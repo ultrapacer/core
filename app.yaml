@@ -1,2 +1,11 @@
-runtime: nodejs
-env: flex
+runtime: nodejs8
+env: standard
+
+handlers:
+  - url: /public
+    static_dir: public
+
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto

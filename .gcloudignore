@@ -14,5 +14,8 @@
 .gitignore
 
 # Node.js dependencies:
+build/
 node_modules/
-config/local.json
+src/
+static/
+test/
