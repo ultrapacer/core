@@ -8,6 +8,15 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
 Vue.use(BootstrapVue)
+
+
+// Import the plugin here
+import AuthPlugin from "./plugins/auth";
+
+// Install the authentication plugin here
+Vue.use(AuthPlugin);
+
+
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */

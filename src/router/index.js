@@ -2,7 +2,9 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Hello from '@/components/Hello'
 import PostsManager from '@/components/PostsManager'
-//import Auth from '@okta/okta-vue'
+import Callback from '@/components/Callback'
+import Profile from '@/components/Profile'
+import auth from "../auth/authService";
 
 /* Vue.use(Auth, {
   issuer: 'https://dev-375773.okta.com/oauth2/default',
@@ -21,10 +23,11 @@ let router = new Router({
       name: 'Hello',
       component: Hello
     },
-    //{
-      //path: '/implicit/callback',
-      //component: Auth.handleCallback()
-    //},
+    {
+      path: '/callback',
+      name: 'callback',
+      component: Callback
+    },
     {
       path: '/posts-manager',
       name: 'PostsManager',
@@ -32,10 +35,25 @@ let router = new Router({
       meta: {
         //requiresAuth: true
       }
-    }
+    },
+    {
+      path: "/profile",
+      name: "Profile",
+      component: Profile
+    }       
   ]
 })
 
-//router.beforeEach(Vue.prototype.$auth.authRedirectGuard())
+// NEW - add a `beforeEach` handler to each route
+router.beforeEach((to, from, next) => {
+  if (to.path === "/" || to.path === "/callback" || auth.isAuthenticated()) {
+    return next();
+  }
+
+  // Specify the current path as the customState parameter, meaning it
+  // will be returned to the application after auth
+  auth.login({ target: to.path });
+});
+
 
 export default router

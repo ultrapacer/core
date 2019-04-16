@@ -6,8 +6,9 @@
       <b-collapse is-nav id="nav_collapse">
         <b-navbar-nav>
           <b-nav-item to="/">Home</b-nav-item>
-          <b-nav-item to="/posts-manager">Posts Manager</b-nav-item>
-          <b-nav-item href="#" @click.prevent="login" v-if="!activeUser">Login</b-nav-item>
+          <b-nav-item to="/posts-manager" v-if="isAuthenticated">Posts Manager</b-nav-item>
+          <b-nav-item to="/profile" v-if="isAuthenticated">Profile</b-nav-item>
+          <b-nav-item href="#" @click.prevent="login" v-if="!isAuthenticated">Login</b-nav-item>
           <b-nav-item href="#" @click.prevent="logout" v-else>Logout</b-nav-item>
         </b-navbar-nav>
       </b-collapse>
@@ -18,33 +19,31 @@
 </template>
 
 <script>
-
 export default {
-  name: 'app',
-  data () {
+  name: "app",
+  data() {
     return {
-      activeUser: null
+      isAuthenticated: false
+    };
+  },
+  async created() {
+    try {
+      await this.$auth.renewTokens();
+    } catch (e) {
+      console.log(e);
     }
-  },
-  async created () {
-    await this.refreshActiveUser()
-  },
-  watch: {
-    // everytime a route is changed refresh the activeUser
-    '$route': 'refreshActiveUser'
   },
   methods: {
-    login () {
-      this.$auth.loginRedirect()
+    login() {
+      this.$auth.login();
     },
-    async refreshActiveUser () {
-      this.activeUser = await this.$auth.getUser()
+    logout() {
+      this.$auth.logOut();
     },
-    async logout () {
-      await this.$auth.logout()
-      await this.refreshActiveUser()
-      this.$router.push('/')
+    handleLoginEvent(data) {
+      this.isAuthenticated = data.loggedIn;
+      this.profile = data.profile;
     }
   }
-}
+};
 </script>
