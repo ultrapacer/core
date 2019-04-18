@@ -9,7 +9,7 @@ const app = express(),
             STATIC_FOLDER = path.join(DIST_DIR, '/static')
 //app.use('/static', express.static('public'));
 
-app.get('/', (req, res) => {
+app.get('/*', (req, res) => {
     res.sendFile(HTML_FILE)
 })
 

@@ -6,13 +6,6 @@ import Callback from '@/components/Callback'
 import Profile from '@/components/Profile'
 import auth from "../auth/authService";
 
-/* Vue.use(Auth, {
-  issuer: 'https://dev-375773.okta.com/oauth2/default',
-  client_id: '{clientId}',
-  redirect_uri: 'http://localhost:8080/implicit/callback',
-  scope: 'openid profile email'
-}) */
-
 Vue.use(Router)
 
 let router = new Router({
