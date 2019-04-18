@@ -12,10 +12,7 @@ const app = express(),
 //app.use('/static', express.static('public'));
 
 // Set up Auth0 configuration
-const authConfig = {
-  domain: "amokrunner.auth0.com",
-  audience: "https://api.pacer.amokrunner.com"
-};
+const authConfig = require("./config/auth_config.json");
 
 // Define middleware that validates incoming bearer tokens
 // using JWKS from YOUR_TENANT
