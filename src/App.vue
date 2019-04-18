@@ -21,30 +21,30 @@
 
 <script>
 export default {
-  name: "app",
-  data() {
+  name: 'app',
+  data () {
     return {
       isAuthenticated: false
-    };
+    }
   },
-  async created() {
+  async created () {
     try {
-      await this.$auth.renewTokens();
+      await this.$auth.renewTokens()
     } catch (e) {
-      console.log(e);
+      console.log(e)
     }
   },
   methods: {
-    login() {
-      this.$auth.login();
+    login () {
+      this.$auth.login()
     },
-    logout() {
-      this.$auth.logOut();
+    logout () {
+      this.$auth.logOut()
     },
-    handleLoginEvent(data) {
-      this.isAuthenticated = data.loggedIn;
-      this.profile = data.profile;
+    handleLoginEvent (data) {
+      this.isAuthenticated = data.loggedIn
+      this.profile = data.profile
     }
   }
-};
+}
 </script>

@@ -19,30 +19,31 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from 'axios'
 
 export default {
-  name: "Api",
-  data() {
+  name: 'Api',
+  data () {
     return {
       apiMessage: null
-    };
+    }
   },
   methods: {
-    async callApi() {
-      const accessToken = await this.$auth.getAccessToken();
+    async callApi () {
+      const accessToken = await this.$auth.getAccessToken()
 
       try {
-        const { data } = await axios.get("/api/external", {
+        const { data } = await axios.get('/api/external', {
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
-        });
+        })
 
-        this.apiMessage = data.msg;
+        this.apiMessage = data.msg
       } catch (e) {
-        this.apiMessage = `Error: the server responded with '${ e.response.status }: ${e.response.statusText}'`; }
+        this.apiMessage = `Error: the server responded with '${e.response.status}: ${e.response.statusText}'`
+      }
     }
   }
-};
+}
 </script>

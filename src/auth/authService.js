@@ -1,3 +1,4 @@
+/* eslint-disable */
 import auth0 from "auth0-js";
 import { EventEmitter } from "events";
 import authConfig from "../../config/auth_config.json";

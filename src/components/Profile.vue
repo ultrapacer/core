@@ -20,15 +20,15 @@
 
 <script>
 export default {
-  data() {
+  data () {
     return {
       profile: this.$auth.profile
-    };
+    }
   },
   methods: {
-    handleLoginEvent(data) {
-      this.profile = data.profile;
+    handleLoginEvent (data) {
+      this.profile = data.profile
     }
   }
-};
+}
 </script>
