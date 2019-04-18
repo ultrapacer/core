@@ -5,6 +5,7 @@ import PostsManager from '@/components/PostsManager'
 import Callback from '@/components/Callback'
 import Profile from '@/components/Profile'
 import auth from "../auth/authService";
+import ExternalApiView from "@/components/ExternalApi";
 
 Vue.use(Router)
 
@@ -33,7 +34,12 @@ let router = new Router({
       path: "/profile",
       name: "Profile",
       component: Profile
-    }       
+    },
+     {
+      path: "/external-api",
+      name: "external-api",
+      component: ExternalApiView
+    }
   ]
 })
 
