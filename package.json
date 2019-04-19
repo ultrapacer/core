@@ -14,9 +14,11 @@
   },
   "dependencies": {
     "auth0-js": "^9.10.2",
+    "cors": "^2.8.5",
     "express": "^4.16.4",
     "express-jwt": "^5.3.1",
     "jwks-rsa": "^1.4.0",
+    "mongoose": "^5.5.2",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1"
   },

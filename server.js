@@ -1,21 +1,16 @@
-'use strict';
+'use strict'
+const express = require('express')
+const path = require('path')
+const dbconfig = require("./config/DB")
+const mongoose = require('mongoose')
+const bodyParser = require('body-parser')
+const cors = require('cors')
+const postRoutes = require('./expressroutes/postRoutes')
+const jwt = require("express-jwt")
+const jwksRsa = require("jwks-rsa")
+const authConfig = require("./config/auth_config.json")
 
-const express = require('express');
-const jwt = require("express-jwt");
-const jwksRsa = require("jwks-rsa");
-const path = require('path');
 
-const app = express(),
-            DIST_DIR = path.join(__dirname + '/dist'),
-            HTML_FILE = path.join(DIST_DIR, 'index.html'),
-            STATIC_FOLDER = path.join(DIST_DIR, '/static')
-//app.use('/static', express.static('public'));
-
-// Set up Auth0 configuration
-const authConfig = require("./config/auth_config.json");
-
-// Define middleware that validates incoming bearer tokens
-// using JWKS from YOUR_TENANT
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
@@ -27,24 +22,42 @@ const checkJwt = jwt({
   audience: authConfig.audience,
   issuer: `https://${authConfig.domain}/`,
   algorithm: ["RS256"]
-});
+})
+
+const app = express()
+const DIST_DIR = path.join(__dirname + '/dist')
+const HTML_FILE = path.join(DIST_DIR, 'index.html')
+const STATIC_FOLDER = path.join(DIST_DIR, '/static')
+
+mongoose.Promise = global.Promise
+mongoose.connect(dbconfig.DB).then(
+  () => {console.log('Database is connected') },
+  err => { console.log('Can not connect to the database'+ err)}
+)
+
+app.use(cors())
+app.use(bodyParser.json())
 
 // Define an endpoint that must be called with an access token
-app.get("/api/external", checkJwt, (req, res) => {
+var r = express.Router();
+r.route('/').get(function (req, res) {
   res.send({
-    msg: "Your Access Token was successfully validated!"
-  });
-});
+    msg: "Your Access Token was successfully validated at " + Date.now()
+  })
+})
+app.use('/api/external', checkJwt,r)
+
+app.use('/api/posts', checkJwt, postRoutes)
 
 app.get('/*', (req, res) => {
     res.sendFile(HTML_FILE)
 })
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8080
 app.listen(PORT, () => {
-  console.log(`DIST_DIR: ${DIST_DIR}`);
-  console.log(`HTML_FILE: ${HTML_FILE}`);
-  console.log(`STATIC_FOLDER: ${STATIC_FOLDER}`);
-  console.log(`App listening on port ${PORT}`);
-  console.log('Press Ctrl+C to quit.');
+  console.log(`DIST_DIR: ${DIST_DIR}`)
+  console.log(`HTML_FILE: ${HTML_FILE}`)
+  console.log(`STATIC_FOLDER: ${STATIC_FOLDER}`)
+  console.log(`App listening on port ${PORT}`)
+  console.log('Press Ctrl+C to quit.')
 });

@@ -2,6 +2,22 @@
 
 > A Vue.js project
 
+
+
+add a file /config/DB.js with:
+  module.exports = {
+    DB: 'path_to_your_mongodb'
+  };
+
+add a file /config/DB.js with AUTH0 credentials:
+    {
+      "domain": "XXXXXXXXXX",
+      "clientId": "XXXXXXXXXXXX",
+      "audience": "XXXXXXXXXXXX"
+    }
+  
+  
+  
 ## Build Setup
 
 ``` bash

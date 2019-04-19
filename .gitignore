@@ -9,6 +9,7 @@ yarn-error.log*
 /test/e2e/reports/
 selenium-debug.log
 config/auth_config.json
+config/DB.json
 
 # Editor directories and files
 .idea
