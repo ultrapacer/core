@@ -6,6 +6,7 @@ const mongoose = require('mongoose')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const postRoutes = require('./expressroutes/postRoutes')
+const courseRoutes = require('./expressroutes/courseRoutes')
 const jwt = require("express-jwt")
 const jwksRsa = require("jwks-rsa")
 const authConfig = require("./config/auth_config.json")
@@ -38,16 +39,8 @@ mongoose.connect(dbconfig.DB).then(
 app.use(cors())
 app.use(bodyParser.json())
 
-// Define an endpoint that must be called with an access token
-var r = express.Router();
-r.route('/').get(function (req, res) {
-  res.send({
-    msg: "Your Access Token was successfully validated at " + Date.now()
-  })
-})
-app.use('/api/external', checkJwt,r)
-
 app.use('/api/posts', checkJwt, postRoutes)
+app.use('/api/courses', checkJwt, courseRoutes)
 
 app.get('/*', (req, res) => {
     res.sendFile(HTML_FILE)

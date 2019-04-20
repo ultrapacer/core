@@ -35,7 +35,19 @@ export default {
   deletePost (id) {
     return this.execute('delete', `/api/posts/${id}`)
   },
-  callApi () {
-    return this.execute('get', '/api/external')
+  getCourses () {
+    return this.execute('get', '/api/courses')
+  },
+  getCourse (id) {
+    return this.execute('get', `/api/courses/${id}`)
+  },
+  createCourse (data) {
+    return this.execute('post', '/api/courses', data)
+  },
+  updateCourse (id, data) {
+    return this.execute('put', `/api/courses/${id}`, data)
+  },
+  deleteCourse (id) {
+    return this.execute('delete', `/api/courses/${id}`)
   }
 }

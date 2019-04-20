@@ -7,7 +7,7 @@
         <b-navbar-nav>
           <b-nav-item to="/">Home</b-nav-item>
           <b-nav-item to="/posts-manager" v-if="isAuthenticated">Posts Manager</b-nav-item>
-          <b-nav-item to="/external-api" v-if="isAuthenticated">External API</b-nav-item>
+          <b-nav-item to="/courses" v-if="isAuthenticated">Courses</b-nav-item>
           <b-nav-item to="/profile" v-if="isAuthenticated">Profile</b-nav-item>
           <b-nav-item href="#" @click.prevent="login" v-if="!isAuthenticated">Login</b-nav-item>
           <b-nav-item href="#" @click.prevent="logout" v-else>Logout</b-nav-item>

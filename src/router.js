@@ -4,8 +4,8 @@ import Hello from '@/components/Hello'
 import PostsManager from '@/components/PostsManager'
 import Callback from '@/components/Callback'
 import Profile from '@/components/Profile'
-import auth from '../auth/authService'
-import ExternalApiView from '@/components/ExternalApi'
+import auth from './auth/authService'
+import Courses from '@/components/Courses'
 
 Vue.use(Router)
 
@@ -33,9 +33,9 @@ let router = new Router({
       component: Profile
     },
     {
-      path: '/external-api',
-      name: 'external-api',
-      component: ExternalApiView
+      path: '/courses',
+      name: 'courses',
+      component: Courses
     }
   ]
 })
