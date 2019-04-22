@@ -3,7 +3,7 @@
     <h1 class="h1">Courses</h1>
     <b-alert :show="loading" variant="info">Loading...</b-alert>
     <b-row>
-      <b-col v-show="!editing">
+      <b-col>
         <table class="table table-striped">
           <thead>
             <tr>
@@ -39,6 +39,15 @@
             <b-form-group label="Description">
               <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
             </b-form-group>
+            <b-form-group label="GPX File" v-show="!model._id">
+              <b-form-file
+                  :state="Boolean(file)"
+                  v-model="file"
+                  placeholder="Choose a GPX file..."
+                  drop-placeholder="Drop GPX file here..."
+                  accept=".gpx"
+                ></b-form-file>
+            </b-form-group>
             <div>
               <b-btn type="submit" variant="success">Save Course</b-btn>
               <b-btn type="cancel" @click.prevent="cancelEdit()">Cancel</b-btn>
@@ -58,7 +67,8 @@ export default {
       loading: false,
       editing: false,
       courses: [],
-      model: {}
+      model: {},
+      file: null
     }
   },
   async created () {
@@ -78,7 +88,11 @@ export default {
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
       } else {
-        await api.createCourse(this.model)
+        const formData = new FormData()
+        formData.append('file', this.file)
+        formData.append('model', JSON.stringify(this.model))
+        await api.createCourse(formData)
+        //await api.createCourse(this.model)
       }
       this.model = {} // reset form
       await this.refreshCourses()

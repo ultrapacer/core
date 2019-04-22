@@ -1,20 +1,38 @@
 // courseRoutes.js
-var express = require('express');
-var courseRoutes = express.Router();
+var express = require('express')
+var courseRoutes = express.Router()
+const multer = require('multer')
+const gpxParse = require('gpx-parse')
+const fs = require('fs')
 
+const upload = multer({
+  dest: './uploads'
+})
 // Require Course model in our routes module
-var Course = require('../models/Course');
+var Course = require('../models/Course')
 
 // Defined store route
-courseRoutes.route('/').post(function (req, res) {
-  var course = new Course(req.body);
-      course.save()
+courseRoutes.route('/').post(upload.single('file'), function (req, res) {
+  gpxParse.parseGpxFromFile(req.file.path, function(error, data) {
+    if (error) throw error 
+
+  console.log(data.tracks[0].segments)
+  var course = new Course(JSON.parse(req.body.model));
+  course.filename = req.file.path
+  course.points = data.tracks[0].segments[0]
+  course.save()
     .then(post => {
-    res.status(200).json({'post': 'Course added successfully'});
+    res.status(200).json({'post': 'Course added successfully'})
     })
     .catch(err => {
-    res.status(400).send("unable to save to database");
+    res.status(400).send("unable to save to database")
     });
+    }) 
+});
+
+// Defined upload route
+courseRoutes.route('/upload').post(upload.single('file'), function (req, res) {
+  console.log(req.file)
 });
 
 // Defined get data(index or listing) route

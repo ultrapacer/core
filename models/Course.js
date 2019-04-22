@@ -8,6 +8,12 @@ var Course = new Schema({
   },
   description: {
     type: String
+  },
+  filename: {
+    type: String
+  },
+  points: {
+    type: Array
   }
 },{
     collection: 'courses'
