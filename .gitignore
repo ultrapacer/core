@@ -9,7 +9,7 @@ yarn-error.log*
 /test/e2e/reports/
 selenium-debug.log
 config/auth_config.json
-config/DB.json
+config/DB.js
 /uploads/
 
 # Editor directories and files
