@@ -10,24 +10,33 @@ const upload = multer({
 })
 // Require Course model in our routes module
 var Course = require('../models/Course')
+var GPX = require('../models/GPX')
 
 // Defined store route
 courseRoutes.route('/').post(upload.single('file'), function (req, res) {
   gpxParse.parseGpxFromFile(req.file.path, function(error, data) {
     if (error) throw error 
 
-  console.log(data.tracks[0].segments)
   var course = new Course(JSON.parse(req.body.model));
-  course.filename = req.file.path
-  course.points = data.tracks[0].segments[0]
-  course.save()
-    .then(post => {
-    res.status(200).json({'post': 'Course added successfully'})
-    })
-    .catch(err => {
-    res.status(400).send("unable to save to database")
-    });
-    }) 
+  var gpx = new GPX()
+  
+  gpx.filename = req.file.path
+  gpx.points = data.tracks[0].segments[0]
+  course.distance = data.tracks[0].length()
+  
+  console.log('length' + course.length)
+  
+  gpx.save(function(err,record){
+    course.gpx = record
+    course.save()
+      .then(post => {
+      res.status(200).json({'post': 'Course added successfully'})
+      })
+      .catch(err => {
+      res.status(400).send("unable to save to database")
+      });
+      })
+  })    
 });
 
 // Defined upload route

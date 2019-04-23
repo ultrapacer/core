@@ -9,11 +9,11 @@ var Course = new Schema({
   description: {
     type: String
   },
-  filename: {
-    type: String
+  gpx: {
+    type: mongoose.Schema.Types.ObjectId
   },
-  points: {
-    type: Array
+  distance: {
+    type: Number
   }
 },{
     collection: 'courses'
