@@ -14,6 +14,12 @@ var Course = new Schema({
   },
   distance: {
     type: Number
+  },
+  gain: {
+    type: Number
+  },
+  loss: {
+    type: Number
   }
 },{
     collection: 'courses'

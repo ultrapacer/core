@@ -8,18 +8,18 @@
           <thead>
             <tr>
               <th>Name</th>
-              <th>Distance [km]</th>
-              <th>Elevation [m]</th>
+              <th>Distance [mi]</th>
+              <th>Elevation [ft]</th>
               <th>&nbsp;</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="course in courses" :key="course._id">
               <td>{{ course.name }}</td>
-              <td>{{ course.distance | distance }}</td>
-              <td>+{{ course.elevationGain }}/-{{ course.elevationLoss }}</td>
+              <td>{{ course.distance | toMiles }}</td>
+              <td>+{{ course.gain | toFeet }}/{{ course.loss | toFeet }}</td>
               <td class="text-right">
-                <a href="#" @click.prevent="populateCourseToEdit(course)">Go</a> /
+                <router-link :to="'/course/'+course._id">Go</router-link> /
                 <a href="#" @click.prevent="populateCourseToEdit(course)">Edit</a> /
                 <a href="#" @click.prevent="deleteCourse(course._id)">Delete</a>
               </td>
@@ -72,9 +72,13 @@ export default {
     }
   },
    filters: {
-    distance(val) {
-      const v = Number(val)
+    toMiles(val) {
+      var v = Number(val*0.621371)
       return v.toFixed(2)
+    },
+    toFeet(val) {
+      var v = Number(val*3.28084)
+      return v.toFixed(0)
     }
   },
   async created () {

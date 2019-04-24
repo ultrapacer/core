@@ -6,6 +6,7 @@ import Callback from '@/components/Callback'
 import Profile from '@/components/Profile'
 import auth from './auth/authService'
 import Courses from '@/components/Courses'
+import Course from '@/components/Course'
 
 Vue.use(Router)
 
@@ -36,6 +37,11 @@ let router = new Router({
       path: '/courses',
       name: 'courses',
       component: Courses
+    },
+    {
+      path: '/course/:id',
+      name: 'course',
+      component: Course
     }
   ]
 })
