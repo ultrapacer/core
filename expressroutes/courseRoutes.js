@@ -5,16 +5,14 @@ const multer = require('multer')
 const gpxParse = require('./gpx-parse')
 const fs = require('fs')
 
-const upload = multer({
-  dest: './uploads'
-})
+const upload = multer()
 // Require Course model in our routes module
 var Course = require('../models/Course')
 var GPX = require('../models/GPX')
 
 // Defined store route
 coursesRoutes.route('/').post(upload.single('file'), function (req, res) {
-  gpxParse.parseGpxFromFile(req.file.path, function(error, data) {
+  gpxParse.parseGpx(req.file.buffer.toString(), function(error, data) {
     if (error) throw error 
 
   var course = new Course(JSON.parse(req.body.model));
