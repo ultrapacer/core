@@ -19,14 +19,14 @@
               <td>{{ course.distance | toMiles }}</td>
               <td>+{{ course.gain | toFeet }}/{{ course.loss | toFeet }}</td>
               <td class="text-right">
-                <router-link :to="'/course/'+course._id">Go</router-link> /
+                <router-link :to="'/course/?course='+course._id">Go</router-link> /
                 <a href="#" @click.prevent="populateCourseToEdit(course)">Edit</a> /
                 <a href="#" @click.prevent="deleteCourse(course._id)">Delete</a>
               </td>
             </tr>
           </tbody>
         </table>
-        <div>
+        <div v-show="!editing">
           <b-btn variant="success" @click.prevent="newCourse()">New Course</b-btn>
         </div>
       </b-col>
@@ -71,13 +71,13 @@ export default {
       file: null
     }
   },
-   filters: {
-    toMiles(val) {
-      var v = Number(val*0.621371)
+  filters: {
+    toMiles (val) {
+      var v = Number(val * 0.621371)
       return v.toFixed(2)
     },
-    toFeet(val) {
-      var v = Number(val*3.28084)
+    toFeet (val) {
+      var v = Number(val * 3.28084)
       return v.toFixed(0)
     }
   },
@@ -102,7 +102,6 @@ export default {
         formData.append('file', this.file)
         formData.append('model', JSON.stringify(this.model))
         await api.createCourse(formData)
-        //await api.createCourse(this.model)
       }
       this.model = {} // reset form
       await this.refreshCourses()

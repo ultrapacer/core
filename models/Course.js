@@ -9,8 +9,9 @@ var Course = new Schema({
   description: {
     type: String
   },
-  gpx: {
-    type: mongoose.Schema.Types.ObjectId
+  _gpx: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'GPX'
   },
   distance: {
     type: Number

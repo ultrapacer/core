@@ -1,22 +1,131 @@
 <template>
-  <div class="hero">
-    <div>
-      <h1 class="display-3">coming soon</h1>
-      <p class="lead">pace your race</p>
-    </div>
+  <div class="container-fluid mt-4">
+    <h1 class="h1">{{ course.name }}</h1>
+    <b-alert :show="loading" variant="info">Loading...</b-alert>
+    <b-row>
+      <b-col>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Distance [mi]</th>
+              <th>Elevation [ft]</th>
+              <th>&nbsp;</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="course in courses" :key="course._id">
+              <td>{{ course.name }}</td>
+              <td>{{ course.distance | toMiles }}</td>
+              <td>+{{ course.gain | toFeet }}/{{ course.loss | toFeet }}</td>
+              <td class="text-right">
+                <router-link :to="'/course/'+course._id">Go</router-link> /
+                <a href="#" @click.prevent="populateCourseToEdit(course)">Edit</a> /
+                <a href="#" @click.prevent="deleteCourse(course._id)">Delete</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </b-col>
+      <b-col v-show="editing" lg="3">
+        <b-card :title="(model._id ? 'Edit Course' : 'New Course')">
+          <form @submit.prevent="saveCourse">
+            <b-form-group label="Name">
+              <b-form-input type="text" v-model="model.name"></b-form-input>
+            </b-form-group>
+            <b-form-group label="Description">
+              <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
+            </b-form-group>
+            <b-form-group label="GPX File" v-show="!model._id">
+              <b-form-file
+                  :state="Boolean(file)"
+                  v-model="file"
+                  placeholder="Choose a GPX file..."
+                  drop-placeholder="Drop GPX file here..."
+                  accept=".gpx"
+                ></b-form-file>
+            </b-form-group>
+            <div>
+              <b-btn type="submit" variant="success">Save Course</b-btn>
+              <b-btn type="cancel" @click.prevent="cancelEdit()">Cancel</b-btn>
+            </div>
+          </form>
+        </b-card>
+      </b-col>
+    </b-row>
   </div>
 </template>
 
-<style>
-  .hero {
-    height: 90vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+<script>
+import api from '@/api'
+export default {
+  data () {
+    return {
+      loading: false,
+      editing: false,
+      courses: [],
+      model: {},
+      course: {},
+      file: null
+    }
+  },
+  filters: {
+    toMiles (val) {
+      var v = Number(val * 0.621371)
+      return v.toFixed(2)
+    },
+    toFeet (val) {
+      var v = Number(val * 3.28084)
+      return v.toFixed(0)
+    }
+  },
+  async created () {
+    this.loading = true
+    this.course = await api.getCourse(this.$route.query.course)
+    console.log(this.course)
+    this.loading = false
+  },
+  methods: {
+    async refreshCourses () {
+      this.courses = await api.getCourses()
+    },
+    async populateCourseToEdit (course) {
+      this.model = Object.assign({}, course)
+      this.editing = true
+    },
+    async saveCourse () {
+      if (this.model._id) {
+        await api.updateCourse(this.model._id, this.model)
+      } else {
+        const formData = new FormData()
+        formData.append('file', this.file)
+        formData.append('model', JSON.stringify(this.model))
+        await api.createCourse(formData)
+      }
+      this.model = {} // reset form
+      await this.refreshCourses()
+      this.editing = false
+    },
+    async deleteCourse (id) {
+      if (confirm('Are you sure you want to delete this course?')) {
+        // if we are editing a course we deleted, remove it from the form
+        if (this.model._id === id) {
+          this.model = {}
+          this.editing = false
+        }
+        await api.deleteCourse(id)
+        await this.refreshCourses()
+      }
+    },
+    async cancelEdit () {
+      this.model = {}
+      this.editing = false
+      await this.refreshCourses()
+    },
+    async newCourse () {
+      this.model = {}
+      this.editing = true
+    }
   }
-  .hero .lead {
-    font-weight: 200;
-    font-size: 1.5rem;
-  }
-</style>
+}
+</script>

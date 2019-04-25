@@ -39,7 +39,7 @@ export default {
     return this.execute('get', '/api/courses')
   },
   getCourse (id) {
-    return this.execute('get', `/api/courses/${id}`)
+    return this.execute('get', `/api/course/${id}`)
   },
   createCourse (data) {
     return this.execute('post', '/api/courses', data)

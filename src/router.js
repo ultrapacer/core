@@ -5,7 +5,7 @@ import PostsManager from '@/components/PostsManager'
 import Callback from '@/components/Callback'
 import Profile from '@/components/Profile'
 import auth from './auth/authService'
-import Courses from '@/components/Courses'
+import CoursesManager from '@/components/CoursesManager'
 import Course from '@/components/Course'
 
 Vue.use(Router)
@@ -35,11 +35,11 @@ let router = new Router({
     },
     {
       path: '/courses',
-      name: 'courses',
-      component: Courses
+      name: 'CoursesManager',
+      component: CoursesManager
     },
     {
-      path: '/course/:id',
+      path: '/course',
       name: 'course',
       component: Course
     }

@@ -6,7 +6,6 @@ const mongoose = require('mongoose')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const postRoutes = require('./expressroutes/postRoutes')
-const coursesRoutes = require('./expressroutes/coursesRoutes')
 const courseRoutes = require('./expressroutes/courseRoutes')
 const jwt = require("express-jwt")
 const jwksRsa = require("jwks-rsa")
@@ -41,8 +40,7 @@ app.use(cors())
 app.use(bodyParser.json())
 
 app.use('/api/posts', checkJwt, postRoutes)
-app.use('/api/courses', checkJwt, coursesRoutes)
-app.use('/api/course', checkJwt, courseRoutes)
+app.use(['/api/course','/api/courses'], checkJwt, courseRoutes)
 
 app.get('/*', (req, res) => {
     res.sendFile(HTML_FILE)
