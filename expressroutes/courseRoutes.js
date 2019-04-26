@@ -25,7 +25,6 @@ coursesRoutes.route('/').post(upload.single('file'), function (req, res) {
   course.distance = stats.distance
   course.gain = stats.gain
   course.loss = stats.loss
-  course.splits = stats.splits
     
   gpx.save(function(err,record){
     course._gpx = record

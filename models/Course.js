@@ -21,9 +21,6 @@ var CourseSchema = new Schema({
   },
   loss: {
     type: Number
-  },
-  splits: {
-    type: Array
   }
 },{
     collection: 'courses'
