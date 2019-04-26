@@ -7,50 +7,20 @@
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Distance [mi]</th>
-              <th>Elevation [ft]</th>
+              <th>Split</th>
+              <th>Gain [ft]</th>
+              <th>Loss [ft]</th>
               <th>&nbsp;</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="course in courses" :key="course._id">
-              <td>{{ course.name }}</td>
-              <td>{{ course.distance | toMiles }}</td>
-              <td>+{{ course.gain | toFeet }}/{{ course.loss | toFeet }}</td>
-              <td class="text-right">
-                <router-link :to="'/course/'+course._id">Go</router-link> /
-                <a href="#" @click.prevent="populateCourseToEdit(course)">Edit</a> /
-                <a href="#" @click.prevent="deleteCourse(course._id)">Delete</a>
-              </td>
+            <tr v-for="split in splits">
+              <td>{{ split.split }}</td>
+              <td>{{ split.gain | toFeet }}</td>
+              <td>{{ split.loss | toFeet }}</td>
             </tr>
           </tbody>
         </table>
-      </b-col>
-      <b-col v-show="editing" lg="3">
-        <b-card :title="(model._id ? 'Edit Course' : 'New Course')">
-          <form @submit.prevent="saveCourse">
-            <b-form-group label="Name">
-              <b-form-input type="text" v-model="model.name"></b-form-input>
-            </b-form-group>
-            <b-form-group label="Description">
-              <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
-            </b-form-group>
-            <b-form-group label="GPX File" v-show="!model._id">
-              <b-form-file
-                  :state="Boolean(file)"
-                  v-model="file"
-                  placeholder="Choose a GPX file..."
-                  drop-placeholder="Drop GPX file here..."
-                  accept=".gpx"
-                ></b-form-file>
-            </b-form-group>
-            <div>
-              <b-btn type="submit" variant="success">Save Course</b-btn>
-              <b-btn type="cancel" @click.prevent="cancelEdit()">Cancel</b-btn>
-            </div>
-          </form>
-        </b-card>
       </b-col>
     </b-row>
   </div>
@@ -58,15 +28,14 @@
 
 <script>
 import api from '@/api'
+var gpxParse = require('gpx-parse')
 export default {
   data () {
     return {
       loading: false,
-      editing: false,
       courses: [],
-      model: {},
       course: {},
-      file: null
+      splits: [],
     }
   },
   filters: {
@@ -82,49 +51,35 @@ export default {
   async created () {
     this.loading = true
     this.course = await api.getCourse(this.$route.query.course)
-    console.log(this.course)
+    await this.calcSplits()
     this.loading = false
   },
   methods: {
-    async refreshCourses () {
-      this.courses = await api.getCourses()
-    },
-    async populateCourseToEdit (course) {
-      this.model = Object.assign({}, course)
-      this.editing = true
-    },
-    async saveCourse () {
-      if (this.model._id) {
-        await api.updateCourse(this.model._id, this.model)
-      } else {
-        const formData = new FormData()
-        formData.append('file', this.file)
-        formData.append('model', JSON.stringify(this.model))
-        await api.createCourse(formData)
-      }
-      this.model = {} // reset form
-      await this.refreshCourses()
-      this.editing = false
-    },
-    async deleteCourse (id) {
-      if (confirm('Are you sure you want to delete this course?')) {
-        // if we are editing a course we deleted, remove it from the form
-        if (this.model._id === id) {
-          this.model = {}
-          this.editing = false
+    async calcSplits() {
+      var total = 0
+      var split = 0
+      var igain = 0
+      var iloss = 0
+      var currentSegment = this.course._gpx.points
+      var delta = 0
+      this.splits = []
+      console.log(this.course)
+      for (var i=0, il= currentSegment.length -1; i<il; i++) {
+      	total += (gpxParse.utils.calculateDistance(currentSegment[i].lat,currentSegment[i].lon,currentSegment[i+1].lat,currentSegment[i+1].lon )) * 0.621371;
+        delta = currentSegment[i+1].elevation - currentSegment[i].elevation
+        if (delta < 0) { iloss += delta }
+        else { igain += delta }
+        if (total - split > 1 || i == il - 1) {
+          split += 1
+          this.splits.push({
+            split: total.toFixed(2),
+            gain: igain,
+            loss: iloss
+          })
+          igain = 0
+          iloss = 0
         }
-        await api.deleteCourse(id)
-        await this.refreshCourses()
       }
-    },
-    async cancelEdit () {
-      this.model = {}
-      this.editing = false
-      await this.refreshCourses()
-    },
-    async newCourse () {
-      this.model = {}
-      this.editing = true
     }
   }
 }

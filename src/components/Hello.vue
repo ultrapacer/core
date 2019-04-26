@@ -1,6 +1,7 @@
 <template>
   <div class="hero">
     <div>
+      <img src="/public/favicon-96x96.png">
       <h1 class="display-3">coming soon</h1>
       <p class="lead">pace your race</p>
     </div>
