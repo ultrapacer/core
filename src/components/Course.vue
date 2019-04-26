@@ -21,6 +21,9 @@
             </tr>
           </tbody>
         </table>
+        <div>
+          <b-btn variant="success" @click.prevent="toggleUnits()">Switch Units</b-btn>
+        </div>
       </b-col>
     </b-row>
   </div>
@@ -36,6 +39,7 @@ export default {
       courses: [],
       course: {},
       splits: [],
+      unitSystem: 'english',
       distUnits: 'mi',
       elevUnits: 'ft'
     }
@@ -64,7 +68,18 @@ export default {
     this.loading = false
   },
   methods: {
-    
+    async toggleUnits () {
+      if (this.unitSystem == 'metric') {
+        this.elevUnits = 'ft'
+        this.distUnits = 'mi'
+        this.unitSystem = 'english'
+      } else {
+        this.elevUnits = 'm'
+        this.distUnits = 'km'
+        this.unitSystem = 'metric'
+      }
+      this.splits = utilities.calcSplits(this.course._gpx.points, this.distUnits)
+    }
   }
 }
 </script>
