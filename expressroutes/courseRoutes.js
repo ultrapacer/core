@@ -2,8 +2,9 @@
 var express = require('express')
 var coursesRoutes = express.Router()
 const multer = require('multer')
-const gpxParse = require('./gpx-parse')
+const gpxParse = require('gpx-parse')
 const fs = require('fs')
+const utilities = require('../src/utilities')
 
 const upload = multer()
 // Require Course model in our routes module
@@ -19,10 +20,12 @@ coursesRoutes.route('/').post(upload.single('file'), function (req, res) {
   var gpx = new GPX()
   
   gpx.filename = req.file.path
-  gpx.points = data.tracks[0].segments[0]
-  course.distance = data.tracks[0].length()
-  course.gain = data.tracks[0].gain()
-  course.loss = data.tracks[0].loss()
+  gpx.points = utilities.cleanPoints(data.tracks[0].segments[0])
+  var stats = utilities.calcStats(gpx.points)
+  course.distance = stats.distance
+  course.gain = stats.gain
+  course.loss = stats.loss
+  course.splits = stats.splits
     
   gpx.save(function(err,record){
     course._gpx = record
