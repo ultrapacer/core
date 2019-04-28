@@ -56,7 +56,7 @@
                       <td>{{ waypoint.location | formatMilesKM(distUnits) }}</td>
                       <td>{{ waypoint.elevation | formatFeetMeters(elevUnits) }}</td>
                         <td class="text-right">
-                        <a href="#" @click.prevent="populateWaypointToEdit(waypoint._id)">Edit</a> /
+                        <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a> /
                         <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
                       </td>
                     </tr>
@@ -164,7 +164,6 @@ export default {
         await api.updateWaypoint(this.waypoint._id, this.waypoint)
       } else {
         this.waypoint._course = this.course._id
-        console.log(this.waypoint)
         await api.createWaypoint(this.waypoint)
       }
       this.waypoint = {} // reset form
@@ -186,6 +185,10 @@ export default {
         await api.deleteWaypoint(id)
         await this.refreshWaypoints()
       }
+    },
+    async populateWaypointToEdit (waypoint) {
+      this.waypoint = Object.assign({}, waypoint)
+      this.editing = true
     },
   }
 }

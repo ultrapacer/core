@@ -7,6 +7,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const postRoutes = require('./expressroutes/postRoutes')
 const courseRoutes = require('./expressroutes/courseRoutes')
+const waypointRoutes = require('./expressroutes/waypointRoutes')
 const jwt = require("express-jwt")
 const jwksRsa = require("jwks-rsa")
 const authConfig = require("./config/auth_config.json")
@@ -41,6 +42,7 @@ app.use(bodyParser.json())
 
 app.use('/api/posts', checkJwt, postRoutes)
 app.use(['/api/course','/api/courses'], checkJwt, courseRoutes)
+app.use('/api/waypoint', checkJwt, waypointRoutes)
 
 app.get('/*', (req, res) => {
     res.sendFile(HTML_FILE)

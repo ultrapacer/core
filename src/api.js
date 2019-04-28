@@ -50,13 +50,16 @@ export default {
   deleteCourse (id) {
     return this.execute('delete', `/api/courses/${id}`)
   },
-  getWaypoints (id) {
-    return this.execute('get', `/api/course/waypoints/${id}`)
+  getWaypoints (course_id) {
+    return this.execute('get', `/api/waypoint/list/${course_id}`)
   },
   createWaypoint (data) {
-    return this.execute('post', `/api/course/waypoint`, data)
+    return this.execute('post', `/api/waypoint`, data)
+  },
+  updateWaypoint (id, data) {
+    return this.execute('put', `/api/waypoint/${id}`, data)
   },
   deleteWaypoint (id) {
-    return this.execute('delete', `/api/course/waypoint/${id}`)
+    return this.execute('delete', `/api/waypoint/${id}`)
   },
 }

@@ -94,40 +94,12 @@ courseRoutes.route('/:id').delete(function (req, res) {
     });
 });
 
+// GE COURSE
 courseRoutes.route('/:id').get(function (req, res) {
   var id = req.params.id;
   Course.findById(id).populate('_gpx').exec(function (err, course){
       res.json(course);
   });
 });
-
-courseRoutes.route('/waypoints/:id').get(function (req, res) {
-  var courseid = req.params.id;
-  Waypoint.find({ _course: courseid }, function (err, waypoints){
-      res.json(waypoints)
-  });
-});
-
-// Defined store route
-courseRoutes.route('/waypoint/').post(function (req, res) {
-  var waypoint = new Waypoint(req.body)
-  console.log(waypoint)
-  console.log(req.body.waypoint)
-  waypoint.save().then(post => {
-      res.json('Update complete');
-  })
-  .catch(err => {
-        res.status(400).send("unable to update the database");
-  });
-});
-
-courseRoutes.route('/waypoint/:id').delete(function (req, res) {
-  console.log('delete ' + req.params.id)
-  Waypoint.findByIdAndRemove({_id: req.params.id}, function(err, course){
-        if(err) res.json(err);
-        else res.json('Successfully removed');
-    });
-});
-
 
 module.exports = courseRoutes;
