@@ -98,7 +98,7 @@
 
 <script>
 import api from '@/api'
-import utilities from '@/utilities'
+import utilities from '../../shared/utilities'
 export default {
   data () {
     return {

@@ -4,7 +4,7 @@ var courseRoutes = express.Router()
 const multer = require('multer')
 const gpxParse = require('gpx-parse')
 const fs = require('fs')
-const utilities = require('../src/utilities')
+const utilities = require('../../shared/utilities')
 var mongoose = require('mongoose')
 
 const upload = multer()
