@@ -31,6 +31,7 @@ function calcSplits(points, units) {
   var igain = 0
   var iloss = 0
   var delta = 0
+  console.log(points)
   for (var i=0, il= points.length -1; i<il; i++) {
     distance += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon )) * dist_scale;
     delta = points[i+1].ele - points[i].ele
@@ -68,8 +69,17 @@ function cleanPoints(points){
   return points2
 }
 
+var Waypoint = {
+  id: null,
+  ele: null,
+  loc: null,
+  name: null,
+  description: null
+}
+
 module.exports = {
   calcStats: calcStats,
   calcSplits: calcSplits,
-  cleanPoints: cleanPoints
+  cleanPoints: cleanPoints,
+  Waypoint: Waypoint
 }

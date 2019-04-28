@@ -1,18 +1,20 @@
-// coursesRoutes.js
+// courseRoutes.js
 var express = require('express')
-var coursesRoutes = express.Router()
+var courseRoutes = express.Router()
 const multer = require('multer')
 const gpxParse = require('gpx-parse')
 const fs = require('fs')
 const utilities = require('../src/utilities')
+var mongoose = require('mongoose')
 
 const upload = multer()
 // Require Course model in our routes module
 var Course = require('../models/Course')
 var GPX = require('../models/GPX')
+var Waypoint = require('../models/Waypoint')
 
 // Defined store route
-coursesRoutes.route('/').post(upload.single('file'), function (req, res) {
+courseRoutes.route('/').post(upload.single('file'), function (req, res) {
   gpxParse.parseGpx(req.file.buffer.toString(), function(error, data) {
     if (error) throw error 
 
@@ -40,12 +42,12 @@ coursesRoutes.route('/').post(upload.single('file'), function (req, res) {
 });
 
 // Defined upload route
-coursesRoutes.route('/upload').post(upload.single('file'), function (req, res) {
+courseRoutes.route('/upload').post(upload.single('file'), function (req, res) {
   console.log(req.file)
 });
 
 // Defined get data(index or listing) route
-coursesRoutes.route('/').get(function (req, res) {
+courseRoutes.route('/').get(function (req, res) {
   Course.find(function (err, courses){
     if(err){
       console.log(err);
@@ -57,7 +59,7 @@ coursesRoutes.route('/').get(function (req, res) {
 });
 
 // Defined edit route
-coursesRoutes.route('/edit/:id').get(function (req, res) {
+courseRoutes.route('/edit/:id').get(function (req, res) {
   var id = req.params.id;
   Course.findById(id, function (err, course){
       res.json(course);
@@ -65,7 +67,7 @@ coursesRoutes.route('/edit/:id').get(function (req, res) {
 });
 
 //  Defined update route
-coursesRoutes.route('/:id').put(function (req, res) {
+courseRoutes.route('/:id').put(function (req, res) {
   Course.findById(req.params.id, function(err, course) {
     if (!course)
       return next(new Error('Could not load Document'));
@@ -84,7 +86,7 @@ coursesRoutes.route('/:id').put(function (req, res) {
 });
 
 // Defined delete | remove | destroy route
-coursesRoutes.route('/:id').delete(function (req, res) {
+courseRoutes.route('/:id').delete(function (req, res) {
   console.log('delete ' + req.params.id)
   Course.findByIdAndRemove({_id: req.params.id}, function(err, course){
         if(err) res.json(err);
@@ -92,12 +94,40 @@ coursesRoutes.route('/:id').delete(function (req, res) {
     });
 });
 
-// Defined edit route
-coursesRoutes.route('/:id').get(function (req, res) {
+courseRoutes.route('/:id').get(function (req, res) {
   var id = req.params.id;
   Course.findById(id).populate('_gpx').exec(function (err, course){
       res.json(course);
   });
 });
 
-module.exports = coursesRoutes;
+courseRoutes.route('/waypoints/:id').get(function (req, res) {
+  var courseid = req.params.id;
+  Waypoint.find({ _course: courseid }, function (err, waypoints){
+      res.json(waypoints)
+  });
+});
+
+// Defined store route
+courseRoutes.route('/waypoint/').post(function (req, res) {
+  var waypoint = new Waypoint(req.body)
+  console.log(waypoint)
+  console.log(req.body.waypoint)
+  waypoint.save().then(post => {
+      res.json('Update complete');
+  })
+  .catch(err => {
+        res.status(400).send("unable to update the database");
+  });
+});
+
+courseRoutes.route('/waypoint/:id').delete(function (req, res) {
+  console.log('delete ' + req.params.id)
+  Waypoint.findByIdAndRemove({_id: req.params.id}, function(err, course){
+        if(err) res.json(err);
+        else res.json('Successfully removed');
+    });
+});
+
+
+module.exports = courseRoutes;

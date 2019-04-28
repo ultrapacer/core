@@ -49,5 +49,14 @@ export default {
   },
   deleteCourse (id) {
     return this.execute('delete', `/api/courses/${id}`)
-  }
+  },
+  getWaypoints (id) {
+    return this.execute('get', `/api/course/waypoints/${id}`)
+  },
+  createWaypoint (data) {
+    return this.execute('post', `/api/course/waypoint`, data)
+  },
+  deleteWaypoint (id) {
+    return this.execute('delete', `/api/course/waypoint/${id}`)
+  },
 }
