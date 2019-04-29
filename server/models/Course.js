@@ -3,6 +3,10 @@ var Schema = mongoose.Schema;
 
 // Define collection and schema for Posts
 var CourseSchema = new Schema({
+  _user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   name: {
     type: String
   },
