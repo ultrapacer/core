@@ -18,6 +18,14 @@ var WaypointSchema = new Schema({
   },
   elevation: {
     type: Number
+  },
+  aidStation: {
+    type: Boolean,
+    default: true
+  },
+  terrainIndex: {
+    type: Number,
+    default: 3
   }
 },{
     collection: 'waypoints'
