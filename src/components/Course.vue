@@ -20,7 +20,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="split in splits">
+                    <tr v-for="(split, index) in splits" :key="index">
                       <td>{{ split.split }}</td>
                       <td>{{ split.gain | formatFeetMeters(elevUnits) }}</td>
                       <td>{{ split.loss | formatFeetMeters(elevUnits) }}</td>
@@ -32,7 +32,6 @@
           </b-card-body>
         </b-collapse>
       </b-card>
-      
       <b-card no-body class="mb-1">
         <b-card-header header-tag="header" class="p-1" role="tab">
           <b-button block href="#" v-b-toggle.accordion-3 variant="info">Waypoints</b-button>
@@ -59,6 +58,12 @@
                         <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a> /
                         <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
                       </td>
+                    </tr>
+                    <tr>
+                      <td>Finish</td>
+                      <td>{{ course.distance | formatMilesKM(distUnits) }}</td>
+                      <td>{{ course.elevation | formatFeetMeters(elevUnits) }}</td>
+                      <td>&nbsp;</td>
                     </tr>
                   </tbody>
                 </table>
@@ -114,25 +119,21 @@ export default {
     }
   },
   filters: {
-    formatMilesKM (val,units) {
+    formatMilesKM (val, units) {
       var v = Number(val)
-      if (units == 'mi') { v = v * 0.621371 }
+      if (units === 'mi') { v = v * 0.621371 }
       return v.toFixed(2)
     },
-    formatFeetMeters (val,units) {
+    formatFeetMeters (val, units) {
       var v = Number(val)
-      if (units == 'ft') { v = v * 3.28084 }
+      if (units === 'ft') { v = v * 3.28084 }
       return v.toFixed(0)
-    },
-    unitFeetMeters (units){
-      if(units == 'english') { return 'ft' }
-      else { return 'm' }
     }
   },
   async created () {
     this.loading = true
     this.course = await api.getCourse(this.$route.query.course)
-    this.waypoints = await api.getWaypoints(this.$route.query.course)
+    await this.refreshWaypoints()
     this.splits = utilities.calcSplits(this.course._gpx.points, this.distUnits)
     console.log(this.splits)
     console.log(this.course)
@@ -140,7 +141,7 @@ export default {
   },
   methods: {
     async toggleUnits () {
-      if (this.unitSystem == 'metric') {
+      if (this.unitSystem === 'metric') {
         this.elevUnits = 'ft'
         this.distUnits = 'mi'
         this.unitSystem = 'english'
@@ -160,10 +161,14 @@ export default {
       this.editing = false
     },
     async saveWaypoint () {
+      if (this.unitSystem === 'english') {
+        this.waypoint.location = this.waypoint.location / 0.621371
+      }
       if (this.waypoint._id) {
         await api.updateWaypoint(this.waypoint._id, this.waypoint)
       } else {
         this.waypoint._course = this.course._id
+        console.log(this.waypoint)
         await api.createWaypoint(this.waypoint)
       }
       this.waypoint = {} // reset form
@@ -171,9 +176,11 @@ export default {
       this.editing = false
     },
     async refreshWaypoints () {
-      this.loading = true
       this.waypoints = await api.getWaypoints(this.$route.query.course)
-      this.loading = false
+      if (!this.waypoints.length) {
+        await api.createWaypoint({name: 'Start', location: 0, _course: this.course._id})
+        await this.refreshWaypoints()
+      }
     },
     async deleteWaypoint (id) {
       if (confirm('Are you sure you want to delete this waypoint?')) {
@@ -182,14 +189,19 @@ export default {
           this.waypoint = {}
           this.editing = false
         }
+        this.loading = true
         await api.deleteWaypoint(id)
         await this.refreshWaypoints()
+        this.loading = false
       }
     },
     async populateWaypointToEdit (waypoint) {
       this.waypoint = Object.assign({}, waypoint)
+      if (this.unitSystem === 'english') {
+        this.waypoint.location = (this.waypoint.location * 0.621371).toFixed(3)
+      }
       this.editing = true
-    },
+    }
   }
 }
 </script>

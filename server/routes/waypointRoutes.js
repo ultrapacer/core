@@ -5,8 +5,8 @@ var Waypoint = require('../models/Waypoint')
 
 // GET LIST
 waypointRoutes.route('/list/:course_id').get(function (req, res) {
-  Waypoint.find({ _course: req.params.course_id }, function (err, waypoints){
-      res.json(waypoints)
+  Waypoint.find({ _course: req.params.course_id }).sort('location').exec(function(err, waypoints) {
+    res.json(waypoints)
   });
 });
 
@@ -51,8 +51,5 @@ waypointRoutes.route('/:id').delete(function (req, res) {
         else res.json('Successfully removed');
     });
 });
-
-
-
 
 module.exports = waypointRoutes;
