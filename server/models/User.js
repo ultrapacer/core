@@ -5,9 +5,13 @@ var UserSchema = new Schema({
   auth0UserID: {
     type: String
   },
-  unitSystem: {
+  distUnits: {
     type: String,
-    default: 'english'
+    default: 'mi'
+  },
+  elevUnits: {
+    type: String,
+    default: 'ft'
   }
 },{
     collection: 'users'
