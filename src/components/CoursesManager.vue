@@ -68,7 +68,8 @@ export default {
       editing: false,
       courses: [],
       model: {},
-      file: null
+      file: null,
+      user: {}
     }
   },
   filters: {
@@ -84,6 +85,7 @@ export default {
   async created () {
     this.loading = true
     this.courses = await api.getCourses()
+    this.user = await api.getUser()
     this.loading = false
   },
   methods: {

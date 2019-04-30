@@ -14,9 +14,9 @@
                 <table class="table table-striped">
                   <thead>
                     <tr>
-                      <th>Split [{{ distUnits }}]</th>
-                      <th>Gain [{{ elevUnits }}]</th>
-                      <th>Loss [{{ elevUnits }}]</th>
+                      <th>Split [{{ user.distUnits }}]</th>
+                      <th>Gain [{{ user.elevUnits }}]</th>
+                      <th>Loss [{{ user.elevUnits }}]</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -44,16 +44,16 @@
                   <thead>
                     <tr>
                       <th>Name</th>
-                      <th>Location [{{ distUnits }}]</th>
-                      <th>Elevation [{{ elevUnits }}]</th>
+                      <th>Location [{{ user.distUnits }}]</th>
+                      <th>Elevation [{{ user.elevUnits }}]</th>
                       <th>&nbsp;</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="waypoint in waypoints" :key="waypoint._id">
                       <td>{{ waypoint.name }}</td>
-                      <td>{{ waypoint.location | formatMilesKM(distUnits) }}</td>
-                      <td>{{ waypoint.elevation | formatFeetMeters(elevUnits) }}</td>
+                      <td>{{ waypoint.location | formatMilesKM(user.distUnits) }}</td>
+                      <td>{{ waypoint.elevation | formatFeetMeters(user.elevUnits) }}</td>
                         <td class="text-right">
                         <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a> /
                         <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
@@ -61,8 +61,8 @@
                     </tr>
                     <tr>
                       <td>Finish</td>
-                      <td>{{ course.distance | formatMilesKM(distUnits) }}</td>
-                      <td>{{ course.elevation | formatFeetMeters(elevUnits) }}</td>
+                      <td>{{ course.distance | formatMilesKM(user.distUnits) }}</td>
+                      <td>{{ course.elevation | formatFeetMeters(user.elevUnits) }}</td>
                       <td>&nbsp;</td>
                     </tr>
                   </tbody>
@@ -77,7 +77,7 @@
                     <b-form-group label="Name">
                       <b-form-input type="text" v-model="waypoint.name"></b-form-input>
                     </b-form-group>
-                    <b-form-group label="Location [distUnits]">
+                    <b-form-group label="Location [user.distUnits]">
                       <b-form-input type="number" v-model="waypoint.location"></b-form-input>
                     </b-form-group>
                     <b-form-group label="Description">
@@ -111,11 +111,10 @@ export default {
       course: {},
       splits: [],
       unitSystem: 'english',
-      distUnits: 'mi',
-      elevUnits: 'ft',
       waypoint: {},
       waypoints: [],
-      editing: false
+      editing: false,
+      user: {}
     }
   },
   filters: {
@@ -133,24 +132,20 @@ export default {
   async created () {
     this.loading = true
     this.course = await api.getCourse(this.$route.query.course)
+    this.user = await api.getUser()
     await this.refreshWaypoints()
-    this.splits = utilities.calcSplits(this.course._gpx.points, this.distUnits)
+    this.splits = utilities.calcSplits(this.course._gpx.points, this.user.distUnits)
     console.log(this.splits)
-    console.log(this.course)
     this.loading = false
   },
   methods: {
     async toggleUnits () {
       if (this.unitSystem === 'metric') {
-        this.elevUnits = 'ft'
-        this.distUnits = 'mi'
         this.unitSystem = 'english'
       } else {
-        this.elevUnits = 'm'
-        this.distUnits = 'km'
         this.unitSystem = 'metric'
       }
-      this.splits = utilities.calcSplits(this.course._gpx.points, this.distUnits)
+      this.splits = utilities.calcSplits(this.course._gpx.points, this.user.distUnits)
     },
     async newWaypoint () {
       this.waypoint = {}
@@ -168,7 +163,6 @@ export default {
         await api.updateWaypoint(this.waypoint._id, this.waypoint)
       } else {
         this.waypoint._course = this.course._id
-        console.log(this.waypoint)
         await api.createWaypoint(this.waypoint)
       }
       this.waypoint = {} // reset form

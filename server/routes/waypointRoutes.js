@@ -4,8 +4,8 @@ var waypointRoutes = express.Router()
 var Waypoint = require('../models/Waypoint')
 
 // GET LIST
-waypointRoutes.route('/list/:course_id').get(function (req, res) {
-  Waypoint.find({ _course: req.params.course_id }).sort('location').exec(function(err, waypoints) {
+waypointRoutes.route('/list/:courseID').get(function (req, res) {
+  Waypoint.find({ _course: req.params.courseID }).sort('location').exec(function(err, waypoints) {
     res.json(waypoints)
   });
 });

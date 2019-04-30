@@ -20,16 +20,20 @@
 </template>
 
 <script>
+import api from '@/api'
 export default {
   name: 'app',
   data () {
     return {
-      isAuthenticated: false
+      isAuthenticated: false,
+      user: {}
     }
   },
   async created () {
     try {
       await this.$auth.renewTokens()
+      this.user = await api.getUser()
+      console.log(this.user)
     } catch (e) {
       console.log(e)
     }

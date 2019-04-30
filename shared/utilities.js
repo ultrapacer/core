@@ -64,8 +64,6 @@ function cleanPoints(points){
       lon: points[i].lon
     })
 	}
-  console.log(points.length)
-  console.log(points2.length)
   return points2
 }
 

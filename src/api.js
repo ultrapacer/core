@@ -20,6 +20,9 @@ export default {
       return req.data
     })
   },
+  getUser () {
+    return this.execute('get', `/api/user`)
+  },
   getPosts () {
     return this.execute('get', '/api/posts')
   },
