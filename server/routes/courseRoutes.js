@@ -48,7 +48,8 @@ courseRoutes.route('/upload').post(upload.single('file'), function (req, res) {
 
 // Defined get data(index or listing) route
 courseRoutes.route('/').get(function (req, res) {
-  Course.find(function (err, courses){
+  var query = { _user: req.auth.user_id }
+  Course.find(query).sort('name').exec(function(err, courses) {
     if(err){
       console.log(err);
     }
