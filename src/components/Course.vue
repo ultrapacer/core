@@ -77,7 +77,7 @@
                     <b-form-group label="Name">
                       <b-form-input type="text" v-model="waypoint.name"></b-form-input>
                     </b-form-group>
-                    <b-form-group label="Location [user.distUnits]">
+                    <b-form-group v-bind:label="'Location [' + user.distUnits + ']'">
                       <b-form-input type="number" v-model="waypoint.location"></b-form-input>
                     </b-form-group>
                     <b-form-group label="Description">
