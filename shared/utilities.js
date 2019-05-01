@@ -31,7 +31,6 @@ function calcSplits(points, units) {
   var igain = 0
   var iloss = 0
   var delta = 0
-  console.log(points)
   for (var i=0, il= points.length -1; i<il; i++) {
     distance += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon )) * dist_scale;
     delta = points[i+1].ele - points[i].ele
@@ -55,7 +54,7 @@ function calcSplits(points, units) {
   return splits
 }
 
-function cleanPoints(points){
+function cleanPoints(points) {
   var points2 = []
   for (var i=0, il= points.length; i<il; i++) {
     points2.push({
@@ -65,6 +64,23 @@ function cleanPoints(points){
     })
 	}
   return points2
+}
+
+function elevationProfile(points, units) {
+  var dist_scale = 1
+  if (units == 'mi') { dist_scale = 0.621371 }
+  var distance = 0
+  var data = []
+  for (var i=0, il= points.length; i<il; i++) {
+    data.push({
+      x: distance,
+      y: points[i].ele
+    })
+    if (i<points.length-1) {
+      distance += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon )) * dist_scale
+    }
+	}
+  return data
 }
 
 var Waypoint = {
@@ -79,5 +95,5 @@ module.exports = {
   calcStats: calcStats,
   calcSplits: calcSplits,
   cleanPoints: cleanPoints,
-  Waypoint: Waypoint
+  elevationProfile: elevationProfile
 }

@@ -15,7 +15,7 @@
       </b-collapse>
     </b-navbar>
     <!-- routes will be rendered here -->
-    <router-view />
+    <router-view :user="user" />
   </div>
 </template>
 
@@ -33,7 +33,6 @@ export default {
     try {
       await this.$auth.renewTokens()
       this.user = await api.getUser()
-      console.log(this.user)
     } catch (e) {
       console.log(e)
     }

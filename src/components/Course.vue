@@ -5,6 +5,12 @@
     <div role="tablist">
       <b-card no-body class="mb-1">
         <b-card-header header-tag="header" class="p-1" role="tab">
+          <b-button block href="#" v-b-toggle.accordion-0 variant="info">Chart</b-button>
+        </b-card-header>
+        <b-collapse id="accordion-0" visible accordion="my-accordion" role="tabpanel">
+          <CourseChart :points="points" :user="user" />
+        </b-collapse>
+        <b-card-header header-tag="header" class="p-1" role="tab">
           <b-button block href="#" v-b-toggle.accordion-1 variant="info">Splits</b-button>
         </b-card-header>
         <b-collapse id="accordion-1" accordion="my-accordion" role="tabpanel">
@@ -22,8 +28,8 @@
                   <tbody>
                     <tr v-for="(split, index) in splits" :key="index">
                       <td>{{ split.split }}</td>
-                      <td>{{ split.gain | formatFeetMeters(elevUnits) }}</td>
-                      <td>{{ split.loss | formatFeetMeters(elevUnits) }}</td>
+                      <td>{{ split.gain | formatFeetMeters(user.elevUnits) }}</td>
+                      <td>{{ split.loss | formatFeetMeters(user.elevUnits) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -102,9 +108,14 @@
 </template>
 
 <script>
+import CourseChart from './CourseChart'
 import api from '@/api'
 import utilities from '../../shared/utilities'
 export default {
+  props: ['user'],
+  components: {
+    CourseChart
+  },
   data () {
     return {
       loading: false,
@@ -114,7 +125,7 @@ export default {
       waypoint: {},
       waypoints: [],
       editing: false,
-      user: {}
+      points: []
     }
   },
   filters: {
@@ -132,10 +143,9 @@ export default {
   async created () {
     this.loading = true
     this.course = await api.getCourse(this.$route.query.course)
-    this.user = await api.getUser()
+    this.points = this.course._gpx.points
     await this.refreshWaypoints()
-    this.splits = utilities.calcSplits(this.course._gpx.points, this.user.distUnits)
-    console.log(this.splits)
+    this.splits = utilities.calcSplits(this.points, this.user.distUnits)
     this.loading = false
   },
   methods: {
@@ -145,7 +155,7 @@ export default {
       } else {
         this.unitSystem = 'metric'
       }
-      this.splits = utilities.calcSplits(this.course._gpx.points, this.user.distUnits)
+      this.splits = utilities.calcSplits(this.points, this.user.distUnits)
     },
     async newWaypoint () {
       this.waypoint = {}
