@@ -37,6 +37,9 @@ export default {
           point:{
             radius: 0
           }
+        },
+        tooltips: {
+          enabled: false
         }
       }
       this.renderChart(data, options)

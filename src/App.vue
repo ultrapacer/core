@@ -32,10 +32,16 @@ export default {
   async created () {
     try {
       await this.$auth.renewTokens()
-      this.user = await api.getUser()
     } catch (e) {
       console.log(e)
     }
+  },
+  watch: {
+    isAuthenticated: function (val) {
+      if (val) {
+        this.updateUser()
+      }
+    },
   },
   methods: {
     login () {
@@ -47,6 +53,9 @@ export default {
     handleLoginEvent (data) {
       this.isAuthenticated = data.loggedIn
       this.profile = data.profile
+    },
+    async updateUser() {
+      this.user = await api.getUser()
     }
   }
 }

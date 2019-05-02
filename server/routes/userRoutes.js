@@ -1,23 +1,21 @@
 // userRoutes.js
 var express = require('express')
 var userRoutes = express.Router()
-
-// Require Course model in our routes module
 var User = require('../models/User')
 
 // Defined get data(index or listing) route
 userRoutes.route('/').get(function (req, res) {
   console.log(req.user.sub)
-  var query = { _id: req.user.sub.substring(req.user.sub.indexOf('|')+1,req.user.sub.length) }
+  var query = { auth0ID: req.user.sub }
   User.findOne(query).exec(function(err, user) {
     if(err){
-      console.log(err);
+      console.log(err)
     }
     else {
       console.log(user)
       if (user == null) {
         console.log('creating new')
-        user = new User({_id: req.user.sub.substring(req.user.sub.indexOf('|')+1,req.user.sub.length)})
+        user = new User({auth0ID: req.user.sub})
         user.save(function(err,record){
           res.json(record)
         })
@@ -25,7 +23,7 @@ userRoutes.route('/').get(function (req, res) {
         res.json(user)
       }
     }
-  });
-});
+  })
+})
 
-module.exports = userRoutes;
+module.exports = userRoutes
