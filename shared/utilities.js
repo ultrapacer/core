@@ -7,7 +7,7 @@ function calcStats(points) {
   var delta = 0
   for (var i=0, il= points.length -1; i<il; i++) {
     distance += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon ));
-    delta = points[i+1].ele - points[i].ele
+    delta = points[i+1].alt - points[i].alt
     if (delta < 0) {
       loss += delta
     }
@@ -33,7 +33,7 @@ function calcSplits(points, units) {
   var delta = 0
   for (var i=0, il= points.length -1; i<il; i++) {
     distance += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon )) * dist_scale;
-    delta = points[i+1].ele - points[i].ele
+    delta = points[i+1].alt - points[i].alt
     if (delta < 0) {
       iloss += delta 
     }
@@ -58,7 +58,7 @@ function cleanPoints(points) {
   var points2 = []
   for (var i=0, il= points.length; i<il; i++) {
     points2.push({
-      ele: points[i].elevation,
+      alt: points[i].elevation,
       lat: points[i].lat,
       lon: points[i].lon
     })
@@ -66,29 +66,23 @@ function cleanPoints(points) {
   return points2
 }
 
-function elevationProfile(points, units) {
+function elevationProfile(points, distUnit, altUnit) {
   var dist_scale = 1
-  if (units == 'mi') { dist_scale = 0.621371 }
+  var alt_scale = 1
+  if (distUunit === 'mi') { dist_scale = 0.621371 }
+  if (altUunit === 'ft') { alt_scale = 3.28084 }
   var distance = 0
   var data = []
   for (var i=0, il= points.length; i<il; i++) {
     data.push({
-      x: distance,
-      y: points[i].ele
+      x: distance * dist_scale
+      y: points[i].alt * alt_scale
     })
     if (i<points.length-1) {
-      distance += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon )) * dist_scale
+      distance += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon ))
     }
-	}
+  }
   return data
-}
-
-var Waypoint = {
-  id: null,
-  ele: null,
-  loc: null,
-  name: null,
-  description: null
 }
 
 module.exports = {
