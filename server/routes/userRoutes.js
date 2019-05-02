@@ -14,7 +14,7 @@ userRoutes.route('/').get(function (req, res) {
     else {
       console.log(user)
       if (user == null) {
-        console.log('creating new')
+        console.log('CREATING NEW USER')
         user = new User({auth0ID: req.user.sub})
         user.save(function(err,record){
           res.json(record)

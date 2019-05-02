@@ -19,9 +19,9 @@ var WaypointSchema = new Schema({
   elevation: {
     type: Number
   },
-  aidStation: {
-    type: Boolean,
-    default: true
+  type: {
+    type: String,
+    default: 'aid'
   },
   terrainIndex: {
     type: Number,

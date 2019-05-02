@@ -60,7 +60,7 @@ courseRoutes.route('/upload').post(upload.single('file'), function (req, res) {
 // Defined get data(index or listing) route
 courseRoutes.route('/').get(function (req, res) {
   var query = { auth0ID: req.user.sub }
-  User.findOne(query).populate('courses').exec(function(err, user) {
+  User.findOne(query).populate({ path: 'courses', options: { sort: { name: 1}, collation: { locale: "en" }}}).exec(function(err, user) {
     if(err){
       console.log(err)
     }
@@ -122,7 +122,7 @@ courseRoutes.route('/:id').delete(function (req, res) {
 // GET COURSE
 courseRoutes.route('/:id').get(function (req, res) {
   var id = req.params.id;
-  Course.findById(id).populate(['_gpx','waypoints']).exec(function (err, course){
+  Course.findById(id).populate(['_gpx',{ path: 'waypoints', options: { sort: { location: 1}}}]).exec(function (err, course){
       res.json(course);
   })
 })

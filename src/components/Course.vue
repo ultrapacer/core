@@ -58,15 +58,11 @@
                           <td>{{ waypoint.location | formatMilesKM(user.distUnits) }}</td>
                           <td>{{ waypoint.elevation | formatFeetMeters(user.elevUnits) }}</td>
                             <td class="text-right">
-                            <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a> /
-                            <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
+                            <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a>
+                            <span v-show="waypoint.type != 'start' && waypoint.type != 'finish'">/
+                              <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
+                            </span>
                           </td>
-                        </tr>
-                        <tr>
-                          <td>Finish</td>
-                          <td>{{ course.distance | formatMilesKM(user.distUnits) }}</td>
-                          <td>{{ course.elevation | formatFeetMeters(user.elevUnits) }}</td>
-                          <td>&nbsp;</td>
                         </tr>
                       </tbody>
                     </table>
@@ -91,6 +87,9 @@
             </b-form-group>
             <b-form-group v-bind:label="'Location [' + user.distUnits + ']'">
               <b-form-input type="number" v-model="waypoint.location"></b-form-input>
+            </b-form-group>
+            <b-form-group label="Type">
+              <b-form-select type="number" v-model="waypoint.type" :options="waypointTypes[waypoint.type]"></b-form-select>
             </b-form-group>
             <b-form-group label="Description">
               <b-form-textarea rows="4" v-model="waypoint.description"></b-form-textarea>
@@ -124,7 +123,23 @@ export default {
       waypoint: {},
       waypoints: [],
       editing: false,
-      points: []
+      points: [],
+      waypointTypes: {
+        start: [
+          { value: 'start', text: 'Start' },
+        ],
+        finish:  [
+          { value: 'finish', text: 'Finish' },
+        ],
+        aid: [
+          { value: 'aid', text: 'Aid Station' },
+          { value: 'landmark', text: 'Landmark' }
+        ],
+        landmark: [
+          { value: 'aid', text: 'Aid Station' },
+          { value: 'landmark', text: 'Landmark' }
+        ]
+      }
     }
   },
   filters: {
@@ -207,8 +222,16 @@ export default {
       this.editing = true
     },
     async checkWaypoints () {
-      if (!this.waypoints.length) {
-        await api.createWaypoint({name: 'Start', location: 0, _course: this.course._id})
+      var update = false
+      if (!this.waypoints.find( waypoint => waypoint.type === 'start' )) {
+        await api.createWaypoint({name: 'Start', type: 'start', location: 0, _course: this.course._id})
+        update = true
+      }
+      if (!this.waypoints.find( waypoint => waypoint.type === 'finish' )) {
+        await api.createWaypoint({name: 'Finish', type: 'finish', location: this.course.distance, _course: this.course._id})
+        update = true
+      }
+      if (update) {
         await this.refreshWaypoints()
       }
     }

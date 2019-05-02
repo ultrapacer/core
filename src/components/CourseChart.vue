@@ -20,7 +20,6 @@ export default {
   },
   methods: {
     renderLineChart: function () {
-      console.log(this.points)
       var data = {
         datasets: [{
           data: utilities.elevationProfile(this.chartData, this.user.distUnits, this.user.elevUnits)
