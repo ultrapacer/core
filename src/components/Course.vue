@@ -86,7 +86,7 @@
               <b-form-input type="text" v-model="waypoint.name"></b-form-input>
             </b-form-group>
             <b-form-group v-bind:label="'Location [' + user.distUnits + ']'">
-              <b-form-input type="number" v-model="waypoint.location"></b-form-input>
+              <b-form-input type="number" step="0.001" v-model="waypoint.location" min="0" v-bind:max="course.distance"></b-form-input>
             </b-form-group>
             <b-form-group label="Type">
               <b-form-select type="number" v-model="waypoint.type" :options="waypointTypes[waypoint.type]"></b-form-select>
