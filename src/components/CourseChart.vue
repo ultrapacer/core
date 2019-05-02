@@ -34,7 +34,7 @@ export default {
           }]
         },
         elements: {
-          point:{
+          point: {
             radius: 0
           }
         },

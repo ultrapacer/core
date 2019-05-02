@@ -2,6 +2,7 @@
 var express = require('express')
 var waypointRoutes = express.Router()
 var Waypoint = require('../models/Waypoint')
+var Course = require('../models/Course')
 
 // GET LIST
 waypointRoutes.route('/list/:courseID').get(function (req, res) {
@@ -15,12 +16,14 @@ waypointRoutes.route('/').post(function (req, res) {
   var waypoint = new Waypoint(req.body)
   console.log(waypoint)
   console.log(req.body.waypoint)
-  waypoint.save().then(post => {
+  waypoint.save().then(function() {
+    Course.update(
+      { _id: waypoint._course },
+      { $push: { waypoints: waypoint } }
+    ).then(post => {
       res.json('Update complete');
+    })
   })
-  .catch(err => {
-        res.status(400).send("unable to update the database");
-  });
 });
 
 //  UPDATE

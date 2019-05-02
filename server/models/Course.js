@@ -25,7 +25,8 @@ var CourseSchema = new Schema({
   },
   loss: {
     type: Number
-  }
+  },
+  waypoints: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Waypoint' }]
 },{
     collection: 'courses'
 });

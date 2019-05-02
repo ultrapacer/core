@@ -41,7 +41,7 @@ export default {
       if (val) {
         this.updateUser()
       }
-    },
+    }
   },
   methods: {
     login () {
@@ -54,8 +54,9 @@ export default {
       this.isAuthenticated = data.loggedIn
       this.profile = data.profile
     },
-    async updateUser() {
+    async updateUser () {
       this.user = await api.getUser()
+      console.log(this.user)
     }
   }
 }

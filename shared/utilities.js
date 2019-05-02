@@ -67,16 +67,16 @@ function cleanPoints(points) {
 }
 
 function elevationProfile(points, distUnit, altUnit) {
-  var dist_scale = 1
-  var alt_scale = 1
-  if (distUunit === 'mi') { dist_scale = 0.621371 }
-  if (altUunit === 'ft') { alt_scale = 3.28084 }
+  var distScale = 1
+  var altScale = 1
+  if (distUnit === 'mi') { distScale = 0.621371 }
+  if (altUnit === 'ft') { altScale = 3.28084 }
   var distance = 0
   var data = []
   for (var i=0, il= points.length; i<il; i++) {
     data.push({
-      x: distance * dist_scale
-      y: points[i].alt * alt_scale
+      x: distance * distScale,
+      y: points[i].alt * altScale
     })
     if (i<points.length-1) {
       distance += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon ))

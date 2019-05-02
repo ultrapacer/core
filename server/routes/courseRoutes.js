@@ -119,10 +119,10 @@ courseRoutes.route('/:id').delete(function (req, res) {
   })
 })
 
-// GE COURSE
+// GET COURSE
 courseRoutes.route('/:id').get(function (req, res) {
   var id = req.params.id;
-  Course.findById(id).populate('_gpx').exec(function (err, course){
+  Course.findById(id).populate(['_gpx','waypoints']).exec(function (err, course){
       res.json(course);
   })
 })
