@@ -23,30 +23,49 @@ function calcStats(points) {
 }
 
 function calcSplits(points, units) {
+  points = addLoc(points) // remove this later !!!
   var dist_scale = 1
   if (units == 'mi') { dist_scale = 0.621371 }
+  var tot = points[points.length-1].loc * dist_scale
+  
+  // generate array of breaks in km
+  var breaks = []
+  var i = 1
+  while (i < tot) {
+    breaks.push(i)
+    i++;
+  }
+  if (tot > breaks[breaks.length-1]) {
+    breaks.push(tot)
+  }
+  
   var splits = []
   var distance = 0
   var split = 0
   var igain = 0
   var iloss = 0
   var delta = 0
-  for (var i=0, il= points.length -1; i<il; i++) {
-    distance += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon )) * dist_scale;
-    delta = points[i+1].alt - points[i].alt
+  var brk = breaks.shift()
+  for (var i = 1, il = points.length; i < il; i++) {
+    if (points[i].loc < brk || i = il -1) {
+      delta = points[i].alt - points[i-1].alt
+    else {
+      // interpolate
+      delta = (points[i].alt - points[i-1].alt) * (brk - points[i-1].loc) / (points[i].loc - points[i-1].loc)
+    }
     if (delta < 0) {
       iloss += delta 
     }
     else {
       igain += delta
     }
-    if (distance - split > 1 || i == il - 1) {
-      split += 1
+    if (points.loc >= brk) {
       splits.push({
-        split: distance.toFixed(2),
+        split: brk.toFixed(3),
         gain: igain,
         loss: iloss
       })
+      brk = breaks.shift()
       igain = 0
       iloss = 0
     }
@@ -85,7 +104,19 @@ function elevationProfile(points, distUnit, altUnit) {
   return data
 }
 
+function addLoc(points) {
+  var loc = 0
+  for (var i=0, il= points.length; i<il; i++) {
+    points[i].loc = loc
+    if (i<points.length-1) {
+      loc += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon ))
+    }
+  }
+  return points
+}
+
 module.exports = {
+  addLoc: addLoc,
   calcStats: calcStats,
   calcSplits: calcSplits,
   cleanPoints: cleanPoints,
