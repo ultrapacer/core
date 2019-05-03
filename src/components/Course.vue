@@ -12,26 +12,22 @@
             </b-card-header>
             <b-collapse id="accordion-1" accordion="my-accordion" role="tabpanel">
               <b-card-body>
-                <b-row>
-                  <b-col>
-                    <table class="table table-striped">
-                      <thead>
-                        <tr>
-                          <th>Split [{{ user.distUnits }}]</th>
-                          <th>Gain [{{ user.elevUnits }}]</th>
-                          <th>Loss [{{ user.elevUnits }}]</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="(split, index) in splits" :key="index">
-                          <td>{{ split.split }}</td>
-                          <td>{{ split.gain | formatFeetMeters(user.elevUnits) }}</td>
-                          <td>{{ split.loss | formatFeetMeters(user.elevUnits) }}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </b-col>
-                </b-row>
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Split [{{ user.distUnits }}]</th>
+                      <th>Gain [{{ user.elevUnits }}]</th>
+                      <th>Loss [{{ user.elevUnits }}]</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(split, index) in splits" :key="index">
+                      <td>{{ split.dist | formatMilesKM(user.distUnits) }}</td>
+                      <td>{{ split.gain | formatFeetMeters(user.elevUnits) }}</td>
+                      <td>{{ split.loss | formatFeetMeters(user.elevUnits) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </b-card-body>
             </b-collapse>
           </b-card>
@@ -41,36 +37,32 @@
             </b-card-header>
             <b-collapse id="accordion-3" accordion="my-accordion" role="tabpanel">
               <b-card-body>
-                <b-row>
-                  <b-col>
-                    <table class="table table-striped">
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>Location [{{ user.distUnits }}]</th>
-                          <th>Elevation [{{ user.elevUnits }}]</th>
-                          <th>&nbsp;</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="waypoint in waypoints" :key="waypoint._id">
-                          <td>{{ waypoint.name }}</td>
-                          <td>{{ waypoint.location | formatMilesKM(user.distUnits) }}</td>
-                          <td>{{ waypoint.elevation | formatFeetMeters(user.elevUnits) }}</td>
-                            <td class="text-right">
-                            <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a>
-                            <span v-show="waypoint.type != 'start' && waypoint.type != 'finish'">/
-                              <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
-                            </span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <div v-show="!editing">
-                      <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
-                    </div>
-                  </b-col>
-                </b-row>
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Location [{{ user.distUnits }}]</th>
+                      <th>Elevation [{{ user.elevUnits }}]</th>
+                      <th>&nbsp;</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="waypoint in waypoints" :key="waypoint._id">
+                      <td>{{ waypoint.name }}</td>
+                      <td>{{ waypoint.location | formatMilesKM(user.distUnits) }}</td>
+                      <td>{{ waypoint.elevation | formatFeetMeters(user.elevUnits) }}</td>
+                        <td class="text-right">
+                        <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a>
+                        <span v-show="waypoint.type != 'start' && waypoint.type != 'finish'">/
+                          <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div v-show="!editing">
+                  <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
+                </div>
               </b-card-body>
             </b-collapse>
           </b-card>

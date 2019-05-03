@@ -23,7 +23,6 @@ function calcStats(points) {
 }
 
 function calcSplits(points, units) {
-  points = addLoc(points) // remove this later !!!
   var dist_scale = 1
   if (units == 'mi') { dist_scale = 0.621371 }
   var tot = points[points.length-1].loc * dist_scale
@@ -32,36 +31,36 @@ function calcSplits(points, units) {
   var breaks = []
   var i = 1
   while (i < tot) {
-    breaks.push(i)
-    i++;
+    breaks.push(i / dist_scale)
+    i++
   }
-  if (tot > breaks[breaks.length-1]) {
-    breaks.push(tot)
+  if (tot / dist_scale > breaks[breaks.length-1]) {
+    breaks.push(tot / dist_scale)
   }
-  
-  var splits = []
-  var distance = 0
-  var split = 0
+  return calcSegments(points,breaks)
+}
+
+function calcSegments(points,breaks) {
+  var segments = []
   var igain = 0
   var iloss = 0
   var delta = 0
   var brk = breaks.shift()
   for (var i = 1, il = points.length; i < il; i++) {
-    if (points[i].loc < brk || i = il -1) {
+    if (brk > points[i].loc || i == il - 1) {
       delta = points[i].alt - points[i-1].alt
-    else {
+    } else {
       // interpolate
       delta = (points[i].alt - points[i-1].alt) * (brk - points[i-1].loc) / (points[i].loc - points[i-1].loc)
     }
     if (delta < 0) {
       iloss += delta 
-    }
-    else {
+    } else {
       igain += delta
     }
-    if (points.loc >= brk) {
-      splits.push({
-        split: brk.toFixed(3),
+    if (points[i].loc >= brk) {
+      segments.push({
+        dist: brk,
         gain: igain,
         loss: iloss
       })
@@ -70,7 +69,7 @@ function calcSplits(points, units) {
       iloss = 0
     }
   }
-  return splits
+  return segments
 }
 
 function cleanPoints(points) {
@@ -106,6 +105,7 @@ function elevationProfile(points, distUnit, altUnit) {
 
 function addLoc(points) {
   var loc = 0
+  var distance = 0
   for (var i=0, il= points.length; i<il; i++) {
     points[i].loc = loc
     if (i<points.length-1) {
@@ -120,5 +120,6 @@ module.exports = {
   calcStats: calcStats,
   calcSplits: calcSplits,
   cleanPoints: cleanPoints,
-  elevationProfile: elevationProfile
+  elevationProfile: elevationProfile,
+  calcSegments: calcSegments
 }
