@@ -157,21 +157,13 @@ export default {
   async created () {
     this.loading = true
     this.course = await api.getCourse(this.$route.query.course)
-    this.points = this.course._gpx.points
+    this.points = utilities.addLoc(this.course._gpx.points)
     this.waypoints = this.course.waypoints
     await this.checkWaypoints()
     this.splits = utilities.calcSplits(this.points, this.user.distUnits)
     this.loading = false
   },
   methods: {
-    async toggleUnits () {
-      if (this.unitSystem === 'metric') {
-        this.unitSystem = 'english'
-      } else {
-        this.unitSystem = 'metric'
-      }
-      this.splits = utilities.calcSplits(this.points, this.user.distUnits)
-    },
     async newWaypoint () {
       this.waypoint = {}
       this.editing = true
