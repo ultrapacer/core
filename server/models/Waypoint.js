@@ -26,7 +26,10 @@ var WaypointSchema = new Schema({
   terrainIndex: {
     type: Number,
     default: 3
-  }
+  },
+  segmentNotes: {
+    type: String
+  },
 },{
     collection: 'waypoints'
 });

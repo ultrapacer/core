@@ -67,7 +67,7 @@
                     </tr>
                   </tbody>
                 </table>
-                <div v-show="!editing">
+                <div v-show="!editingWaypoint">
                   <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
                 </div>
               </b-card-body>
@@ -82,20 +82,26 @@
                 <table class="table table-striped">
                   <thead>
                     <tr>
-                      <th>Begin</th>
+                      <th>Start</th>
                       <th>End</th>
                       <th>Distance</th>
                       <th>Gain [{{ user.elevUnits }}]</th>
                       <th>Loss [{{ user.elevUnits }}]</th>
+                      <th>Terrain</th>
+                      <th>&nbsp;</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(segment, index) in segments" :key="index">
-                      <td>{{ segment.begin.name }}</td>
+                    <tr v-for="segment in segments" :key="segment.start._id">
+                      <td>{{ segment.start.name }}</td>
                       <td>{{ segment.end.name }}</td>
                       <td>{{ segment.len | formatMilesKM(user.distUnits) }}</td>
                       <td>{{ segment.gain | formatFeetMeters(user.elevUnits) }}</td>
                       <td>{{ segment.loss | formatFeetMeters(user.elevUnits) }}</td>
+                      <td>{{ segment.start.terrainIndex }}</td>
+                      <td class="text-right">
+                        <a href="#" @click.prevent="populateSegmentToEdit(segment.start)">Edit</a>
+                      </td>
                     </tr>
                   </tbody>
                   <thead>
@@ -105,6 +111,8 @@
                       <th>{{ course.distance | formatMilesKM(user.distUnits) }}</th>
                       <th>{{ course.gain | formatFeetMeters(user.elevUnits) }}</th>
                       <th>{{ course.loss | formatFeetMeters(user.elevUnits) }}</th>
+                      <th>&nbsp;</th>
+                      <th>&nbsp;</th>
                     </tr>
                   </thead>
                 </table>
@@ -114,10 +122,10 @@
         </div>
       </b-col>
       <b-col lg="5">
-        <b-card v-show="!editing" >
+        <b-card v-show="showMap" >
           <CourseChart :points="points" :user="user" />
         </b-card>
-        <b-card v-show="editing" :title="(waypoint._id ? 'Edit Waypoint' : 'New Waypoint')">
+        <b-card v-show="editingWaypoint" :title="(waypoint._id ? 'Edit Waypoint' : 'New Waypoint')">
           <form @submit.prevent="saveWaypoint">
             <b-form-group label="Name">
               <b-form-input type="text" v-model="waypoint.name"></b-form-input>
@@ -134,6 +142,20 @@
             <div>
               <b-btn type="submit" variant="success">Save Waypoint</b-btn>
               <b-btn type="cancel" @click.prevent="cancelWaypointEdit()">Cancel</b-btn>
+            </div>
+          </form>
+        </b-card>
+        <b-card v-show="editingSegment" :title="'Segment starting at ' + waypoint.name">
+          <form @submit.prevent="saveSegment">
+            <b-form-group label="Terrain">
+              <b-form-input type="number" v-model="waypoint.terrainIndex" min="0" step="0"></b-form-input>
+            </b-form-group>
+            <b-form-group label="Notes">
+              <b-form-textarea rows="4" v-model="waypoint.segmentNotes"></b-form-textarea>
+            </b-form-group>
+            <div>
+              <b-btn type="submit" variant="success">Save Segment</b-btn>
+              <b-btn type="cancel" @click.prevent="cancelSegmentEdit()">Cancel</b-btn>
             </div>
           </form>
         </b-card>
@@ -159,7 +181,8 @@ export default {
       unitSystem: 'english',
       waypoint: {},
       waypoints: [],
-      editing: false,
+      editingWaypoint: false,
+      editingSegment: false,
       points: []
     }
   },
@@ -167,7 +190,6 @@ export default {
     segments: function () {
       if (!this.points.length) { return [] }
       if (!this.waypoints.length) { return [] }
-      console.log(':::::: segments computed ::::::::::')
       var arr = []
       var breaks = []
       for (var i = 0, il = this.waypoints.length; i < il; i++) {
@@ -176,8 +198,8 @@ export default {
       var splits = utilities.calcSegments(this.points, breaks)
       for (var j = 0, jl = splits.length; j < jl; j++) {
         arr.push({
-          begin: splits[j].start,
-          end: splits[j].end,
+          start: this.waypoints[j],
+          end: this.waypoints[j + 1],
           len: splits[j].len,
           gain: splits[j].gain,
           loss: splits[j].loss
@@ -196,6 +218,21 @@ export default {
           { value: 'landmark', text: 'Landmark' }
         ]
       }
+    },
+    showMap: function () {
+      if (!this.editingSegment && !this.editingWaypoint) {
+        return true
+      } else {
+        return false
+      }
+    }
+  },
+  watch: {
+    editingSegment: function (val) {
+      if (val) { this.editingWaypoint = false }
+    },
+    editingWaypoint: function (val) {
+      if (val) { this.editingSegment = false }
     }
   },
   filters: {
@@ -222,11 +259,15 @@ export default {
   methods: {
     async newWaypoint () {
       this.waypoint = {}
-      this.editing = true
+      this.editingWaypoint = true
     },
     async cancelWaypointEdit () {
       this.waypoint = {}
-      this.editing = false
+      this.editingWaypoint = false
+    },
+    async cancelSegmentEdit () {
+      this.waypoint = {}
+      this.editingSegment = false
     },
     async saveWaypoint () {
       this.waypoint.elevation = utilities.getElevation(this.points, this.waypoint.location)
@@ -241,7 +282,13 @@ export default {
       }
       this.waypoint = {} // reset form
       await this.refreshWaypoints()
-      this.editing = false
+      this.editingWaypoint = false
+    },
+    async saveSegment () {
+      await api.updateSegment(this.waypoint._id, this.waypoint)
+      this.waypoint = {} // reset form
+      await this.refreshWaypoints()
+      this.editingSegment = false
     },
     async refreshWaypoints () {
       this.waypoints = await api.getWaypoints(this.$route.query.course)
@@ -257,10 +304,10 @@ export default {
     },
     async deleteWaypoint (id) {
       if (confirm('Are you sure you want to delete this waypoint?')) {
-        // if we are editing a course we deleted, remove it from the form
+        // if we are editing a waypoint we deleted, remove it from the form
         if (this.waypoint._id === id) {
           this.waypoint = {}
-          this.editing = false
+          this.editingWaypoint = false
         }
         this.loading = true
         await api.deleteWaypoint(id)
@@ -273,7 +320,11 @@ export default {
       if (this.unitSystem === 'english') {
         this.waypoint.location = (this.waypoint.location * 0.621371).toFixed(3)
       }
-      this.editing = true
+      this.editingWaypoint = true
+    },
+    async populateSegmentToEdit (waypoint) {
+      this.waypoint = Object.assign({}, waypoint)
+      this.editingSegment = true
     },
     async checkWaypoints () {
       var update = false

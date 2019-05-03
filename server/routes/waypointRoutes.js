@@ -42,10 +42,28 @@ waypointRoutes.route('/:id').put(function (req, res) {
       })
       .catch(err => {
             res.status(400).send("unable to update the database");
-      });
+      })
     }
-  });
-});
+  })
+})
+
+//  UPDATE
+waypointRoutes.route('/:id/segment').put(function (req, res) {
+  Waypoint.findById(req.params.id, function(err, waypoint) {
+    if (!waypoint)
+      return next(new Error('Could not load Document'));
+    else {
+      waypoint.terrainIndex = req.body.terrainIndex
+      waypoint.segmentNotes = req.body.segmentNotes
+      waypoint.save().then(post => {
+        res.json('Update complete')
+      })
+      .catch(err => {
+        res.status(400).send("unable to update the database")
+      })
+    }
+  })
+})
 
 // DELETE
 waypointRoutes.route('/:id').delete(function (req, res) {
