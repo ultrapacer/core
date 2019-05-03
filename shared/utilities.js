@@ -45,13 +45,16 @@ function calcSegments(points,breaks) {
   var igain = 0
   var iloss = 0
   var delta = 0
+  var idist = 0
   var brk = breaks.shift()
   for (var i = 1, il = points.length; i < il; i++) {
     if (brk > points[i].loc || i == il - 1) {
       delta = points[i].alt - points[i-1].alt
+      idist += points[i].loc - points[i-1].loc
     } else {
       // interpolate
       delta = (points[i].alt - points[i-1].alt) * (brk - points[i-1].loc) / (points[i].loc - points[i-1].loc)
+      idist += brk - points[i-1].loc
     }
     if (delta < 0) {
       iloss += delta 
@@ -61,11 +64,13 @@ function calcSegments(points,breaks) {
     if (points[i].loc >= brk) {
       segments.push({
         dist: brk,
+        len: idist,
         gain: igain,
         loss: iloss
       })
       brk = breaks.shift()
       igain = 0
+      idist = 0
       iloss = 0
     }
   }

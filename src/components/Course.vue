@@ -51,7 +51,7 @@
                       <td>{{ waypoint.name }}</td>
                       <td>{{ waypoint.location | formatMilesKM(user.distUnits) }}</td>
                       <td>{{ waypoint.elevation | formatFeetMeters(user.elevUnits) }}</td>
-                        <td class="text-right">
+                      <td class="text-right">
                         <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a>
                         <span v-show="waypoint.type != 'start' && waypoint.type != 'finish'">/
                           <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
@@ -63,6 +63,35 @@
                 <div v-show="!editing">
                   <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
                 </div>
+              </b-card-body>
+            </b-collapse>
+          </b-card>
+          <b-card no-body class="mb-1">
+            <b-card-header header-tag="header" class="p-1" role="tab">
+              <b-button block href="#" v-b-toggle.accordion-4 variant="info">Segments</b-button>
+            </b-card-header>
+            <b-collapse id="accordion-4" accordion="my-accordion" role="tabpanel">
+              <b-card-body>
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Begin</th>
+                      <th>End</th>
+                      <th>Distance</th>
+                      <th>Gain [{{ user.elevUnits }}]</th>
+                      <th>Loss [{{ user.elevUnits }}]</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(segment, index) in segments" :key="index">
+                      <td>{{ segment.begin.name }}</td>
+                      <td>{{ segment.end.name }}</td>
+                      <td>{{ segment.len | formatMilesKM(user.distUnits) }}</td>
+                      <td>{{ segment.gain | formatFeetMeters(user.elevUnits) }}</td>
+                      <td>{{ segment.loss | formatFeetMeters(user.elevUnits) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </b-card-body>
             </b-collapse>
           </b-card>
@@ -132,6 +161,30 @@ export default {
           { value: 'landmark', text: 'Landmark' }
         ]
       }
+    }
+  },
+  computed: {
+    segments: function(){
+      var arr = []
+      console.log(this.points.length)
+      console.log(this.waypoints.length)
+      if (!this.points.length){ return [] }
+      if (!this.waypoints.length){ return [] }
+      var breaks = []
+      for (var i = 0, il = this.waypoints.length; i < il; i++) {
+        breaks.push(this.waypoints[i].location)
+      }
+      var splits = utilities.calcSegments(this.points,breaks)
+      for (var i = 1, il = this.waypoints.length; i < il; i++) {
+        arr.push({
+          begin: this.waypoints[i-1],
+          end: this.waypoints[i],
+          len: splits[i].len,
+          gain: splits[i].gain,
+          loss: splits[i].loss
+        })
+      }
+      return arr
     }
   },
   filters: {
