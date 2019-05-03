@@ -164,31 +164,28 @@ export default {
     }
   },
   computed: {
-    segments: function(){
+    segments: function () {
+      if (!this.points.length) { return [] }
+      if (!this.waypoints.length) { return [] }
+      console.log(':::::: segments computed ::::::::::')
       var arr = []
-      console.log(this.points.length)
-      console.log(this.waypoints.length)
-      if (!this.points.length){ return [] }
-      if (!this.waypoints.length){ return [] }
       var breaks = []
       for (var i = 0, il = this.waypoints.length; i < il; i++) {
         breaks.push(this.waypoints[i].location)
       }
-      console.log(breaks)
-      var splits = utilities.calcSegments(this.points,breaks)
-      console.log(splits)
-      for (var i = 0, il = splits.length; i < il; i++) {
+      var splits = utilities.calcSegments(this.points, breaks)
+      for (var j = 0, jl = splits.length; j < jl; j++) {
         arr.push({
-          begin: splits[i].start,
-          end: splits[i].end,
-          len: splits[i].len,
-          gain: splits[i].gain,
-          loss: splits[i].loss
+          begin: splits[j].start,
+          end: splits[j].end,
+          len: splits[j].len,
+          gain: splits[j].gain,
+          loss: splits[j].loss
         })
       }
       return arr
     },
-    waypointTypes: function() {
+    waypointTypes: function () {
       if (this.waypoint.type === 'start') {
         return [{ value: 'start', text: 'Start' }]
       } else if (this.waypoint.type === 'finish') {
@@ -232,7 +229,7 @@ export default {
       this.editing = false
     },
     async saveWaypoint () {
-      this.waypoint.elevation = utilities.getElevation(this.points,this.waypoint.location)
+      this.waypoint.elevation = utilities.getElevation(this.points, this.waypoint.location)
       if (this.unitSystem === 'english') {
         this.waypoint.location = this.waypoint.location / 0.621371
       }
@@ -249,7 +246,12 @@ export default {
     async refreshWaypoints () {
       this.waypoints = await api.getWaypoints(this.$route.query.course)
       if (!this.waypoints.length) {
-        await api.createWaypoint({name: 'Start', location: 0, _course: this.course._id, elevation: this.points[this.points.length-1].alt })
+        await api.createWaypoint({
+          name: 'Start',
+          location: 0,
+          _course: this.course._id,
+          elevation: this.points[this.points.length - 1].alt
+        })
         await this.refreshWaypoints()
       }
     },
@@ -275,12 +277,25 @@ export default {
     },
     async checkWaypoints () {
       var update = false
-      if (!this.waypoints.find( waypoint => waypoint.type === 'start' )) {
-        await api.createWaypoint({name: 'Start', type: 'start', location: 0, _course: this.course._id, elevation: this.points[this.points.length-1].alt })
+      if (!this.waypoints.find(waypoint => waypoint.type === 'start')) {
+        await api.createWaypoint({
+          name: 'Start',
+          type: 'start',
+          location: 0,
+          _course:
+          this.course._id,
+          elevation: this.points[this.points.length - 1].alt
+        })
         update = true
       }
-      if (!this.waypoints.find( waypoint => waypoint.type === 'finish' )) {
-        await api.createWaypoint({name: 'Finish', type: 'finish', location: this.course.distance, _course: this.course._id, elevation: this.points[this.points.length-1].alt })
+      if (!this.waypoints.find(waypoint => waypoint.type === 'finish')) {
+        await api.createWaypoint({
+          name: 'Finish',
+          type: 'finish',
+          location: this.course.distance,
+          _course: this.course._id,
+          elevation: this.points[this.points.length - 1].alt
+        })
         update = true
       }
       if (update) {
