@@ -35,6 +35,7 @@ waypointRoutes.route('/:id').put(function (req, res) {
       waypoint.name = req.body.name;
       waypoint.location = req.body.location;
       waypoint.description = req.body.description;
+      waypoint.elevation = req.body.elevation;
 
       waypoint.save().then(post => {
           res.json('Update complete');

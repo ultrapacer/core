@@ -22,11 +22,18 @@
                   </thead>
                   <tbody>
                     <tr v-for="(split, index) in splits" :key="index">
-                      <td>{{ split.dist | formatMilesKM(user.distUnits) }}</td>
+                      <td>{{ split.end | formatMilesKM(user.distUnits) }}</td>
                       <td>{{ split.gain | formatFeetMeters(user.elevUnits) }}</td>
                       <td>{{ split.loss | formatFeetMeters(user.elevUnits) }}</td>
                     </tr>
                   </tbody>
+                  <thead>
+                    <tr>
+                      <th>&nbsp;</th>
+                      <th>{{ course.gain | formatFeetMeters(user.elevUnits) }}</th>
+                      <th>{{ course.loss | formatFeetMeters(user.elevUnits) }}</th>
+                    </tr>
+                  </thead>
                 </table>
               </b-card-body>
             </b-collapse>
@@ -91,6 +98,15 @@
                       <td>{{ segment.loss | formatFeetMeters(user.elevUnits) }}</td>
                     </tr>
                   </tbody>
+                  <thead>
+                    <tr>
+                      <th>&nbsp;</th>
+                      <th>&nbsp;</th>
+                      <th>{{ course.distance | formatMilesKM(user.distUnits) }}</th>
+                      <th>{{ course.gain | formatFeetMeters(user.elevUnits) }}</th>
+                      <th>{{ course.loss | formatFeetMeters(user.elevUnits) }}</th>
+                    </tr>
+                  </thead>
                 </table>
               </b-card-body>
             </b-collapse>
@@ -110,7 +126,7 @@
               <b-form-input type="number" step="0.001" v-model="waypoint.location" min="0" v-bind:max="course.distance"></b-form-input>
             </b-form-group>
             <b-form-group label="Type">
-              <b-form-select type="number" v-model="waypoint.type" :options="waypointTypes[waypoint.type]"></b-form-select>
+              <b-form-select type="number" v-model="waypoint.type" :options="waypointTypes"></b-form-select>
             </b-form-group>
             <b-form-group label="Description">
               <b-form-textarea rows="4" v-model="waypoint.description"></b-form-textarea>
@@ -144,23 +160,7 @@ export default {
       waypoint: {},
       waypoints: [],
       editing: false,
-      points: [],
-      waypointTypes: {
-        start: [
-          { value: 'start', text: 'Start' },
-        ],
-        finish:  [
-          { value: 'finish', text: 'Finish' },
-        ],
-        aid: [
-          { value: 'aid', text: 'Aid Station' },
-          { value: 'landmark', text: 'Landmark' }
-        ],
-        landmark: [
-          { value: 'aid', text: 'Aid Station' },
-          { value: 'landmark', text: 'Landmark' }
-        ]
-      }
+      points: []
     }
   },
   computed: {
@@ -174,17 +174,31 @@ export default {
       for (var i = 0, il = this.waypoints.length; i < il; i++) {
         breaks.push(this.waypoints[i].location)
       }
+      console.log(breaks)
       var splits = utilities.calcSegments(this.points,breaks)
-      for (var i = 1, il = this.waypoints.length; i < il; i++) {
+      console.log(splits)
+      for (var i = 0, il = splits.length; i < il; i++) {
         arr.push({
-          begin: this.waypoints[i-1],
-          end: this.waypoints[i],
+          begin: splits[i].start,
+          end: splits[i].end,
           len: splits[i].len,
           gain: splits[i].gain,
           loss: splits[i].loss
         })
       }
       return arr
+    },
+    waypointTypes: function() {
+      if (this.waypoint.type === 'start') {
+        return [{ value: 'start', text: 'Start' }]
+      } else if (this.waypoint.type === 'finish') {
+        return [{ value: 'finish', text: 'Finish' }]
+      } else {
+        return [
+          { value: 'aid', text: 'Aid Station' },
+          { value: 'landmark', text: 'Landmark' }
+        ]
+      }
     }
   },
   filters: {
@@ -218,6 +232,7 @@ export default {
       this.editing = false
     },
     async saveWaypoint () {
+      this.waypoint.elevation = utilities.getElevation(this.points,this.waypoint.location)
       if (this.unitSystem === 'english') {
         this.waypoint.location = this.waypoint.location / 0.621371
       }
@@ -234,7 +249,7 @@ export default {
     async refreshWaypoints () {
       this.waypoints = await api.getWaypoints(this.$route.query.course)
       if (!this.waypoints.length) {
-        await api.createWaypoint({name: 'Start', location: 0, _course: this.course._id})
+        await api.createWaypoint({name: 'Start', location: 0, _course: this.course._id, elevation: this.points[this.points.length-1].alt })
         await this.refreshWaypoints()
       }
     },
@@ -261,11 +276,11 @@ export default {
     async checkWaypoints () {
       var update = false
       if (!this.waypoints.find( waypoint => waypoint.type === 'start' )) {
-        await api.createWaypoint({name: 'Start', type: 'start', location: 0, _course: this.course._id})
+        await api.createWaypoint({name: 'Start', type: 'start', location: 0, _course: this.course._id, elevation: this.points[this.points.length-1].alt })
         update = true
       }
       if (!this.waypoints.find( waypoint => waypoint.type === 'finish' )) {
-        await api.createWaypoint({name: 'Finish', type: 'finish', location: this.course.distance, _course: this.course._id})
+        await api.createWaypoint({name: 'Finish', type: 'finish', location: this.course.distance, _course: this.course._id, elevation: this.points[this.points.length-1].alt })
         update = true
       }
       if (update) {

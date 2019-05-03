@@ -28,7 +28,7 @@ function calcSplits(points, units) {
   var tot = points[points.length-1].loc * dist_scale
   
   // generate array of breaks in km
-  var breaks = []
+  var breaks = [0]
   var i = 1
   while (i < tot) {
     breaks.push(i / dist_scale)
@@ -42,37 +42,54 @@ function calcSplits(points, units) {
 
 function calcSegments(points,breaks) {
   var segments = []
-  var igain = 0
-  var iloss = 0
+  for (var i = 1, il = breaks.length; i < il; i++) {
+    segments.push({
+        start: breaks[i-1],
+        end: breaks[i],
+        len: breaks[i]-breaks[i-1],
+        gain: 0,
+        loss: 0
+    })
+  }
+  function getSegmentIndex(dist){
+    for (var i = 0, il = segments.length; i < il; i++) {
+        if (dist > segments[i].start && dist <= segments[i].end) {
+          return i
+        }
+    }
+    return -1
+  }
   var delta = 0
-  var idist = 0
-  var brk = breaks.shift()
+  var j = 0
+  var j0 = 0
+  var delta0 = 0
   for (var i = 1, il = points.length; i < il; i++) {
-    if (brk > points[i].loc || i == il - 1) {
-      delta = points[i].alt - points[i-1].alt
-      idist += points[i].loc - points[i-1].loc
+    if (i== il-1) {
+      j = segments.length - 1
     } else {
+      j = getSegmentIndex(points[i].loc)
+    }
+    if (j>j0) {
       // interpolate
-      delta = (points[i].alt - points[i-1].alt) * (brk - points[i-1].loc) / (points[i].loc - points[i-1].loc)
-      idist += brk - points[i-1].loc
+      delta = (points[i].alt - points[i-1].alt) * (segments[j].start - points[i-1].loc) / (points[i].loc - points[i-1].loc)
+      delta0 = points[i].alt - points[i-1].alt - delta
+    } else {
+      delta = points[i].alt - points[i-1].alt
+      delta0 = 0
     }
     if (delta < 0) {
-      iloss += delta 
+      segments[j].loss += delta 
     } else {
-      igain += delta
+      segments[j].gain += delta 
     }
-    if (points[i].loc >= brk) {
-      segments.push({
-        dist: brk,
-        len: idist,
-        gain: igain,
-        loss: iloss
-      })
-      brk = breaks.shift()
-      igain = 0
-      idist = 0
-      iloss = 0
+    if (delta0) {
+      if (delta0 < 0) {
+        segments[j0].loss += delta0
+      } else {
+        segments[j0].gain += delta0
+      }
     }
+    j0 = j
   }
   return segments
 }
@@ -120,11 +137,24 @@ function addLoc(points) {
   return points
 }
 
+function getElevation(points,location){
+  for (var i=0, il= points.length -1; i<il; i++) {
+    if (points[i].loc >= location) {
+      if (points[i].loc == location) {
+        return points[i].alt
+      } else {
+        return points[i].alt + (location - points[i].loc) * (points[i+1].alt - points[i].alt) / (points[i+1].loc - points[i].loc)
+      }
+    }
+  }
+}
+
 module.exports = {
   addLoc: addLoc,
   calcStats: calcStats,
   calcSplits: calcSplits,
   cleanPoints: cleanPoints,
   elevationProfile: elevationProfile,
-  calcSegments: calcSegments
+  calcSegments: calcSegments,
+  getElevation: getElevation
 }
