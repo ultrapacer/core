@@ -288,7 +288,13 @@ export default {
       this.editingSegment = false
     },
     async saveWaypoint () {
-      this.waypoint.elevation = utilities.getElevation(this.points, this.waypoint.location)
+      if (this.waypoint.type == 'start') {
+        this.waypoint.elevation = this.points[0].alt
+      } else if (this.waypoint.type === 'finish') {
+        this.waypoint.elevation = this.points[this.points.length - 1].alt
+      } else {        
+        this.waypoint.elevation = utilities.getElevation(this.points, this.waypoint.location)
+      }
       if (this.waypoint._id) {
         await api.updateWaypoint(this.waypoint._id, this.waypoint)
       } else {

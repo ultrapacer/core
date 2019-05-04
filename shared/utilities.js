@@ -106,39 +106,19 @@ function cleanPoints(points) {
   return points2
 }
 
-function elevationProfile(points, distUnit, altUnit) {
-  var distScale = 1
-  var altScale = 1
-  if (distUnit === 'mi') { distScale = 0.621371 }
-  if (altUnit === 'ft') { altScale = 3.28084 }
-  var distance = 0
-  var data = []
-  for (var i=0, il= points.length; i<il; i++) {
-    data.push({
-      x: distance * distScale,
-      y: points[i].alt * altScale
-    })
-    if (i<points.length-1) {
-      distance += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon ))
-    }
-  }
-  return data
-}
-
 function addLoc(points) {
   var loc = 0
-  var distance = 0
-  for (var i=0, il= points.length; i<il; i++) {
-    points[i].loc = loc
-    if (i<points.length-1) {
-      loc += (gpxParse.utils.calculateDistance(points[i].lat,points[i].lon,points[i+1].lat,points[i+1].lon ))
-    }
+  var d = 0
+  points[0].loc = 0
+  for (var i = 1, il = points.length; i < il; i++) {
+    d += (gpxParse.utils.calculateDistance(points[i-1].lat, points[i-1].lon, points[i].lat, points[i].lon))
+    points[i].loc = d
   }
   return points
 }
 
-function getElevation(points,location){
-  for (var i=0, il= points.length -1; i<il; i++) {
+function getElevation(points, location) {
+  for (var i = 0, il = points.length; i < il; i++) {
     if (points[i].loc >= location) {
       if (points[i].loc == location) {
         return points[i].alt
@@ -154,7 +134,6 @@ module.exports = {
   calcStats: calcStats,
   calcSplits: calcSplits,
   cleanPoints: cleanPoints,
-  elevationProfile: elevationProfile,
   calcSegments: calcSegments,
   getElevation: getElevation
 }

@@ -1,5 +1,6 @@
 <script>
 import { Line } from 'vue-chartjs'
+import utilities from '../../shared/utilities'
 
 export default {
   extends: Line,
@@ -18,22 +19,43 @@ export default {
     }
   },
   watch: {
-    points: function () {
+    chartProfile: function () {
+      this.renderLineChart()
+    },
+    chartPoints: function () {
       this.renderLineChart()
     }
   },
   computed: {
     chartProfile: function () {
+      if (!this.points.length) { return [] }
+      console.log(':::: getting chartProfile :::::::' + this.points.length)
       var data = []
-      for (var i = 0, il = this.points.length; i < il; i++) {
-        data.push({
-          x: this.points[i].loc * this.distScale,
-          y: this.points[i].alt * this.altScale
-        })
+      if ( this.points.length < 200 ) {
+        for (var i = 0, il = this.points.length; i < il; i++) {
+          data.push({
+            x: this.points[i].loc * this.distScale,
+            y: this.points[i].alt * this.altScale
+          })
+        }
+      } else {
+        var max = this.points[this.points.length - 1].loc
+        console.log('max' + max)
+        var x = 0
+        for (var i = 0; i <= 200; i++) {
+          x = (i / 200) * max
+          data.push({
+            x: x * this.distScale,
+            y: utilities.getElevation(this.points, x) * this.altScale
+          })
+        }
       }
+      console.log(':::: done getting chartProfile :::::::')
       return data
     },
     chartPoints: function () {
+      if (!this.waypoints.length) { return [] }
+      console.log(':::: getting chartPoints :::::::')
       var data = []
       for (var i = 0, il = this.waypoints.length; i < il; i++) {
         data.push({
@@ -41,12 +63,14 @@ export default {
           y: this.waypoints[i].elevation * this.altScale
         })
       }
+      console.log(this)
+      console.log(':::: done getting chartPoints :::::::')
       return data
     }
   },
   methods: {
     renderLineChart: function () {
-      console.log('a')
+      console.log(':::: rendering chart :::::::')
       var data = {
         datasets: [
           { data: this.chartPoints,
@@ -69,8 +93,7 @@ export default {
         scales: {
           xAxes: [{
             type: 'linear',
-            position: 'bottom',
-            suggestedMax: this.chartProfile[this.chartProfile.length - 1].loc * this.distScale
+            position: 'bottom'
           }]
         },
         tooltips: {
@@ -80,7 +103,7 @@ export default {
           display: false
         }
       }
-      console.log(data.datasets[1])
+      console.log(data)
       this.renderChart(data, options)
     },
     transparentize: function (color, opacity) {
