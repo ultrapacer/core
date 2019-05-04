@@ -123,7 +123,7 @@
       </b-col>
       <b-col lg="5">
         <b-card v-show="showMap" >
-          <CourseChart :points="points" :user="user" />
+          <CourseChart :points="points" :user="user" :waypoints="waypoints" :altScale="altScale" :distScale="distScale" />
         </b-card>
         <b-card v-show="editingWaypoint" :title="(waypoint._id ? 'Edit Waypoint' : 'New Waypoint')">
           <form @submit.prevent="saveWaypoint">
