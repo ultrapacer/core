@@ -22,16 +22,16 @@
                   </thead>
                   <tbody>
                     <tr v-for="(split, index) in splits" :key="index">
-                      <td>{{ split.end | formatMilesKM(user.distUnits) }}</td>
-                      <td>{{ split.gain | formatFeetMeters(user.elevUnits) }}</td>
-                      <td>{{ split.loss | formatFeetMeters(user.elevUnits) }}</td>
+                      <td>{{ split.end | formatMilesKM }}</td>
+                      <td>{{ split.gain | formatFeetMeters }}</td>
+                      <td>{{ split.loss | formatFeetMeters }}</td>
                     </tr>
                   </tbody>
                   <thead>
                     <tr>
                       <th>&nbsp;</th>
-                      <th>{{ course.gain | formatFeetMeters(user.elevUnits) }}</th>
-                      <th>{{ course.loss | formatFeetMeters(user.elevUnits) }}</th>
+                      <th>{{ course.gain | formatFeetMeters }}</th>
+                      <th>{{ course.loss | formatFeetMeters }}</th>
                     </tr>
                   </thead>
                 </table>
@@ -56,8 +56,8 @@
                   <tbody>
                     <tr v-for="waypoint in waypoints" :key="waypoint._id">
                       <td>{{ waypoint.name }}</td>
-                      <td>{{ waypoint.location | formatMilesKM(user.distUnits) }}</td>
-                      <td>{{ waypoint.elevation | formatFeetMeters(user.elevUnits) }}</td>
+                      <td>{{ waypoint.location | formatMilesKM }}</td>
+                      <td>{{ waypoint.elevation | formatFeetMeters }}</td>
                       <td class="text-right">
                         <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a>
                         <span v-show="waypoint.type != 'start' && waypoint.type != 'finish'">/
@@ -95,9 +95,9 @@
                     <tr v-for="segment in segments" :key="segment.start._id">
                       <td>{{ segment.start.name }}</td>
                       <td>{{ segment.end.name }}</td>
-                      <td>{{ segment.len | formatMilesKM(user.distUnits) }}</td>
-                      <td>{{ segment.gain | formatFeetMeters(user.elevUnits) }}</td>
-                      <td>{{ segment.loss | formatFeetMeters(user.elevUnits) }}</td>
+                      <td>{{ segment.len | formatMilesKM }}</td>
+                      <td>{{ segment.gain | formatFeetMeters }}</td>
+                      <td>{{ segment.loss | formatFeetMeters }}</td>
                       <td>{{ segment.start.terrainIndex }}</td>
                       <td class="text-right">
                         <a href="#" @click.prevent="populateSegmentToEdit(segment.start)">Edit</a>
@@ -108,9 +108,9 @@
                     <tr>
                       <th>&nbsp;</th>
                       <th>&nbsp;</th>
-                      <th>{{ course.distance | formatMilesKM(user.distUnits) }}</th>
-                      <th>{{ course.gain | formatFeetMeters(user.elevUnits) }}</th>
-                      <th>{{ course.loss | formatFeetMeters(user.elevUnits) }}</th>
+                      <th>{{ course.distance | formatMilesKM }}</th>
+                      <th>{{ course.gain | formatFeetMeters }}</th>
+                      <th>{{ course.loss | formatFeetMeters }}</th>
                       <th>&nbsp;</th>
                       <th>&nbsp;</th>
                     </tr>
@@ -131,7 +131,7 @@
               <b-form-input type="text" v-model="waypoint.name"></b-form-input>
             </b-form-group>
             <b-form-group v-bind:label="'Location [' + user.distUnits + ']'">
-              <b-form-input type="number" step="0.001" v-model="waypoint.location" min="0" v-bind:max="course.distance"></b-form-input>
+              <b-form-input type="number" step="0.001" v-model="waypointLoc" min="0" v-bind:max="course.distance"></b-form-input>
             </b-form-group>
             <b-form-group label="Type">
               <b-form-select type="number" v-model="waypoint.type" :options="waypointTypes"></b-form-select>
@@ -225,6 +225,28 @@ export default {
       } else {
         return false
       }
+    },
+    distScale: function () {
+      if (this.user.distUnits === 'mi') {
+        return 0.621371
+      } else {
+        return 1
+      }
+    },
+    altScale: function () {
+      if (this.user.elevUnits === 'ft') {
+        return 3.28084
+      } else {
+        return 1
+      }
+    },
+    waypointLoc: {
+      set: function(val) {
+        this.waypoint.location = val * this.distScale
+      },
+      get: function() {
+        return this.waypoint.location / this.distScale
+      }
     }
   },
   watch: {
@@ -236,14 +258,14 @@ export default {
     }
   },
   filters: {
-    formatMilesKM (val, units) {
+    formatMilesKM (val) {
       var v = Number(val)
-      if (units === 'mi') { v = v * 0.621371 }
+      v = v * this.distScale
       return v.toFixed(2)
     },
-    formatFeetMeters (val, units) {
+    formatFeetMeters (val) {
       var v = Number(val)
-      if (units === 'ft') { v = v * 3.28084 }
+      v = v * this.altScale
       return v.toFixed(0)
     }
   },
@@ -271,9 +293,6 @@ export default {
     },
     async saveWaypoint () {
       this.waypoint.elevation = utilities.getElevation(this.points, this.waypoint.location)
-      if (this.unitSystem === 'english') {
-        this.waypoint.location = this.waypoint.location / 0.621371
-      }
       if (this.waypoint._id) {
         await api.updateWaypoint(this.waypoint._id, this.waypoint)
       } else {
@@ -317,9 +336,6 @@ export default {
     },
     async populateWaypointToEdit (waypoint) {
       this.waypoint = Object.assign({}, waypoint)
-      if (this.unitSystem === 'english') {
-        this.waypoint.location = (this.waypoint.location * 0.621371).toFixed(3)
-      }
       this.editingWaypoint = true
     },
     async populateSegmentToEdit (waypoint) {
