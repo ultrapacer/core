@@ -7,6 +7,7 @@ import Profile from '@/components/Profile'
 import auth from './auth/authService'
 import CoursesManager from '@/components/CoursesManager'
 import Course from '@/components/Course'
+import Settings from '@/components/Settings'
 
 Vue.use(Router)
 
@@ -32,6 +33,11 @@ let router = new Router({
       path: '/profile',
       name: 'Profile',
       component: Profile
+    },
+    {
+      path: '/settings',
+      name: 'Settings',
+      component: Settings
     },
     {
       path: '/courses',
