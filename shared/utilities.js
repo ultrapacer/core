@@ -118,12 +118,28 @@ function addLoc(points) {
 }
 
 function getElevation(points, location) {
+  var locs = []
+  var elevs = []
+  if (Array.isArray(location)) {
+    locs = [...location]
+  } else {
+    locs = [location]
+  }
+  location = locs.shift()
   for (var i = 0, il = points.length; i < il; i++) {
     if (points[i].loc >= location) {
       if (points[i].loc == location) {
-        return points[i].alt
+        elevs.push(points[i].alt)
       } else {
-        return points[i].alt + (location - points[i].loc) * (points[i+1].alt - points[i].alt) / (points[i+1].loc - points[i].loc)
+        elevs.push(points[i].alt + (location - points[i].loc) * (points[i+1].alt - points[i].alt) / (points[i+1].loc - points[i].loc))
+      }
+      location = locs.shift()
+      if (location == null) {
+        if (elevs.length > 1) {
+          return elevs
+        } else {
+          return elevs[0]
+        }
       }
     }
   }

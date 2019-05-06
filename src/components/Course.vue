@@ -451,13 +451,15 @@ export default {
         }
       } else {
         var max = this.points[this.points.length - 1].loc
-        console.log('max' + max)
-        var x = 0
+        var xs = []
         for (var j = 0; j <= 400; j++) {
-          x = (j / 400) * max
+          xs.push((j / 400) * max)
+        }
+        var ys = utilities.getElevation(this.points, xs)
+        for (var i = 0, il = xs.length; i < il; i++) {
           data.push({
-            x: x * this.distScale,
-            y: utilities.getElevation(this.points, x) * this.altScale
+            x: xs[i] * this.distScale,
+            y: ys[i] * this.altScale
           })
         }
       }
