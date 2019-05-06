@@ -360,7 +360,7 @@ export default {
         this.waypoint.elevation = this.points[0].alt
       } else if (this.waypoint.type === 'finish') {
         this.waypoint.elevation = this.points[this.points.length - 1].alt
-      } else {        
+      } else {
         this.waypoint.elevation = utilities.getElevation(this.points, this.waypoint.location)
       }
       if (this.waypoint._id) {

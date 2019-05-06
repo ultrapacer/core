@@ -23,6 +23,9 @@ export default {
   getUser () {
     return this.execute('get', `/api/user`)
   },
+  updateSettings (id, data) {
+    return this.execute('put', `/api/user/${id}`, data)
+  },
   getPosts () {
     return this.execute('get', '/api/posts')
   },

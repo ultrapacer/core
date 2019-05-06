@@ -8,16 +8,16 @@
           <thead>
             <tr>
               <th>Name</th>
-              <th>Distance [mi]</th>
-              <th>Elevation [ft]</th>
+              <th>Distance [{{ user.distUnits }}]</th>
+              <th>Elevation [{{ user.elevUnits }}]</th>
               <th>&nbsp;</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="course in courses" :key="course._id">
               <td>{{ course.name }}</td>
-              <td>{{ course.distance | toMiles }}</td>
-              <td>+{{ course.gain | toFeet }}/{{ course.loss | toFeet }}</td>
+              <td>{{ course.distance | formatDist(distScale) }}</td>
+              <td>+{{ course.gain | formatAlt(altScale) }}/{{ course.loss | formatAlt(altScale) }}</td>
               <td class="text-right">
                 <router-link :to="'/course/?course='+course._id">Go</router-link> /
                 <a href="#" @click.prevent="populateCourseToEdit(course)">Edit</a> /
@@ -73,13 +73,27 @@ export default {
     }
   },
   filters: {
-    toMiles (val) {
-      var v = Number(val * 0.621371)
-      return v.toFixed(2)
+    formatDist (val, distScale) {
+      return (val * distScale).toFixed(2)
     },
-    toFeet (val) {
-      var v = Number(val * 3.28084)
-      return v.toFixed(0)
+    formatAlt (val, altScale) {
+      return (val * altScale).toFixed(0)
+    }
+  },
+  computed: {
+    distScale: function () {
+      if (this.user.distUnits === 'mi') {
+        return 0.621371
+      } else {
+        return 1
+      }
+    },
+    altScale: function () {
+      if (this.user.elevUnits === 'ft') {
+        return 3.28084
+      } else {
+        return 1
+      }
     }
   },
   async created () {

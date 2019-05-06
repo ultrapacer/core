@@ -6,7 +6,6 @@
       <b-collapse is-nav id="nav_collapse">
         <b-navbar-nav>
           <b-nav-item to="/">Home</b-nav-item>
-          <b-nav-item to="/posts-manager" v-if="isAuthenticated">Posts Manager</b-nav-item>
           <b-nav-item to="/courses" v-if="isAuthenticated">Courses</b-nav-item>
           <b-nav-item to="/profile" v-if="isAuthenticated">Profile</b-nav-item>
           <b-nav-item to="/settings" v-if="isAuthenticated">Settings</b-nav-item>

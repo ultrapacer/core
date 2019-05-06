@@ -26,4 +26,21 @@ userRoutes.route('/').get(function (req, res) {
   })
 })
 
+userRoutes.route('/:id').put(function (req, res) {
+  User.findById(req.params.id, function(err, user) {
+    if (!user)
+      return next(new Error('Could not load Document'));
+    else {
+      user.distUnits = req.body.distUnits
+      user.elevUnits = req.body.elevUnits
+      user.save().then(post => {
+        res.json('Update complete');
+      })
+      .catch(err => {
+        res.status(400).send("unable to update the database");
+      })
+    }
+  })
+})
+
 module.exports = userRoutes

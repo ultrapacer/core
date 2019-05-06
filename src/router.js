@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Hello from '@/components/Hello'
-import PostsManager from '@/components/PostsManager'
 import Callback from '@/components/Callback'
 import Profile from '@/components/Profile'
 import auth from './auth/authService'
@@ -23,11 +22,6 @@ let router = new Router({
       path: '/callback',
       name: 'callback',
       component: Callback
-    },
-    {
-      path: '/posts-manager',
-      name: 'PostsManager',
-      component: PostsManager
     },
     {
       path: '/profile',
