@@ -45,16 +45,23 @@ let router = new Router({
     }
   ]
 })
-
+const util = require('util')
 // NEW - add a `beforeEach` handler to each route
 router.beforeEach((to, from, next) => {
   if (to.path === '/' || to.path === '/callback' || auth.isAuthenticated()) {
+    console.log('passing:')
+    console.log(to)
     return next()
   }
 
   // Specify the current path as the customState parameter, meaning it
   // will be returned to the application after auth
-  auth.login({ target: to.path })
+  console.log(util.inspect(to, {showHidden: false, depth: null}))
+  if (to.query == null) {
+    auth.login({ target: to.path })
+  } else {
+    auth.login({ target: to.path, query: to.query })
+  }
 })
 
 export default router
