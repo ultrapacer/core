@@ -3,7 +3,7 @@
     <h1 class="h1">{{ course.name }}</h1>
     <b-alert :show="loading" variant="info">Loading...</b-alert>
     <b-row>
-      <b-col>
+      <b-col order="2">
 
         <div role="tablist">
           <b-card no-body class="mb-1">
@@ -121,7 +121,7 @@
           </b-card>
         </div>
       </b-col>
-      <b-col lg="5">
+      <b-col lg="5" order="1">
         <b-card v-show="showMap" >
           <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
         </b-card>
