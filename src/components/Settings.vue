@@ -2,14 +2,13 @@
   <div class="container-fluid mt-4">
     <h1 class="h1">Settings</h1>
     <b-alert :show="loading" variant="info">Loading...</b-alert>
-        <b-card>
-          <form @submit.prevent="saveSettings">
-      
-            <div>
-              <b-btn type="submit" variant="success">Save Settings</b-btn>
-            </div>
-          </form>
-        </b-card>
+    <b-card>
+      <form @submit.prevent="saveSettings">
+        <div>
+          <b-btn type="submit" variant="success">Save Settings</b-btn>
+        </div>
+      </form>
+    </b-card>
   </div>
 </template>
 
@@ -19,7 +18,7 @@ export default {
   data () {
     return {
       loading: false,
-      user: []
+      user: [],
     }
   },
   async created () {

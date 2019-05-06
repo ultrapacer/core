@@ -123,7 +123,7 @@
       </b-col>
       <b-col lg="5">
         <b-card v-show="showMap" >
-          <CourseChart :points="points" :user="user" :waypoints="waypoints" :altScale="altScale" :distScale="distScale" />
+          <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
         </b-card>
         <b-card v-show="editingWaypoint" :title="(waypoint._id ? 'Edit Waypoint' : 'New Waypoint')">
           <form @submit.prevent="saveWaypoint">
@@ -165,13 +165,13 @@
 </template>
 
 <script>
-import CourseChart from './CourseChart'
+import LineChart from './LineChart.js'
 import api from '@/api'
 import utilities from '../../shared/utilities'
 export default {
   props: ['user'],
   components: {
-    CourseChart
+    LineChart
   },
   data () {
     return {
@@ -183,7 +183,30 @@ export default {
       waypoints: [],
       editingWaypoint: false,
       editingSegment: false,
-      points: []
+      points: [],
+      chartColors: {
+        red: 'rgb(255, 99, 132)',
+        orange: 'rgb(255, 159, 64)',
+        yellow: 'rgb(255, 205, 86)',
+        green: 'rgb(75, 192, 192)',
+        blue: 'rgb(54, 162, 235)',
+        purple: 'rgb(153, 102, 255)',
+        grey: 'rgb(201, 203, 207)'
+      },
+      chartOptions: {
+        scales: {
+          xAxes: [{
+            type: 'linear',
+            position: 'bottom'
+          }]
+        },
+        tooltips: {
+          enabled: false
+        },
+        legend: {
+          display: false
+        }
+      }
     }
   },
   computed: {
@@ -247,6 +270,49 @@ export default {
       get: function () {
         return (this.waypoint.location * this.distScale).toFixed(3)
       }
+    },
+    chartData: function () {
+      return {
+        datasets: [
+          this.chartPoints,
+          { data: this.chartProfile,
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            borderColor: this.chartColors.blue,
+            backgroundColor: this.transparentize(this.chartColors.blue)
+          }
+        ]
+      }
+    },
+    chartPoints: function () {
+      if (!this.waypoints.length) { return [] }
+      var d = {
+        data: [],
+        backgroundColor: this.chartColors.red,
+        borderColor: this.chartColors.red,
+        fill: false,
+        pointRadius: [],
+        pointSyle: [],
+        pointHoverRadius: 10,
+        showLine: false
+      }
+      console.log(':::: getting chartPoints :::::::')
+      d.data = []
+      for (var i = 0, il = this.waypoints.length; i < il; i++) {
+        d.data.push({
+          x: this.waypoints[i].location * this.distScale,
+          y: this.waypoints[i].elevation * this.altScale
+        })
+        if (this.waypoints[i].type === 'landmark') {
+          d.pointRadius.push(3)
+          d.pointSyle.push('triangle')
+        } else {
+          d.pointRadius.push(6)
+          d.pointSyle.push('circle')
+        }
+      }
+      console.log(':::: done getting chartPoints :::::::')
+      return d
     }
   },
   watch: {
@@ -269,10 +335,12 @@ export default {
     this.loading = true
     this.course = await api.getCourse(this.$route.query.course)
     this.points = utilities.addLoc(this.course._gpx.points)
+    this.updateChartProfile()
     this.waypoints = this.course.waypoints
     await this.checkWaypoints()
     this.splits = utilities.calcSplits(this.points, this.user.distUnits)
     this.loading = false
+    console.log('::::: CREATED :::::::')
   },
   methods: {
     async newWaypoint () {
@@ -288,7 +356,7 @@ export default {
       this.editingSegment = false
     },
     async saveWaypoint () {
-      if (this.waypoint.type == 'start') {
+      if (this.waypoint.type === 'start') {
         this.waypoint.elevation = this.points[0].alt
       } else if (this.waypoint.type === 'finish') {
         this.waypoint.elevation = this.points[this.points.length - 1].alt
@@ -370,6 +438,35 @@ export default {
       if (update) {
         await this.refreshWaypoints()
       }
+    },
+    updateChartProfile: function () {
+      console.log(':::: getting chartProfile :::::::')
+      var data = []
+      if (this.points.length < 400) {
+        for (var i = 0, il = this.points.length; i < il; i++) {
+          data.push({
+            x: this.points[i].loc * this.distScale,
+            y: this.points[i].alt * this.altScale
+          })
+        }
+      } else {
+        var max = this.points[this.points.length - 1].loc
+        console.log('max' + max)
+        var x = 0
+        for (var j = 0; j <= 400; j++) {
+          x = (j / 400) * max
+          data.push({
+            x: x * this.distScale,
+            y: utilities.getElevation(this.points, x) * this.altScale
+          })
+        }
+      }
+      this.chartProfile = data
+      console.log(':::: done getting chartProfile :::::::')
+    },
+    transparentize: function (color, opacity) {
+      var alpha = opacity === undefined ? 0.5 : 1 - opacity
+      return Color(color).alpha(alpha).rgbString()
     }
   }
 }
