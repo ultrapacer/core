@@ -103,7 +103,7 @@
           <b-spinner label="Loading..."></b-spinner>
         </b-card>
         <b-card v-show="showMap && !initializing" class="sticky-top mt-3">
-          <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
+          <component :is="chartComponent" :chart-data="chartData" :options="chartOptions"></component>
         </b-card>
         <b-card v-show="editingWaypoint" :title="(waypoint._id ? 'Edit Waypoint' : 'New Waypoint')">
           <form @submit.prevent="saveWaypoint">
@@ -161,6 +161,7 @@ export default {
   },
   data () {
     return {
+      chartComponent: null,
       initializing: true,
       loading: false,
       course: {},
@@ -455,6 +456,11 @@ export default {
           })
         }
       }
+      this.chartOptions.scales.xAxes[0].ticks = {
+        max: xs[xs.length - 1] * this.distScale
+      }
+      this.chartComponent = "line-chart"
+      console.log(this.chartOptions)
       this.chartProfile = data
       console.log(':::: done getting chartProfile :::::::')
     },
