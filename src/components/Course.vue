@@ -102,8 +102,8 @@
         <b-card v-show="initializing" class="mt-3">
           <b-spinner label="Loading..."></b-spinner>
         </b-card>
-        <b-card v-show="showMap && !initializing" class="sticky-top mt-3">
-          <component :is="chartComponent" :chart-data="chartData" :options="chartOptions"></component>
+        <b-card v-if="!initializing" v-show="showMap" class="sticky-top mt-3">
+          <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
         </b-card>
         <b-card v-show="editingWaypoint" :title="(waypoint._id ? 'Edit Waypoint' : 'New Waypoint')">
           <form @submit.prevent="saveWaypoint">
@@ -161,7 +161,6 @@ export default {
   },
   data () {
     return {
-      chartComponent: null,
       initializing: true,
       loading: false,
       course: {},
@@ -185,7 +184,17 @@ export default {
         scales: {
           xAxes: [{
             type: 'linear',
-            position: 'bottom'
+            position: 'bottom',
+            ticks: {
+              stepSize: 5,
+              callback: function (value, index, values) {
+                if (value % 5 === 0) {
+                  return value
+                } else {
+                  return ''
+                }
+              }
+            }
           }]
         },
         tooltips: {
@@ -449,18 +458,14 @@ export default {
           xs.push((j / 400) * max)
         }
         var ys = utilities.getElevation(this.points, xs)
-        for (var i = 0, il = xs.length; i < il; i++) {
+        for (i = 0, il = xs.length; i < il; i++) {
           data.push({
             x: xs[i] * this.distScale,
             y: ys[i] * this.altScale
           })
         }
       }
-      this.chartOptions.scales.xAxes[0].ticks = {
-        max: xs[xs.length - 1] * this.distScale
-      }
-      this.chartComponent = "line-chart"
-      console.log(this.chartOptions)
+      this.chartOptions.scales.xAxes[0].ticks.max = xs[xs.length - 1] * this.distScale
       this.chartProfile = data
       console.log(':::: done getting chartProfile :::::::')
     },
