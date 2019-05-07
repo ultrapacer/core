@@ -4,122 +4,100 @@
     <b-alert :show="loading" variant="info">Loading...</b-alert>
     <b-row>
       <b-col order="2">
-
-        <div role="tablist">
-          <b-card no-body class="mb-1">
-            <b-card-header header-tag="header" class="p-1" role="tab">
-              <b-button block href="#" v-b-toggle.accordion-1 variant="info">Splits</b-button>
-            </b-card-header>
-            <b-collapse id="accordion-1" accordion="my-accordion" role="tabpanel">
-              <b-card-body>
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Split [{{ user.distUnits }}]</th>
-                      <th>Gain [{{ user.elevUnits }}]</th>
-                      <th>Loss [{{ user.elevUnits }}]</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(split, index) in splits" :key="index">
-                      <td>{{ split.end | formatDist(distScale) }}</td>
-                      <td>{{ split.gain | formatAlt(altScale) }}</td>
-                      <td>{{ split.loss | formatAlt(altScale) }}</td>
-                    </tr>
-                  </tbody>
-                  <thead>
-                    <tr>
-                      <th>&nbsp;</th>
-                      <th>{{ course.gain | formatAlt(altScale) }}</th>
-                      <th>{{ course.loss | formatAlt(altScale) }}</th>
-                    </tr>
-                  </thead>
-                </table>
-              </b-card-body>
-            </b-collapse>
-          </b-card>
-          <b-card no-body class="mb-1">
-            <b-card-header header-tag="header" class="p-1" role="tab">
-              <b-button block href="#" v-b-toggle.accordion-3 variant="info">Waypoints</b-button>
-            </b-card-header>
-            <b-collapse id="accordion-3" accordion="my-accordion" role="tabpanel">
-              <b-card-body>
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Location [{{ user.distUnits }}]</th>
-                      <th>Elevation [{{ user.elevUnits }}]</th>
-                      <th>&nbsp;</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="waypoint in waypoints" :key="waypoint._id">
-                      <td>{{ waypoint.name }}</td>
-                      <td>{{ waypoint.location | formatDist(distScale) }}</td>
-                      <td>{{ waypoint.elevation | formatAlt(altScale) }}</td>
-                      <td class="text-right">
-                        <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a>
-                        <span v-show="waypoint.type != 'start' && waypoint.type != 'finish'">/
-                          <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <div v-show="!editingWaypoint">
-                  <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
-                </div>
-              </b-card-body>
-            </b-collapse>
-          </b-card>
-          <b-card no-body class="mb-1">
-            <b-card-header header-tag="header" class="p-1" role="tab">
-              <b-button block href="#" v-b-toggle.accordion-4 variant="info">Segments</b-button>
-            </b-card-header>
-            <b-collapse id="accordion-4" accordion="my-accordion" role="tabpanel">
-              <b-card-body>
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Start</th>
-                      <th>End</th>
-                      <th>Distance</th>
-                      <th>Gain [{{ user.elevUnits }}]</th>
-                      <th>Loss [{{ user.elevUnits }}]</th>
-                      <th>Terrain</th>
-                      <th>&nbsp;</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="segment in segments" :key="segment.start._id">
-                      <td>{{ segment.start.name }}</td>
-                      <td>{{ segment.end.name }}</td>
-                      <td>{{ segment.len | formatDist(distScale) }}</td>
-                      <td>{{ segment.gain | formatAlt(altScale) }}</td>
-                      <td>{{ segment.loss | formatAlt(altScale) }}</td>
-                      <td>{{ segment.start.terrainIndex }}</td>
-                      <td class="text-right">
-                        <a href="#" @click.prevent="populateSegmentToEdit(segment.start)">Edit</a>
-                      </td>
-                    </tr>
-                  </tbody>
-                  <thead>
-                    <tr>
-                      <th>&nbsp;</th>
-                      <th>&nbsp;</th>
-                      <th>{{ course.distance | formatDist(distScale) }}</th>
-                      <th>{{ course.gain | formatAlt(altScale) }}</th>
-                      <th>{{ course.loss | formatAlt(altScale) }}</th>
-                      <th>&nbsp;</th>
-                      <th>&nbsp;</th>
-                    </tr>
-                  </thead>
-                </table>
-              </b-card-body>
-            </b-collapse>
-          </b-card>
-        </div>
+        <b-tabs content-class="mt-3">
+          <b-tab title="Splits" active>
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Split [{{ user.distUnits }}]</th>
+                  <th>Gain [{{ user.elevUnits }}]</th>
+                  <th>Loss [{{ user.elevUnits }}]</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(split, index) in splits" :key="index">
+                  <td>{{ split.end | formatDist(distScale) }}</td>
+                  <td>{{ split.gain | formatAlt(altScale) }}</td>
+                  <td>{{ split.loss | formatAlt(altScale) }}</td>
+                </tr>
+              </tbody>
+              <thead>
+                <tr>
+                  <th>&nbsp;</th>
+                  <th>{{ course.gain | formatAlt(altScale) }}</th>
+                  <th>{{ course.loss | formatAlt(altScale) }}</th>
+                </tr>
+              </thead>
+            </table>
+          </b-tab>
+          <b-tab title="Waypoints">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Location [{{ user.distUnits }}]</th>
+                  <th>Elevation [{{ user.elevUnits }}]</th>
+                  <th>&nbsp;</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="waypoint in waypoints" :key="waypoint._id">
+                  <td>{{ waypoint.name }}</td>
+                  <td>{{ waypoint.location | formatDist(distScale) }}</td>
+                  <td>{{ waypoint.elevation | formatAlt(altScale) }}</td>
+                  <td class="text-right">
+                    <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a>
+                    <span v-show="waypoint.type != 'start' && waypoint.type != 'finish'">/
+                      <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-show="!editingWaypoint">
+              <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
+            </div>
+          </b-tab>
+          <b-tab title="Second">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Distance</th>
+                  <th>Gain [{{ user.elevUnits }}]</th>
+                  <th>Loss [{{ user.elevUnits }}]</th>
+                  <th>Terrain</th>
+                  <th>&nbsp;</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="segment in segments" :key="segment.start._id">
+                  <td>{{ segment.start.name }}</td>
+                  <td>{{ segment.end.name }}</td>
+                  <td>{{ segment.len | formatDist(distScale) }}</td>
+                  <td>{{ segment.gain | formatAlt(altScale) }}</td>
+                  <td>{{ segment.loss | formatAlt(altScale) }}</td>
+                  <td>{{ segment.start.terrainIndex }}</td>
+                  <td class="text-right">
+                    <a href="#" @click.prevent="populateSegmentToEdit(segment.start)">Edit</a>
+                  </td>
+                </tr>
+              </tbody>
+              <thead>
+                <tr>
+                  <th>&nbsp;</th>
+                  <th>&nbsp;</th>
+                  <th>{{ course.distance | formatDist(distScale) }}</th>
+                  <th>{{ course.gain | formatAlt(altScale) }}</th>
+                  <th>{{ course.loss | formatAlt(altScale) }}</th>
+                  <th>&nbsp;</th>
+                  <th>&nbsp;</th>
+                </tr>
+              </thead>
+            </table>
+          </b-tab>
+        </b-tabs>
       </b-col>
       <b-col lg="5" order="1">
         <b-card v-show="showMap" >
