@@ -131,7 +131,11 @@ function getElevation(points, location) {
       if (points[i].loc == location) {
         elevs.push(points[i].alt)
       } else {
-        elevs.push(points[i].alt + (location - points[i].loc) * (points[i+1].alt - points[i].alt) / (points[i+1].loc - points[i].loc))
+        if (points[i+1].loc === points[i].loc) {
+          elevs.push((points[i+1].alt + points[i].alt) / 2)
+        } else {
+          elevs.push(points[i].alt + (location - points[i].loc) * (points[i+1].alt - points[i].alt) / (points[i+1].loc - points[i].loc))
+        }
       }
       location = locs.shift()
       if (location == null) {
