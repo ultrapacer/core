@@ -1,7 +1,6 @@
 <template>
   <div class="container-fluid mt-4">
     <h1 class="h1">{{ course.name }}</h1>
-    <b-alert :show="loading" variant="info">Loading...</b-alert>
     <b-row>
       <b-col order="2">
         <b-tabs content-class="mt-3">
@@ -58,7 +57,7 @@
               <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
             </div>
           </b-tab>
-          <b-tab title="Second">
+          <b-tab title="Segments">
             <table class="table table-striped">
               <thead>
                 <tr>
@@ -100,7 +99,10 @@
         </b-tabs>
       </b-col>
       <b-col lg="5" order="1">
-        <b-card v-show="showMap" class="sticky-top">
+        <b-card v-show="initializing" class="mt-3">
+          <b-spinner label="Loading..."></b-spinner>
+        </b-card>
+        <b-card v-show="showMap && !initializing" class="sticky-top mt-3">
           <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
         </b-card>
         <b-card v-show="editingWaypoint" :title="(waypoint._id ? 'Edit Waypoint' : 'New Waypoint')">
@@ -118,7 +120,10 @@
               <b-form-textarea rows="4" v-model="waypoint.description"></b-form-textarea>
             </b-form-group>
             <div>
-              <b-btn type="submit" variant="success">Save Waypoint</b-btn>
+              <b-btn type="submit" variant="success">
+                 <b-spinner v-show="loading" small></b-spinner>
+                Save Waypoint
+              </b-btn>
               <b-btn type="cancel" @click.prevent="cancelWaypointEdit()">Cancel</b-btn>
             </div>
           </form>
@@ -132,7 +137,10 @@
               <b-form-textarea rows="4" v-model="waypoint.segmentNotes"></b-form-textarea>
             </b-form-group>
             <div>
-              <b-btn type="submit" variant="success">Save Segment</b-btn>
+              <b-btn type="submit" variant="success">
+                 <b-spinner v-show="loading" small></b-spinner>
+                 Save Segment
+               </b-btn>
               <b-btn type="cancel" @click.prevent="cancelSegmentEdit()">Cancel</b-btn>
             </div>
           </form>
@@ -153,6 +161,7 @@ export default {
   },
   data () {
     return {
+      initializing: true,
       loading: false,
       course: {},
       splits: [],
@@ -318,6 +327,7 @@ export default {
     await this.checkWaypoints()
     this.splits = utilities.calcSplits(this.points, this.user.distUnits)
     this.loading = false
+    this.initializing = false
     console.log('::::: CREATED :::::::')
   },
   methods: {
@@ -334,6 +344,7 @@ export default {
       this.editingSegment = false
     },
     async saveWaypoint () {
+      this.loading = true
       if (this.waypoint.type === 'start') {
         this.waypoint.elevation = this.points[0].alt
       } else if (this.waypoint.type === 'finish') {
@@ -347,14 +358,17 @@ export default {
         this.waypoint._course = this.course._id
         await api.createWaypoint(this.waypoint)
       }
+      this.loading = false
       this.waypoint = {} // reset form
       await this.refreshWaypoints()
       this.editingWaypoint = false
     },
     async saveSegment () {
+      this.loading = true
       await api.updateSegment(this.waypoint._id, this.waypoint)
       this.waypoint = {} // reset form
       await this.refreshWaypoints()
+      this.loading = false
       this.editingSegment = false
     },
     async refreshWaypoints () {
