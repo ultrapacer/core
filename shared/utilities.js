@@ -96,12 +96,19 @@ function calcSegments(points,breaks) {
 
 function cleanPoints(points) {
   var points2 = []
-  for (var i=0, il= points.length; i<il; i++) {
-    points2.push({
-      alt: points[i].elevation,
-      lat: points[i].lat,
-      lon: points[i].lon
-    })
+  var avgQty = 1
+  for (var i = 0, il = points.length; i < il; i++) {
+    if (i > 0 && points[i].lat === points[i - 1].lat && points[i].lon === points[i - 1].lon) {
+      points2[points2.length - 1].alt = (((avgQty * points2[points2.length - 1].alt) + points[i].elevation) / (avgQty + 1)).toFixed(2)
+      avgQty += 1
+    } else {
+      avgQty = 1
+      points2.push({
+        alt: points[i].elevation,
+        lat: points[i].lat,
+        lon: points[i].lon
+      })
+    }
 	}
   return points2
 }
