@@ -100,7 +100,7 @@
         </b-tabs>
       </b-col>
       <b-col lg="5" order="1">
-        <b-card v-show="showMap" >
+        <b-card v-show="showMap" class="sticky-top">
           <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
         </b-card>
         <b-card v-show="editingWaypoint" :title="(waypoint._id ? 'Edit Waypoint' : 'New Waypoint')">
