@@ -180,6 +180,7 @@ export default {
         purple: 'rgb(153, 102, 255)',
         grey: 'rgb(201, 203, 207)'
       },
+      chartProfile: [],
       chartOptions: {
         scales: {
           xAxes: [{
@@ -465,7 +466,7 @@ export default {
           })
         }
       }
-      this.chartOptions.scales.xAxes[0].ticks.max = xs[xs.length - 1] * this.distScale
+      this.chartOptions.scales.xAxes[0].ticks.max = (xs[xs.length - 1] * this.distScale) + .01
       this.chartProfile = data
       console.log(':::: done getting chartProfile :::::::')
     },

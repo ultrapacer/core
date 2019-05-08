@@ -16,9 +16,9 @@ function calcStats(points) {
     }
   }
   return {
-    distance: distance.toFixed(2),
-    gain: gain.toFixed(0),
-    loss: loss.toFixed(0)
+    distance: round(distance, 2),
+    gain: Math.round(gain),
+    loss: Math.round(loss)
   }
 }
 
@@ -99,7 +99,7 @@ function cleanPoints(points) {
   var avgQty = 1
   for (var i = 0, il = points.length; i < il; i++) {
     if (i > 0 && points[i].lat === points[i - 1].lat && points[i].lon === points[i - 1].lon) {
-      points2[points2.length - 1].alt = (((avgQty * points2[points2.length - 1].alt) + points[i].elevation) / (avgQty + 1)).toFixed(2)
+      points2[points2.length - 1].alt = round(((avgQty * points2[points2.length - 1].alt) + points[i].elevation) / (avgQty + 1), 2)
       avgQty += 1
     } else {
       avgQty = 1
@@ -127,6 +127,7 @@ function addLoc(points) {
 function getElevation(points, location) {
   var locs = []
   var elevs = []
+  var num = 0
   if (Array.isArray(location)) {
     locs = [...location]
   } else {
@@ -141,7 +142,8 @@ function getElevation(points, location) {
         if (points[i+1].loc === points[i].loc) {
           elevs.push((points[i+1].alt + points[i].alt) / 2)
         } else {
-          elevs.push(points[i].alt + (location - points[i].loc) * (points[i+1].alt - points[i].alt) / (points[i+1].loc - points[i].loc))
+          num = points[i].alt + (location - points[i].loc) * (points[i+1].alt - points[i].alt) / (points[i+1].loc - points[i].loc)
+          elevs.push(round(num, 2))
         }
       }
       location = locs.shift()
@@ -154,6 +156,10 @@ function getElevation(points, location) {
       }
     }
   }
+}
+
+function round (num, digits) {
+  return Math.round(num * (10**digits)) / 10**digits
 }
 
 module.exports = {
