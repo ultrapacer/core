@@ -19,7 +19,7 @@
               <td>{{ course.distance | formatDist(distScale) }}</td>
               <td>+{{ course.gain | formatAlt(altScale) }}/{{ course.loss | formatAlt(altScale) }}</td>
               <td class="text-right">
-                <router-link :to="'/course/?course='+course._id">Go</router-link> /
+                <router-link :to="'/course/'+course._id">Go</router-link> /
                 <a href="#" @click.prevent="populateCourseToEdit(course)">Edit</a> /
                 <a href="#" @click.prevent="deleteCourse(course._id)">Delete</a>
               </td>

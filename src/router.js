@@ -39,24 +39,23 @@ let router = new Router({
       component: CoursesManager
     },
     {
-      path: '/course',
+      path: '/course/:course',
       name: 'course',
       component: Course
+    },
+    {
+      path: '*',
+      redirect: '/'
     }
   ]
 })
-const util = require('util')
-// NEW - add a `beforeEach` handler to each route
+
 router.beforeEach((to, from, next) => {
   if (to.path === '/' || to.path === '/callback' || auth.isAuthenticated()) {
-    console.log('passing:')
-    console.log(to)
     return next()
   }
-
   // Specify the current path as the customState parameter, meaning it
   // will be returned to the application after auth
-  console.log(util.inspect(to, {showHidden: false, depth: null}))
   if (to.query == null) {
     auth.login({ target: to.path })
   } else {

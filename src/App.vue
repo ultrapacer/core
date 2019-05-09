@@ -56,7 +56,6 @@ export default {
     },
     async updateUser () {
       this.user = await api.getUser()
-      console.log(this.user)
     }
   }
 }

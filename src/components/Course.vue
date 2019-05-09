@@ -331,7 +331,7 @@ export default {
   },
   async created () {
     this.loading = true
-    this.course = await api.getCourse(this.$route.query.course)
+    this.course = await api.getCourse(this.$route.params.course)
     this.points = utilities.addLoc(this.course._gpx.points)
     this.updateChartProfile()
     this.waypoints = this.course.waypoints
@@ -466,7 +466,7 @@ export default {
           })
         }
       }
-      this.chartOptions.scales.xAxes[0].ticks.max = (xs[xs.length - 1] * this.distScale) + .01
+      this.chartOptions.scales.xAxes[0].ticks.max = (xs[xs.length - 1] * this.distScale) + 0.01
       this.chartProfile = data
       console.log(':::: done getting chartProfile :::::::')
     },
