@@ -7,9 +7,14 @@ import BootstrapVue from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import AuthPlugin from './plugins/auth'
+import VuePageTitle from 'vue-page-title'
 
 Vue.use(BootstrapVue)
 Vue.use(AuthPlugin)
+Vue.use(VuePageTitle, {
+  // prefix: 'My App - ',
+  suffix: '- ultraPacer'
+})
 
 Vue.config.productionTip = false
 

@@ -21,3 +21,10 @@
     font-size: 1.5rem;
   }
 </style>
+
+<script>
+export default {
+  title: 'Home'
+}
+</script>
+

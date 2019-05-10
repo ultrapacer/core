@@ -20,6 +20,7 @@
 
 <script>
 export default {
+  title: 'My Profile',
   data () {
     return {
       profile: this.$auth.profile

@@ -21,6 +21,7 @@
 <script>
 import api from '@/api'
 export default {
+  title: 'My Settings',
   props: ['user'],
   data () {
     return {

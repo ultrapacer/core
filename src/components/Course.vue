@@ -157,6 +157,7 @@ import LineChart from './LineChart.js'
 import api from '@/api'
 import utilities from '../../shared/utilities'
 export default {
+  title: 'Loading',
   props: ['user'],
   components: {
     LineChart
@@ -341,6 +342,7 @@ export default {
   },
   async created () {
     this.course = await api.getCourse(this.$route.params.course)
+    this.$title = this.course.name
     this.points = utilities.addLoc(this.course._gpx.points)
     this.waypoints = await api.getWaypoints(this.course._id)
     this.updateChartProfile()

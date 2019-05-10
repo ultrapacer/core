@@ -67,6 +67,7 @@
 <script>
 import api from '@/api'
 export default {
+  title: 'My Courses',
   props: ['user'],
   data () {
     return {
