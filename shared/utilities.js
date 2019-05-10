@@ -40,15 +40,17 @@ function calcSplits(points, units) {
   return calcSegments(points,breaks)
 }
 
-function calcSegments(points,breaks) {
+function calcSegments(points, breaks) {
   var segments = []
+  var alts = getElevation(points, breaks)
   for (var i = 1, il = breaks.length; i < il; i++) {
     segments.push({
-        start: breaks[i-1],
-        end: breaks[i],
-        len: breaks[i]-breaks[i-1],
-        gain: 0,
-        loss: 0
+      start: breaks[i - 1],
+      end: breaks[i],
+      len: breaks[i] - breaks[i - 1],
+      gain: 0,
+      loss: 0,
+      grade: round((alts[i] - alts[i - 1]) / (breaks[i] - breaks[i - 1]) / 10,2)
     })
   }
   function getSegmentIndex(dist){
@@ -135,8 +137,8 @@ function getElevation(points, location) {
   }
   location = locs.shift()
   for (var i = 0, il = points.length; i < il; i++) {
-    if (points[i].loc >= location) {
-      if (points[i].loc == location) {
+    if (points[i].loc >= location || i === il - 1) {
+      if (points[i].loc == location || i === il - 1) {
         elevs.push(points[i].alt)
       } else {
         if (points[i+1].loc === points[i].loc) {
@@ -148,13 +150,14 @@ function getElevation(points, location) {
       }
       location = locs.shift()
       if (location == null) {
-        if (elevs.length > 1) {
-          return elevs
-        } else {
-          return elevs[0]
-        }
+        break
       }
     }
+  }
+  if (elevs.length > 1) {
+    return elevs
+  } else {
+    return elevs[0]
   }
 }
 

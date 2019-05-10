@@ -66,6 +66,7 @@
                   <th>Distance</th>
                   <th>Gain [{{ user.elevUnits }}]</th>
                   <th>Loss [{{ user.elevUnits }}]</th>
+                  <th>Grade</th>
                   <th>Terrain</th>
                   <th>&nbsp;</th>
                 </tr>
@@ -77,6 +78,7 @@
                   <td>{{ segment.len | formatDist(distScale) }}</td>
                   <td>{{ segment.gain | formatAlt(altScale) }}</td>
                   <td>{{ segment.loss | formatAlt(altScale) }}</td>
+                  <td>{{ segment.grade }}%</td>
                   <td>{{ segment.start.terrainIndex }}</td>
                   <td class="text-right">
                     <a href="#" @click.prevent="populateSegmentToEdit(segment.start)">Edit</a>
@@ -227,7 +229,8 @@ export default {
           end: this.waypoints[j + 1],
           len: splits[j].len,
           gain: splits[j].gain,
-          loss: splits[j].loss
+          loss: splits[j].loss,
+          grade: splits[j].grade
         })
       }
       return arr
@@ -340,8 +343,8 @@ export default {
     this.loading = true
     this.course = await api.getCourse(this.$route.params.course)
     this.points = utilities.addLoc(this.course._gpx.points)
-    this.updateChartProfile()
     this.waypoints = await api.getWaypoints(this.course._id)
+    this.updateChartProfile()
     this.splits = utilities.calcSplits(this.points, this.user.distUnits)
     this.loading = false
     this.initializing = false
@@ -413,7 +416,6 @@ export default {
       this.editingSegment = true
     },
     updateChartProfile: function () {
-      console.log(':::: getting chartProfile :::::::')
       var data = []
       if (this.points.length < 400) {
         for (var i = 0, il = this.points.length; i < il; i++) {
@@ -438,7 +440,6 @@ export default {
       }
       this.chartOptions.scales.xAxes[0].ticks.max = (xs[xs.length - 1] * this.distScale) + 0.01
       this.chartProfile = data
-      console.log(':::: done getting chartProfile :::::::')
     },
     transparentize: function (color, opacity) {
       var alpha = opacity === undefined ? 0.5 : 1 - opacity
