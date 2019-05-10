@@ -3,28 +3,58 @@ var express = require('express')
 var waypointRoutes = express.Router()
 var Waypoint = require('../models/Waypoint')
 var Course = require('../models/Course')
+var GPX = require('../models/GPX')
 
 // GET LIST
-waypointRoutes.route('/list/:courseID').get(function (req, res) {
-  Waypoint.find({ _course: req.params.courseID }).sort('location').exec(function(err, waypoints) {
+waypointRoutes.route('/list/:courseID').get(async function (req, res) {
+  try {
+    var waypoints = await Waypoint.find({ _course: req.params.courseID }).sort('location').exec()
+    // check to make sure start and end waypoints exists:
+    if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
+      var course = await Course.findOne({ _id: req.params.courseID }).exec()
+      var gpx = await GPX.findOne({_id: course._gpx}).exec()
+       if (!waypoints.find(waypoint => waypoint.type === 'start')) {
+        var ws = new Waypoint({
+          name: 'Start',
+          type: 'start',
+          location: 0,
+          _course: req.params.courseID,
+          elevation: gpx.points[0].alt
+        })
+        await ws.save()
+        waypoints.unshift(ws)
+      }
+      if (!waypoints.find(waypoint => waypoint.type === 'finish')) {
+        var course = await Course.findOne({ _id: req.params.courseID }).exec()
+        var wf = new Waypoint({
+          name: 'Finish',
+          type: 'finish',
+          location: course.distance,
+          _course: req.params.courseID,
+          elevation: gpx.points[gpx.points.length - 1].alt
+        })
+        await wf.save()
+        waypoints.push(wf)
+      }
+    }
     res.json(waypoints)
-  });
-});
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
 
 // SAVE NEW
-waypointRoutes.route('/').post(function (req, res) {
-  var waypoint = new Waypoint(req.body)
-  console.log(waypoint)
-  console.log(req.body.waypoint)
-  waypoint.save().then(function() {
-    Course.update(
-      { _id: waypoint._course },
-      { $push: { waypoints: waypoint } }
-    ).then(post => {
-      res.json('Update complete');
-    })
-  })
-});
+waypointRoutes.route('/').post(async function (req, res) {
+  try {
+    var waypoint = new Waypoint(req.body)
+    await waypoint.save()
+    res.json('Update complete')
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
 
 //  UPDATE
 waypointRoutes.route('/:id').put(function (req, res) {

@@ -334,8 +334,7 @@ export default {
     this.course = await api.getCourse(this.$route.params.course)
     this.points = utilities.addLoc(this.course._gpx.points)
     this.updateChartProfile()
-    this.waypoints = this.course.waypoints
-    await this.checkWaypoints()
+    this.waypoints = await api.getWaypoints(this.course._id)
     this.splits = utilities.calcSplits(this.points, this.user.distUnits)
     this.loading = false
     this.initializing = false
@@ -383,16 +382,7 @@ export default {
       this.editingSegment = false
     },
     async refreshWaypoints () {
-      this.waypoints = await api.getWaypoints(this.$route.query.course)
-      if (!this.waypoints.length) {
-        await api.createWaypoint({
-          name: 'Start',
-          location: 0,
-          _course: this.course._id,
-          elevation: this.points[this.points.length - 1].alt
-        })
-        await this.refreshWaypoints()
-      }
+      this.waypoints = await api.getWaypoints(this.course._id)
     },
     async deleteWaypoint (id) {
       if (confirm('Are you sure you want to delete this waypoint?')) {
@@ -414,33 +404,6 @@ export default {
     async populateSegmentToEdit (waypoint) {
       this.waypoint = Object.assign({}, waypoint)
       this.editingSegment = true
-    },
-    async checkWaypoints () {
-      var update = false
-      if (!this.waypoints.find(waypoint => waypoint.type === 'start')) {
-        await api.createWaypoint({
-          name: 'Start',
-          type: 'start',
-          location: 0,
-          _course:
-          this.course._id,
-          elevation: this.points[this.points.length - 1].alt
-        })
-        update = true
-      }
-      if (!this.waypoints.find(waypoint => waypoint.type === 'finish')) {
-        await api.createWaypoint({
-          name: 'Finish',
-          type: 'finish',
-          location: this.course.distance,
-          _course: this.course._id,
-          elevation: this.points[this.points.length - 1].alt
-        })
-        update = true
-      }
-      if (update) {
-        await this.refreshWaypoints()
-      }
     },
     updateChartProfile: function () {
       console.log(':::: getting chartProfile :::::::')

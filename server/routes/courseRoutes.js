@@ -16,7 +16,7 @@ var Waypoint = require('../models/Waypoint')
 // Defined store route
 courseRoutes.route('/').post(upload.single('file'), function (req, res) {
   var query = { auth0ID: req.user.sub }
-  User.findOne(query).populate('courses').exec(function(err, user) {
+  User.findOne(query).exec(function(err, user) {
     console.log(user)
     gpxParse.parseGpx(req.file.buffer.toString(), function(error, data) {
       if (error) throw error 
@@ -35,18 +35,13 @@ courseRoutes.route('/').post(upload.single('file'), function (req, res) {
         
       gpx.save(function(err,record){
         course._gpx = record
-        course.save().then(function(){
-            console.log(user)
-            user.courses.push(course)
-            user.save()
-            .then(post => {
-              res.status(200).json({'post': 'Course added successfully'})
-            })
+        course.save().then(post => {
+          res.status(200).json({'post': 'Course added successfully'})
         })
-          .catch(err => {
-            console.log(err)
-            res.status(400).send("unable to save to database")
-          })
+        .catch(err => {
+          console.log(err)
+          res.status(400).send("unable to save to database")
+        })
       })
     })
   })
@@ -55,28 +50,22 @@ courseRoutes.route('/').post(upload.single('file'), function (req, res) {
 // Defined upload route
 courseRoutes.route('/upload').post(upload.single('file'), function (req, res) {
   console.log(req.file)
-});
+})
 
 // Defined get data(index or listing) route
-courseRoutes.route('/').get(function (req, res) {
-  var query = { auth0ID: req.user.sub }
-  User.findOne(query).populate({ path: 'courses', options: { sort: { name: 1}, collation: { locale: "en" }}}).exec(function(err, user) {
-    if(err){
-      console.log(err)
-    }
-    else {
-      res.json(user.courses)
-    }
-  })
+courseRoutes.route('/').get(async function (req, res) {
+  var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+  var courses = await Course.find({ _user: user }).exec()
+  res.json(courses)
 })
 
 // Defined edit route
 courseRoutes.route('/edit/:id').get(function (req, res) {
   var id = req.params.id;
   Course.findById(id, function (err, course){
-      res.json(course);
-  });
-});
+      res.json(course)
+  })
+})
 
 //  Defined update route
 courseRoutes.route('/:id').put(function (req, res) {
@@ -98,21 +87,20 @@ courseRoutes.route('/:id').put(function (req, res) {
 })
 
 // Defined delete | remove | destroy route
-courseRoutes.route('/:id').delete(function (req, res) {
+courseRoutes.route('/:id').delete(async function (req, res) {
   console.log('delete ' + req.params.id)
-  var query = { auth0ID: req.user.sub }
-  User.findOne(query).populate('courses').exec(function(err, user) {
+  var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+  console.log(user)
+  Course.findOne({ _id: req.params.id, _user: user }, (err, course) => {
     if(err){
       console.log(err)
+      res.status(400).send("unable to remove");
     }
     else {
-      Course.findByIdAndRemove({_id: req.params.id}, function(err, course){
+      course.remove().then(function(){
         if(err) res.json(err);
         else {
-          user.courses.pull(course)
-          user.save().then(function(){
-            res.json('Successfully removed')
-          })
+          res.json('Successfully removed')
         }
       })
     }
@@ -120,11 +108,14 @@ courseRoutes.route('/:id').delete(function (req, res) {
 })
 
 // GET COURSE
-courseRoutes.route('/:id').get(function (req, res) {
-  var id = req.params.id;
-  Course.findById(id).populate(['_gpx',{ path: 'waypoints', options: { sort: { location: 1}}}]).exec(function (err, course){
-      res.json(course);
-  })
+courseRoutes.route('/:course').get(async function (req, res) {
+  try {
+    var id = req.params.course
+    var course = await Course.findById(id).populate('_gpx').exec()
+    res.json(course)
+  } catch (err) {
+    res.status(400).send("No record");
+  }
 })
 
 module.exports = courseRoutes;
