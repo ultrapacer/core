@@ -1,8 +1,10 @@
 <template>
   <div class="container-fluid mt-4">
     <h1 class="h1">Courses</h1>
-    <b-alert :show="loading" variant="info">Loading...</b-alert>
-    <b-row>
+    <b-card v-if="initializing">
+      <b-spinner label="Loading..."></b-spinner>
+    </b-card>
+    <b-row v-if="!initializing">
       <b-col>
         <table class="table table-striped">
           <thead>
@@ -49,7 +51,10 @@
                 ></b-form-file>
             </b-form-group>
             <div>
-              <b-btn type="submit" variant="success">Save Course</b-btn>
+              <b-btn type="submit" variant="success" :disabled="saving">
+                 <b-spinner v-show="saving" small></b-spinner>
+                 Save Course
+               </b-btn>
               <b-btn type="cancel" @click.prevent="cancelEdit()">Cancel</b-btn>
             </div>
           </form>
@@ -65,7 +70,8 @@ export default {
   props: ['user'],
   data () {
     return {
-      loading: false,
+      initializing: true,
+      saving: false,
       editing: false,
       courses: [],
       model: {},
@@ -97,9 +103,8 @@ export default {
     }
   },
   async created () {
-    this.loading = true
     this.courses = await api.getCourses()
-    this.loading = false
+    this.initializing = false
   },
   methods: {
     async refreshCourses () {
@@ -110,6 +115,7 @@ export default {
       this.editing = true
     },
     async saveCourse () {
+      this.saving = true
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
       } else {
@@ -120,6 +126,7 @@ export default {
       }
       this.model = {} // reset form
       await this.refreshCourses()
+      this.saving = false
       this.editing = false
     },
     async deleteCourse (id) {

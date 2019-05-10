@@ -122,8 +122,8 @@
               <b-form-textarea rows="4" v-model="waypoint.description"></b-form-textarea>
             </b-form-group>
             <div>
-              <b-btn type="submit" variant="success">
-                 <b-spinner v-show="loading" small></b-spinner>
+              <b-btn type="submit" variant="success" :disabled="saving">
+                 <b-spinner v-show="saving" small></b-spinner>
                 Save Waypoint
               </b-btn>
               <b-btn type="cancel" @click.prevent="cancelWaypointEdit()">Cancel</b-btn>
@@ -139,8 +139,8 @@
               <b-form-textarea rows="4" v-model="waypoint.segmentNotes"></b-form-textarea>
             </b-form-group>
             <div>
-              <b-btn type="submit" variant="success">
-                 <b-spinner v-show="loading" small></b-spinner>
+              <b-btn type="submit" variant="success" :disabled="saving">
+                 <b-spinner v-show="saving" small></b-spinner>
                  Save Segment
                </b-btn>
               <b-btn type="cancel" @click.prevent="cancelSegmentEdit()">Cancel</b-btn>
@@ -164,7 +164,7 @@ export default {
   data () {
     return {
       initializing: true,
-      loading: false,
+      saving: false,
       course: {},
       splits: [],
       unitSystem: 'english',
@@ -340,13 +340,11 @@ export default {
     }
   },
   async created () {
-    this.loading = true
     this.course = await api.getCourse(this.$route.params.course)
     this.points = utilities.addLoc(this.course._gpx.points)
     this.waypoints = await api.getWaypoints(this.course._id)
     this.updateChartProfile()
     this.splits = utilities.calcSplits(this.points, this.user.distUnits)
-    this.loading = false
     this.initializing = false
     console.log('::::: CREATED :::::::')
   },
@@ -364,7 +362,7 @@ export default {
       this.editingSegment = false
     },
     async saveWaypoint () {
-      this.loading = true
+      this.saving = true
       if (this.waypoint.type === 'start') {
         this.waypoint.elevation = this.points[0].alt
       } else if (this.waypoint.type === 'finish') {
@@ -378,17 +376,17 @@ export default {
         this.waypoint._course = this.course._id
         await api.createWaypoint(this.waypoint)
       }
-      this.loading = false
       this.waypoint = {} // reset form
       await this.refreshWaypoints()
       this.editingWaypoint = false
+      this.saving = false
     },
     async saveSegment () {
-      this.loading = true
+      this.saving = true
       await api.updateSegment(this.waypoint._id, this.waypoint)
       this.waypoint = {} // reset form
       await this.refreshWaypoints()
-      this.loading = false
+      this.saving = false
       this.editingSegment = false
     },
     async refreshWaypoints () {
@@ -401,10 +399,8 @@ export default {
           this.waypoint = {}
           this.editingWaypoint = false
         }
-        this.loading = true
         await api.deleteWaypoint(id)
         await this.refreshWaypoints()
-        this.loading = false
       }
     },
     async populateWaypointToEdit (waypoint) {
