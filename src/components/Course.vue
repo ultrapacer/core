@@ -176,6 +176,7 @@ export default {
         orange: 'rgb(255, 159, 64)',
         yellow: 'rgb(255, 205, 86)',
         green: 'rgb(75, 192, 192)',
+        darkgreen: 'rgb(50, 150, 150)',
         blue: 'rgb(54, 162, 235)',
         purple: 'rgb(153, 102, 255)',
         grey: 'rgb(201, 203, 207)'
@@ -199,7 +200,10 @@ export default {
           }]
         },
         tooltips: {
-          enabled: false
+          enabled: true,
+          filter: function (tooltipItem) {
+            return tooltipItem.datasetIndex === 0
+          }
         },
         legend: {
           display: false
@@ -276,7 +280,6 @@ export default {
           { data: this.chartProfile,
             pointRadius: 0,
             pointHoverRadius: 0,
-            borderColor: this.chartColors.blue,
             backgroundColor: this.transparentize(this.chartColors.blue)
           }
         ]
@@ -286,11 +289,11 @@ export default {
       if (!this.waypoints.length) { return [] }
       var d = {
         data: [],
-        backgroundColor: this.chartColors.red,
-        borderColor: this.chartColors.red,
+        backgroundColor: [],
+        borderColor: [],
         fill: false,
         pointRadius: [],
-        pointSyle: [],
+        pointStyle: [],
         pointHoverRadius: 10,
         showLine: false
       }
@@ -302,11 +305,15 @@ export default {
           y: this.waypoints[i].elevation * this.altScale
         })
         if (this.waypoints[i].type === 'landmark') {
-          d.pointRadius.push(3)
-          d.pointSyle.push('triangle')
+          d.pointRadius.push(6)
+          d.pointStyle.push('triangle')
+          d.backgroundColor.push(this.chartColors.darkgreen)
+          d.borderColor.push(this.chartColors.darkgreen)
         } else {
           d.pointRadius.push(6)
-          d.pointSyle.push('circle')
+          d.pointStyle.push('circle')
+          d.backgroundColor.push(this.chartColors.red)
+          d.borderColor.push(this.chartColors.red)
         }
       }
       console.log(':::: done getting chartPoints :::::::')
