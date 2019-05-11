@@ -110,9 +110,14 @@ courseRoutes.route('/:id').delete(async function (req, res) {
 // GET COURSE
 courseRoutes.route('/:course').get(async function (req, res) {
   try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var id = req.params.course
     var course = await Course.findById(id).populate('_gpx').exec()
-    res.json(course)
+    if (course.public || course._user == user._id) {
+      res.json(course)
+    } else {
+      res.status(403).send("No permission")
+    }
   } catch (err) {
     res.status(400).send("No record");
   }
