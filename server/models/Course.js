@@ -27,9 +27,13 @@ var CourseSchema = new Schema({
   },
   loss: {
     type: Number
+  },
+  public: {
+    type: Boolean,
+    default: false
   }
 },{
-    collection: 'courses'
+  collection: 'courses'
 })
 
 CourseSchema.pre('remove', function() {
