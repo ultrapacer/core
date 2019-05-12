@@ -38,6 +38,11 @@
             <b-form-group label="Name">
               <b-form-input type="text" v-model="model.name"></b-form-input>
             </b-form-group>
+            <b-form-group label="Privacy">
+              <b-form-checkbox v-model="model.public" value="true" unchecked-value="false">
+                Visible to public
+              </b-form-checkbox>
+            </b-form-group>
             <b-form-group label="Description">
               <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
             </b-form-group>
@@ -125,10 +130,10 @@ export default {
         formData.append('model', JSON.stringify(this.model))
         await api.createCourse(formData)
       }
-      this.model = {} // reset form
       await this.refreshCourses()
       this.saving = false
       this.editing = false
+      this.model = {} // reset form
     },
     async deleteCourse (id) {
       if (confirm('Are you sure you want to delete this course?')) {

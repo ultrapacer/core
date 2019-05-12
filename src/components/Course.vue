@@ -8,9 +8,9 @@
             <table class="table table-striped">
               <thead>
                 <tr>
-                  <th>Split [{{ user.distUnits }}]</th>
-                  <th>Gain [{{ user.elevUnits }}]</th>
-                  <th>Loss [{{ user.elevUnits }}]</th>
+                  <th>Split [{{ distUnits }}]</th>
+                  <th>Gain [{{ elevUnits }}]</th>
+                  <th>Loss [{{ elevUnits }}]</th>
                 </tr>
               </thead>
               <tbody>
@@ -34,8 +34,8 @@
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Location [{{ user.distUnits }}]</th>
-                  <th>Elevation [{{ user.elevUnits }}]</th>
+                  <th>Location [{{ distUnits }}]</th>
+                  <th>Elevation [{{ elevUnits }}]</th>
                   <th>&nbsp;</th>
                 </tr>
               </thead>
@@ -44,16 +44,17 @@
                   <td>{{ waypoint.name }}</td>
                   <td>{{ waypoint.location | formatDist(distScale) }}</td>
                   <td>{{ waypoint.elevation | formatAlt(altScale) }}</td>
-                  <td class="text-right">
+                  <td class="text-right" v-if="owner">
                     <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a>
                     <span v-show="waypoint.type != 'start' && waypoint.type != 'finish'">/
                       <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
                     </span>
                   </td>
+                  <th v-if="!owner">&nbsp;</th>
                 </tr>
               </tbody>
             </table>
-            <div v-show="!editingWaypoint">
+            <div v-show="!editingWaypoint" v-if="owner">
               <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
             </div>
           </b-tab>
@@ -64,8 +65,8 @@
                   <th>Start</th>
                   <th>End</th>
                   <th>Distance</th>
-                  <th>Gain [{{ user.elevUnits }}]</th>
-                  <th>Loss [{{ user.elevUnits }}]</th>
+                  <th>Gain [{{ elevUnits }}]</th>
+                  <th>Loss [{{ elevUnits }}]</th>
                   <th>Grade</th>
                   <th>Terrain</th>
                   <th>&nbsp;</th>
@@ -81,7 +82,7 @@
                   <td>{{ segment.grade }}%</td>
                   <td>{{ segment.start.terrainIndex }}</td>
                   <td class="text-right">
-                    <a href="#" @click.prevent="populateSegmentToEdit(segment.start)">Edit</a>
+                    <a v-if="owner" href="#" @click.prevent="populateSegmentToEdit(segment.start)">Edit</a>
                   </td>
                 </tr>
               </tbody>
@@ -112,7 +113,7 @@
             <b-form-group label="Name">
               <b-form-input type="text" v-model="waypoint.name"></b-form-input>
             </b-form-group>
-            <b-form-group v-bind:label="'Location [' + user.distUnits + ']'" v-show="waypoint.type != 'start' && waypoint.type != 'finish'">
+            <b-form-group v-bind:label="'Location [' + distUnits + ']'" v-show="waypoint.type != 'start' && waypoint.type != 'finish'">
               <b-form-input type="number" step="0.001" v-model="waypointLoc" min="0" v-bind:max="course.distance"></b-form-input>
             </b-form-group>
             <b-form-group label="Type">
@@ -158,7 +159,7 @@ import api from '@/api'
 import utilities from '../../shared/utilities'
 export default {
   title: 'Loading',
-  props: ['user'],
+  props: ['isAuthenticated', 'user'],
   components: {
     LineChart
   },
@@ -215,6 +216,13 @@ export default {
     }
   },
   computed: {
+    owner: function () {
+      if (this.isAuthenticated && String(this.user._id) === String(this.course._user)) {
+        return true
+      } else {
+        return false
+      }
+    },
     segments: function () {
       if (!this.points.length) { return [] }
       if (!this.waypoints.length) { return [] }
@@ -255,15 +263,21 @@ export default {
         return false
       }
     },
+    distUnits: function () {
+      return (this.isAuthenticated) ? this.user.distUnits : 'mi'
+    },
+    elevUnits: function () {
+      return (this.isAuthenticated) ? this.user.elevUnits : 'ft'
+    },
     distScale: function () {
-      if (this.user.distUnits === 'mi') {
+      if (this.distUnits === 'mi') {
         return 0.621371
       } else {
         return 1
       }
     },
     altScale: function () {
-      if (this.user.elevUnits === 'ft') {
+      if (this.elevUnits === 'ft') {
         return 3.28084
       } else {
         return 1
@@ -346,7 +360,7 @@ export default {
     this.points = utilities.addLoc(this.course._gpx.points)
     this.waypoints = await api.getWaypoints(this.course._id)
     this.updateChartProfile()
-    this.splits = utilities.calcSplits(this.points, this.user.distUnits)
+    this.splits = utilities.calcSplits(this.points, this.distUnits)
     this.initializing = false
     console.log('::::: CREATED :::::::')
   },

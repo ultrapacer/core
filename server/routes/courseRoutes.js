@@ -73,8 +73,9 @@ courseRoutes.route('/:id').put(function (req, res) {
     if (!course)
       return next(new Error('Could not load Document'));
     else {
-      course.name = req.body.name;
-      course.description = req.body.description;
+      course.name = req.body.name
+      course.description = req.body.description
+      course.public = req.body.public
 
       course.save().then(post => {
           res.json('Update complete');
@@ -113,7 +114,7 @@ courseRoutes.route('/:course').get(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var id = req.params.course
     var course = await Course.findById(id).populate('_gpx').exec()
-    if (course.public || course._user == user._id) {
+    if (course.public || String(course._user._id) == String(user._id)) {
       res.json(course)
     } else {
       res.status(403).send("No permission")

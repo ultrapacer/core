@@ -15,7 +15,7 @@
       </b-collapse>
     </b-navbar>
     <!-- routes will be rendered here -->
-    <router-view :user="user" />
+    <router-view :isAuthenticated="isAuthenticated" :user="user" />
   </div>
 </template>
 
