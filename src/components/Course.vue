@@ -1,7 +1,10 @@
 <template>
   <div class="container-fluid mt-4">
     <h1 class="h1">{{ course.name }}</h1>
-    <b-row>
+    <b-card v-show="initializing" class="mt-3">
+      <b-spinner label="Loading..."></b-spinner>
+    </b-card>
+    <b-row v-if="!initializing">
       <b-col order="2">
         <b-tabs content-class="mt-3">
           <b-tab title="Splits" active>
@@ -102,9 +105,6 @@
         </b-tabs>
       </b-col>
       <b-col lg="5" order="1">
-        <b-card v-show="initializing" class="mt-3">
-          <b-spinner label="Loading..."></b-spinner>
-        </b-card>
         <b-card v-if="!initializing" v-show="showMap" class="sticky-top mt-3">
           <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
         </b-card>
