@@ -7,6 +7,7 @@ import auth from './auth/authService'
 import CoursesManager from '@/components/CoursesManager'
 import Course from '@/components/Course'
 import Settings from '@/components/Settings'
+import PrivacyPolicy from '@/components/PrivacyPolicy'
 
 Vue.use(Router)
 
@@ -17,6 +18,10 @@ let router = new Router({
       path: '/',
       name: 'Hello',
       component: Hello
+    },{
+      path: '/privacy',
+      name: 'PrivacyPolicy',
+      component: PrivacyPolicy
     },
     {
       path: '/callback',
@@ -26,22 +31,34 @@ let router = new Router({
     {
       path: '/profile',
       name: 'Profile',
-      component: Profile
+      component: Profile,
+      meta: {
+        requiresAuth: true
+      }
     },
     {
       path: '/settings',
       name: 'Settings',
-      component: Settings
+      component: Settings,
+      meta: {
+        requiresAuth: true
+      }
     },
     {
       path: '/courses',
       name: 'CoursesManager',
-      component: CoursesManager
+      component: CoursesManager,
+      meta: {
+        requiresAuth: true
+      }
     },
     {
       path: '/course/:course',
       name: 'course',
-      component: Course
+      component: Course,
+      meta: {
+        requiresAuth: true
+      }
     },
     {
       path: '*',
@@ -51,7 +68,7 @@ let router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.path === '/' || to.path === '/callback' || auth.isAuthenticated()) {
+  if (!to.meta.requiresAuth || auth.isAuthenticated()) {
     return next()
   }
   // Specify the current path as the customState parameter, meaning it
