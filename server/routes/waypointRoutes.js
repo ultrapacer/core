@@ -19,7 +19,9 @@ waypointRoutes.route('/list/:courseID').get(async function (req, res) {
           type: 'start',
           location: 0,
           _course: req.params.courseID,
-          elevation: gpx.points[0].alt
+          elevation: gpx.points[0].alt,
+          lat: gpx.points[0].lat,
+          lon: gpx.points[0].lon
         })
         await ws.save()
         waypoints.unshift(ws)
@@ -31,7 +33,9 @@ waypointRoutes.route('/list/:courseID').get(async function (req, res) {
           type: 'finish',
           location: course.distance,
           _course: req.params.courseID,
-          elevation: gpx.points[gpx.points.length - 1].alt
+          elevation: gpx.points[gpx.points.length - 1].alt,
+          lat: gpx.points[gpx.points.length - 1].lat,
+          lon: gpx.points[gpx.points.length - 1].lon
         })
         await wf.save()
         waypoints.push(wf)
@@ -60,18 +64,20 @@ waypointRoutes.route('/').post(async function (req, res) {
 waypointRoutes.route('/:id').put(function (req, res) {
   Waypoint.findById(req.params.id, function(err, waypoint) {
     if (!waypoint)
-      return next(new Error('Could not load Document'));
+      return next(new Error('Could not load Document'))
     else {
-      waypoint.name = req.body.name;
-      waypoint.location = req.body.location;
-      waypoint.description = req.body.description;
-      waypoint.elevation = req.body.elevation;
+      waypoint.name = req.body.name
+      waypoint.location = req.body.location
+      waypoint.description = req.body.description
+      waypoint.elevation = req.body.elevation
+      waypoint.lat = req.body.lat
+      waypoint.lon = req.body.lon
 
       waypoint.save().then(post => {
-          res.json('Update complete');
+          res.json('Update complete')
       })
       .catch(err => {
-            res.status(400).send("unable to update the database");
+            res.status(400).send("unable to update the database")
       })
     }
   })

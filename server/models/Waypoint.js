@@ -16,6 +16,12 @@ var WaypointSchema = new Schema({
   location: {
     type: Number
   },
+  lat: {
+    type: Number
+  },
+  lon: {
+    type: Number
+  },
   elevation: {
     type: Number
   },
