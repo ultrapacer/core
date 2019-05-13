@@ -1,3 +1,4 @@
+const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
 
 function calcStats(points) {
@@ -161,6 +162,43 @@ function getElevation(points, location) {
   }
 }
 
+function getLatLonFromDistance(points, location) {
+  var locs = []
+  var lls = []
+  var num = 0
+  if (Array.isArray(location)) {
+    locs = [...location]
+  } else {
+    locs = [location]
+  }
+  location = locs.shift()
+  for (var i = 0, il = points.length; i < il; i++) {
+    if (points[i].loc >= location || i === il - 1) {
+      if (points[i].loc == location || i === il - 1) {
+        lls.push([points[i].lat, points[i].lon])
+      } else {
+        if (points[i+1].loc === points[i].loc) {
+          lls.push([points[i].lat, points[i].lon])
+        } else {
+          var p1 = new sgeo.latlon(points[i].lat, points[i].lon)
+          var p2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
+          var inp = p1.interpolate(p2,3)
+          lls.push([inp[1].lat, inp[1].lng])
+        }
+      }
+      location = locs.shift()
+      if (location == null) {
+        break
+      }
+    }
+  }
+  if (lls.length > 1) {
+    return lls
+  } else {
+    return lls[0]
+  }
+}
+
 function round (num, digits) {
   return Math.round(num * (10**digits)) / 10**digits
 }
@@ -171,5 +209,6 @@ module.exports = {
   calcSplits: calcSplits,
   cleanPoints: cleanPoints,
   calcSegments: calcSegments,
-  getElevation: getElevation
+  getElevation: getElevation,
+  getLatLonFromDistance: getLatLonFromDistance
 }

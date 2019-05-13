@@ -105,9 +105,21 @@
         </b-tabs>
       </b-col>
       <b-col lg="5" order="1">
-        <b-card v-if="!initializing" v-show="showMap" class="sticky-top mt-3">
-          <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
-        </b-card>
+        <b-tabs content-class="mt-3" v-if="!initializing" v-show="showMap" class="sticky-top mt-3" >
+          <b-tab title="Profile" >
+            <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
+          </b-tab>
+          <b-tab title="Map" active>
+            <l-map ref="courseMap" style="height: 600px; width: 100%" :center="mapLatLon[1]" :zoom="12">
+            <l-tile-layer :url="mapLayerURL"></l-tile-layer>
+            <l-polyline
+                :lat-lngs="mapLatLon"
+                color="red">
+            </l-polyline>
+            <l-marker v-for="waypoint in waypoints" :key="waypoint._id" :lat-lng="[waypoint.lat, waypoint.lon]" ></l-marker>
+          </l-map>
+          </b-tab>
+        </b-tabs>
         <b-card v-show="editingWaypoint" :title="(waypoint._id ? 'Edit Waypoint' : 'New Waypoint')">
           <form @submit.prevent="saveWaypoint">
             <b-form-group label="Name">
@@ -155,13 +167,19 @@
 
 <script>
 import LineChart from './LineChart.js'
+import {LMap, LTileLayer, LPolyline, LMarker } from 'vue2-leaflet'
 import api from '@/api'
 import utilities from '../../shared/utilities'
+
 export default {
   title: 'Loading',
   props: ['isAuthenticated', 'user'],
   components: {
-    LineChart
+    LineChart,
+    LMap,
+    LTileLayer,
+    LPolyline,
+    LMarker
   },
   data () {
     return {
@@ -212,7 +230,9 @@ export default {
         legend: {
           display: false
         }
-      }
+      },
+      mapLatLon: [],
+      mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png'
     }
   },
   computed: {
@@ -358,6 +378,7 @@ export default {
     this.course = await api.getCourse(this.$route.params.course)
     this.$title = this.course.name
     this.points = utilities.addLoc(this.course._gpx.points)
+    this.updateMapLatLon()
     this.waypoints = await api.getWaypoints(this.course._id)
     this.updateChartProfile()
     this.splits = utilities.calcSplits(this.points, this.distUnits)
@@ -381,10 +402,17 @@ export default {
       this.saving = true
       if (this.waypoint.type === 'start') {
         this.waypoint.elevation = this.points[0].alt
+        this.waypoint.lat = this.points[0].lat
+        this.waypoint.lon = this.points[0].lon
       } else if (this.waypoint.type === 'finish') {
         this.waypoint.elevation = this.points[this.points.length - 1].alt
+        this.waypoint.lat = this.points[this.points.length - 1].lat
+        this.waypoint.lon = this.points[this.points.length - 1].lon
       } else {
         this.waypoint.elevation = utilities.getElevation(this.points, this.waypoint.location)
+        var ll = utilities.getLatLonFromDistance(this.points, this.waypoint.location)
+        this.waypoint.lat = ll[0]
+        this.waypoint.lon = ll[1]
       }
       if (this.waypoint._id) {
         await api.updateWaypoint(this.waypoint._id, this.waypoint)
@@ -456,6 +484,13 @@ export default {
     transparentize: function (color, opacity) {
       var alpha = opacity === undefined ? 0.5 : 1 - opacity
       return Color(color).alpha(alpha).rgbString()
+    },
+    updateMapLatLon: function() {
+      var arr = []
+      for (var i = 0, il = this.points.length; i < il; i++) {
+        arr.push([this.points[i].lat, this.points[i].lon])
+      }
+      this.mapLatLon = arr
     }
   }
 }
