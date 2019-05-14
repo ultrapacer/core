@@ -8,7 +8,7 @@
       <b-col order="2">
         <b-tabs content-class="mt-3">
           <b-tab title="Splits" active>
-            <b-table :items="splits" :fields="splitTableFields" hover foot-clone>
+            <b-table :items="splits" :fields="splitTableFields" hover foot-clone small>
               <template slot="HEAD_end">Split [{{ distUnits }}]</template>
               <template slot="HEAD_gain">Gain [{{ elevUnits }}]</template>
               <template slot="HEAD_loss">Gain [{{ elevUnits }}]</template>
@@ -18,7 +18,7 @@
             </b-table>
           </b-tab>
           <b-tab title="Waypoints">
-            <b-table :items="waypoints" :fields="waypointTableFields" primary-key="_id" hover>
+            <b-table :items="waypoints" :fields="waypointTableFields" primary-key="_id" hover small>
               <template slot="HEAD_location">Location [{{ elevUnits }}]</template>
               <template slot="HEAD_elevation">Elevation [{{ elevUnits }}]</template>
               <template slot="HEAD_actions">&nbsp;</template>
@@ -36,7 +36,7 @@
             </div>
           </b-tab>
           <b-tab title="Segments">
-            <b-table :items="segments" :fields="segmentTableFields" primary-key="start._id" hover foot-clone>
+            <b-table :items="segments" :fields="segmentTableFields" primary-key="start._id" hover foot-clone small>
               <template slot="HEAD_len">Length [{{ distUnits }}]</template>
               <template slot="HEAD_gain">Gain [{{ elevUnits }}]</template>
               <template slot="HEAD_loss">Loss [{{ elevUnits }}]</template>
