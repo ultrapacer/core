@@ -8,14 +8,7 @@
       <b-col order="2">
         <b-tabs content-class="mt-3">
           <b-tab title="Splits" active>
-            <b-table :items="splits" :fields="splitTableFields" hover foot-clone small>
-              <template slot="HEAD_end">Split [{{ distUnits }}]</template>
-              <template slot="HEAD_gain">Gain [{{ elevUnits }}]</template>
-              <template slot="HEAD_loss">Gain [{{ elevUnits }}]</template>
-              <template slot="FOOT_end">&nbsp;</template>
-              <template slot="FOOT_gain">{{ course.gain | formatAlt(altScale) }}</template>
-              <template slot="FOOT_loss">{{ course.loss | formatAlt(altScale) }}</template>
-            </b-table>
+            <split-table :course="course" :splits="splits" :units="units"></split-table>
           </b-tab>
           <b-tab title="Waypoints">
             <b-table :items="waypoints" :fields="waypointTableFields" primary-key="_id" hover small>
@@ -124,6 +117,7 @@ import LineChart from './LineChart.js'
 import {LMap, LTileLayer, LPolyline, LMarker } from 'vue2-leaflet'
 import api from '@/api'
 import utilities from '../../shared/utilities'
+import SplitTable from './SplitTable'
 
 export default {
   title: 'Loading',
@@ -133,7 +127,8 @@ export default {
     LMap,
     LTileLayer,
     LPolyline,
-    LMarker
+    LMarker,
+    SplitTable
   },
   data () {
     return {
@@ -321,6 +316,14 @@ export default {
         return true
       } else {
         return false
+      }
+    },
+    units: function () {
+      return {
+        dist: this.distUnits,
+        alt: this.elevUnits,
+        distScale: this.distScale,
+        altScale: this.altScale
       }
     },
     distUnits: function () {
