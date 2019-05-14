@@ -1,9 +1,9 @@
 <template>
   <div class="container-fluid mt-4">
     <h1 class="h1">{{ course.name }}</h1>
-    <b-card v-show="initializing" class="mt-3">
-      <b-spinner label="Loading..."></b-spinner>
-    </b-card>
+    <div v-if="initializing" class="d-flex justify-content-center mb-3">
+      <b-spinner label="Loading..." ></b-spinner>
+    </div>
     <b-row v-if="!initializing">
       <b-col order="2">
         <b-tabs content-class="mt-3">

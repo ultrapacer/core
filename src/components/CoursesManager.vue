@@ -1,33 +1,30 @@
 <template>
   <div class="container-fluid mt-4">
     <h1 class="h1">Courses</h1>
-    <b-card v-if="initializing">
-      <b-spinner label="Loading..."></b-spinner>
-    </b-card>
+    <div v-if="initializing" class="d-flex justify-content-center mb-3">
+      <b-spinner label="Loading..." ></b-spinner>
+    </div>
     <b-row v-if="!initializing">
       <b-col>
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Distance [{{ user.distUnits }}]</th>
-              <th>Elevation [{{ user.elevUnits }}]</th>
-              <th>&nbsp;</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="course in courses" :key="course._id">
-              <td>{{ course.name }}</td>
-              <td>{{ course.distance | formatDist(distScale) }}</td>
-              <td>+{{ course.gain | formatAlt(altScale) }}/{{ course.loss | formatAlt(altScale) }}</td>
-              <td class="text-right">
-                <router-link :to="'/course/'+course._id">Go</router-link> /
-                <a href="#" @click.prevent="populateCourseToEdit(course)">Edit</a> /
-                <a href="#" @click.prevent="deleteCourse(course._id)">Delete</a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <b-table :items="courses" :fields="fields" hover>
+          <template slot="HEAD_distance">
+            Distance [{{ user.distUnits }}]
+          </template>
+          <template slot="HEAD_elevation">
+            Elevation [{{ user.elevUnits }}]
+          </template>
+          <template slot="actions" slot-scope="row">
+            <b-button size="sm" @click="goToCourse(row.item)" class="mr-2" variant="outline-primary">
+              View
+            </b-button>
+            <b-button size="sm" @click="populateCourseToEdit(row.item)" class="mr-2">
+              Edit
+            </b-button>
+            <b-button size="sm" @click="deleteCourse(row.item._id)" class="mr-2" variant="danger">
+              Delete
+            </b-button>
+          </template>
+        </b-table>
         <div v-show="!editing">
           <b-btn variant="success" @click.prevent="newCourse()">New Course</b-btn>
         </div>
@@ -72,7 +69,7 @@
 <script>
 import api from '@/api'
 export default {
-  title: 'My Courses',
+  title: 'Courses',
   props: ['user'],
   data () {
     return {
@@ -81,15 +78,31 @@ export default {
       editing: false,
       courses: [],
       model: {},
-      file: null
-    }
-  },
-  filters: {
-    formatDist (val, distScale) {
-      return (val * distScale).toFixed(2)
-    },
-    formatAlt (val, altScale) {
-      return (val * altScale).toFixed(0)
+      file: null,
+      fields: [
+          {
+            key: 'name',
+            label: 'Name',
+            sortable: true
+          },
+          {
+            key: 'distance',
+            sortable: true,
+            formatter: (value, key, item) => {
+              return (value * this.distScale).toFixed(2)
+            }
+          },
+          {
+            key: 'elevation',
+            formatter: (value, key, item) => {
+              return '+' + (item.gain * this.altScale).toFixed(0) + '/' +  (item.loss * this.altScale).toFixed(0)
+            }
+          },
+          {
+            key: 'actions',
+            label: 'Actions'
+          }
+        ]
     }
   },
   computed: {
@@ -115,6 +128,9 @@ export default {
   methods: {
     async refreshCourses () {
       this.courses = await api.getCourses()
+    },
+    async goToCourse (course) {
+      this.$router.push({path: '/course/' + course._id})
     },
     async populateCourseToEdit (course) {
       this.model = Object.assign({}, course)
