@@ -15,29 +15,31 @@ export default {
     }
   },
   computed: {
-    fields: function() [
-      {
-        key: 'end',
-        label: 'Split [' + this.units.dist + ']',
-        formatter: (value, key, item) => {
-          return (value * this.units.distScale).toFixed(2)
+    fields: function() {
+      return [
+        {
+          key: 'end',
+          label: 'Split [' + this.units.dist + ']',
+          formatter: (value, key, item) => {
+            return (value * this.units.distScale).toFixed(2)
+          }
+        },
+        {
+          key: 'gain',
+          label: 'Gain [' + this.units.alt + ']',
+          formatter: (value, key, item) => {
+            return (value * this.units.altScale).toFixed(0)
+          }
+        },
+        {
+          key: 'loss',
+          label: 'Loss [' + this.units.alt + ']',
+          formatter: (value, key, item) => {
+            return (value * this.units.altScale).toFixed(0)
+          }
         }
-      },
-      {
-        key: 'gain',
-        label: 'Gain [' + this.units.alt + ']',
-        formatter: (value, key, item) => {
-          return (value * this.units.altScale).toFixed(0)
-        }
-      },
-      {
-        key: 'loss',
-        label: 'Loss [' + this.units.alt + ']',
-        formatter: (value, key, item) => {
-          return (value * this.units.altScale).toFixed(0)
-        }
-      }
-    ],
+      ]
+    }
   }
 }
 </script>
