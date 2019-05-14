@@ -9,95 +9,52 @@
         <b-tabs content-class="mt-3">
           <b-tab title="Splits" active>
             <b-table :items="splits" :fields="splitTableFields" hover foot-clone>
-              <template slot="HEAD_end">
-                Split [{{ user.distUnits }}]
-              </template>
-              <template slot="HEAD_gain">
-                Gain [{{ user.elevUnits }}]
-              </template>
-              <template slot="HEAD_loss">
-                Gain [{{ user.elevUnits }}]
-              </template>
-              <template slot="FOOT_end">
-                &nbsp;
-              </template>
-              <template slot="FOOT_gain">
-                {{ course.gain | formatAlt(altScale) }}
-              </template>
-              <template slot="FOOT_loss">
-                {{ course.loss | formatAlt(altScale) }}
-              </template>
+              <template slot="HEAD_end">Split [{{ distUnits }}]</template>
+              <template slot="HEAD_gain">Gain [{{ elevUnits }}]</template>
+              <template slot="HEAD_loss">Gain [{{ elevUnits }}]</template>
+              <template slot="FOOT_end">&nbsp;</template>
+              <template slot="FOOT_gain">{{ course.gain | formatAlt(altScale) }}</template>
+              <template slot="FOOT_loss">{{ course.loss | formatAlt(altScale) }}</template>
             </b-table>
           </b-tab>
           <b-tab title="Waypoints">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Location [{{ distUnits }}]</th>
-                  <th>Elevation [{{ elevUnits }}]</th>
-                  <th>&nbsp;</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="waypoint in waypoints" :key="waypoint._id">
-                  <td>{{ waypoint.name }}</td>
-                  <td>{{ waypoint.location | formatDist(distScale) }}</td>
-                  <td>{{ waypoint.elevation | formatAlt(altScale) }}</td>
-                  <td class="text-right" v-if="owner">
-                    <a href="#" @click.prevent="populateWaypointToEdit(waypoint)">Edit</a>
-                    <span v-show="waypoint.type != 'start' && waypoint.type != 'finish'">/
-                      <a href="#" @click.prevent="deleteWaypoint(waypoint._id)">Delete</a>
-                    </span>
-                  </td>
-                  <th v-if="!owner">&nbsp;</th>
-                </tr>
-              </tbody>
-            </table>
+            <b-table :items="waypoints" :fields="waypointTableFields" primary-key="_id" hover>
+              <template slot="HEAD_location">Location [{{ elevUnits }}]</template>
+              <template slot="HEAD_elevation">Elevation [{{ elevUnits }}]</template>
+              <template slot="HEAD_actions">&nbsp;</template>
+              <template slot="actions" slot-scope="row">
+                <b-button size="sm" @click="populateWaypointToEdit(row.item)" class="mr-2">
+                  Edit
+                </b-button>
+                <b-button size="sm" @click="deleteWaypoint(row.item._id)" class="mr-2" variant="danger">
+                  Delete
+                </b-button>
+              </template>
+            </b-table>
             <div v-show="!editingWaypoint" v-if="owner">
               <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
             </div>
           </b-tab>
           <b-tab title="Segments">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Start</th>
-                  <th>End</th>
-                  <th>Distance</th>
-                  <th>Gain [{{ elevUnits }}]</th>
-                  <th>Loss [{{ elevUnits }}]</th>
-                  <th>Grade</th>
-                  <th>Terrain</th>
-                  <th>&nbsp;</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="segment in segments" :key="segment.start._id">
-                  <td>{{ segment.start.name }}</td>
-                  <td>{{ segment.end.name }}</td>
-                  <td>{{ segment.len | formatDist(distScale) }}</td>
-                  <td>{{ segment.gain | formatAlt(altScale) }}</td>
-                  <td>{{ segment.loss | formatAlt(altScale) }}</td>
-                  <td>{{ segment.grade }}%</td>
-                  <td>{{ segment.start.terrainIndex }}</td>
-                  <td class="text-right">
-                    <a v-if="owner" href="#" @click.prevent="populateSegmentToEdit(segment.start)">Edit</a>
-                  </td>
-                </tr>
-              </tbody>
-              <thead>
-                <tr>
-                  <th>&nbsp;</th>
-                  <th>&nbsp;</th>
-                  <th>{{ course.distance | formatDist(distScale) }}</th>
-                  <th>{{ course.gain | formatAlt(altScale) }}</th>
-                  <th>{{ course.loss | formatAlt(altScale) }}</th>
-                  <th>&nbsp;</th>
-                  <th>&nbsp;</th>
-                </tr>
-              </thead>
-            </table>
+            <b-table :items="segments" :fields="segmentTableFields" primary-key="start._id" hover foot-clone>
+              <template slot="HEAD_len">Length [{{ distUnits }}]</template>
+              <template slot="HEAD_gain">Gain [{{ elevUnits }}]</template>
+              <template slot="HEAD_loss">Loss [{{ elevUnits }}]</template>
+              <template slot="HEAD_actions">&nbsp;</template>
+              <template slot="FOOT_start.name">&nbsp;</template>
+              <template slot="FOOT_end.name">&nbsp;</template>
+              <template slot="FOOT_len">{{ course.distance | formatDist(distScale) }}</template>
+              <template slot="FOOT_gain">{{ course.gain | formatAlt(altScale) }}</template>
+              <template slot="FOOT_loss">{{ course.loss | formatAlt(altScale) }}</template>
+              <template slot="FOOT_grade">&nbsp;</template>
+              <template slot="FOOT_start.terrainIndex">&nbsp;</template>
+              <template slot="FOOT_actions">&nbsp;</template>
+              <template slot="actions" slot-scope="row">
+                <b-button size="sm" @click="populateSegmentToEdit(row.item.start)" class="mr-2">
+                  Edit
+                </b-button>
+              </template>
+            </b-table>
           </b-tab>
         </b-tabs>
       </b-col>
@@ -249,6 +206,71 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.altScale).toFixed(0)
           }
+        }
+      ],
+      segmentTableFields: [
+        {
+          key: 'start.name',
+          label: 'Start',
+        },
+        {
+          key: 'end.name',
+          label: 'End',
+        },
+        {
+          key: 'len',
+          formatter: (value, key, item) => {
+            return (value * this.distScale).toFixed(2)
+          }
+        },
+        {
+          key: 'gain',
+          formatter: (value, key, item) => {
+            return (value * this.altScale).toFixed(0)
+          }
+        },
+        {
+          key: 'loss',
+          formatter: (value, key, item) => {
+            return (value * this.altScale).toFixed(0)
+          }
+        },
+        {
+          key: 'grade',
+          label: 'Grade [%]',
+          formatter: (value, key, item) => {
+            return (value).toFixed(2) + '%'
+          }
+        },
+        {
+          key: 'start.terrainIndex',
+          label: 'Terrain'
+        },
+        {
+          key: 'actions',
+          label: 'Actions'
+        }
+      ],
+      waypointTableFields: [
+        {
+          key: 'name',
+          label: 'Name',
+        },
+        {
+          key: 'location',
+          formatter: (value, key, item) => {
+            return (value * this.distScale).toFixed(2)
+          }
+        },
+        {
+          key: 'elevation',
+          formatter: (value, key, item) => {
+            return (item.elevation * this.altScale).toFixed(0)
+          }
+        },
+        {
+          key: 'actions',
+          label: 'Actions'
         }
       ]
     }
