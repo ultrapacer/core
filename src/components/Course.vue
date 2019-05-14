@@ -29,25 +29,7 @@
             </div>
           </b-tab>
           <b-tab title="Segments">
-            <b-table :items="segments" :fields="segmentTableFields" primary-key="start._id" hover foot-clone small>
-              <template slot="HEAD_len">Length [{{ distUnits }}]</template>
-              <template slot="HEAD_gain">Gain [{{ elevUnits }}]</template>
-              <template slot="HEAD_loss">Loss [{{ elevUnits }}]</template>
-              <template slot="HEAD_actions">&nbsp;</template>
-              <template slot="FOOT_start.name">&nbsp;</template>
-              <template slot="FOOT_end.name">&nbsp;</template>
-              <template slot="FOOT_len">{{ course.distance | formatDist(distScale) }}</template>
-              <template slot="FOOT_gain">{{ course.gain | formatAlt(altScale) }}</template>
-              <template slot="FOOT_loss">{{ course.loss | formatAlt(altScale) }}</template>
-              <template slot="FOOT_grade">&nbsp;</template>
-              <template slot="FOOT_start.terrainIndex">&nbsp;</template>
-              <template slot="FOOT_actions">&nbsp;</template>
-              <template slot="actions" slot-scope="row">
-                <b-button size="sm" @click="populateSegmentToEdit(row.item.start)" class="mr-2">
-                  Edit
-                </b-button>
-              </template>
-            </b-table>
+            <segment-table :course="course" :segments="segments" :units="units"></segment-table>
           </b-tab>
         </b-tabs>
       </b-col>
@@ -118,6 +100,7 @@ import {LMap, LTileLayer, LPolyline, LMarker } from 'vue2-leaflet'
 import api from '@/api'
 import utilities from '../../shared/utilities'
 import SplitTable from './SplitTable'
+import SegmentTable from './SegmentTable'
 
 export default {
   title: 'Loading',
@@ -128,7 +111,8 @@ export default {
     LTileLayer,
     LPolyline,
     LMarker,
-    SplitTable
+    SplitTable,
+    SegmentTable
   },
   data () {
     return {
@@ -182,70 +166,6 @@ export default {
       },
       mapLatLon: [],
       mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
-      splitTableFields: [
-        {
-          key: 'end',
-          label: 'Split',
-          formatter: (value, key, item) => {
-            return (value * this.distScale).toFixed(2)
-          }
-        },
-        {
-          key: 'gain',
-          formatter: (value, key, item) => {
-            return (value * this.altScale).toFixed(0)
-          }
-        },
-        {
-          key: 'loss',
-          formatter: (value, key, item) => {
-            return (value * this.altScale).toFixed(0)
-          }
-        }
-      ],
-      segmentTableFields: [
-        {
-          key: 'start.name',
-          label: 'Start',
-        },
-        {
-          key: 'end.name',
-          label: 'End',
-        },
-        {
-          key: 'len',
-          formatter: (value, key, item) => {
-            return (value * this.distScale).toFixed(2)
-          }
-        },
-        {
-          key: 'gain',
-          formatter: (value, key, item) => {
-            return (value * this.altScale).toFixed(0)
-          }
-        },
-        {
-          key: 'loss',
-          formatter: (value, key, item) => {
-            return (value * this.altScale).toFixed(0)
-          }
-        },
-        {
-          key: 'grade',
-          label: 'Grade [%]',
-          formatter: (value, key, item) => {
-            return (value).toFixed(2) + '%'
-          }
-        },
-        {
-          key: 'start.terrainIndex',
-          label: 'Terrain'
-        },
-        {
-          key: 'actions',
-          label: 'Actions'
-        }
-      ],
       waypointTableFields: [
         {
           key: 'name',
@@ -320,10 +240,10 @@ export default {
     },
     units: function () {
       return {
-        dist: this.distUnits,
-        alt: this.elevUnits,
-        distScale: this.distScale,
-        altScale: this.altScale
+        dist: (this.isAuthenticated) ? this.user.distUnits : 'mi',
+        alt: (this.isAuthenticated) ? this.user.elevUnits : 'ft',
+        distScale: (this.distUnits === 'mi') ? 0.621371 : 1,
+        altScale: (this.elevUnits === 'ft') ? 3.28084 : 1
       }
     },
     distUnits: function () {
