@@ -8,29 +8,26 @@
       <b-col order="2">
         <b-tabs content-class="mt-3">
           <b-tab title="Splits" active>
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Split [{{ distUnits }}]</th>
-                  <th>Gain [{{ elevUnits }}]</th>
-                  <th>Loss [{{ elevUnits }}]</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(split, index) in splits" :key="index">
-                  <td>{{ split.end | formatDist(distScale) }}</td>
-                  <td>{{ split.gain | formatAlt(altScale) }}</td>
-                  <td>{{ split.loss | formatAlt(altScale) }}</td>
-                </tr>
-              </tbody>
-              <thead>
-                <tr>
-                  <th>&nbsp;</th>
-                  <th>{{ course.gain | formatAlt(altScale) }}</th>
-                  <th>{{ course.loss | formatAlt(altScale) }}</th>
-                </tr>
-              </thead>
-            </table>
+            <b-table :items="splits" :fields="splitTableFields" hover foot-clone>
+              <template slot="HEAD_end">
+                Split [{{ user.distUnits }}]
+              </template>
+              <template slot="HEAD_gain">
+                Gain [{{ user.elevUnits }}]
+              </template>
+              <template slot="HEAD_loss">
+                Gain [{{ user.elevUnits }}]
+              </template>
+              <template slot="FOOT_end">
+                &nbsp;
+              </template>
+              <template slot="FOOT_gain">
+                {{ course.gain | formatAlt(altScale) }}
+              </template>
+              <template slot="FOOT_loss">
+                {{ course.loss | formatAlt(altScale) }}
+              </template>
+            </b-table>
           </b-tab>
           <b-tab title="Waypoints">
             <table class="table table-striped">
@@ -232,7 +229,28 @@ export default {
         }
       },
       mapLatLon: [],
-      mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png'
+      mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
+      splitTableFields: [
+        {
+          key: 'end',
+          label: 'Split',
+          formatter: (value, key, item) => {
+            return (value * this.distScale).toFixed(2)
+          }
+        },
+        {
+          key: 'gain',
+          formatter: (value, key, item) => {
+            return (value * this.altScale).toFixed(0)
+          }
+        },
+        {
+          key: 'loss',
+          formatter: (value, key, item) => {
+            return (value * this.altScale).toFixed(0)
+          }
+        }
+      ]
     }
   },
   computed: {

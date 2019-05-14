@@ -80,29 +80,29 @@ export default {
       model: {},
       file: null,
       fields: [
-          {
-            key: 'name',
-            label: 'Name',
-            sortable: true
-          },
-          {
-            key: 'distance',
-            sortable: true,
-            formatter: (value, key, item) => {
-              return (value * this.distScale).toFixed(2)
-            }
-          },
-          {
-            key: 'elevation',
-            formatter: (value, key, item) => {
-              return '+' + (item.gain * this.altScale).toFixed(0) + '/' +  (item.loss * this.altScale).toFixed(0)
-            }
-          },
-          {
-            key: 'actions',
-            label: 'Actions'
+        {
+          key: 'name',
+          label: 'Name',
+          sortable: true
+        },
+        {
+          key: 'distance',
+          sortable: true,
+          formatter: (value, key, item) => {
+            return (value * this.distScale).toFixed(2)
           }
-        ]
+        },
+        {
+          key: 'elevation',
+          formatter: (value, key, item) => {
+            return '+' + (item.gain * this.altScale).toFixed(0) + '/' +  (item.loss * this.altScale).toFixed(0)
+          }
+        },
+        {
+          key: 'actions',
+          label: 'Actions'
+        }
+      ]
     }
   },
   computed: {
