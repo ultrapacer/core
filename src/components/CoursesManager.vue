@@ -6,14 +6,11 @@
     </div>
     <b-row v-if="!initializing">
       <b-col>
-        <b-table :items="courses" :fields="fields" primary-key="_id" hover>
+        <b-table :items="courses" :fields="fields" primary-key="_id" @row-clicked="goToCourse" hover>
           <template slot="HEAD_distance">Distance [{{ user.distUnits }}]</template>
           <template slot="HEAD_elevation">Elevation [{{ user.elevUnits }}]</template>
           <template slot="HEAD_actions">&nbsp;</template>
           <template slot="actions" slot-scope="row">
-            <b-button size="sm" @click="goToCourse(row.item)" class="mr-2" variant="outline-primary">
-              View
-            </b-button>
             <b-button size="sm" @click="populateCourseToEdit(row.item)" class="mr-2">
               Edit
             </b-button>
