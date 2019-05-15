@@ -44,7 +44,7 @@
             <b-form-group label="Name">
               <b-form-input type="text" v-model="waypoint.name"></b-form-input>
             </b-form-group>
-            <b-form-group v-bind:label="'Location [' + distUnits + ']'" v-show="waypoint.type != 'start' && waypoint.type != 'finish'">
+            <b-form-group v-bind:label="'Location [' + units.dist + ']'" v-show="waypoint.type != 'start' && waypoint.type != 'finish'">
               <b-form-input type="number" step="0.001" v-model="waypointLoc" min="0" v-bind:max="course.distance"></b-form-input>
             </b-form-group>
             <b-form-group label="Type">
@@ -209,39 +209,20 @@ export default {
       }
     },
     units: function () {
-      return {
+      var u = {
         dist: (this.isAuthenticated) ? this.user.distUnits : 'mi',
-        alt: (this.isAuthenticated) ? this.user.elevUnits : 'ft',
-        distScale: (this.distUnits === 'mi') ? 0.621371 : 1,
-        altScale: (this.elevUnits === 'ft') ? 3.28084 : 1
+        alt: (this.isAuthenticated) ? this.user.elevUnits : 'ft'
       }
-    },
-    distUnits: function () {
-      return (this.isAuthenticated) ? this.user.distUnits : 'mi'
-    },
-    elevUnits: function () {
-      return (this.isAuthenticated) ? this.user.elevUnits : 'ft'
-    },
-    distScale: function () {
-      if (this.distUnits === 'mi') {
-        return 0.621371
-      } else {
-        return 1
-      }
-    },
-    altScale: function () {
-      if (this.elevUnits === 'ft') {
-        return 3.28084
-      } else {
-        return 1
-      }
+      u.distScale = (u.dist === 'mi') ? 0.621371 : 1
+      u.altScale = (u.alt === 'ft') ? 3.28084 : 1
+      return u
     },
     waypointLoc: {
       set: function (val) {
-        this.waypoint.location = val / this.distScale
+        this.waypoint.location = val / this.units.distScale
       },
       get: function () {
-        return (this.waypoint.location * this.distScale).toFixed(3)
+        return (this.waypoint.location * this.units.distScale).toFixed(3)
       }
     },
     chartData: function () {
@@ -272,8 +253,8 @@ export default {
       d.data = []
       for (var i = 0, il = this.waypoints.length; i < il; i++) {
         d.data.push({
-          x: this.waypoints[i].location * this.distScale,
-          y: this.waypoints[i].elevation * this.altScale
+          x: this.waypoints[i].location * this.units.distScale,
+          y: this.waypoints[i].elevation * this.units.altScale
         })
         if (this.waypoints[i].type === 'landmark') {
           d.pointRadius.push(6)
@@ -314,7 +295,7 @@ export default {
     this.updateMapLatLon()
     this.waypoints = await api.getWaypoints(this.course._id)
     this.updateChartProfile()
-    this.splits = utilities.calcSplits(this.points, this.distUnits)
+    this.splits = utilities.calcSplits(this.points, this.units.dist)
     this.initializing = false
     console.log('::::: CREATED :::::::')
   },
@@ -393,8 +374,8 @@ export default {
       if (this.points.length < 400) {
         for (var i = 0, il = this.points.length; i < il; i++) {
           data.push({
-            x: this.points[i].loc * this.distScale,
-            y: this.points[i].alt * this.altScale
+            x: this.points[i].loc * this.units.distScale,
+            y: this.points[i].alt * this.units.altScale
           })
         }
       } else {
@@ -406,12 +387,12 @@ export default {
         var ys = utilities.getElevation(this.points, xs)
         for (i = 0, il = xs.length; i < il; i++) {
           data.push({
-            x: xs[i] * this.distScale,
-            y: ys[i] * this.altScale
+            x: xs[i] * this.units.distScale,
+            y: ys[i] * this.units.altScale
           })
         }
       }
-      this.chartOptions.scales.xAxes[0].ticks.max = (xs[xs.length - 1] * this.distScale) + 0.01
+      this.chartOptions.scales.xAxes[0].ticks.max = (xs[xs.length - 1] * this.units.distScale) + 0.01
       this.chartProfile = data
     },
     transparentize: function (color, opacity) {
