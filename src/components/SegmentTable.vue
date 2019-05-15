@@ -1,6 +1,5 @@
 <template>
   <b-table :items="segments" :fields="segmentTableFields" primary-key="start._id" hover foot-clone small>
-    <template slot="HEAD_actions">&nbsp;</template>
     <template slot="FOOT_start.name">&nbsp;</template>
     <template slot="FOOT_end.name">&nbsp;</template>
     <template slot="FOOT_len">{{ course.distance | formatDist(units.distScale) }}</template>
@@ -8,7 +7,6 @@
     <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_start.terrainIndex">&nbsp;</template>
-    <template slot="FOOT_actions">&nbsp;</template>
     <template slot="actions" slot-scope="row">
       <b-button size="sm" @click="$emit('populateSegmentToEdit', row.item.start)" class="mr-2">
         Edit
@@ -73,7 +71,7 @@ export default {
         },
         {
           key: 'actions',
-          label: 'Actions'
+          label: ''
         }
       ]
     }
