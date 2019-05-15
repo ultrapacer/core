@@ -12,15 +12,18 @@
           <template slot="HEAD_actions">&nbsp;</template>
           <template slot="actions" slot-scope="row">
             <b-button size="sm" @click="populateCourseToEdit(row.item)" class="mr-2">
-              Edit
+              <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
             </b-button>
             <b-button size="sm" @click="deleteCourse(row.item._id)" class="mr-2" variant="danger">
-              Delete
+              <v-icon name="trash"></v-icon><span class="d-none d-md-inline">Delete</span>
             </b-button>
           </template>
         </b-table>
         <div v-show="!editing">
-          <b-btn variant="success" @click.prevent="newCourse()">New Course</b-btn>
+          <b-btn variant="success" @click.prevent="newCourse()">
+            <v-icon name="plus"></v-icon>
+            <span>New Course</span>
+          </b-btn>
         </div>
       </b-col>
       <b-col v-show="editing" lg="3">

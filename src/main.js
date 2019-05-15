@@ -18,6 +18,12 @@ Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png')
 })
 
+import 'vue-awesome/icons/trash'
+import 'vue-awesome/icons/edit'
+import 'vue-awesome/icons/plus'
+import VIcon from 'vue-awesome/components/Icon'
+Vue.component('v-icon', VIcon)
+
 Vue.use(BootstrapVue)
 Vue.use(AuthPlugin)
 Vue.use(VuePageTitle, {

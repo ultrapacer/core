@@ -13,7 +13,9 @@
           <b-tab title="Waypoints">
             <waypoint-table :course="course" :waypoints="waypoints" :units="units" :owner="owner" :editFn="populateWaypointToEdit" :delFn="deleteWaypoint"></waypoint-table>
             <div v-show="!editingWaypoint" v-if="owner">
-              <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
+              <b-btn variant="success" @click.prevent="newWaypoint()">
+                <v-icon name="plus"></v-icon><span>New Waypoint</span>
+              </b-btn>
             </div>
           </b-tab>
           <b-tab title="Segments">

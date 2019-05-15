@@ -2,10 +2,10 @@
   <b-table :items="waypoints" :fields="fields" primary-key="_id" hover small>
     <template slot="actions" slot-scope="row">
       <b-button size="sm" @click="editFn(row.item)" class="mr-2">
-        Edit
+        <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
       </b-button>
       <b-button size="sm" @click="delFn(row.item._id)" class="mr-2" variant="danger">
-        Delete
+        <v-icon name="trash"></v-icon><span class="d-none d-md-inline">Delete</span>
       </b-button>
     </template>
   </b-table>

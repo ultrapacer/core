@@ -18,7 +18,15 @@
     <router-view :isAuthenticated="isAuthenticated" :user="user" />
   </div>
 </template>
-
+<style>
+.btn .fa-icon {
+    vertical-align: middle;
+    margin-top: -0.25rem;
+}
+.btn span:last-child {
+    margin-left: 0.5rem;
+}
+</style>
 <script>
 import api from '@/api'
 export default {
