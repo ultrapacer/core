@@ -35,7 +35,9 @@ export default {
         },
         {
           key: 'end.name',
-          label: 'End'
+          label: 'End',
+          thClass: 'd-none d-md-table-cell',
+          tdClass: 'd-none d-md-table-cell'
         },
         {
           key: 'len',
@@ -49,21 +51,27 @@ export default {
           label: 'Gain [' + this.units.alt + ']',
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
-          }
+          },
+          thClass: 'd-none d-md-table-cell',
+          tdClass: 'd-none d-md-table-cell'
         },
         {
           key: 'loss',
           label: 'Loss [' + this.units.alt + ']',
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
-          }
+          },
+          thClass: 'd-none d-md-table-cell',
+          tdClass: 'd-none d-md-table-cell'
         },
         {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
             return (value).toFixed(2) + '%'
-          }
+          },
+          thClass: 'd-none d-md-table-cell',
+          tdClass: 'd-none d-md-table-cell'
         },
         {
           key: 'start.terrainIndex',

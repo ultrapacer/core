@@ -90,7 +90,9 @@ export default {
           key: 'elevation',
           formatter: (value, key, item) => {
             return '+' + (item.gain * this.altScale).toFixed(0) + '/' + (item.loss * this.altScale).toFixed(0)
-          }
+          },
+          thClass: 'd-none d-sm-table-cell',
+          tdClass: 'd-none d-sm-table-cell'
         },
         {
           key: 'actions',

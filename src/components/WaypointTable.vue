@@ -32,7 +32,9 @@ export default {
           label: 'Elevation [' + this.units.alt + ']',
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
-          }
+          },
+          thClass: 'd-none d-sm-table-cell',
+          tdClass: 'd-none d-sm-table-cell'
         }
       ]
       if (this.owner) {
