@@ -11,22 +11,7 @@
             <split-table :course="course" :splits="splits" :units="units"></split-table>
           </b-tab>
           <b-tab title="Waypoints">
-            <b-table :items="waypoints" :fields="waypointTableFields" primary-key="_id" hover small>
-              <template slot="HEAD_location">Location [{{ elevUnits }}]</template>
-              <template slot="HEAD_elevation">Elevation [{{ elevUnits }}]</template>
-              <template slot="HEAD_actions">&nbsp;</template>
-              <template slot="actions" slot-scope="row">
-                <b-button size="sm" @click="populateWaypointToEdit(row.item)" class="mr-2">
-                  Edit
-                </b-button>
-                <b-button size="sm" @click="deleteWaypoint(row.item._id)" class="mr-2" variant="danger">
-                  Delete
-                </b-button>
-              </template>
-            </b-table>
-            <div v-show="!editingWaypoint" v-if="owner">
-              <b-btn variant="success" @click.prevent="newWaypoint()">New Waypoint</b-btn>
-            </div>
+            <waypoint-table :course="course" :waypoints="waypoints" :units="units"></split-table>
           </b-tab>
           <b-tab title="Segments">
             <segment-table :course="course" :segments="segments" :units="units"></segment-table>
@@ -101,6 +86,7 @@ import api from '@/api'
 import utilities from '../../shared/utilities'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
+import WaypointTable from './WaypointTable'
 
 export default {
   title: 'Loading',
@@ -112,7 +98,8 @@ export default {
     LPolyline,
     LMarker,
     SplitTable,
-    SegmentTable
+    SegmentTable,
+    WaypointTable
   },
   data () {
     return {
@@ -165,29 +152,7 @@ export default {
         }
       },
       mapLatLon: [],
-      mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
-      waypointTableFields: [
-        {
-          key: 'name',
-          label: 'Name',
-        },
-        {
-          key: 'location',
-          formatter: (value, key, item) => {
-            return (value * this.distScale).toFixed(2)
-          }
-        },
-        {
-          key: 'elevation',
-          formatter: (value, key, item) => {
-            return (item.elevation * this.altScale).toFixed(0)
-          }
-        },
-        {
-          key: 'actions',
-          label: 'Actions'
-        }
-      ]
+      mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png'
     }
   },
   computed: {
