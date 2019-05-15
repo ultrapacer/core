@@ -15,7 +15,7 @@ export default {
     }
   },
   computed: {
-    fields: function() {
+    fields: function () {
       return [
         {
           key: 'end',

@@ -92,7 +92,7 @@ export default {
         {
           key: 'elevation',
           formatter: (value, key, item) => {
-            return '+' + (item.gain * this.altScale).toFixed(0) + '/' +  (item.loss * this.altScale).toFixed(0)
+            return '+' + (item.gain * this.altScale).toFixed(0) + '/' + (item.loss * this.altScale).toFixed(0)
           }
         },
         {

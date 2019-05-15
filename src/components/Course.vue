@@ -11,10 +11,10 @@
             <split-table :course="course" :splits="splits" :units="units"></split-table>
           </b-tab>
           <b-tab title="Waypoints">
-            <waypoint-table :course="course" :waypoints="waypoints" :units="units"></split-table>
+            <waypoint-table :course="course" :waypoints="waypoints" :units="units" :owner="owner" :editFn="populateWaypointToEdit" :delFn="deleteWaypoint"></waypoint-table>
           </b-tab>
           <b-tab title="Segments">
-            <segment-table :course="course" :segments="segments" :units="units"></segment-table>
+            <segment-table :course="course" :segments="segments" :units="units" :owner="owner" :editFn="populateSegmentToEdit"></segment-table>
           </b-tab>
         </b-tabs>
       </b-col>
@@ -81,7 +81,7 @@
 
 <script>
 import LineChart from './LineChart.js'
-import {LMap, LTileLayer, LPolyline, LMarker } from 'vue2-leaflet'
+import {LMap, LTileLayer, LPolyline, LMarker} from 'vue2-leaflet'
 import api from '@/api'
 import utilities from '../../shared/utilities'
 import SplitTable from './SplitTable'
@@ -413,7 +413,7 @@ export default {
       var alpha = opacity === undefined ? 0.5 : 1 - opacity
       return Color(color).alpha(alpha).rgbString()
     },
-    updateMapLatLon: function() {
+    updateMapLatLon: function () {
       var arr = []
       for (var i = 0, il = this.points.length; i < il; i++) {
         arr.push([this.points[i].lat, this.points[i].lon])

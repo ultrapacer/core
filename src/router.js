@@ -18,7 +18,8 @@ let router = new Router({
       path: '/',
       name: 'Hello',
       component: Hello
-    },{
+    },
+    {
       path: '/privacy',
       name: 'PrivacyPolicy',
       component: PrivacyPolicy

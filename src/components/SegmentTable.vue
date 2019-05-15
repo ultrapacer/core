@@ -1,5 +1,5 @@
 <template>
-  <b-table :items="segments" :fields="segmentTableFields" primary-key="start._id" hover foot-clone small>
+  <b-table :items="segments" :fields="fields" primary-key="start._id" hover foot-clone small>
     <template slot="FOOT_start.name">&nbsp;</template>
     <template slot="FOOT_end.name">&nbsp;</template>
     <template slot="FOOT_len">{{ course.distance | formatDist(units.distScale) }}</template>
@@ -8,7 +8,7 @@
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_start.terrainIndex">&nbsp;</template>
     <template slot="actions" slot-scope="row">
-      <b-button size="sm" @click="$emit('populateSegmentToEdit', row.item.start)" class="mr-2">
+      <b-button size="sm" @click="editFn(row.item.start)" class="mr-2">
         Edit
       </b-button>
     </template>
@@ -17,7 +17,7 @@
 
 <script>
 export default {
-  props: ['course', 'segments', 'units'],
+  props: ['course', 'segments', 'units', 'owner', 'editFn'],
   filters: {
     formatDist (val, distScale) {
       return (val * distScale).toFixed(2)
@@ -28,14 +28,14 @@ export default {
   },
   computed: {
     fields: function () {
-      return [
+      var f = [
         {
           key: 'start.name',
-          label: 'Start',
+          label: 'Start'
         },
         {
           key: 'end.name',
-          label: 'End',
+          label: 'End'
         },
         {
           key: 'len',
@@ -68,12 +68,15 @@ export default {
         {
           key: 'start.terrainIndex',
           label: 'Terrain'
-        },
-        {
-          key: 'actions',
-          label: ''
         }
       ]
+      if (this.owner) {
+        f.push({
+          key: 'actions',
+          label: ''
+        })
+      }
+      return f
     }
   }
 }

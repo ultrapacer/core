@@ -1,10 +1,10 @@
 <template>
   <b-table :items="waypoints" :fields="fields" primary-key="_id" hover small>
     <template slot="actions" slot-scope="row">
-      <b-button size="sm" @click="$emit('populateWaypointToEdit', row.item)" class="mr-2">
+      <b-button size="sm" @click="editFn(row.item)" class="mr-2">
         Edit
       </b-button>
-      <b-button size="sm" @click="$emit('deleteWaypoint' row.item._id)" class="mr-2" variant="danger">
+      <b-button size="sm" @click="delFn(row.item._id)" class="mr-2" variant="danger">
         Delete
       </b-button>
     </template>
@@ -13,20 +13,12 @@
 
 <script>
 export default {
-  props: ['course', 'segments', 'units'],
-  filters: {
-    formatDist (val, distScale) {
-      return (val * distScale).toFixed(2)
-    },
-    formatAlt (val, altScale) {
-      return (val * altScale).toFixed(0)
-    }
-  },
+  props: ['course', 'waypoints', 'units', 'owner', 'editFn', 'delFn'],
   computed: {
     fields: function () {
-      return [
+      var f = [
         {
-          key: 'name',
+          key: 'name'
         },
         {
           key: 'location',
@@ -41,12 +33,15 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           }
-        },
-        {
-          key: 'actions',
-          label: ''
         }
       ]
+      if (this.owner) {
+        f.push({
+          key: 'actions',
+          label: ''
+        })
+      }
+      return f
     }
   }
 }
