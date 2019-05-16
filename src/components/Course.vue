@@ -323,7 +323,7 @@ export default {
         this.waypoint.lat = this.points[this.points.length - 1].lat
         this.waypoint.lon = this.points[this.points.length - 1].lon
       } else {
-        var lla = utilities.getLatLonAltFromDistance(this.points, this.waypoint.location, this.waypoint.startIndex)
+        var lla = utilities.getLatLonAltFromDistance(this.points, this.waypoint.location, this.waypoint.pointsIndex)
         this.waypoint.elevationt = lla.alt
         this.waypoint.lat = lla.lat
         this.waypoint.lon = lla.lon
