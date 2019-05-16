@@ -11,10 +11,10 @@
           <template slot="HEAD_elevation">Elevation [{{ user.elevUnits }}]</template>
           <template slot="HEAD_actions">&nbsp;</template>
           <template slot="actions" slot-scope="row">
-            <b-button size="sm" @click="populateCourseToEdit(row.item)" class="mr-2">
+            <b-button size="sm" @click="populateCourseToEdit(row.item)" class="mr-1">
               <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
             </b-button>
-            <b-button size="sm" @click="deleteCourse(row.item._id)" class="mr-2" variant="danger">
+            <b-button size="sm" @click="deleteCourse(row.item._id)" class="mr-1">
               <v-icon name="trash"></v-icon><span class="d-none d-md-inline">Delete</span>
             </b-button>
           </template>
@@ -99,7 +99,8 @@ export default {
         },
         {
           key: 'actions',
-          label: 'Actions'
+          label: 'Actions',
+          tdClass: 'actionButtonColumn'
         }
       ]
     }

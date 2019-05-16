@@ -26,6 +26,10 @@
 .btn span:last-child {
     margin-left: 0.5rem;
 }
+.actionButtonColumn {
+  white-space: nowrap;
+  text-align: right
+}
 </style>
 <script>
 import api from '@/api'

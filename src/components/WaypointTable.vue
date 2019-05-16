@@ -1,10 +1,10 @@
 <template>
   <b-table :items="waypoints" :fields="fields" primary-key="_id" @row-clicked="toggleRowDetails" hover small>
     <template slot="actions" slot-scope="row">
-      <b-button size="sm" @click="editFn(row.item)" class="mr-2">
+      <b-button size="sm" @click="editFn(row.item)" class="mr-1">
         <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
       </b-button>
-      <b-button size="sm" @click="delFn(row.item._id)" class="mr-2" variant="danger">
+      <b-button size="sm" @click="delFn(row.item._id)" class="mr-1">
         <v-icon name="trash"></v-icon><span class="d-none d-md-inline">Delete</span>
       </b-button>
     </template>
@@ -52,7 +52,8 @@ export default {
       if (this.owner) {
         f.push({
           key: 'actions',
-          label: ''
+          label: '',
+          tdClass: 'actionButtonColumn'
         })
       }
       return f

@@ -8,7 +8,7 @@
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_start.terrainIndex">&nbsp;</template>
     <template slot="actions" slot-scope="row">
-      <b-button size="sm" @click="editFn(row.item.start)" class="mr-2">
+      <b-button size="sm" @click="editFn(row.item.start)" class="mr-1">
         <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
       </b-button>
     </template>
@@ -81,7 +81,8 @@ export default {
       if (this.owner) {
         f.push({
           key: 'actions',
-          label: ''
+          label: '',
+          tdClass: 'actionButtonColumn'
         })
       }
       return f
