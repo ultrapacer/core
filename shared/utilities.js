@@ -199,6 +199,69 @@ function getLatLonFromDistance(points, location) {
   }
 }
 
+function getLatLonAltFromDistance(points, location, start) {
+  // if the start index is passed, make sure you go the right direction:
+  var i0 = start || 0
+  if (i0 > 0 && points[i0].loc > location) {
+    for (var i = i0; i >= 0; i--) {
+      if (points[i].loc <= location) {
+        i0 = i
+        break
+      }
+    }
+  }
+  var locs = []
+  var llas = []
+  var num = 0
+  if (Array.isArray(location)) {
+    locs = [...location]
+  } else {
+    locs = [location]
+  }
+  location = locs.shift()
+
+  for (var i = i0, il = points.length; i < il; i++) {
+    if (points[i].loc >= location || i === il - 1) {
+      if (points[i].loc == location || i === il - 1) {
+        llas.push({
+          lat: points[i].lat,
+          lon: points[i].lon,
+          alt: points[i].alt,
+          ind: i
+        })
+      } else {
+        if (points[i + 1].loc === points[i].loc) {
+          llas.push({
+            lat: points[i].lat,
+            lon: points[i].lon,
+            alt: (points[i + 1].alt + points[i].alt) / 2,
+            ind: i
+          })
+        } else {
+          var p1 = new sgeo.latlon(points[i].lat, points[i].lon)
+          var p2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
+          var inp = p1.interpolate(p2, 3)
+          llas.push({
+            lat: inp[1].lat,
+            lon: inp[1].lng,
+            alt: points[i].alt + (location - points[i].loc) * (points[i+1].alt - points[i].alt) / (points[i + 1].loc - points[i].loc),
+            ind: i
+          })
+        }
+      }
+      location = locs.shift()
+      if (location == null) {
+        break
+      }
+    }
+  }
+  if (llas.length > 1) {
+    return llas
+  } else {
+    return llas[0]
+  }
+}
+
 function round (num, digits) {
   return Math.round(num * (10**digits)) / 10**digits
 }
@@ -210,5 +273,6 @@ module.exports = {
   cleanPoints: cleanPoints,
   calcSegments: calcSegments,
   getElevation: getElevation,
-  getLatLonFromDistance: getLatLonFromDistance
+  getLatLonFromDistance: getLatLonFromDistance,
+  getLatLonAltFromDistance: getLatLonAltFromDistance
 }

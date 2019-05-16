@@ -36,6 +36,10 @@ var WaypointSchema = new Schema({
   segmentNotes: {
     type: String
   },
+  pointsIndex: {
+    type: Number,
+    default: 0
+  }
 },{
     collection: 'waypoints'
 });

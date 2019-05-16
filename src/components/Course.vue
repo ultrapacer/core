@@ -11,7 +11,7 @@
             <split-table :course="course" :splits="splits" :units="units"></split-table>
           </b-tab>
           <b-tab title="Waypoints">
-            <waypoint-table :course="course" :waypoints="waypoints" :units="units" :owner="owner" :editFn="populateWaypointToEdit" :delFn="deleteWaypoint"></waypoint-table>
+            <waypoint-table :course="course" :waypoints="waypoints" :units="units" :owner="owner" :editFn="populateWaypointToEdit" :delFn="deleteWaypoint" :points="points"></waypoint-table>
             <div v-show="!editingWaypoint" v-if="owner">
               <b-btn variant="success" @click.prevent="newWaypoint()">
                 <v-icon name="plus"></v-icon><span>New Waypoint</span>
@@ -323,10 +323,10 @@ export default {
         this.waypoint.lat = this.points[this.points.length - 1].lat
         this.waypoint.lon = this.points[this.points.length - 1].lon
       } else {
-        this.waypoint.elevation = utilities.getElevation(this.points, this.waypoint.location)
-        var ll = utilities.getLatLonFromDistance(this.points, this.waypoint.location)
-        this.waypoint.lat = ll[0]
-        this.waypoint.lon = ll[1]
+        var lla = utilities.getLatLonAltFromDistance(this.points, this.waypoint.location, this.waypoint.startIndex)
+        this.waypoint.elevationt = lla.alt
+        this.waypoint.lat = lla.lat
+        this.waypoint.lon = lla.lon
       }
       if (this.waypoint._id) {
         await api.updateWaypoint(this.waypoint._id, this.waypoint)

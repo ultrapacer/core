@@ -72,6 +72,7 @@ waypointRoutes.route('/:id').put(function (req, res) {
       waypoint.elevation = req.body.elevation
       waypoint.lat = req.body.lat
       waypoint.lon = req.body.lon
+      waypoint.pointsIndex = req.body.pointsIndex
 
       waypoint.save().then(post => {
           res.json('Update complete')

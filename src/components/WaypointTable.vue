@@ -11,21 +11,33 @@
     <template slot="row-details" slot-scope="row">
       <b-card>
         <b-row class="mb-2">
-          <b-button size="sm" class="mr-2" variant="outline-primary">&lt;&lt;&lt;</b-button>
-          <b-button size="sm" class="mr-2" variant="outline-primary">&lt;&lt;</b-button>
-          <b-button size="sm" class="mr-2" variant="outline-primary">&lt;</b-button>
-          <b-button size="sm" class="mr-2" variant="outline-primary">&gt;</b-button>
-          <b-button size="sm" class="mr-2" variant="outline-primary">&gt;&gt;</b-button>
-          <b-button size="sm" class="mr-2" variant="outline-primary">&gt;&gt;&gt;</b-button>
+          <b-col>
+          Adjust Location: &nbsp;
+          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-1)">&lt;&lt;&lt;</b-button>
+          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-0.1)">&lt;&lt;</b-button>
+          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-0.01)">&lt;</b-button>
+          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,0.01)">&gt;</b-button>
+          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,0.1)">&gt;&gt;</b-button>
+          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,1)">&gt;&gt;&gt;</b-button>
+        </b-col>
         </b-row>
+        
       </b-card>
       </template>
   </b-table>
 </template>
 
 <script>
+import util from '../../shared/utilities'
+import api from '@/api'
 export default {
-  props: ['course', 'waypoints', 'units', 'owner', 'editFn', 'delFn'],
+  props: ['course', 'waypoints', 'units', 'owner', 'editFn', 'delFn', 'updFn', 'points'],
+  data () {
+    return {
+      updatingWaypointTimeout: null,
+      updatingWaypointTimeoutID: null 
+    }
+  },
   computed: {
     fields: function () {
       var f = [
@@ -60,9 +72,26 @@ export default {
     }
   },
   methods: {
-    toggleRowDetails: function (row) {
+    toggleRowDetails: function (waypoint) {
       // To toggle:
-      this.$set(row, '_showDetails', !row._showDetails)
+      if (waypoint.type != 'start' && waypoint.type != 'finish') {
+        this.$set(waypoint, '_showDetails', !waypoint._showDetails)
+      }
+    },
+    shiftWaypoint: function (waypoint, delta) {
+      waypoint.location += delta / this.units.distScale
+      var lla = util.getLatLonAltFromDistance(this.points, waypoint.location, waypoint.pointsIndex || 0)
+      waypoint.lat = lla.lat
+      waypoint.lon = lla.lon
+      waypoint.elevation = lla.alt
+      waypoint.pointsIndex = lla.ind
+      if (String(waypoint._id) == this.updatingWaypointTimeoutID) {
+        clearTimeout(this.updatingWaypointTimeout)
+      }
+      this.updatingWaypointTimeoutID = String(waypoint._id)
+      this.updatingWaypointTimeout = setTimeout(() => {
+        api.updateWaypoint(waypoint._id, waypoint)
+      }, 2000);
     }
   }
 }
