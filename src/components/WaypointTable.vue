@@ -11,15 +11,17 @@
     <template slot="row-details" slot-scope="row">
       <b-card>
         <b-row class="mb-2">
-          <b-col>
-          Adjust Location: &nbsp;
-          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-1)">&lt;&lt;&lt;</b-button>
-          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-0.1)">&lt;&lt;</b-button>
-          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-0.01)">&lt;</b-button>
-          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,0.01)">&gt;</b-button>
-          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,0.1)">&gt;&gt;</b-button>
-          <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,1)">&gt;&gt;&gt;</b-button>
-        </b-col>
+          <b-col sm="4">
+            Adjust Location:
+          </b-col>
+          <b-col sm="8">
+            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-1)">&lt;&lt;&lt;</b-button>
+            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-0.1)">&lt;&lt;</b-button>
+            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-0.01)">&lt;</b-button>
+            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,0.01)">&gt;</b-button>
+            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,0.1)">&gt;&gt;</b-button>
+            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,1)">&gt;&gt;&gt;</b-button>
+          </b-col>
         </b-row>
         
       </b-card>
