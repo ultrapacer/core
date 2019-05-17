@@ -18,6 +18,21 @@ function updateLLA (waypoint, points) {
   }
 }
 
+function compareWaypointsForSort(a, b) {
+  let comparison = 0
+  if (a.location > b.location) {
+    comparison = 1
+  } else if (a.location < b.location) {
+    comparison = -1
+  }
+  return comparison
+}
+
+function sortWaypointsByDistance (waypoints) {
+  waypoints.sort(compareWaypointsForSort)
+}
+
 module.exports = {
-  updateLLA: updateLLA
+  updateLLA: updateLLA,
+  sortWaypointsByDistance: sortWaypointsByDistance
 }
