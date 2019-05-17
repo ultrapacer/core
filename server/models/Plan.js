@@ -1,8 +1,6 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema
-const Waypoint = require('./Waypoint')
 
-// Define collection and schema for Posts
 var PlanSchema = new Schema({
   _course: {
     type: mongoose.Schema.Types.ObjectId,
@@ -20,7 +18,11 @@ var PlanSchema = new Schema({
   },
   pacingValue: {
     type: Number
-  }
+  },
+  waypointDelays: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'PlanWaypointDelay'
+  }]
 }, {
   collection: 'plans'
 })

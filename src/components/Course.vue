@@ -1,6 +1,16 @@
 <template>
   <div class="container-fluid mt-4">
-    <h1 class="h1">{{ course.name }}</h1>
+    <b-row>
+      <b-col>
+        <h1 class="h1">{{ course.name }}</h1>
+      </b-col>
+      <b-col v-if="owner && !initializing && !plans.length" style="text-align: right">
+        <b-btn variant="success"  v-b-modal.plan-form-modal>
+          <v-icon name="plus"></v-icon>
+          <span>New Plan</span>
+        </b-btn>
+      </b-col>
+    </b-row>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
       <b-spinner label="Loading..." ></b-spinner>
     </div>
@@ -39,19 +49,19 @@
           </l-map>
           </b-tab>
         </b-tabs>
-        <b-card v-show="editingWaypoint" :title="(waypoint._id ? 'Edit Waypoint' : 'New Waypoint')">
+        <b-card v-show="editingWaypoint" :title="(waypointToEdit._id ? 'Edit Waypoint' : 'New Waypoint')">
           <form @submit.prevent="saveWaypoint">
             <b-form-group label="Name">
-              <b-form-input type="text" v-model="waypoint.name"></b-form-input>
+              <b-form-input type="text" v-model="waypointToEdit.name"></b-form-input>
             </b-form-group>
-            <b-form-group v-bind:label="'Location [' + units.dist + ']'" v-show="waypoint.type != 'start' && waypoint.type != 'finish'">
+            <b-form-group v-bind:label="'Location [' + units.dist + ']'" v-show="waypointToEdit.type != 'start' && waypointToEdit.type != 'finish'">
               <b-form-input type="number" step="0.001" v-model="waypointLoc" min="0" v-bind:max="course.distance"></b-form-input>
             </b-form-group>
             <b-form-group label="Type">
-              <b-form-select type="number" v-model="waypoint.type" :options="waypointTypes"></b-form-select>
+              <b-form-select type="number" v-model="waypointToEdit.type" :options="waypointTypes"></b-form-select>
             </b-form-group>
             <b-form-group label="Description">
-              <b-form-textarea rows="4" v-model="waypoint.description"></b-form-textarea>
+              <b-form-textarea rows="4" v-model="waypointToEdit.description"></b-form-textarea>
             </b-form-group>
             <div>
               <b-btn type="submit" variant="success" :disabled="saving">
@@ -62,13 +72,13 @@
             </div>
           </form>
         </b-card>
-        <b-card v-show="editingSegment" :title="'Segment starting at ' + waypoint.name">
+        <b-card v-show="editingSegment" :title="'Segment starting at ' + waypointToEdit.name">
           <form @submit.prevent="saveSegment">
             <b-form-group label="Terrain">
-              <b-form-input type="number" v-model="waypoint.terrainIndex" min="0" step="0"></b-form-input>
+              <b-form-input type="number" v-model="waypointToEdit.terrainIndex" min="0" step="0"></b-form-input>
             </b-form-group>
             <b-form-group label="Notes">
-              <b-form-textarea rows="4" v-model="waypoint.segmentNotes"></b-form-textarea>
+              <b-form-textarea rows="4" v-model="waypointToEdit.segmentNotes"></b-form-textarea>
             </b-form-group>
             <div>
               <b-btn type="submit" variant="success" :disabled="saving">
@@ -81,6 +91,7 @@
         </b-card>
       </b-col>
     </b-row>
+    <plan-form-modal :show="planModalVisible"></plan-form-modal>
   </div>
 </template>
 
@@ -93,6 +104,7 @@ import wputil from '../../shared/waypointUtilities'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
+import PlanFormModal from './PlanFormModal'
 
 export default {
   title: 'Loading',
@@ -105,7 +117,8 @@ export default {
     LMarker,
     SplitTable,
     SegmentTable,
-    WaypointTable
+    WaypointTable,
+    PlanFormModal
   },
   data () {
     return {
@@ -113,9 +126,11 @@ export default {
       saving: false,
       course: {},
       plans: [],
+      planModalVisible: false,
       splits: [],
       unitSystem: 'english',
       waypoint: {},
+      waypointToEdit: {},
       waypoints: [],
       editingWaypoint: false,
       editingSegment: false,
@@ -221,10 +236,10 @@ export default {
     },
     waypointLoc: {
       set: function (val) {
-        this.waypoint.location = val / this.units.distScale
+        this.waypointToEdit.location = val / this.units.distScale
       },
       get: function () {
-        return (this.waypoint.location * this.units.distScale).toFixed(3)
+        return (this.waypointToEdit.location * this.units.distScale).toFixed(2)
       }
     },
     chartData: function () {
@@ -348,11 +363,11 @@ export default {
       }
     },
     async populateWaypointToEdit (waypoint) {
-      this.waypoint = Object.assign({}, waypoint)
+      this.waypointToEdit = Object.assign({}, waypoint)
       this.editingWaypoint = true
     },
     async populateSegmentToEdit (waypoint) {
-      this.waypoint = Object.assign({}, waypoint)
+      this.waypointToEdit = Object.assign({}, waypoint)
       this.editingSegment = true
     },
     updateChartProfile: function () {

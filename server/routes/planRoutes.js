@@ -47,6 +47,7 @@ planRoutes.route('/:id').delete(async function (req, res) {
       res.status(403).send('No permission')
     }
   } catch (err) {
+    console.log(err)
     res.status(400).send(err)
   }
 })
