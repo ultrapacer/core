@@ -4,6 +4,7 @@ var waypointRoutes = express.Router()
 var Waypoint = require('../models/Waypoint')
 var Course = require('../models/Course')
 var GPX = require('../models/GPX')
+var User = require('../models/User')
 
 // GET LIST
 waypointRoutes.route('/list/:courseID').get(async function (req, res) {
@@ -61,11 +62,11 @@ waypointRoutes.route('/').post(async function (req, res) {
 })
 
 //  UPDATE
-waypointRoutes.route('/:id').put(function (req, res) {
-  Waypoint.findById(req.params.id, function(err, waypoint) {
-    if (!waypoint)
-      return next(new Error('Could not load Document'))
-    else {
+waypointRoutes.route('/:id').put(async function (req, res) {
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var waypoint = await Waypoint.findById(req.params.id).populate('_course').exec()
+    if (waypoint._course._user.equals(user._id)) {
       waypoint.name = req.body.name
       waypoint.location = req.body.location
       waypoint.description = req.body.description
@@ -73,15 +74,15 @@ waypointRoutes.route('/:id').put(function (req, res) {
       waypoint.lat = req.body.lat
       waypoint.lon = req.body.lon
       waypoint.pointsIndex = req.body.pointsIndex
-
       waypoint.save().then(post => {
           res.json('Update complete')
       })
-      .catch(err => {
-            res.status(400).send("unable to update the database")
-      })
+    } else {
+      res.status(403).send("No permission")
     }
-  })
+  } catch (err) {
+    res.status(400).send(err)
+  }
 })
 
 //  UPDATE

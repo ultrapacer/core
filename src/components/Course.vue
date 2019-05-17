@@ -89,6 +89,7 @@ import LineChart from './LineChart.js'
 import {LMap, LTileLayer, LPolyline, LMarker} from 'vue2-leaflet'
 import api from '@/api'
 import utilities from '../../shared/utilities'
+import wputil from '../../shared/waypointUtilities'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
@@ -314,20 +315,7 @@ export default {
     },
     async saveWaypoint () {
       this.saving = true
-      if (this.waypoint.type === 'start') {
-        this.waypoint.elevation = this.points[0].alt
-        this.waypoint.lat = this.points[0].lat
-        this.waypoint.lon = this.points[0].lon
-      } else if (this.waypoint.type === 'finish') {
-        this.waypoint.elevation = this.points[this.points.length - 1].alt
-        this.waypoint.lat = this.points[this.points.length - 1].lat
-        this.waypoint.lon = this.points[this.points.length - 1].lon
-      } else {
-        var lla = utilities.getLatLonAltFromDistance(this.points, this.waypoint.location, this.waypoint.pointsIndex)
-        this.waypoint.elevationt = lla.alt
-        this.waypoint.lat = lla.lat
-        this.waypoint.lon = lla.lon
-      }
+      wputil.updateLLA(this.waypoint, this.points)
       if (this.waypoint._id) {
         await api.updateWaypoint(this.waypoint._id, this.waypoint)
       } else {

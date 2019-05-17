@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import util from '../../shared/utilities'
+import wputil from '../../shared/waypointUtilities'
 import api from '@/api'
 export default {
   props: ['course', 'waypoints', 'units', 'owner', 'editFn', 'delFn', 'updFn', 'points'],
@@ -75,18 +75,21 @@ export default {
   },
   methods: {
     toggleRowDetails: function (waypoint) {
-      // To toggle:
+      if (!this.owner) return
       if (waypoint.type != 'start' && waypoint.type != 'finish') {
         this.$set(waypoint, '_showDetails', !waypoint._showDetails)
       }
     },
     shiftWaypoint: function (waypoint, delta) {
-      waypoint.location += delta / this.units.distScale
-      var lla = util.getLatLonAltFromDistance(this.points, waypoint.location, waypoint.pointsIndex || 0)
-      waypoint.lat = lla.lat
-      waypoint.lon = lla.lon
-      waypoint.elevation = lla.alt
-      waypoint.pointsIndex = lla.ind
+      var loc = waypoint.location + delta / this.units.distScale
+      if (loc < 0.01 / this.units.distScale) {
+        loc = 0.01
+      } else if (loc >= this.points[this.points.length - 1].loc) {
+        loc = this.points[this.points.length - 1].loc - (0.01 / this.units.distScale)
+      }
+      waypoint.location = loc
+      wputil.updateLLA(waypoint, this.points)
+      wputil.sortWaypointsByDistance(this.waypoints)
       if (String(waypoint._id) == this.updatingWaypointTimeoutID) {
         clearTimeout(this.updatingWaypointTimeout)
       }
