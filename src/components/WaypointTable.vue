@@ -76,6 +76,11 @@ export default {
   methods: {
     toggleRowDetails: function (waypoint) {
       if (!this.owner) return
+      for (var i = 0, il = this.waypoints.length; i < il; i++) {
+        if (waypoint !== this.waypoints[i] && this.waypoints[i]._showDetails) {
+          this.waypoints[i]._showDetails = false
+        }
+      }
       if (waypoint.type != 'start' && waypoint.type != 'finish') {
         this.$set(waypoint, '_showDetails', !waypoint._showDetails)
       }

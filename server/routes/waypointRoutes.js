@@ -85,31 +85,39 @@ waypointRoutes.route('/:id').put(async function (req, res) {
   }
 })
 
-//  UPDATE
-waypointRoutes.route('/:id/segment').put(function (req, res) {
-  Waypoint.findById(req.params.id, function(err, waypoint) {
-    if (!waypoint)
-      return next(new Error('Could not load Document'));
-    else {
+//  UPDATE SEGMENT
+waypointRoutes.route('/:id/segment').put(async function (req, res) {
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var waypoint = await Waypoint.findById(req.params.id).populate('_course').exec()
+    if (waypoint._course._user.equals(user._id)) {
       waypoint.terrainIndex = req.body.terrainIndex
       waypoint.segmentNotes = req.body.segmentNotes
       waypoint.save().then(post => {
-        res.json('Update complete')
+          res.json('Update complete')
       })
-      .catch(err => {
-        res.status(400).send("unable to update the database")
-      })
+    } else {
+      res.status(403).send("No permission")
     }
-  })
+  } catch (err) {
+    res.status(400).send(err)
+  }
 })
 
 // DELETE
-waypointRoutes.route('/:id').delete(function (req, res) {
-  console.log('delete ' + req.params.id)
-  Waypoint.findByIdAndRemove({_id: req.params.id}, function(err, waypoint){
-        if(err) res.json(err);
-        else res.json('Successfully removed');
-    });
-});
+waypointRoutes.route('/:id').delete(async function (req, res) {
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var waypoint = await Waypoint.findById(req.params.id).populate('_course').exec()
+    if (waypoint._course._user.equals(user._id)) {
+      await waypoint.remove()
+      res.json('Successfully removed');
+    } else {
+      res.status(403).send("No permission")
+    }
+  } catch (err) {
+    res.status(400).send(err)
+  }
+})
 
 module.exports = waypointRoutes;
