@@ -81,7 +81,7 @@ export default {
           this.waypoints[i]._showDetails = false
         }
       }
-      if (waypoint.type != 'start' && waypoint.type != 'finish') {
+      if (waypoint.type !== 'start' && waypoint.type !== 'finish') {
         this.$set(waypoint, '_showDetails', !waypoint._showDetails)
       }
     },
@@ -95,13 +95,13 @@ export default {
       waypoint.location = loc
       wputil.updateLLA(waypoint, this.points)
       wputil.sortWaypointsByDistance(this.waypoints)
-      if (String(waypoint._id) == this.updatingWaypointTimeoutID) {
+      if (String(waypoint._id) === this.updatingWaypointTimeoutID) {
         clearTimeout(this.updatingWaypointTimeout)
       }
       this.updatingWaypointTimeoutID = String(waypoint._id)
       this.updatingWaypointTimeout = setTimeout(() => {
         api.updateWaypoint(waypoint._id, waypoint)
-      }, 2000);
+      }, 2000)
     }
   }
 }
