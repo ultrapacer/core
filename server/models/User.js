@@ -1,5 +1,5 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+var mongoose = require('mongoose')
+var Schema = mongoose.Schema
 
 var UserSchema = new Schema({
   auth0ID: {
@@ -13,8 +13,8 @@ var UserSchema = new Schema({
     type: String,
     default: 'ft'
   }
-},{
-    collection: 'users'
+}, {
+  collection: 'users'
 })
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model('User', UserSchema)

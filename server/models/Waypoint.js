@@ -1,5 +1,5 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+var mongoose = require('mongoose')
+var Schema = mongoose.Schema
 
 // Define collection and schema for Posts
 var WaypointSchema = new Schema({
@@ -40,8 +40,8 @@ var WaypointSchema = new Schema({
     type: Number,
     default: 0
   }
-},{
-    collection: 'waypoints'
-});
+}, {
+  collection: 'waypoints'
+})
 
-module.exports = mongoose.model('Waypoint', WaypointSchema);
+module.exports = mongoose.model('Waypoint', WaypointSchema)

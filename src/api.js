@@ -70,5 +70,17 @@ export default {
   },
   deleteWaypoint (id) {
     return this.execute('delete', `/api/waypoint/${id}`)
+  },
+  getPlans (courseID) {
+    return this.execute('get', `/api/plan/list/${courseID}`)
+  },
+  createPlan (data) {
+    return this.execute('post', `/api/plan`, data)
+  },
+  updatePlan (id, data) {
+    return this.execute('put', `/api/plan/${id}`, data)
+  },
+  deletePlan (id) {
+    return this.execute('delete', `/api/plan/${id}`)
   }
 }

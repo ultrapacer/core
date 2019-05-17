@@ -112,6 +112,7 @@ export default {
       initializing: true,
       saving: false,
       course: {},
+      plans: [],
       splits: [],
       unitSystem: 'english',
       waypoint: {},
@@ -250,8 +251,6 @@ export default {
         pointHoverRadius: 10,
         showLine: false
       }
-      console.log(':::: getting chartPoints :::::::')
-      d.data = []
       for (var i = 0, il = this.waypoints.length; i < il; i++) {
         d.data.push({
           x: this.waypoints[i].location * this.units.distScale,
@@ -269,7 +268,6 @@ export default {
           d.borderColor.push(this.chartColors.red)
         }
       }
-      console.log(':::: done getting chartPoints :::::::')
       return d
     }
   },
@@ -297,8 +295,8 @@ export default {
     this.waypoints = await api.getWaypoints(this.course._id)
     this.updateChartProfile()
     this.splits = utilities.calcSplits(this.points, this.units.dist)
+    this.plans = await api.getPlans(this.course._id)
     this.initializing = false
-    console.log('::::: CREATED :::::::')
   },
   methods: {
     async newWaypoint () {

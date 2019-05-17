@@ -1,5 +1,5 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+var mongoose = require('mongoose')
+var Schema = mongoose.Schema
 
 // Define collection and schema for Posts
 var GPX = new Schema({
@@ -9,8 +9,8 @@ var GPX = new Schema({
   points: {
     type: Array
   }
-},{
-    collection: 'gpx'
-});
+}, {
+  collection: 'gpx'
+})
 
-module.exports = mongoose.model('GPX', GPX);
+module.exports = mongoose.model('GPX', GPX)

@@ -23,7 +23,6 @@
             <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,1)">&gt;&gt;&gt;</b-button>
           </b-col>
         </b-row>
-        
       </b-card>
       </template>
   </b-table>
@@ -37,7 +36,7 @@ export default {
   data () {
     return {
       updatingWaypointTimeout: null,
-      updatingWaypointTimeoutID: null 
+      updatingWaypointTimeoutID: null
     }
   },
   computed: {

@@ -1,5 +1,5 @@
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+var mongoose = require('mongoose')
+var Schema = mongoose.Schema
 
 // Define collection and schema for Posts
 var SegmentSchema = new Schema({
@@ -21,8 +21,8 @@ var SegmentSchema = new Schema({
     type: Number,
     default: 3
   }
-},{
-    collection: 'segments'
+}, {
+  collection: 'segments'
 })
 
-module.exports = mongoose.model('Segment', SegmentSchema);
+module.exports = mongoose.model('Segment', SegmentSchema)

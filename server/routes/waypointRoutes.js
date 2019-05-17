@@ -14,7 +14,7 @@ waypointRoutes.route('/list/:courseID').get(async function (req, res) {
     if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
       var course = await Course.findOne({ _id: req.params.courseID }).exec()
       var gpx = await GPX.findOne({_id: course._gpx}).exec()
-       if (!waypoints.find(waypoint => waypoint.type === 'start')) {
+      if (!waypoints.find(waypoint => waypoint.type === 'start')) {
         var ws = new Waypoint({
           name: 'Start',
           type: 'start',
@@ -28,7 +28,6 @@ waypointRoutes.route('/list/:courseID').get(async function (req, res) {
         waypoints.unshift(ws)
       }
       if (!waypoints.find(waypoint => waypoint.type === 'finish')) {
-        var course = await Course.findOne({ _id: req.params.courseID }).exec()
         var wf = new Waypoint({
           name: 'Finish',
           type: 'finish',
@@ -53,6 +52,7 @@ waypointRoutes.route('/list/:courseID').get(async function (req, res) {
 waypointRoutes.route('/').post(async function (req, res) {
   try {
     var waypoint = new Waypoint(req.body)
+    waypoint._user = await User.findOne({ auth0ID: req.user.sub }).exec()
     await waypoint.save()
     res.json('Update complete')
   } catch (err) {
@@ -75,10 +75,10 @@ waypointRoutes.route('/:id').put(async function (req, res) {
       waypoint.lon = req.body.lon
       waypoint.pointsIndex = req.body.pointsIndex
       waypoint.save().then(post => {
-          res.json('Update complete')
+        res.json('Update complete')
       })
     } else {
-      res.status(403).send("No permission")
+      res.status(403).send('No permission')
     }
   } catch (err) {
     res.status(400).send(err)
@@ -94,10 +94,10 @@ waypointRoutes.route('/:id/segment').put(async function (req, res) {
       waypoint.terrainIndex = req.body.terrainIndex
       waypoint.segmentNotes = req.body.segmentNotes
       waypoint.save().then(post => {
-          res.json('Update complete')
+        res.json('Update complete')
       })
     } else {
-      res.status(403).send("No permission")
+      res.status(403).send('No permission')
     }
   } catch (err) {
     res.status(400).send(err)
@@ -111,13 +111,13 @@ waypointRoutes.route('/:id').delete(async function (req, res) {
     var waypoint = await Waypoint.findById(req.params.id).populate('_course').exec()
     if (waypoint._course._user.equals(user._id)) {
       await waypoint.remove()
-      res.json('Successfully removed');
+      res.json('Successfully removed')
     } else {
-      res.status(403).send("No permission")
+      res.status(403).send('No permission')
     }
   } catch (err) {
     res.status(400).send(err)
   }
 })
 
-module.exports = waypointRoutes;
+module.exports = waypointRoutes
