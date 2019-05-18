@@ -19,13 +19,9 @@
         <b-form-group label="Type">
           <b-form-select type="number" v-model="waypointToEdit.type" :options="waypointTypes"></b-form-select>
         <b-form-group>
-          <b-form-group label="Description">
-              <b-form-textarea rows="4" v-model="waypointToEdit.description"></b-form-textarea>
-            </b-form-group>
-
-
-
-
+        <b-form-group label="Description">
+          <b-form-textarea rows="4" v-model="waypointToEdit.description"></b-form-textarea>
+        </b-form-group>
       </form>
       <template slot="modal-ok" slot-scope="{ ok }">
         <b-spinner v-show="saving" small></b-spinner>
@@ -38,7 +34,7 @@
 <script>
 import api from '@/api'
 export default {
-  props: ['course'],
+  props: ['waypoint'],
   data (
     return {
       file: null,
@@ -53,7 +49,7 @@ export default {
       } else {
         this.model = {}
       }
-      this.$bvModal.show('course-edit-modal')
+      this.$bvModal.show('waypoint-edit-modal')
     }
   },
   methods: {
@@ -61,9 +57,9 @@ export default {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
-      this.saveCourse()
+      this.saveWaypoint()
     },
-    async saveCourse () {
+    async saveWaypoint () {
       this.saving = true
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
