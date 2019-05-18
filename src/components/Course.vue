@@ -91,7 +91,7 @@
         </b-card>
       </b-col>
     </b-row>
-    <plan-form-modal :show="planModalVisible"></plan-form-modal>
+    <plan-edit></plan-edit>
   </div>
 </template>
 
@@ -104,7 +104,7 @@ import wputil from '../../shared/waypointUtilities'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
-import PlanFormModal from './PlanFormModal'
+import PlanEdit from './PlanEdit'
 
 export default {
   title: 'Loading',
@@ -118,7 +118,7 @@ export default {
     SplitTable,
     SegmentTable,
     WaypointTable,
-    PlanFormModal
+    PlanEdit
   },
   data () {
     return {

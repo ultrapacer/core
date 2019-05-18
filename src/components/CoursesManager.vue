@@ -11,7 +11,7 @@
           <template slot="HEAD_elevation">Elevation [{{ user.elevUnits }}]</template>
           <template slot="HEAD_actions">&nbsp;</template>
           <template slot="actions" slot-scope="row">
-            <b-button size="sm" @click="populateCourseToEdit(row.item)" class="mr-1">
+            <b-button size="sm" @click="editCourse(row.item)" class="mr-1">
               <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
             </b-button>
             <b-button size="sm" @click="deleteCourse(row.item._id)" class="mr-1">
@@ -19,63 +19,33 @@
             </b-button>
           </template>
         </b-table>
-        <div v-show="!editing">
+        <div>
           <b-btn variant="success" @click.prevent="newCourse()">
             <v-icon name="plus"></v-icon>
             <span>New Course</span>
           </b-btn>
         </div>
       </b-col>
-      <b-col v-show="editing" lg="3">
-        <b-card :title="(model._id ? 'Edit Course' : 'New Course')">
-          <form @submit.prevent="saveCourse">
-            <b-form-group label="Name">
-              <b-form-input type="text" v-model="model.name"></b-form-input>
-            </b-form-group>
-            <b-form-group label="Privacy">
-              <b-form-checkbox v-model="model.public" value="true" unchecked-value="false">
-                Visible to public
-              </b-form-checkbox>
-            </b-form-group>
-            <b-form-group label="Description">
-              <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
-            </b-form-group>
-            <b-form-group label="GPX File" v-show="!model._id">
-              <b-form-file
-                  :state="Boolean(file)"
-                  v-model="file"
-                  placeholder="Choose a GPX file..."
-                  drop-placeholder="Drop GPX file here..."
-                  accept=".gpx"
-                ></b-form-file>
-            </b-form-group>
-            <div>
-              <b-btn type="submit" variant="success" :disabled="saving">
-                 <b-spinner v-show="saving" small></b-spinner>
-                 Save Course
-               </b-btn>
-              <b-btn type="cancel" @click.prevent="cancelEdit()">Cancel</b-btn>
-            </div>
-          </form>
-        </b-card>
-      </b-col>
     </b-row>
+    <course-edit :course="course" @refresh="refreshCourses"></course-edit>
   </div>
 </template>
 
 <script>
 import api from '@/api'
+import CourseEdit from './CourseEdit'
 export default {
   title: 'Courses',
   props: ['user'],
+  components: {
+    CourseEdit
+  },
   data () {
     return {
       initializing: true,
-      saving: false,
-      editing: false,
+      course: {},
       courses: [],
-      model: {},
-      file: null,
+      courseEditor: false,
       fields: [
         {
           key: 'name',
@@ -132,44 +102,17 @@ export default {
     async goToCourse (course) {
       this.$router.push({path: '/course/' + course._id})
     },
-    async populateCourseToEdit (course) {
-      this.model = Object.assign({}, course)
-      this.editing = true
+    async newCourse () {
+      this.course = {}
     },
-    async saveCourse () {
-      this.saving = true
-      if (this.model._id) {
-        await api.updateCourse(this.model._id, this.model)
-      } else {
-        const formData = new FormData()
-        formData.append('file', this.file)
-        formData.append('model', JSON.stringify(this.model))
-        await api.createCourse(formData)
-      }
-      await this.refreshCourses()
-      this.saving = false
-      this.editing = false
-      this.model = {} // reset form
+    async editCourse (course) {
+      this.course = course
     },
     async deleteCourse (id) {
       if (confirm('Are you sure you want to delete this course?')) {
-        // if we are editing a course we deleted, remove it from the form
-        if (this.model._id === id) {
-          this.model = {}
-          this.editing = false
-        }
         await api.deleteCourse(id)
         await this.refreshCourses()
       }
-    },
-    async cancelEdit () {
-      this.model = {}
-      this.editing = false
-      await this.refreshCourses()
-    },
-    async newCourse () {
-      this.model = {}
-      this.editing = true
     }
   }
 }

@@ -52,11 +52,11 @@ export default {
     }
   },
   async created () {
-    this.model = Object.assign({}, modelDefaults)
   },
   methods: {
     async newPlan () {
       this.model = Object.assign({}, modelDefaults)
+      this.$refs['plan-form-modal'].show()
     },
     async populatePlanToEdit (plan) {
       this.model = Object.assign({}, plan)
