@@ -37,7 +37,7 @@
         </b-tabs>
       </b-col>
       <b-col lg="5" order="1">
-        <b-tabs content-class="mt-3" v-if="!initializing" v-show="showMap" class="sticky-top mt-3" >
+        <b-tabs content-class="mt-3" v-if="!initializing" class="sticky-top mt-3" >
           <b-tab title="Profile" >
             <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
           </b-tab>
@@ -101,7 +101,6 @@ export default {
       waypoint: {},
       waypointToEdit: {},
       waypoints: [],
-      editingSegment: false,
       points: [],
       chartColors: {
         red: 'rgb(255, 99, 132)',
@@ -183,13 +182,6 @@ export default {
         })
       }
       return arr
-    },
-    showMap: function () {
-      if (!this.editingSegment) {
-        return true
-      } else {
-        return false
-      }
     },
     units: function () {
       var u = {
