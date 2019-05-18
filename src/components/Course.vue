@@ -4,10 +4,13 @@
       <b-col>
         <h1 class="h1">{{ course.name }}</h1>
       </b-col>
-      <b-col v-if="owner && !initializing && !plans.length" style="text-align: right">
+      <b-col v-if="owner && !initializing" style="text-align: right">
+          <b-form-group label="Plan" v-if="plans.length">
+              <b-form-select type="number"  v-model="plan" :options="planSelect"></b-form-select>
+            </b-form-group>
         <b-btn variant="success"  v-b-modal.plan-form-modal>
           <v-icon name="plus"></v-icon>
-          <span>New Plan</span>
+          <span v-if="!plans.length" >New Plan</span>
         </b-btn>
       </b-col>
     </b-row>
@@ -178,6 +181,16 @@ export default {
     }
   },
   computed: {
+    plansSelect: function () {
+      var p = []
+      for (var i = 0, il = this.plans.length; i < il; i++) {
+        p.push({
+          value: plans[i],
+          text: plans[I].name
+        })
+      }
+      return p
+    },
     owner: function () {
       if (this.isAuthenticated && String(this.user._id) === String(this.course._user)) {
         return true
