@@ -52,23 +52,6 @@
           </l-map>
           </b-tab>
         </b-tabs>
-        <b-card v-show="editingSegment" :title="'Segment starting at ' + waypointToEdit.name">
-          <form @submit.prevent="saveSegment">
-            <b-form-group label="Terrain">
-              <b-form-input type="number" v-model="waypointToEdit.terrainIndex" min="0" step="0"></b-form-input>
-            </b-form-group>
-            <b-form-group label="Notes">
-              <b-form-textarea rows="4" v-model="waypointToEdit.segmentNotes"></b-form-textarea>
-            </b-form-group>
-            <div>
-              <b-btn type="submit" variant="success" :disabled="saving">
-                 <b-spinner v-show="saving" small></b-spinner>
-                 Save Segment
-               </b-btn>
-              <b-btn type="cancel" @click.prevent="cancelSegmentEdit()">Cancel</b-btn>
-            </div>
-          </form>
-        </b-card>
       </b-col>
     </b-row>
     <plan-edit></plan-edit>
