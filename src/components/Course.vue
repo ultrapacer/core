@@ -32,7 +32,7 @@
             </div>
           </b-tab>
           <b-tab title="Segments">
-            <segment-table :course="course" :segments="segments" :units="units" :owner="owner" :editFn="populateSegmentToEdit"></segment-table>
+            <segment-table :course="course" :segments="segments" :units="units" :owner="owner" :editFn="editSegment"></segment-table>
           </b-tab>
         </b-tabs>
       </b-col>
@@ -73,6 +73,7 @@
     </b-row>
     <plan-edit></plan-edit>
     <waypoint-edit :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
+    <segment-edit :segment="segment" @refresh="refreshWaypoints"></segment-edit>
   </div>
 </template>
 
@@ -86,6 +87,7 @@ import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
 import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
+import SegmentEdit from './SegmentEdit'
 
 export default {
   title: 'Loading',
@@ -100,7 +102,8 @@ export default {
     SegmentTable,
     WaypointTable,
     PlanEdit,
-    WaypointEdit
+    WaypointEdit,
+    SegmentEdit
   },
   data () {
     return {
@@ -109,6 +112,7 @@ export default {
       course: {},
       plans: [],
       planModalVisible: false,
+      segment: {},
       splits: [],
       unitSystem: 'english',
       waypoint: {},
@@ -280,21 +284,6 @@ export default {
     async newWaypoint () {
       this.waypoint = {}
     },
-    async cancelWaypointEdit () {
-      this.waypoint = {}
-    },
-    async cancelSegmentEdit () {
-      this.waypoint = {}
-      this.editingSegment = false
-    },
-    async saveSegment () {
-      this.saving = true
-      await api.updateSegment(this.waypoint._id, this.waypoint)
-      this.waypoint = {} // reset form
-      await this.refreshWaypoints()
-      this.saving = false
-      this.editingSegment = false
-    },
     async refreshWaypoints () {
       this.waypoints = await api.getWaypoints(this.course._id)
     },
@@ -311,9 +300,8 @@ export default {
     async editWaypoint (waypoint) {
       this.waypoint = Object.assign({}, waypoint)
     },
-    async populateSegmentToEdit (waypoint) {
-      this.waypointToEdit = Object.assign({}, waypoint)
-      this.editingSegment = true
+    async editSegment (waypoint) {
+      this.segment = Object.assign({}, waypoint)
     },
     updateChartProfile: function () {
       var data = []

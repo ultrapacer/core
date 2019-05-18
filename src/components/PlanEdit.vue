@@ -20,6 +20,7 @@
 </template>
 
 <script>
+import api from '@/api'
 export default {
   props: ['user', 'show', 'course'],
   data () {

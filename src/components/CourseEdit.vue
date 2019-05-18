@@ -4,9 +4,9 @@
       id="course-edit-modal"
       centered
       :static="true"
-      v-bind:title="(model._id ? 'Edit Course' : 'New Course')"
-      @hidden="clearModal"
-      @cancel="clearModal"
+      v-bind:title="(model._id ? 'Edit' : 'New') + ' Course'"
+      @hidden="clear"
+      @cancel="clear"
       @ok="handleOk"
     >
       <form @submit.prevent="saveCourse">
@@ -77,10 +77,10 @@ export default {
       }
       await this.$emit('refresh')
       this.saving = false
-      this.clearModal()
+      this.clear()
       this.$bvModal.hide('course-edit-modal')
     },
-    clearModal () {
+    clear () {
       this.model = {}
     }
   }

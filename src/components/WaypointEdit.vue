@@ -5,8 +5,8 @@
       centered
       :static="true"
       v-bind:title="(model._id ? 'Edit' : 'New') + ' Waypoint'"
-      @hidden="clearModal"
-      @cancel="clearModal"
+      @hidden="clear"
+      @cancel="clear"
       @ok="handleOk"
     >
       <form @submit.prevent="">
@@ -83,7 +83,7 @@ export default {
       this.save()
     },
     async save () {
-      this.saving = true      
+      this.saving = true
       wputil.updateLLA(this.model, this.points)
       if (this.model._id) {
         await api.updateWaypoint(this.model._id, this.model)
@@ -93,10 +93,10 @@ export default {
       }
       await this.$emit('refresh')
       this.saving = false
-      this.clearModal()
+      this.clear()
       this.$bvModal.hide('waypoint-edit-modal')
     },
-    clearModal () {
+    clear () {
       this.model = Object.assign({}, this.defaults)
     }
   }
