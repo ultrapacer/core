@@ -21,25 +21,20 @@
 
 <script>
 export default {
-  props: ['user','show'],
+  props: ['user', 'show', 'course'],
   data () {
     return {
-      visible: false,
       title: 'Create a race plan',
-      model: {
-        pacingMethod: 'time'
-      },
+      model: {},
       pacingMethods: [
         { value: 'time', text: 'Finish Time' },
         { value: 'pace', text: 'Average Pace' },
         { value: 'gap', text: 'Grade Adjusted Pace' }
-      ]
+      ],
+      saving: false
     }
   },
   watch: {
-    show: function (val) {
-      //$('#exampleModalCenter').modal({ show: val })
-    }
   },
   computed: {
     targetLabel: function () {
@@ -48,13 +43,34 @@ export default {
             return this.pacingMethods[i].text
         }
       }
+    },
+    modelDefaults: function () {
+      return {
+        _course: this.course._id,
+        pacingMethod: 'time'
+      }
     }
   },
   async created () {
-  //$('#exampleModalCenter').modal({ show: true })
+    this.model = Object.assign({}, modelDefaults)
   },
   methods: {
-
+    async newPlan () {
+      this.model = Object.assign({}, modelDefaults)
+    },
+    async populatePlanToEdit (plan) {
+      this.model = Object.assign({}, plan)
+    },
+    async savePlan () {
+      this.saving = true
+      if (this.model._id) {
+        await api.updatePlan(this.model._id, this.model)
+      } else {
+        await api.createPlan(this.model)
+      }
+      this.saving = false
+      this.model = Object.assign({}, modelDefaults) // clear model
+    }
   }
 }
 </script>
