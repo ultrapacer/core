@@ -24,8 +24,8 @@
             <split-table :course="course" :splits="splits" :units="units"></split-table>
           </b-tab>
           <b-tab title="Waypoints">
-            <waypoint-table :course="course" :waypoints="waypoints" :units="units" :owner="owner" :editFn="populateWaypointToEdit" :delFn="deleteWaypoint" :points="points"></waypoint-table>
-            <div v-show="!editingWaypoint" v-if="owner">
+            <waypoint-table :course="course" :waypoints="waypoints" :units="units" :owner="owner" :editFn="editWaypoint" :delFn="deleteWaypoint" :points="points"></waypoint-table>
+            <div v-if="owner">
               <b-btn variant="success" @click.prevent="newWaypoint()">
                 <v-icon name="plus"></v-icon><span>New Waypoint</span>
               </b-btn>
@@ -52,29 +52,6 @@
           </l-map>
           </b-tab>
         </b-tabs>
-        <b-card v-show="editingWaypoint" :title="(waypointToEdit._id ? 'Edit Waypoint' : 'New Waypoint')">
-          <form @submit.prevent="saveWaypoint">
-            <b-form-group label="Name">
-              <b-form-input type="text" v-model="waypointToEdit.name"></b-form-input>
-            </b-form-group>
-            <b-form-group v-bind:label="'Location [' + units.dist + ']'" v-show="waypointToEdit.type != 'start' && waypointToEdit.type != 'finish'">
-              <b-form-input type="number" step="0.001" v-model="waypointLoc" min="0" v-bind:max="course.distance"></b-form-input>
-            </b-form-group>
-            <b-form-group label="Type">
-              <b-form-select type="number" v-model="waypointToEdit.type" :options="waypointTypes"></b-form-select>
-            </b-form-group>
-            <b-form-group label="Description">
-              <b-form-textarea rows="4" v-model="waypointToEdit.description"></b-form-textarea>
-            </b-form-group>
-            <div>
-              <b-btn type="submit" variant="success" :disabled="saving">
-                 <b-spinner v-show="saving" small></b-spinner>
-                Save Waypoint
-              </b-btn>
-              <b-btn type="cancel" @click.prevent="cancelWaypointEdit()">Cancel</b-btn>
-            </div>
-          </form>
-        </b-card>
         <b-card v-show="editingSegment" :title="'Segment starting at ' + waypointToEdit.name">
           <form @submit.prevent="saveSegment">
             <b-form-group label="Terrain">
@@ -95,6 +72,7 @@
       </b-col>
     </b-row>
     <plan-edit></plan-edit>
+    <waypoint-edit :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
   </div>
 </template>
 
@@ -103,11 +81,11 @@ import LineChart from './LineChart.js'
 import {LMap, LTileLayer, LPolyline, LMarker} from 'vue2-leaflet'
 import api from '@/api'
 import utilities from '../../shared/utilities'
-import wputil from '../../shared/waypointUtilities'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
 import PlanEdit from './PlanEdit'
+import WaypointEdit from './WaypointEdit'
 
 export default {
   title: 'Loading',
@@ -121,7 +99,8 @@ export default {
     SplitTable,
     SegmentTable,
     WaypointTable,
-    PlanEdit
+    PlanEdit,
+    WaypointEdit
   },
   data () {
     return {
@@ -135,7 +114,6 @@ export default {
       waypoint: {},
       waypointToEdit: {},
       waypoints: [],
-      editingWaypoint: false,
       editingSegment: false,
       points: [],
       chartColors: {
@@ -185,8 +163,8 @@ export default {
       var p = []
       for (var i = 0, il = this.plans.length; i < il; i++) {
         p.push({
-          value: plans[i],
-          text: plans[I].name
+          value: this.plans[i],
+          text: this.plans[i].name
         })
       }
       return p
@@ -219,20 +197,8 @@ export default {
       }
       return arr
     },
-    waypointTypes: function () {
-      if (this.waypoint.type === 'start') {
-        return [{ value: 'start', text: 'Start' }]
-      } else if (this.waypoint.type === 'finish') {
-        return [{ value: 'finish', text: 'Finish' }]
-      } else {
-        return [
-          { value: 'aid', text: 'Aid Station' },
-          { value: 'landmark', text: 'Landmark' }
-        ]
-      }
-    },
     showMap: function () {
-      if (!this.editingSegment && !this.editingWaypoint) {
+      if (!this.editingSegment) {
         return true
       } else {
         return false
@@ -246,14 +212,6 @@ export default {
       u.distScale = (u.dist === 'mi') ? 0.621371 : 1
       u.altScale = (u.alt === 'ft') ? 3.28084 : 1
       return u
-    },
-    waypointLoc: {
-      set: function (val) {
-        this.waypointToEdit.location = val / this.units.distScale
-      },
-      get: function () {
-        return (this.waypointToEdit.location * this.units.distScale).toFixed(2)
-      }
     },
     chartData: function () {
       return {
@@ -299,14 +257,6 @@ export default {
       return d
     }
   },
-  watch: {
-    editingSegment: function (val) {
-      if (val) { this.editingWaypoint = false }
-    },
-    editingWaypoint: function (val) {
-      if (val) { this.editingSegment = false }
-    }
-  },
   filters: {
     formatDist (val, distScale) {
       return (val * distScale).toFixed(2)
@@ -329,29 +279,13 @@ export default {
   methods: {
     async newWaypoint () {
       this.waypoint = {}
-      this.editingWaypoint = true
     },
     async cancelWaypointEdit () {
       this.waypoint = {}
-      this.editingWaypoint = false
     },
     async cancelSegmentEdit () {
       this.waypoint = {}
       this.editingSegment = false
-    },
-    async saveWaypoint () {
-      this.saving = true
-      wputil.updateLLA(this.waypoint, this.points)
-      if (this.waypoint._id) {
-        await api.updateWaypoint(this.waypoint._id, this.waypoint)
-      } else {
-        this.waypoint._course = this.course._id
-        await api.createWaypoint(this.waypoint)
-      }
-      this.waypoint = {} // reset form
-      await this.refreshWaypoints()
-      this.editingWaypoint = false
-      this.saving = false
     },
     async saveSegment () {
       this.saving = true
@@ -369,15 +303,13 @@ export default {
         // if we are editing a waypoint we deleted, remove it from the form
         if (this.waypoint._id === id) {
           this.waypoint = {}
-          this.editingWaypoint = false
         }
         await api.deleteWaypoint(id)
         await this.refreshWaypoints()
       }
     },
-    async populateWaypointToEdit (waypoint) {
-      this.waypointToEdit = Object.assign({}, waypoint)
-      this.editingWaypoint = true
+    async editWaypoint (waypoint) {
+      this.waypoint = Object.assign({}, waypoint)
     },
     async populateSegmentToEdit (waypoint) {
       this.waypointToEdit = Object.assign({}, waypoint)

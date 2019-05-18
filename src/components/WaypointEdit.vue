@@ -4,23 +4,23 @@
       id="waypoint-edit-modal"
       centered
       :static="true"
-      v-bind:title="(model._id ? 'Edit Waypoint' : 'New Waypoint')"
+      v-bind:title="(model._id ? 'Edit' : 'New') + ' Waypoint'"
       @hidden="clearModal"
       @cancel="clearModal"
       @ok="handleOk"
     >
       <form @submit.prevent="">
         <b-form-group label="Name">
-          <b-form-input type="text" v-model="waypointToEdit.name"></b-form-input>
+          <b-form-input type="text" v-model="model.name"></b-form-input>
         </b-form-group>
-        <b-form-group v-bind:label="'Location [' + units.dist + ']'" v-show="waypointToEdit.type != 'start' && waypointToEdit.type != 'finish'">
-          <b-form-input type="number" step="0.001" v-model="waypointLoc" min="0" v-bind:max="course.distance"></b-form-input>
+        <b-form-group v-bind:label="'Location [' + units.dist + ']'" v-show="model.type != 'start' && model.type != 'finish'">
+          <b-form-input type="number" step="0.01" v-model="waypointLoc" min="0" v-bind:max="course.distance"></b-form-input>
         </b-form-group>
         <b-form-group label="Type">
-          <b-form-select type="number" v-model="waypointToEdit.type" :options="waypointTypes"></b-form-select>
-        <b-form-group>
+          <b-form-select type="number" v-model="model.type" :options="waypointTypes"></b-form-select>
+        </b-form-group>
         <b-form-group label="Description">
-          <b-form-textarea rows="4" v-model="waypointToEdit.description"></b-form-textarea>
+          <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
         </b-form-group>
       </form>
       <template slot="modal-ok" slot-scope="{ ok }">
@@ -33,49 +33,71 @@
 
 <script>
 import api from '@/api'
+import wputil from '../../shared/waypointUtilities'
 export default {
-  props: ['waypoint'],
-  data (
+  props: ['waypoint', 'course', 'points', 'units'],
+  data () {
     return {
-      file: null,
       model: {},
-      saving: false
+      saving: false,
+      defaults: {
+        type: 'aid'
+      }
     }
   },
   watch: {
-    course: function (val) {
+    waypoint: function (val) {
       if (val._id) {
         this.model = Object.assign({}, val)
       } else {
-        this.model = {}
+        this.model = Object.assign({}, this.defaults)
       }
       this.$bvModal.show('waypoint-edit-modal')
     }
   },
-  methods: {
-    handleOk(bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault()
-      // Trigger submit handler
-      this.saveWaypoint()
+  computed: {
+    waypointLoc: {
+      set: function (val) {
+        this.model.location = val / this.units.distScale
+      },
+      get: function () {
+        return (this.model.location * this.units.distScale).toFixed(2)
+      }
     },
-    async saveWaypoint () {
-      this.saving = true
-      if (this.model._id) {
-        await api.updateCourse(this.model._id, this.model)
+    waypointTypes: function () {
+      if (this.model.type === 'start') {
+        return [{ value: 'start', text: 'Start' }]
+      } else if (this.model.type === 'finish') {
+        return [{ value: 'finish', text: 'Finish' }]
       } else {
-        const formData = new FormData()
-        formData.append('file', this.file)
-        formData.append('model', JSON.stringify(this.model))
-        await api.createCourse(formData)
+        return [
+          { value: 'aid', text: 'Aid Station' },
+          { value: 'landmark', text: 'Landmark' }
+        ]
+      }
+    }
+  },
+  methods: {
+    handleOk (bvModalEvt) {
+      bvModalEvt.preventDefault()
+      this.save()
+    },
+    async save () {
+      this.saving = true      
+      wputil.updateLLA(this.model, this.points)
+      if (this.model._id) {
+        await api.updateWaypoint(this.model._id, this.model)
+      } else {
+        this.model._course = this.course._id
+        await api.createWaypoint(this.model)
       }
       await this.$emit('refresh')
       this.saving = false
       this.clearModal()
-      this.$bvModal.hide('course-edit-modal')
+      this.$bvModal.hide('waypoint-edit-modal')
     },
-    clearModal() {
-      this.model = {}
+    clearModal () {
+      this.model = Object.assign({}, this.defaults)
     }
   }
 }

@@ -61,13 +61,11 @@ export default {
     }
   },
   methods: {
-    handleOk(bvModalEvt) {
-      // Prevent modal from closing
+    handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
-      // Trigger submit handler
-      this.saveCourse()
+      this.save()
     },
-    async saveCourse () {
+    async save () {
       this.saving = true
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
@@ -82,7 +80,7 @@ export default {
       this.clearModal()
       this.$bvModal.hide('course-edit-modal')
     },
-    clearModal() {
+    clearModal () {
       this.model = {}
     }
   }

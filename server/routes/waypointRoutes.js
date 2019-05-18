@@ -69,6 +69,7 @@ waypointRoutes.route('/:id').put(async function (req, res) {
     if (waypoint._course._user.equals(user._id)) {
       waypoint.name = req.body.name
       waypoint.location = req.body.location
+      waypoint.type = req.body.type
       waypoint.description = req.body.description
       waypoint.elevation = req.body.elevation
       waypoint.lat = req.body.lat
