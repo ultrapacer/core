@@ -94,12 +94,10 @@ export default {
       saving: false,
       course: {},
       plans: [],
-      planModalVisible: false,
       segment: {},
       splits: [],
       unitSystem: 'english',
       waypoint: {},
-      waypointToEdit: {},
       waypoints: [],
       points: [],
       chartColors: {
