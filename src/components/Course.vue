@@ -4,6 +4,15 @@
       <b-col>
         <h1 class="h1">{{ course.name }}</h1>
       </b-col>
+      <b-col v-if="owner && !initializing" style="text-align: right">
+        <b-form-group label="Plan" v-if="plans.length">
+              <b-form-select type="number"  v-model="plan" :options="planSelect"></b-form-select>
+            </b-form-group>
+        <b-btn variant="success"  v-b-modal.plan-form-modal>
+          <v-icon name="plus"></v-icon>
+          <span v-if="!plans.length" >New Plan</span>
+        </b-btn>
+      </b-col>
     </b-row>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
       <b-spinner label="Loading..." ></b-spinner>
