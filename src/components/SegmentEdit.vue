@@ -51,6 +51,7 @@ export default {
       this.save()
     },
     async save () {
+      if (this.saving) { return }
       this.saving = true
       await api.updateSegment(this.model._id, this.model)
       await this.$emit('refresh')

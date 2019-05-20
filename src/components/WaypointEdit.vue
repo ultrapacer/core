@@ -83,6 +83,7 @@ export default {
       this.save()
     },
     async save () {
+      if (this.saving) { return }
       this.saving = true
       wputil.updateLLA(this.model, this.points)
       if (this.model._id) {

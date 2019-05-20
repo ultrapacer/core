@@ -32,6 +32,14 @@ var CourseSchema = new Schema({
   public: {
     type: Boolean,
     default: false
+  },
+  _plan: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Plan'
+  },
+  terrainIndex: {
+    type: Number,
+    default: 3
   }
 }, {
   collection: 'courses'

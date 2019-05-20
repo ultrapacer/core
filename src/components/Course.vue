@@ -4,14 +4,23 @@
       <b-col>
         <h1 class="h1">{{ course.name }}</h1>
       </b-col>
-      <b-col v-if="owner && !initializing" style="text-align: right">
-        <b-form-group label="Plan" v-if="plans.length">
-              <b-form-select type="number"  v-model="plan" :options="planSelect"></b-form-select>
+      <b-col v-if="owner && !initializing" style="text-align:right">
+        <div style="min-width:220px">
+          <div style="width:120px; display:inline-block">
+            <b-form-group v-if="plans.length" label-size="sm" >
+              <b-form-select type="number" v-model="course._plan" :options="plansSelect" @change="calcPlan" size="sm"></b-form-select>
             </b-form-group>
-        <b-btn variant="success"  v-b-modal.plan-form-modal>
-          <v-icon name="plus"></v-icon>
-          <span v-if="!plans.length" >New Plan</span>
-        </b-btn>
+          </div>
+          <div style="width:80px; display:inline-block">
+            <b-btn @click="editPlan()" class="mr-1" v-if="plans.length" size="sm">
+              <v-icon name="edit"></v-icon>
+            </b-btn>
+            <b-btn variant="success" @click.prevent="newPlan()" size="sm">
+              <v-icon name="plus"></v-icon>
+              <span v-if="!plans.length" >New Plan</span>
+            </b-btn>
+          </div>
+        </div>
       </b-col>
     </b-row>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
@@ -21,7 +30,7 @@
       <b-col order="2">
         <b-tabs content-class="mt-3">
           <b-tab title="Splits" active>
-            <split-table :course="course" :splits="splits" :units="units"></split-table>
+            <split-table :course="course" :plan="plan" :splits="splits" :units="units"></split-table>
           </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table :course="course" :waypoints="waypoints" :units="units" :owner="owner" :editFn="editWaypoint" :delFn="deleteWaypoint" :points="points"></waypoint-table>
@@ -54,7 +63,7 @@
         </b-tabs>
       </b-col>
     </b-row>
-    <plan-edit></plan-edit>
+    <plan-edit :plan="planEdit" :course="course" @refresh="refreshPlan"></plan-edit>
     <waypoint-edit :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
     <segment-edit :segment="segment" @refresh="refreshWaypoints"></segment-edit>
   </div>
@@ -65,6 +74,7 @@ import LineChart from './LineChart.js'
 import {LMap, LTileLayer, LPolyline, LMarker} from 'vue2-leaflet'
 import api from '@/api'
 import utilities from '../../shared/utilities'
+import gap from '../../shared/gap'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
@@ -93,10 +103,11 @@ export default {
       initializing: true,
       saving: false,
       course: {},
+      plan: {},
       plans: [],
+      planEdit: false,
       segment: {},
       splits: [],
-      unitSystem: 'english',
       waypoint: {},
       waypoints: [],
       points: [],
@@ -251,6 +262,7 @@ export default {
     this.updateChartProfile()
     this.splits = utilities.calcSplits(this.points, this.units.dist)
     this.plans = await api.getPlans(this.course._id)
+    this.calcPlan()
     this.initializing = false
   },
   methods: {
@@ -312,6 +324,40 @@ export default {
         arr.push([this.points[i].lat, this.points[i].lon])
       }
       this.mapLatLon = arr
+    },
+    async newPlan () {
+      this.planEdit = {}
+    },
+    async editPlan (waypoint) {
+      this.planEdit = Object.assign({}, this.course._plan)
+    },
+    async refreshPlan (plan) {
+      this.plans = await api.getPlans(this.course._id)
+      for (var i = 0, il = this.plans.length; i < il; i++) {
+        if (this.plans[i]._id === plan._id) {
+          this.course._plan = this.plans[i]
+        }
+      }
+      this.calcPlan()
+    },
+    calcPlan () {
+      if (!this.course._plan) { return }
+      // go through points, get weighted average mutiplier for grade (and later terrain)
+      // scale target pace by weighted average
+      // determine time between each point
+      var tot = 0
+      for (var j = 0, jl = this.points.length - 1; j < jl; j++) {
+        tot += gap(this.points[j].grade) * (this.points[j + 1].loc - this.points[j].loc)
+        //tot += (1) * (this.points[j + 1].loc - this.points[j].loc)
+      }
+      var avgPace = this.course._plan.pacingTarget / this.points[this.points.length - 1].loc
+      var weightedAvg = tot / this.points[this.points.length - 1].loc
+      var gradedAdjustedTime = this.course._plan.pacingTarget / weightedAvg
+      var fixedPace = gradedAdjustedTime / this.points[this.points.length - 1].loc
+      console.log('avgPace: ' + avgPace)
+      console.log('graded average: ' + weightedAvg)
+      console.log('gradedAdjustedTime: ' + gradedAdjustedTime)
+      console.log('fixedPace: ' + fixedPace)
     }
   }
 }
