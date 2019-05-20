@@ -7,7 +7,7 @@
       @hidden="clear"
       @cancel="clear"
       @ok="handleOk"
-    >      
+    >
       <form @submit.prevent="">
         <b-form-group label="Name">
           <b-form-input type="text" v-model="model.name"></b-form-input>
@@ -32,6 +32,7 @@
 
 <script>
 import api from '@/api'
+import gap from '../../shared/gap'
 export default {
   props: ['course', 'plan', 'points'],
   data () {
@@ -60,7 +61,7 @@ export default {
   },
   computed: {
     targetLabel: function () {
-      for (var i=0; i < this.pacingMethods.length; i++) {
+      for (var i = 0; i < this.pacingMethods.length; i++) {
         if (this.pacingMethods[i].value === this.model.pacingMethod) {
           return this.pacingMethods[i].text
         }
@@ -76,22 +77,28 @@ export default {
       if (this.saving) { return }
       this.saving = true
       var p = {}
-      
-      if (model.pacingMethod === 'time') {
-        model.time = this.model.pacingTarget
-        model.pace = model.time / this.course.distance
-        // calculated weighted average of grade adjustments:
-        var tot = 0
-        for (var j = 0, jl = this.points.length - 1; j < jl; j++) {
-          tot += gap(this.points[j].grade) * (this.points[j + 1].loc - this.points[j].loc)
-        }
-        var avgPace = this.course._plan.pacingTarget / this.points[this.points.length - 1].loc
-        var weightedAvg = tot / this.points[this.points.length - 1].loc
-        var gradedAdjustedTime = this.course._plan.pacingTarget / weightedAvg
-        model.gap = gradedAdjustedTime / this.course.distance
+
+      // calculated weighted average of grade adjustment. this should really be part of the course model
+      var tot = 0
+      for (var j = 0, jl = this.points.length - 1; j < jl; j++) {
+        tot += gap(this.points[j].grade) * (this.points[j + 1].loc - this.points[j].loc)
       }
-      
-      
+      var gradeAdjustment = tot / this.course.distance
+
+      if (this.model.pacingMethod === 'time') {
+        this.model.time = this.model.pacingTarget
+        this.model.pace = this.model.time / this.course.distance
+        this.model.gap = this.model.pace * gradeAdjustment
+      } else if (this.model.pacingMethod === 'pace') {
+        this.model.pace = this.model.pacingTarget
+        this.model.time = this.model.pace * this.course.distance
+        this.model.gap = this.model.pace * gradeAdjustment
+      } else if (this.model.pacingMethod === 'gap') {
+        this.model.gap = this.model.pacingTarget
+        this.model.pace = this.model.gap / gradeAdjustment
+        this.model.time = this.model.pace * this.course.distance
+      }
+
       if (this.model._id) {
         p = await api.updatePlan(this.model._id, this.model)
       } else {

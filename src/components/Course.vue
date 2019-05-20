@@ -63,7 +63,7 @@
         </b-tabs>
       </b-col>
     </b-row>
-    <plan-edit :plan="planEdit" :course="course" @refresh="refreshPlan"></plan-edit>
+    <plan-edit :plan="planEdit" :course="course" :points="points" @refresh="refreshPlan"></plan-edit>
     <waypoint-edit :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
     <segment-edit :segment="segment" @refresh="refreshWaypoints"></segment-edit>
   </div>
@@ -342,22 +342,7 @@ export default {
     },
     calcPlan () {
       if (!this.course._plan) { return }
-      // go through points, get weighted average mutiplier for grade (and later terrain)
-      // scale target pace by weighted average
-      // determine time between each point
-      var tot = 0
-      for (var j = 0, jl = this.points.length - 1; j < jl; j++) {
-        tot += gap(this.points[j].grade) * (this.points[j + 1].loc - this.points[j].loc)
-        //tot += (1) * (this.points[j + 1].loc - this.points[j].loc)
-      }
-      var avgPace = this.course._plan.pacingTarget / this.points[this.points.length - 1].loc
-      var weightedAvg = tot / this.points[this.points.length - 1].loc
-      var gradedAdjustedTime = this.course._plan.pacingTarget / weightedAvg
-      var fixedPace = gradedAdjustedTime / this.points[this.points.length - 1].loc
-      console.log('avgPace: ' + avgPace)
-      console.log('graded average: ' + weightedAvg)
-      console.log('gradedAdjustedTime: ' + gradedAdjustedTime)
-      console.log('fixedPace: ' + fixedPace)
+      console.log(this.course._plan)
     }
   }
 }

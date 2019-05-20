@@ -48,6 +48,9 @@ planRoutes.route('/:id').put(async function (req, res) {
       plan.description = req.body.description
       plan.pacingMethod = req.body.pacingMethod
       plan.pacingTarget = req.body.pacingTarget
+      plan.time = req.body.time
+      plan.pace = req.body.pace
+      plan.gap = req.body.gap
       await plan.save()
       res.json(plan)
     } else {

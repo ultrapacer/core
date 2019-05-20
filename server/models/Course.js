@@ -40,6 +40,9 @@ var CourseSchema = new Schema({
   terrainIndex: {
     type: Number,
     default: 3
+  },
+  gradeAdjustment: {
+    type: Number
   }
 }, {
   collection: 'courses'

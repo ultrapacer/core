@@ -22,6 +22,12 @@ var PlanSchema = new Schema({
   time: {
     type: Number
   },
+  pace: {
+    type: Number
+  },
+  gap: {
+    type: Number
+  },
   waypointDelays: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'PlanWaypointDelay'

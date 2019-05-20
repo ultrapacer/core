@@ -48,7 +48,7 @@ export default {
           },
           thClass: 'd-none d-md-table-cell',
           tdClass: 'd-none d-md-table-cell'
-        },
+        }
       ]
       if (this.splits[0].time) {
         f.push({
