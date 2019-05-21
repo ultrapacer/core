@@ -1,6 +1,13 @@
 <template>
   <div>
-    <b-modal id="plan-form-modal" centered v-bind:title="title">
+    <b-modal
+      id="plan-edit-modal"
+      centered
+      v-bind:title="(model._id ? 'Edit' : 'New') + ' Plan'"
+      @hidden="clear"
+      @cancel="clear"
+      @ok="handleOk"
+    >
       <form @submit.prevent="">
         <b-form-group label="Name">
           <b-form-input type="text" v-model="model.name"></b-form-input>
@@ -15,17 +22,24 @@
           <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
         </b-form-group>
       </form>
+      <template slot="modal-ok" slot-scope="{ ok }">
+        <b-spinner v-show="saving" small></b-spinner>
+        Save Plan
+      </template>
     </b-modal>
   </div>
 </template>
 
 <script>
 import api from '@/api'
+import gap from '../../shared/gap'
 export default {
-  props: ['user', 'show', 'course'],
+  props: ['course', 'plan', 'points'],
   data () {
     return {
-      title: 'Create a race plan',
+      defaults: {
+        pacingMethod: 'time'
+      },
       model: {},
       pacingMethods: [
         { value: 'time', text: 'Finish Time' },
@@ -36,41 +50,46 @@ export default {
     }
   },
   watch: {
+    plan: function (val) {
+      if (this.plan._id) {
+        this.model = Object.assign({}, val)
+      } else {
+        this.model = Object.assign({}, this.defaults)
+      }
+      this.$bvModal.show('plan-edit-modal')
+    }
   },
   computed: {
     targetLabel: function () {
-      for (var i=0; i < this.pacingMethods.length; i++) {
+      for (var i = 0; i < this.pacingMethods.length; i++) {
         if (this.pacingMethods[i].value === this.model.pacingMethod) {
-            return this.pacingMethods[i].text
+          return this.pacingMethods[i].text
         }
-      }
-    },
-    modelDefaults: function () {
-      return {
-        _course: this.course._id,
-        pacingMethod: 'time'
       }
     }
   },
-  async created () {
-  },
   methods: {
-    async newPlan () {
-      this.model = Object.assign({}, modelDefaults)
-      this.$refs['plan-form-modal'].show()
+    handleOk (bvModalEvt) {
+      bvModalEvt.preventDefault()
+      this.save()
     },
-    async populatePlanToEdit (plan) {
-      this.model = Object.assign({}, plan)
-    },
-    async savePlan () {
+    async save () {
+      if (this.saving) { return }
       this.saving = true
+      var p = {}
       if (this.model._id) {
-        await api.updatePlan(this.model._id, this.model)
+        p = await api.updatePlan(this.model._id, this.model)
       } else {
-        await api.createPlan(this.model)
+        this.model._course = this.course._id
+        p = await api.createPlan(this.model)
       }
+      await this.$emit('refresh', p)
       this.saving = false
-      this.model = Object.assign({}, modelDefaults) // clear model
+      this.clear()
+      this.$bvModal.hide('plan-edit-modal')
+    },
+    clear () {
+      this.model = Object.assign({}, this.defaults)
     }
   }
 }

@@ -3,13 +3,12 @@
     <b-modal
       id="course-edit-modal"
       centered
-      :static="true"
       v-bind:title="(model._id ? 'Edit' : 'New') + ' Course'"
       @hidden="clear"
       @cancel="clear"
       @ok="handleOk"
     >
-      <form @submit.prevent="saveCourse">
+      <form @submit.prevent="">
         <b-form-group label="Name">
           <b-form-input type="text" v-model="model.name"></b-form-input>
         </b-form-group>
@@ -66,6 +65,7 @@ export default {
       this.save()
     },
     async save () {
+      if (this.saving) { return }
       this.saving = true
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)

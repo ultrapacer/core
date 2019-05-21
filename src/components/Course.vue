@@ -4,6 +4,24 @@
       <b-col>
         <h1 class="h1">{{ course.name }}</h1>
       </b-col>
+      <b-col v-if="owner && !initializing" style="text-align:right">
+        <div style="min-width:220px">
+          <div style="width:120px; display:inline-block">
+            <b-form-group v-if="plans.length" label-size="sm" >
+              <b-form-select type="number" v-model="course._plan" :options="plansSelect" @change="calcPlan" size="sm"></b-form-select>
+            </b-form-group>
+          </div>
+          <div style="width:80px; display:inline-block">
+            <b-btn @click="editPlan()" class="mr-1" v-if="plans.length" size="sm">
+              <v-icon name="edit"></v-icon>
+            </b-btn>
+            <b-btn variant="success" @click.prevent="newPlan()" size="sm">
+              <v-icon name="plus"></v-icon>
+              <span v-if="!plans.length" >New Plan</span>
+            </b-btn>
+          </div>
+        </div>
+      </b-col>
     </b-row>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
       <b-spinner label="Loading..." ></b-spinner>
@@ -12,7 +30,7 @@
       <b-col order="2">
         <b-tabs content-class="mt-3">
           <b-tab title="Splits" active>
-            <split-table :course="course" :splits="splits" :units="units"></split-table>
+            <split-table :course="course" :plan="plan" :splits="splits" :units="units" :pacing="pacing"></split-table>
           </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table :course="course" :waypoints="waypoints" :units="units" :owner="owner" :editFn="editWaypoint" :delFn="deleteWaypoint" :points="points"></waypoint-table>
@@ -23,7 +41,7 @@
             </div>
           </b-tab>
           <b-tab title="Segments">
-            <segment-table :course="course" :segments="segments" :units="units" :owner="owner" :editFn="editSegment"></segment-table>
+            <segment-table :course="course" :segments="segments" :units="units" :owner="owner" :editFn="editSegment" :pacing="pacing"></segment-table>
           </b-tab>
         </b-tabs>
       </b-col>
@@ -45,7 +63,7 @@
         </b-tabs>
       </b-col>
     </b-row>
-    <plan-edit></plan-edit>
+    <plan-edit :plan="planEdit" :course="course" :points="points" @refresh="refreshPlan"></plan-edit>
     <waypoint-edit :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
     <segment-edit :segment="segment" @refresh="refreshWaypoints"></segment-edit>
   </div>
@@ -56,6 +74,7 @@ import LineChart from './LineChart.js'
 import {LMap, LTileLayer, LPolyline, LMarker} from 'vue2-leaflet'
 import api from '@/api'
 import utilities from '../../shared/utilities'
+import gap from '../../shared/gap'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
@@ -84,14 +103,14 @@ export default {
       initializing: true,
       saving: false,
       course: {},
+      gradeAdjustment: 0,
+      plan: {},
       plans: [],
-      planModalVisible: false,
+      planEdit: false,
       segment: {},
-      splits: [],
-      unitSystem: 'english',
       waypoint: {},
-      waypointToEdit: {},
       waypoints: [],
+      pacing: {},
       points: [],
       chartColors: {
         red: 'rgb(255, 99, 132)',
@@ -133,7 +152,7 @@ export default {
       },
       mapLatLon: [],
       mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png'
-    }
+      }
   },
   computed: {
     plansSelect: function () {
@@ -153,6 +172,9 @@ export default {
         return false
       }
     },
+    splits: function () {
+      return utilities.calcSplits(this.points, this.units.dist, this.pacing)
+    },
     segments: function () {
       if (!this.points.length) { return [] }
       if (!this.waypoints.length) { return [] }
@@ -161,7 +183,7 @@ export default {
       for (var i = 0, il = this.waypoints.length; i < il; i++) {
         breaks.push(this.waypoints[i].location)
       }
-      var splits = utilities.calcSegments(this.points, breaks)
+      var splits = utilities.calcSegments(this.points, breaks, this.pacing)
       for (var j = 0, jl = splits.length; j < jl; j++) {
         arr.push({
           start: this.waypoints[j],
@@ -169,7 +191,8 @@ export default {
           len: splits[j].len,
           gain: splits[j].gain,
           loss: splits[j].loss,
-          grade: splits[j].grade
+          grade: splits[j].grade,
+          time: splits[j].time
         })
       }
       return arr
@@ -242,8 +265,19 @@ export default {
     this.updateMapLatLon()
     this.waypoints = await api.getWaypoints(this.course._id)
     this.updateChartProfile()
-    this.splits = utilities.calcSplits(this.points, this.units.dist)
     this.plans = await api.getPlans(this.course._id)
+    
+    // calc grade adjustment:
+    var tot = 0
+    var grade = 0
+    var len = 0 
+    for (var j = 1, jl = this.points.length; j < jl; j++) {
+      len = this.points[j].loc - this.points[j - 1].loc
+      grade = (this.points[j].alt - this.points[j - 1].alt) / len / 10
+      tot += gap(grade) * len
+    }
+    this.gradeAdjustment = tot / this.points[this.points.length - 1].loc
+    this.updatePacing()
     this.initializing = false
   },
   methods: {
@@ -305,6 +339,55 @@ export default {
         arr.push([this.points[i].lat, this.points[i].lon])
       }
       this.mapLatLon = arr
+    },
+    async newPlan () {
+      this.planEdit = {}
+    },
+    async editPlan (waypoint) {
+      this.planEdit = Object.assign({}, this.course._plan)
+    },
+    async refreshPlan (plan) {
+      this.plans = await api.getPlans(this.course._id)
+      for (var i = 0, il = this.plans.length; i < il; i++) {
+        if (this.plans[i]._id === plan._id) {
+          this.course._plan = this.plans[i]
+        }
+      }
+      this.calcPlan()
+    },
+    calcPlan () {
+      if (!this.course._plan) { return }
+      console.log(this.course._plan)
+      this.updatePacing()
+    },
+    updatePacing () {
+      if (!this.course._plan) { return }
+      var time = 0
+      var pace= 0
+      var gap = 0
+      var ungap = 0
+      if (this.course._plan.pacingMethod === 'time') {
+        time = this.course._plan.pacingTarget
+        pace = time / this.points[this.points.length - 1].loc
+        gap = pace * this.gradeAdjustment
+        ungap = pace / this.gradeAdjustment
+      } else if (this.course._plan.pacingMethod === 'pace') {
+        pace = this.course._plan.pacingTarget
+        time = pace * this.points[this.points.length - 1].loc
+        gap = pace * this.gradeAdjustment
+        ungap = pace / this.gradeAdjustment
+      } else if (this.course._plan.pacingMethod === 'gap') {
+        gap = this.course._plan.pacingTarget
+        pace = gap / gradeAdjustment
+        time = pace * this.points[this.points.length - 1].loc
+        ungap = pace / this.gradeAdjustment
+      }
+      this.pacing = {
+        time: time,
+        pace: pace,
+        gap: gap,
+        ungap: ungap
+      }
     }
   }
 }

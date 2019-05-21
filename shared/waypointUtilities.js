@@ -18,7 +18,7 @@ function updateLLA (waypoint, points) {
   }
 }
 
-function compareWaypointsForSort(a, b) {
+function compareWaypointsForSort (a, b) {
   let comparison = 0
   if (a.location > b.location) {
     comparison = 1

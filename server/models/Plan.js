@@ -16,7 +16,16 @@ var PlanSchema = new Schema({
     type: String,
     default: 'time'
   },
-  pacingValue: {
+  pacingTarget: {
+    type: Number
+  },
+  time: {
+    type: Number
+  },
+  pace: {
+    type: Number
+  },
+  gap: {
     type: Number
   },
   waypointDelays: [{

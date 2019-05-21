@@ -19,7 +19,7 @@ var SegmentSchema = new Schema({
   },
   terrainIndex: {
     type: Number,
-    default: 3
+    default: -1
   }
 }, {
   collection: 'segments'

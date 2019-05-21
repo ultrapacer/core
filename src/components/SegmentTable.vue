@@ -7,6 +7,7 @@
     <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_start.terrainIndex">&nbsp;</template>
+    <template slot="FOOT_time">{{ pacing.time | formatTime }}</template>
     <template slot="actions" slot-scope="row">
       <b-button size="sm" @click="editFn(row.item.start)" class="mr-1">
         <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
@@ -17,13 +18,23 @@
 
 <script>
 export default {
-  props: ['course', 'segments', 'units', 'owner', 'editFn'],
+  props: ['course', 'segments', 'units', 'owner', 'editFn', 'pacing'],
   filters: {
     formatDist (val, distScale) {
       return (val * distScale).toFixed(2)
     },
     formatAlt (val, altScale) {
       return (val * altScale).toFixed(0)
+    },
+    formatTime (val) {
+      if (!val) { return "" }
+      var date = new Date(null)
+      date.setSeconds(val)
+      if (val > 3600) {
+        return date.toISOString().substr(11, 8)
+      } else {
+        return date.toISOString().substr(14, 5)
+      }
     }
   },
   computed: {
@@ -78,6 +89,21 @@ export default {
           label: 'Terrain'
         }
       ]
+      if (this.segments[0].time) {
+        f.push({
+          key: 'time',
+          formatter: (value, key, item) => {
+            var date = new Date(null)
+            date.setSeconds(value)
+            if (value > 3600) {
+              return date.toISOString().substr(11, 8)
+            } else {
+              return date.toISOString().substr(14, 5)
+            }
+            return (value).toFixed(2) + '%'
+          },
+        })
+      }
       if (this.owner) {
         f.push({
           key: 'actions',
