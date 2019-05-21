@@ -1,5 +1,8 @@
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
+function gap (grade) {
+  return 0.0013*(grade**2) + 0.0276*(grade) + 1.0306
+}
 
 function calcStats (points) {
   var distance = 0
@@ -22,7 +25,7 @@ function calcStats (points) {
   }
 }
 
-function calcSplits (points, units) {
+function calcSplits (points, units, pacing) {
   var distScale = 1
   if (units == 'mi') { distScale = 0.621371 }
   var tot = points[points.length - 1].loc * distScale
@@ -37,10 +40,14 @@ function calcSplits (points, units) {
   if (tot / distScale > breaks[breaks.length - 1]) {
     breaks.push(tot / distScale)
   }
-  return calcSegments(points, breaks)
+  if (pacing) {
+    return calcSegments(points, breaks, pacing)
+  } else {
+    return calcSegments(points, breaks)
+  }
 }
 
-function calcSegments (points, breaks) {
+function calcSegments (points, breaks, pacing) {
   var segments = []
   var alts = getElevation(points, breaks)
   for (var i = 1, il = breaks.length; i < il; i++) {
@@ -50,7 +57,8 @@ function calcSegments (points, breaks) {
       len: breaks[i] - breaks[i - 1],
       gain: 0,
       loss: 0,
-      grade: round((alts[i] - alts[i - 1]) / (breaks[i] - breaks[i - 1]) / 10, 4)
+      grade: round((alts[i] - alts[i - 1]) / (breaks[i] - breaks[i - 1]) / 10, 4),
+      time: 0
     })
   }
   function getSegmentIndex (dist) {
@@ -73,8 +81,8 @@ function calcSegments (points, breaks) {
     }
     if (j > j0) {
       // interpolate
-      delta = (points[i].alt - points[i - 1].alt) * (segments[j].start - points[i - 1].loc) / (points[i].loc - points[i - 1].loc)
-      delta0 = points[i].alt - points[i - 1].alt - delta
+      delta0 = (points[i].alt - points[i - 1].alt) * (segments[j].start - points[i - 1].loc) / (points[i].loc - points[i - 1].loc)
+      delta = points[i].alt - points[i - 1].alt - delta0
     } else {
       delta = points[i].alt - points[i - 1].alt
       delta0 = 0
@@ -89,6 +97,18 @@ function calcSegments (points, breaks) {
         segments[j0].loss += delta0
       } else {
         segments[j0].gain += delta0
+      }
+    }
+    if (pacing) {
+      var len = 0
+      var grade = 0
+      len = points[i].loc - points[i - 1].loc
+      grade = (delta + delta0) / len / 10
+      if (j > j0) {
+        segments[j0].time += pacing.ungap * gap(grade) * (segments[j].start - points[i - 1].loc)
+        segments[j].time += pacing.ungap * gap(grade) * (points[i].loc - segments[j].start)
+      } else {
+        segments[j].time += pacing.ungap * gap(grade) * len
       }
     }
     j0 = j

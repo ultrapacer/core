@@ -30,7 +30,7 @@
       <b-col order="2">
         <b-tabs content-class="mt-3">
           <b-tab title="Splits" active>
-            <split-table :course="course" :plan="plan" :splits="splits" :units="units"></split-table>
+            <split-table :course="course" :plan="plan" :splits="splits" :units="units" :pacing="pacing"></split-table>
           </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table :course="course" :waypoints="waypoints" :units="units" :owner="owner" :editFn="editWaypoint" :delFn="deleteWaypoint" :points="points"></waypoint-table>
@@ -41,7 +41,7 @@
             </div>
           </b-tab>
           <b-tab title="Segments">
-            <segment-table :course="course" :segments="segments" :units="units" :owner="owner" :editFn="editSegment"></segment-table>
+            <segment-table :course="course" :segments="segments" :units="units" :owner="owner" :editFn="editSegment" :pacing="pacing"></segment-table>
           </b-tab>
         </b-tabs>
       </b-col>
@@ -103,13 +103,14 @@ export default {
       initializing: true,
       saving: false,
       course: {},
+      gradeAdjustment: 0,
       plan: {},
       plans: [],
       planEdit: false,
       segment: {},
-      splits: [],
       waypoint: {},
       waypoints: [],
+      pacing: {},
       points: [],
       chartColors: {
         red: 'rgb(255, 99, 132)',
@@ -151,37 +152,9 @@ export default {
       },
       mapLatLon: [],
       mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png'
-    }
+      }
   },
   computed: {
-    gradeAdjustment: function () {
-      var tot = 0
-      for (var j = 0, jl = this.points.length - 1; j < jl; j++) {
-        tot += gap(this.points[j].grade) * (this.points[j + 1].loc - this.points[j].loc)
-      }
-      return tot / this.course.distance
-    },
-    pacing: function () {
-      var time = 0, pace= 0, gap = 0
-      if (this.plan.pacingMethod === 'time') {
-        time = this.plan.pacingTarget
-        pace = time / this.course.distance
-        gap = pace * this.gradeAdjustment
-      } else if (this.plan.pacingMethod === 'pace') {
-        pace = this.plan.pacingTarget
-        time = pace * this.course.distance
-        gap = pace * this.gradeAdjustment
-      } else if (this.plan.pacingMethod === 'gap') {
-        gap = this.plan.pacingTarget
-        pace = gap / gradeAdjustment
-        time = pace * this.course.distance
-      }
-      return {
-        time: time,
-        pace: pace,
-        gap: gap
-      }
-    },
     plansSelect: function () {
       var p = []
       for (var i = 0, il = this.plans.length; i < il; i++) {
@@ -199,6 +172,13 @@ export default {
         return false
       }
     },
+    splits: function () {
+      if (this.course._plan._id) {
+        return utilities.calcSplits(this.points, this.units.dist, this.pacing)
+      } else {
+        return utilities.calcSplits(this.points, this.units.dist)
+      }
+    },
     segments: function () {
       if (!this.points.length) { return [] }
       if (!this.waypoints.length) { return [] }
@@ -207,7 +187,7 @@ export default {
       for (var i = 0, il = this.waypoints.length; i < il; i++) {
         breaks.push(this.waypoints[i].location)
       }
-      var splits = utilities.calcSegments(this.points, breaks)
+      var splits = utilities.calcSegments(this.points, breaks, this.pacing)
       for (var j = 0, jl = splits.length; j < jl; j++) {
         arr.push({
           start: this.waypoints[j],
@@ -215,7 +195,8 @@ export default {
           len: splits[j].len,
           gain: splits[j].gain,
           loss: splits[j].loss,
-          grade: splits[j].grade
+          grade: splits[j].grade,
+          time: splits[j].time
         })
       }
       return arr
@@ -288,9 +269,26 @@ export default {
     this.updateMapLatLon()
     this.waypoints = await api.getWaypoints(this.course._id)
     this.updateChartProfile()
-    this.splits = utilities.calcSplits(this.points, this.units.dist)
     this.plans = await api.getPlans(this.course._id)
-    this.calcPlan()
+    
+    // calc grade adjustment:
+    var tot = 0
+    var grade = 0
+    var len = 0 
+    for (var j = 1, jl = this.points.length; j < jl; j++) {
+      len = this.points[j].loc - this.points[j - 1].loc
+      grade = (this.points[j].alt - this.points[j - 1].alt) / len / 10
+      tot += gap(grade) * len
+    }
+    this.gradeAdjustment = tot / this.points[this.points.length - 1].loc
+    var tot2 = 0
+    for (var j = 1, jl = this.points.length; j < jl; j++) {
+      len = this.points[j].loc - this.points[j - 1].loc
+      grade = (this.points[j].alt - this.points[j - 1].alt) / len / 10
+      tot2 += gap(grade) * len / this.gradeAdjustment 
+    }
+    console.log('tot2:' + tot2 / this.points[this.points.length - 1].loc)
+    this.updatePacing()
     this.initializing = false
   },
   methods: {
@@ -371,6 +369,35 @@ export default {
     calcPlan () {
       if (!this.course._plan) { return }
       console.log(this.course._plan)
+      this.updatePacing()
+    },
+    updatePacing () {
+      var time = 0
+      var pace= 0
+      var gap = 0
+      var ungap = 0
+      if (this.course._plan.pacingMethod === 'time') {
+        time = this.course._plan.pacingTarget
+        pace = time / this.points[this.points.length - 1].loc
+        gap = pace * this.gradeAdjustment
+        ungap = pace / this.gradeAdjustment
+      } else if (this.course._plan.pacingMethod === 'pace') {
+        pace = this.course._plan.pacingTarget
+        time = pace * this.points[this.points.length - 1].loc
+        gap = pace * this.gradeAdjustment
+        ungap = pace / this.gradeAdjustment
+      } else if (this.course._plan.pacingMethod === 'gap') {
+        gap = this.course._plan.pacingTarget
+        pace = gap / gradeAdjustment
+        time = pace * this.points[this.points.length - 1].loc
+        ungap = pace / this.gradeAdjustment
+      }
+      this.pacing = {
+        time: time,
+        pace: pace,
+        gap: gap,
+        ungap: ungap
+      }
     }
   }
 }

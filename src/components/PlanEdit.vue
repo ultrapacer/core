@@ -77,28 +77,6 @@ export default {
       if (this.saving) { return }
       this.saving = true
       var p = {}
-
-      // calculated weighted average of grade adjustment. this should really be part of the course model
-      var tot = 0
-      for (var j = 0, jl = this.points.length - 1; j < jl; j++) {
-        tot += gap(this.points[j].grade) * (this.points[j + 1].loc - this.points[j].loc)
-      }
-      var gradeAdjustment = tot / this.course.distance
-
-      if (this.model.pacingMethod === 'time') {
-        this.model.time = this.model.pacingTarget
-        this.model.pace = this.model.time / this.course.distance
-        this.model.gap = this.model.pace * gradeAdjustment
-      } else if (this.model.pacingMethod === 'pace') {
-        this.model.pace = this.model.pacingTarget
-        this.model.time = this.model.pace * this.course.distance
-        this.model.gap = this.model.pace * gradeAdjustment
-      } else if (this.model.pacingMethod === 'gap') {
-        this.model.gap = this.model.pacingTarget
-        this.model.pace = this.model.gap / gradeAdjustment
-        this.model.time = this.model.pace * this.course.distance
-      }
-
       if (this.model._id) {
         p = await api.updatePlan(this.model._id, this.model)
       } else {

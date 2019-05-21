@@ -4,16 +4,25 @@
     <template slot="FOOT_gain">{{ course.gain | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
-    <template slot="FOOT_time">{{ plan.time }}</template>
+    <template slot="FOOT_time">{{ pacing.time | formatTime }}</template>
   </b-table>
 </template>
 
 <script>
 export default {
-  props: ['course', 'splits', 'units', 'plan'],
+  props: ['course', 'splits', 'units', 'plan', 'pacing'],
   filters: {
     formatAlt (val, altScale) {
       return (val * altScale).toFixed(0)
+    },
+    formatTime (val) {
+      var date = new Date(null)
+      date.setSeconds(val)
+      if (val > 3600) {
+        return date.toISOString().substr(11, 8)
+      } else {
+        return date.toISOString().substr(14, 5)
+      }
     }
   },
   computed: {
@@ -52,7 +61,16 @@ export default {
       ]
       if (this.splits[0].time) {
         f.push({
-          key: 'time'
+          key: 'time',
+          formatter: (value, key, item) => {
+            var date = new Date(null)
+            date.setSeconds(value)
+            if (value > 3600) {
+              return date.toISOString().substr(11, 8)
+            } else {
+              return date.toISOString().substr(14, 5)
+            }
+          },
         })
       }
       return f
