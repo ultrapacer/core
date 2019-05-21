@@ -16,6 +16,7 @@ export default {
       return (val * altScale).toFixed(0)
     },
     formatTime (val) {
+      if (!val) { return "" }
       var date = new Date(null)
       date.setSeconds(val)
       if (val > 3600) {

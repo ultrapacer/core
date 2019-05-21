@@ -173,11 +173,7 @@ export default {
       }
     },
     splits: function () {
-      if (this.course._plan._id) {
-        return utilities.calcSplits(this.points, this.units.dist, this.pacing)
-      } else {
-        return utilities.calcSplits(this.points, this.units.dist)
-      }
+      return utilities.calcSplits(this.points, this.units.dist, this.pacing)
     },
     segments: function () {
       if (!this.points.length) { return [] }
@@ -281,13 +277,6 @@ export default {
       tot += gap(grade) * len
     }
     this.gradeAdjustment = tot / this.points[this.points.length - 1].loc
-    var tot2 = 0
-    for (var j = 1, jl = this.points.length; j < jl; j++) {
-      len = this.points[j].loc - this.points[j - 1].loc
-      grade = (this.points[j].alt - this.points[j - 1].alt) / len / 10
-      tot2 += gap(grade) * len / this.gradeAdjustment 
-    }
-    console.log('tot2:' + tot2 / this.points[this.points.length - 1].loc)
     this.updatePacing()
     this.initializing = false
   },
@@ -372,6 +361,7 @@ export default {
       this.updatePacing()
     },
     updatePacing () {
+      if (!this.course._plan) { return }
       var time = 0
       var pace= 0
       var gap = 0
