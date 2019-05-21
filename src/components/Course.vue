@@ -161,6 +161,27 @@ export default {
       }
       return tot / this.course.distance
     },
+    pacing: function () {
+      var time = 0, pace= 0, gap = 0
+      if (this.plan.pacingMethod === 'time') {
+        time = this.plan.pacingTarget
+        pace = time / this.course.distance
+        gap = pace * this.gradeAdjustment
+      } else if (this.plan.pacingMethod === 'pace') {
+        pace = this.plan.pacingTarget
+        time = pace * this.course.distance
+        gap = pace * this.gradeAdjustment
+      } else if (this.plan.pacingMethod === 'gap') {
+        gap = this.plan.pacingTarget
+        pace = gap / gradeAdjustment
+        time = pace * this.course.distance
+      }
+      return {
+        time: time,
+        pace: pace,
+        gap: gap
+      }
+    },
     plansSelect: function () {
       var p = []
       for (var i = 0, il = this.plans.length; i < il; i++) {
