@@ -87,6 +87,25 @@ courseRoutes.route('/:id').delete(async function (req, res) {
   }
 })
 
+//  UPDATE SELECTED PLAN
+courseRoutes.route('/:courseid/selectplan/:planid').put(async function (req, res) {
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var course = await Course.findById(req.params.courseid).exec()
+    var plan = await Plan.findById(req.params.planid).exec()
+    if (course._user.equals(user._id)) {
+      course.plan = plan
+      await course.save()
+      res.json('Update complete')
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    res.status(400).send(err)
+  }
+})
+
+
 // GET COURSE
 courseRoutes.route('/:course').get(async function (req, res) {
   try {
