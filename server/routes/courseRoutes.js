@@ -4,12 +4,11 @@ var courseRoutes = express.Router()
 const multer = require('multer')
 const gpxParse = require('gpx-parse')
 const utilities = require('../../shared/utilities')
-
 const upload = multer()
-// Require Course model in our routes module
 var Course = require('../models/Course')
 var User = require('../models/User')
 var GPX = require('../models/GPX')
+var Plan = require('../models/Plan')
 
 // Defined store route
 courseRoutes.route('/').post(upload.single('file'), function (req, res) {
