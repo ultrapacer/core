@@ -154,6 +154,13 @@ export default {
     }
   },
   computed: {
+    gradeAdjustment: function () {
+      var tot = 0
+      for (var j = 0, jl = this.points.length - 1; j < jl; j++) {
+        tot += gap(this.points[j].grade) * (this.points[j + 1].loc - this.points[j].loc)
+      }
+      return tot / this.course.distance
+    },
     plansSelect: function () {
       var p = []
       for (var i = 0, il = this.plans.length; i < il; i++) {
