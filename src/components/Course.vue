@@ -358,6 +358,7 @@ export default {
     calcPlan () {
       if (!this.course._plan) { return }
       console.log(this.course._plan)
+      api.selectCoursePlan(this.course._id, {plan: this._course._plan._id})
       this.updatePacing()
     },
     updatePacing () {
