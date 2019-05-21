@@ -88,13 +88,12 @@ courseRoutes.route('/:id').delete(async function (req, res) {
 })
 
 //  UPDATE SELECTED PLAN
-courseRoutes.route('/:courseid/selectplan/:planid').put(async function (req, res) {
+courseRoutes.route('/:courseid/plan').put(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.courseid).exec()
-    var plan = await Plan.findById(req.params.planid).exec()
     if (course._user.equals(user._id)) {
-      course.plan = plan
+      course.plan = await Plan.findById(req.body.plan).exec()
       await course.save()
       res.json('Update complete')
     } else {
@@ -104,7 +103,6 @@ courseRoutes.route('/:courseid/selectplan/:planid').put(async function (req, res
     res.status(400).send(err)
   }
 })
-
 
 // GET COURSE
 courseRoutes.route('/:course').get(async function (req, res) {
