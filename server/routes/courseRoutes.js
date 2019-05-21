@@ -92,7 +92,7 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.courseid).exec()
     if (course._user.equals(user._id)) {
-      course.plan = await Plan.findById(req.body.plan).exec()
+      course._plan = await Plan.findById(req.body.plan).exec()
       await course.save()
       res.json('Update complete')
     } else {
