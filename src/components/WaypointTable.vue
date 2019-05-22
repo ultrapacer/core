@@ -51,8 +51,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
-          thClass: 'text-sm-right',
-          tdClass: 'text-sm-right'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         },
         {
           key: 'elevation',
@@ -60,8 +60,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-sm-table-cell text-sm-right',
-          tdClass: 'd-none d-sm-table-cell text-sm-right'
+          thClass: 'd-none d-sm-table-cell text-right',
+          tdClass: 'd-none d-sm-table-cell text-right'
         }
       ]
       if (this.owner) {

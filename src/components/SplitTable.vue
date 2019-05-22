@@ -35,8 +35,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
-          thClass: 'text-sm-right',
-          tdClass: 'text-sm-right'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         },
         {
           key: 'gain',
@@ -44,8 +44,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'text-sm-right',
-          tdClass: 'text-sm-right'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         },
         {
           key: 'loss',
@@ -53,8 +53,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'text-sm-right',
-          tdClass: 'text-sm-right'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         },
         {
           key: 'grade',
@@ -62,8 +62,8 @@ export default {
           formatter: (value, key, item) => {
             return (value).toFixed(2) + '%'
           },
-          thClass: 'd-none d-md-table-cell text-sm-right',
-          tdClass: 'd-none d-md-table-cell text-sm-right'
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         }
       ]
       if (this.splits[0].time) {
@@ -78,8 +78,8 @@ export default {
               return date.toISOString().substr(14, 5)
             }
           },
-          thClass: 'text-sm-right',
-          tdClass: 'text-sm-right'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         })
       }
       return f

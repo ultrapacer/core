@@ -56,8 +56,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
-          thClass: 'text-sm-right',
-          tdClass: 'text-sm-right'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         },
         {
           key: 'gain',
@@ -65,8 +65,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-md-table-cell text-sm-right',
-          tdClass: 'd-none d-md-table-cell text-sm-right'
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         },
         {
           key: 'loss',
@@ -74,8 +74,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-md-table-cell text-sm-right',
-          tdClass: 'd-none d-md-table-cell text-sm-right'
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         },
         {
           key: 'grade',
@@ -83,14 +83,14 @@ export default {
           formatter: (value, key, item) => {
             return (value).toFixed(2) + '%'
           },
-          thClass: 'd-none d-md-table-cell text-sm-right',
-          tdClass: 'd-none d-md-table-cell text-sm-right'
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         },
         {
           key: 'start.terrainIndex',
           label: 'Terrain',
-          thClass: 'text-sm-center',
-          tdClass: 'text-sm-center'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         }
       ]
       if (this.segments[0].time) {
@@ -105,8 +105,8 @@ export default {
               return date.toISOString().substr(14, 5)
             }
           },
-          thClass: 'text-sm-right',
-          tdClass: 'text-sm-right'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         })
       }
       if (this.owner) {
