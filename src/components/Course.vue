@@ -5,22 +5,28 @@
         <h1 class="h1">{{ course.name }}</h1>
       </b-col>
       <b-col v-if="owner && !initializing" style="text-align:right">
-        <div style="min-width:220px">
-          <div style="width:120px; display:inline-block">
-            <b-form-group v-if="plans.length" label-size="sm" >
+        <b-row>
+          <b-col v-if="plans.length" >
+            <b-form-group label-size="sm" label="Plan" label-cols="4"  label-cols-lg="2">
               <b-form-select type="number" v-model="course._plan" :options="plansSelect" @change="calcPlan" size="sm"></b-form-select>
             </b-form-group>
-          </div>
-          <div style="width:80px; display:inline-block">
-            <b-btn @click="editPlan()" class="mr-1" v-if="plans.length" size="sm">
+          </b-col>
+          <b-col cols="4" md="4" lg="3" xl="3" style="text-align:left" v-if="plans.length">
+            <b-btn @click="editPlan()" class="mr-1" size="sm">
               <v-icon name="edit"></v-icon>
             </b-btn>
             <b-btn variant="success" @click.prevent="newPlan()" size="sm">
               <v-icon name="plus"></v-icon>
               <span v-if="!plans.length" >New Plan</span>
             </b-btn>
-          </div>
-        </div>
+          </b-col>
+          <b-col v-if="!plans.length">
+            <b-btn variant="success" @click.prevent="newPlan()" size="sm">
+              <v-icon name="plus"></v-icon>
+              New Plan
+            </b-btn>
+          </b-col>
+        </b-row>
       </b-col>
     </b-row>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
