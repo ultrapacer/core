@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid mt-4">
     <b-row>
-      <b-col>
+      <b-col class="d-none d-md-block">
         <h1 class="h1">{{ course.name }}</h1>
       </b-col>
       <b-col v-if="owner && !initializing" style="text-align:right">
