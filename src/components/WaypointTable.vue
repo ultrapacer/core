@@ -44,7 +44,6 @@ export default {
       var f = [
         {
           key: 'name',
-          thClass: 'text-sm-center'
         },
         {
           key: 'location',
@@ -52,7 +51,7 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
-          thClass: 'text-sm-center',
+          thClass: 'text-sm-right',
           tdClass: 'text-sm-right'
         },
         {
@@ -61,7 +60,7 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-sm-table-cell text-sm-center',
+          thClass: 'd-none d-sm-table-cell text-sm-right',
           tdClass: 'd-none d-sm-table-cell text-sm-right'
         }
       ]

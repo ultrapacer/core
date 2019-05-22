@@ -2,12 +2,12 @@
   <b-table :items="segments" :fields="fields" primary-key="start._id" hover foot-clone small>
     <template slot="FOOT_start.name">&nbsp;</template>
     <template slot="FOOT_end.name">&nbsp;</template>
-    <template slot="FOOT_len"><div class="text-sm-right">{{ course.distance | formatDist(units.distScale) }}</div></template>
-    <template slot="FOOT_gain"><div class="text-sm-right">{{ course.gain | formatAlt(units.altScale) }}</div></template>
-    <template slot="FOOT_loss"><div class="text-sm-right">{{ course.loss | formatAlt(units.altScale) }}</div></template>
+    <template slot="FOOT_len">{{ course.distance | formatDist(units.distScale) }}</template>
+    <template slot="FOOT_gain">{{ course.gain | formatAlt(units.altScale) }}</template>
+    <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_start.terrainIndex">&nbsp;</template>
-    <template slot="FOOT_time"><div class="text-sm-right">{{ pacing.time | formatTime }}</div></template>
+    <template slot="FOOT_time">{{ pacing.time | formatTime }}</template>
     <template slot="actions" slot-scope="row">
       <b-button size="sm" @click="editFn(row.item.start)" class="mr-1">
         <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
@@ -42,13 +42,12 @@ export default {
       var f = [
         {
           key: 'start.name',
-          label: 'Start',
-          thClass: 'text-sm-center'
+          label: 'Start'
         },
         {
           key: 'end.name',
           label: 'End',
-          thClass: 'd-none d-md-table-cell text-sm-center',
+          thClass: 'd-none d-md-table-cell',
           tdClass: 'd-none d-md-table-cell'
         },
         {
@@ -57,16 +56,16 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
-          thClass: 'text-sm-center',
+          thClass: 'text-sm-right',
           tdClass: 'text-sm-right'
         },
         {
           key: 'gain',
-          label: 'Gain [' + this.units.alt + ']',
+          label: `Gain [${this.units.alt}]`,
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-md-table-cell text-sm-center',
+          thClass: 'd-none d-md-table-cell text-sm-right',
           tdClass: 'd-none d-md-table-cell text-sm-right'
         },
         {
@@ -75,7 +74,7 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-md-table-cell text-sm-center',
+          thClass: 'd-none d-md-table-cell text-sm-right',
           tdClass: 'd-none d-md-table-cell text-sm-right'
         },
         {
@@ -84,8 +83,8 @@ export default {
           formatter: (value, key, item) => {
             return (value).toFixed(2) + '%'
           },
-          thClass: 'd-none d-md-table-cell text-sm-center',
-          tdClass: 'd-none d-md-table-cell'
+          thClass: 'd-none d-md-table-cell text-sm-right',
+          tdClass: 'd-none d-md-table-cell text-sm-right'
         },
         {
           key: 'start.terrainIndex',
@@ -106,7 +105,7 @@ export default {
               return date.toISOString().substr(14, 5)
             }
           },
-          thClass: 'text-sm-center',
+          thClass: 'text-sm-right',
           tdClass: 'text-sm-right'
         })
       }

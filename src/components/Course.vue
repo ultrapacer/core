@@ -4,14 +4,14 @@
       <b-col class="d-none d-md-block">
         <h1 class="h1">{{ course.name }}</h1>
       </b-col>
-      <b-col v-if="owner && !initializing" style="text-align:right">
+      <b-col v-if="!initializing" style="text-align:right">
         <b-row>
           <b-col v-if="plans.length" >
             <b-form-group label-size="sm" label="Plan" label-cols="4"  label-cols-lg="2">
               <b-form-select type="number" v-model="course._plan" :options="plansSelect" @change="calcPlan" size="sm"></b-form-select>
             </b-form-group>
           </b-col>
-          <b-col cols="4" md="4" lg="3" xl="3" style="text-align:left" v-if="plans.length">
+          <b-col cols="4" md="4" lg="3" xl="3" style="text-align:left" v-if="owner && plans.length">
             <b-btn @click="editPlan()" class="mr-1" size="sm">
               <v-icon name="edit"></v-icon>
             </b-btn>
@@ -20,7 +20,7 @@
               <span v-if="!plans.length" >New Plan</span>
             </b-btn>
           </b-col>
-          <b-col v-if="!plans.length">
+          <b-col v-if="owner && !plans.length">
             <b-btn variant="success" @click.prevent="newPlan()" size="sm">
               <v-icon name="plus"></v-icon>
               New Plan
@@ -362,7 +362,9 @@ export default {
     },
     calcPlan () {
       if (!this.course._plan) { return }
-      api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
+      if (this.owner) {
+        api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
+      }
       this.updatePacing()
     },
     updatePacing () {
