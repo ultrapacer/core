@@ -158,7 +158,7 @@ export default {
       },
       mapLatLon: [],
       mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png'
-      }
+    }
   },
   computed: {
     plansSelect: function () {
@@ -272,11 +272,10 @@ export default {
     this.waypoints = await api.getWaypoints(this.course._id)
     this.updateChartProfile()
     this.plans = await api.getPlans(this.course._id)
-    
     // calc grade adjustment:
     var tot = 0
     var grade = 0
-    var len = 0 
+    var len = 0
     for (var j = 1, jl = this.points.length; j < jl; j++) {
       len = this.points[j].loc - this.points[j - 1].loc
       grade = (this.points[j].alt - this.points[j - 1].alt) / len / 10
@@ -369,7 +368,7 @@ export default {
     updatePacing () {
       if (!this.course._plan) { return }
       var time = 0
-      var pace= 0
+      var pace = 0
       var gap = 0
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
@@ -381,7 +380,7 @@ export default {
         gap = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'gap') {
         gap = this.course._plan.pacingTarget
-        pace = gap * gradeAdjustment
+        pace = gap * this.gradeAdjustment
         time = pace * this.points[this.points.length - 1].loc
       }
       this.pacing = {

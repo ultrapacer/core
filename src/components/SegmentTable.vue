@@ -27,7 +27,7 @@ export default {
       return (val * altScale).toFixed(0)
     },
     formatTime (val) {
-      if (!val) { return "" }
+      if (!val) { return '' }
       var date = new Date(null)
       date.setSeconds(val)
       if (val > 3600) {
@@ -43,7 +43,7 @@ export default {
         {
           key: 'start.name',
           label: 'Start',
-          thClass: 'text-sm-center',
+          thClass: 'text-sm-center'
         },
         {
           key: 'end.name',
@@ -105,7 +105,6 @@ export default {
             } else {
               return date.toISOString().substr(14, 5)
             }
-            return (value).toFixed(2) + '%'
           },
           thClass: 'text-sm-center',
           tdClass: 'text-sm-right'
