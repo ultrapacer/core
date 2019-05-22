@@ -1,6 +1,6 @@
 <template>
   <div class="container-fluid mt-4">
-    <h1 class="h1">Courses</h1>
+    <h1 class="h1 d-none d-md-block">Courses</h1>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
       <b-spinner label="Loading..." ></b-spinner>
     </div>
