@@ -107,7 +107,7 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 courseRoutes.route('/:course').get(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.course).populate(['_gpx','_plan']).exec()
+    var course = await Course.findById(req.params.course).populate(['_gpx', '_plan']).exec()
     if (course._user.equals(user._id) || course.public) {
       res.json(course)
     } else {

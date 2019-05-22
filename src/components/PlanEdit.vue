@@ -32,7 +32,6 @@
 
 <script>
 import api from '@/api'
-import gap from '../../shared/gap'
 export default {
   props: ['course', 'plan', 'points'],
   data () {

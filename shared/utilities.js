@@ -1,8 +1,6 @@
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
-function gap (grade) {
-  return 0.0013*(grade**2) + 0.0276*(grade) + 1.0306
-}
+const gapModel = require('./gapModel')
 
 function calcStats (points) {
   var distance = 0
@@ -27,7 +25,7 @@ function calcStats (points) {
 
 function calcSplits (points, units, pacing) {
   var distScale = 1
-  if (units == 'mi') { distScale = 0.621371 }
+  if (units === 'mi') { distScale = 0.621371 }
   var tot = points[points.length - 1].loc * distScale
 
   // generate array of breaks in km
@@ -74,7 +72,7 @@ function calcSegments (points, breaks, pacing) {
   var j0 = 0
   var delta0 = 0
   for (var i = 1, il = points.length; i < il; i++) {
-    if (i == il - 1) {
+    if (i === il - 1) {
       j = segments.length - 1
     } else {
       j = getSegmentIndex(points[i].loc)
@@ -105,10 +103,10 @@ function calcSegments (points, breaks, pacing) {
       len = points[i].loc - points[i - 1].loc
       grade = (delta + delta0) / len / 10
       if (j > j0) {
-        segments[j0].time += pacing.ungap * gap(grade) * (segments[j].start - points[i - 1].loc)
-        segments[j].time += pacing.ungap * gap(grade) * (points[i].loc - segments[j].start)
+        segments[j0].time += pacing.gap * gapModel(grade) * (segments[j].start - points[i - 1].loc)
+        segments[j].time += pacing.gap * gapModel(grade) * (points[i].loc - segments[j].start)
       } else {
-        segments[j].time += pacing.ungap * gap(grade) * len
+        segments[j].time += pacing.gap * gapModel(grade) * len
       }
     }
     j0 = j
@@ -136,13 +134,12 @@ function cleanPoints (points) {
 }
 
 function addLoc (points) {
-  var loc = 0
   var d = 0
   points[0].loc = 0
   for (var i = 1, il = points.length; i < il; i++) {
     d += (gpxParse.utils.calculateDistance(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon))
     points[i].loc = d
-    points[i - 1].grade = round((points[i].alt - points[i - 1].alt) / (points[i].loc - points[i - 1].loc)  / 10, 2)
+    points[i - 1].grade = round((points[i].alt - points[i - 1].alt) / (points[i].loc - points[i - 1].loc) / 10, 2)
   }
   points[points.length - 1].grade = 0
   return points
@@ -160,7 +157,7 @@ function getElevation (points, location) {
   location = locs.shift()
   for (var i = 0, il = points.length; i < il; i++) {
     if (points[i].loc >= location || i === il - 1) {
-      if (points[i].loc == location || i === il - 1) {
+      if (points[i].loc === location || i === il - 1) {
         elevs.push(points[i].alt)
       } else {
         if (points[i + 1].loc === points[i].loc) {
@@ -186,7 +183,6 @@ function getElevation (points, location) {
 function getLatLonFromDistance (points, location) {
   var locs = []
   var lls = []
-  var num = 0
   if (Array.isArray(location)) {
     locs = [...location]
   } else {
@@ -195,7 +191,7 @@ function getLatLonFromDistance (points, location) {
   location = locs.shift()
   for (var i = 0, il = points.length; i < il; i++) {
     if (points[i].loc >= location || i === il - 1) {
-      if (points[i].loc == location || i === il - 1) {
+      if (points[i].loc === location || i === il - 1) {
         lls.push([points[i].lat, points[i].lon])
       } else {
         if (points[i + 1].loc === points[i].loc) {
@@ -243,7 +239,7 @@ function getLatLonAltFromDistance (points, location, start) {
 
   for (var i = i0, il = points.length; i < il; i++) {
     if (points[i].loc >= location || i === il - 1) {
-      if (points[i].loc == location || i === il - 1) {
+      if (points[i].loc === location || i === il - 1) {
         llas.push({
           lat: points[i].lat,
           lon: points[i].lon,
@@ -259,9 +255,9 @@ function getLatLonAltFromDistance (points, location, start) {
             ind: i
           })
         } else {
-          var p1 = new sgeo.latlon(points[i].lat, points[i].lon)
-          var p2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
-          var inp = p1.interpolate(p2, 3)
+          var P1 = new sgeo.latlon(points[i].lat, points[i].lon)
+          var P2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
+          var inp = P1.interpolate(P2, 3)
           llas.push({
             lat: inp[1].lat,
             lon: inp[1].lng,

@@ -26,21 +26,6 @@ export default {
   updateSettings (id, data) {
     return this.execute('put', `/api/user/${id}`, data)
   },
-  getPosts () {
-    return this.execute('get', '/api/posts')
-  },
-  getPost (id) {
-    return this.execute('get', `/api/posts/${id}`)
-  },
-  createPost (data) {
-    return this.execute('post', '/api/posts', data)
-  },
-  updatePost (id, data) {
-    return this.execute('put', `/api/posts/${id}`, data)
-  },
-  deletePost (id) {
-    return this.execute('delete', `/api/posts/${id}`)
-  },
   getCourses () {
     return this.execute('get', '/api/courses')
   },

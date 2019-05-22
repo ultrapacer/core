@@ -74,7 +74,7 @@ import LineChart from './LineChart.js'
 import {LMap, LTileLayer, LPolyline, LMarker} from 'vue2-leaflet'
 import api from '@/api'
 import utilities from '../../shared/utilities'
-import gap from '../../shared/gap'
+import gapModel from '../../shared/gapModel'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
@@ -274,7 +274,7 @@ export default {
     for (var j = 1, jl = this.points.length; j < jl; j++) {
       len = this.points[j].loc - this.points[j - 1].loc
       grade = (this.points[j].alt - this.points[j - 1].alt) / len / 10
-      tot += gap(grade) * len
+      tot += gapModel(grade) * len
     }
     this.gradeAdjustment = tot / this.points[this.points.length - 1].loc
     this.updatePacing()
@@ -357,8 +357,7 @@ export default {
     },
     calcPlan () {
       if (!this.course._plan) { return }
-      console.log(this.course._plan)
-      api.selectCoursePlan(this.course._id, {plan: this._course._plan._id})
+      api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
       this.updatePacing()
     },
     updatePacing () {
@@ -366,28 +365,23 @@ export default {
       var time = 0
       var pace= 0
       var gap = 0
-      var ungap = 0
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
         pace = time / this.points[this.points.length - 1].loc
-        gap = pace * this.gradeAdjustment
-        ungap = pace / this.gradeAdjustment
+        gap = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
         time = pace * this.points[this.points.length - 1].loc
-        gap = pace * this.gradeAdjustment
-        ungap = pace / this.gradeAdjustment
+        gap = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'gap') {
         gap = this.course._plan.pacingTarget
-        pace = gap / gradeAdjustment
+        pace = gap * gradeAdjustment
         time = pace * this.points[this.points.length - 1].loc
-        ungap = pace / this.gradeAdjustment
       }
       this.pacing = {
         time: time,
         pace: pace,
-        gap: gap,
-        ungap: ungap
+        gap: gap
       }
     }
   }
