@@ -43,14 +43,17 @@ export default {
     fields: function () {
       var f = [
         {
-          key: 'name'
+          key: 'name',
+          thClass: 'text-sm-center'
         },
         {
           key: 'location',
           label: 'Location [' + this.units.dist + ']',
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
-          }
+          },
+          thClass: 'text-sm-center',
+          tdClass: 'text-sm-right'
         },
         {
           key: 'elevation',
@@ -58,8 +61,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-sm-table-cell',
-          tdClass: 'd-none d-sm-table-cell'
+          thClass: 'd-none d-sm-table-cell text-sm-center',
+          tdClass: 'd-none d-sm-table-cell text-sm-right'
         }
       ]
       if (this.owner) {

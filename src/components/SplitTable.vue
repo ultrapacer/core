@@ -1,10 +1,10 @@
 <template>
   <b-table :items="splits" :fields="fields" hover foot-clone small>
     <template slot="FOOT_end">&nbsp;</template>
-    <template slot="FOOT_gain">{{ course.gain | formatAlt(units.altScale) }}</template>
-    <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
+    <template slot="FOOT_gain"><div class="text-sm-right">{{ course.gain | formatAlt(units.altScale) }}</div></template>
+    <template slot="FOOT_loss"><div class="text-sm-right">{{ course.loss | formatAlt(units.altScale) }}</div></template>
     <template slot="FOOT_grade">&nbsp;</template>
-    <template slot="FOOT_time">{{ pacing.time | formatTime }}</template>
+    <template slot="FOOT_time"><div class="text-sm-right">{{ pacing.time | formatTime }}</div></template>
   </b-table>
 </template>
 
@@ -34,21 +34,27 @@ export default {
           label: 'Split [' + this.units.dist + ']',
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
-          }
+          },
+          thClass: 'text-sm-center',
+          tdClass: 'text-sm-right'
         },
         {
           key: 'gain',
           label: 'Gain [' + this.units.alt + ']',
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
-          }
+          },
+          thClass: 'text-sm-center',
+          tdClass: 'text-sm-right'
         },
         {
           key: 'loss',
           label: 'Loss [' + this.units.alt + ']',
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
-          }
+          },
+          thClass: 'text-sm-center',
+          tdClass: 'text-sm-right'
         },
         {
           key: 'grade',
@@ -56,8 +62,8 @@ export default {
           formatter: (value, key, item) => {
             return (value).toFixed(2) + '%'
           },
-          thClass: 'd-none d-md-table-cell',
-          tdClass: 'd-none d-md-table-cell'
+          thClass: 'd-none d-md-table-cell text-sm-center',
+          tdClass: 'd-none d-md-table-cell text-sm-right'
         }
       ]
       if (this.splits[0].time) {
@@ -72,6 +78,8 @@ export default {
               return date.toISOString().substr(14, 5)
             }
           },
+          thClass: 'text-sm-center',
+          tdClass: 'text-sm-right'
         })
       }
       return f
