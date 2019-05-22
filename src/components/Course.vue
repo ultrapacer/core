@@ -1,26 +1,32 @@
 <template>
   <div class="container-fluid mt-4">
     <b-row>
-      <b-col>
+      <b-col class="d-none d-md-block">
         <h1 class="h1">{{ course.name }}</h1>
       </b-col>
-      <b-col v-if="owner && !initializing" style="text-align:right">
-        <div style="min-width:220px">
-          <div style="width:120px; display:inline-block">
-            <b-form-group v-if="plans.length" label-size="sm" >
+      <b-col v-if="!initializing" style="text-align:right">
+        <b-row>
+          <b-col v-if="plans.length" >
+            <b-form-group label-size="sm" label="Plan" label-cols="4"  label-cols-lg="2">
               <b-form-select type="number" v-model="course._plan" :options="plansSelect" @change="calcPlan" size="sm"></b-form-select>
             </b-form-group>
-          </div>
-          <div style="width:80px; display:inline-block">
-            <b-btn @click="editPlan()" class="mr-1" v-if="plans.length" size="sm">
+          </b-col>
+          <b-col cols="4" md="4" lg="3" xl="3" style="text-align:left" v-if="owner && plans.length">
+            <b-btn @click="editPlan()" class="mr-1" size="sm">
               <v-icon name="edit"></v-icon>
             </b-btn>
             <b-btn variant="success" @click.prevent="newPlan()" size="sm">
               <v-icon name="plus"></v-icon>
               <span v-if="!plans.length" >New Plan</span>
             </b-btn>
-          </div>
-        </div>
+          </b-col>
+          <b-col v-if="owner && !plans.length">
+            <b-btn variant="success" @click.prevent="newPlan()" size="sm">
+              <v-icon name="plus"></v-icon>
+              New Plan
+            </b-btn>
+          </b-col>
+        </b-row>
       </b-col>
     </b-row>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
@@ -152,7 +158,7 @@ export default {
       },
       mapLatLon: [],
       mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png'
-      }
+    }
   },
   computed: {
     plansSelect: function () {
@@ -266,11 +272,10 @@ export default {
     this.waypoints = await api.getWaypoints(this.course._id)
     this.updateChartProfile()
     this.plans = await api.getPlans(this.course._id)
-    
     // calc grade adjustment:
     var tot = 0
     var grade = 0
-    var len = 0 
+    var len = 0
     for (var j = 1, jl = this.points.length; j < jl; j++) {
       len = this.points[j].loc - this.points[j - 1].loc
       grade = (this.points[j].alt - this.points[j - 1].alt) / len / 10
@@ -357,13 +362,15 @@ export default {
     },
     calcPlan () {
       if (!this.course._plan) { return }
-      api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
+      if (this.owner) {
+        api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
+      }
       this.updatePacing()
     },
     updatePacing () {
       if (!this.course._plan) { return }
       var time = 0
-      var pace= 0
+      var pace = 0
       var gap = 0
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
@@ -375,7 +382,7 @@ export default {
         gap = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'gap') {
         gap = this.course._plan.pacingTarget
-        pace = gap * gradeAdjustment
+        pace = gap * this.gradeAdjustment
         time = pace * this.points[this.points.length - 1].loc
       }
       this.pacing = {
