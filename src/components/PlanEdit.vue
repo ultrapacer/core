@@ -16,7 +16,7 @@
           <b-form-select type="number" v-model="model.pacingMethod" :options="pacingMethods" required></b-form-select>
         </b-form-group>
         <b-form-group v-bind:label="targetLabel">
-          <b-form-input type="number" v-model="model.pacingTarget" min="0" required></b-form-input>
+          <b-form-input ref="planformtimeinput" type="text" v-model="model.pacingTargetFormatted" min="0" v-mask="'##:##:##'" placeholder="hh:mm:ss" required @change="checktimeformat"></b-form-input>
         </b-form-group>
         <b-form-group label="Description">
           <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
@@ -55,6 +55,13 @@ export default {
       } else {
         this.model = Object.assign({}, this.defaults)
       }
+      if (this.model.pacingTarget) {
+        var d = new Date(null)
+        d.setSeconds(this.model.pacingTarget)
+        this.model.pacingTargetFormatted = d.toISOString().substr(11, 8)
+      } else {
+        this.model.pacingTargetFormatted = ''
+      }
       this.$bvModal.show('plan-edit-modal')
     }
   },
@@ -77,6 +84,8 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
+      var arr = this.model.pacingTargetFormatted.split(':')
+      this.model.pacingTarget = 3600 * Number(arr[0]) + 60 * Number(arr[1]) + Number(arr[2])
       var p = {}
       if (this.model._id) {
         p = await api.updatePlan(this.model._id, this.model)
@@ -91,6 +100,23 @@ export default {
     },
     clear () {
       this.model = Object.assign({}, this.defaults)
+    },
+    checktimeformat (val) {
+      console.log(val)
+      var pass = true
+      if (val.length === 8) {
+        var arr = val.split(':')
+        if (Number(arr[1]) >= 60 || Number(arr[2]) >= 60) {
+          pass = false
+        }
+      } else {
+        pass = false
+      }
+      if (pass) {
+        this.$refs.planformtimeinput.setCustomValidity('')
+      } else {
+        this.$refs.planformtimeinput.setCustomValidity('Enter time in "hh:mm:ss".')
+      }
     }
   }
 }
