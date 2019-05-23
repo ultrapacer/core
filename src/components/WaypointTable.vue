@@ -43,7 +43,7 @@ export default {
     fields: function () {
       var f = [
         {
-          key: 'name',
+          key: 'name'
         },
         {
           key: 'location',

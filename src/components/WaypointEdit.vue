@@ -9,12 +9,12 @@
       @cancel="clear"
       @ok="handleOk"
     >
-      <form @submit.prevent="">
+      <form ref="waypointform" @submit.prevent="">
         <b-form-group label="Name">
-          <b-form-input type="text" v-model="model.name"></b-form-input>
+          <b-form-input type="text" v-model="model.name" required></b-form-input>
         </b-form-group>
         <b-form-group v-bind:label="'Location [' + units.dist + ']'" v-show="model.type != 'start' && model.type != 'finish'">
-          <b-form-input type="number" step="0.01" v-model="waypointLoc" min="0" v-bind:max="course.distance"></b-form-input>
+          <b-form-input type="number" step="0.01" v-model="model.locUserUnit" min="0.01" v-bind:max="locationMax" required></b-form-input>
         </b-form-group>
         <b-form-group label="Type">
           <b-form-select type="number" v-model="model.type" :options="waypointTypes"></b-form-select>
@@ -52,17 +52,13 @@ export default {
       } else {
         this.model = Object.assign({}, this.defaults)
       }
+      this.model.locUserUnit = (this.model.location * this.units.distScale).toFixed(2)
       this.$bvModal.show('waypoint-edit-modal')
     }
   },
   computed: {
-    waypointLoc: {
-      set: function (val) {
-        this.model.location = val / this.units.distScale
-      },
-      get: function () {
-        return (this.model.location * this.units.distScale).toFixed(2)
-      }
+    locationMax: function() {
+      return Number((this.course.distance * this.units.distScale).toFixed(2)) - .01
     },
     waypointTypes: function () {
       if (this.model.type === 'start') {
@@ -80,11 +76,14 @@ export default {
   methods: {
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
-      this.save()
+      if (this.$refs.waypointform.reportValidity()) {
+        this.save()
+      }
     },
     async save () {
       if (this.saving) { return }
       this.saving = true
+      this.model.location = this.model.locUserUnit / this.units.distScale
       wputil.updateLLA(this.model, this.points)
       if (this.model._id) {
         await api.updateWaypoint(this.model._id, this.model)
