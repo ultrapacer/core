@@ -85,12 +85,6 @@ export default {
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
-        },
-        {
-          key: 'start.terrainIndex',
-          label: 'Terrain',
-          thClass: 'text-right',
-          tdClass: 'text-right'
         }
       ]
       if (this.segments[0].time) {
@@ -109,13 +103,13 @@ export default {
           tdClass: 'text-right'
         })
       }
-      if (this.owner) {
-        f.push({
-          key: 'actions',
-          label: '',
-          tdClass: 'actionButtonColumn'
-        })
-      }
+      // if (this.owner) {
+      //   f.push({
+      //     key: 'actions',
+      //     label: '',
+      //     tdClass: 'actionButtonColumn'
+      //   })
+      // }
       return f
     }
   }
