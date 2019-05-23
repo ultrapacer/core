@@ -9,12 +9,12 @@
       @cancel="clear"
       @ok="handleOk"
     >
-      <form @submit.prevent="">
+      <form ref="waypointform" @submit.prevent="">
         <b-form-group label="Name">
-          <b-form-input type="text" v-model="model.name"></b-form-input>
+          <b-form-input type="text" v-model="model.name" required></b-form-input>
         </b-form-group>
         <b-form-group v-bind:label="'Location [' + units.dist + ']'" v-show="model.type != 'start' && model.type != 'finish'">
-          <b-form-input type="number" step="0.01" v-model="model.locUserUnit" min="0" v-bind:max="course.distance"></b-form-input>
+          <b-form-input type="number" step="0.01" v-model="model.locUserUnit" min="0.01" v-bind:max="locationMax" required></b-form-input>
         </b-form-group>
         <b-form-group label="Type">
           <b-form-select type="number" v-model="model.type" :options="waypointTypes"></b-form-select>
@@ -57,6 +57,9 @@ export default {
     }
   },
   computed: {
+    locationMax: function() {
+      return Number((this.course.distance * this.units.distScale).toFixed(2)) - .01
+    },
     waypointTypes: function () {
       if (this.model.type === 'start') {
         return [{ value: 'start', text: 'Start' }]
@@ -73,7 +76,9 @@ export default {
   methods: {
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
-      this.save()
+      if (this.$refs.waypointform.reportValidity()) {
+        this.save()
+      }
     },
     async save () {
       if (this.saving) { return }

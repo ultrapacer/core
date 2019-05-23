@@ -8,15 +8,15 @@
       @cancel="clear"
       @ok="handleOk"
     >
-      <form @submit.prevent="">
+      <form ref="planform" @submit.prevent="">
         <b-form-group label="Name">
-          <b-form-input type="text" v-model="model.name"></b-form-input>
+          <b-form-input type="text" v-model="model.name" required></b-form-input>
         </b-form-group>
         <b-form-group label="Pacing Method">
-          <b-form-select type="number" v-model="model.pacingMethod" :options="pacingMethods"></b-form-select>
+          <b-form-select type="number" v-model="model.pacingMethod" :options="pacingMethods" required></b-form-select>
         </b-form-group>
         <b-form-group v-bind:label="targetLabel">
-          <b-form-input type="number" v-model="model.pacingTarget" min="0"></b-form-input>
+          <b-form-input type="number" v-model="model.pacingTarget" min="0" required></b-form-input>
         </b-form-group>
         <b-form-group label="Description">
           <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
@@ -70,7 +70,9 @@ export default {
   methods: {
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
-      this.save()
+      if (this.$refs.planform.reportValidity()) {
+        this.save()
+      }
     },
     async save () {
       if (this.saving) { return }

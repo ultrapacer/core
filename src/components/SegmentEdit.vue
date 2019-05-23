@@ -9,9 +9,9 @@
       @cancel="clear"
       @ok="handleOk"
     >
-      <form @submit.prevent="">
+      <form ref="segmentform" @submit.prevent="">
         <b-form-group label="Terrain">
-          <b-form-input type="number" v-model="model.terrainIndex" min="0" step="0"></b-form-input>
+          <b-form-input type="number" v-model="model.terrainIndex" min="0" step="0" required></b-form-input>
         </b-form-group>
         <b-form-group label="Notes">
           <b-form-textarea rows="4" v-model="model.segmentNotes"></b-form-textarea>
@@ -48,7 +48,9 @@ export default {
   methods: {
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
-      this.save()
+      if (this.$refs.segmentform.reportValidity()) {
+        this.save()
+      }
     },
     async save () {
       if (this.saving) { return }

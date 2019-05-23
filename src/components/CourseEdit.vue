@@ -8,9 +8,9 @@
       @cancel="clear"
       @ok="handleOk"
     >
-      <form @submit.prevent="">
+      <form ref="courseform" @submit.prevent="">
         <b-form-group label="Name">
-          <b-form-input type="text" v-model="model.name"></b-form-input>
+          <b-form-input type="text" v-model="model.name" required></b-form-input>
         </b-form-group>
         <b-form-group label="Privacy">
           <b-form-checkbox v-model="model.public" value="true" unchecked-value="false">
@@ -27,6 +27,7 @@
               placeholder="Choose a GPX file..."
               drop-placeholder="Drop GPX file here..."
               accept=".gpx"
+              required
             ></b-form-file>
         </b-form-group>
       </form>
@@ -62,7 +63,9 @@ export default {
   methods: {
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
-      this.save()
+      if (this.$refs.courseform.reportValidity()) {
+        this.save()
+      }
     },
     async save () {
       if (this.saving) { return }
