@@ -8,6 +8,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import AuthPlugin from './plugins/auth'
 import VuePageTitle from 'vue-page-title'
+import VueTheMask from 'vue-the-mask'
 
 import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -30,6 +31,8 @@ Vue.use(VuePageTitle, {
   // prefix: 'My App - ',
   suffix: '- ultraPacer'
 })
+
+Vue.use(VueTheMask)
 
 Vue.config.productionTip = false
 
