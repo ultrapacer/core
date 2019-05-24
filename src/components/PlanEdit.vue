@@ -15,8 +15,14 @@
         <b-form-group label="Pacing Method">
           <b-form-select type="number" v-model="model.pacingMethod" :options="pacingMethods" required></b-form-select>
         </b-form-group>
-        <b-form-group v-bind:label="targetLabel">
-          <b-form-input ref="planformtimeinput" type="text" v-model="model.pacingTargetFormatted" min="0" v-mask="'##:##:##'" placeholder="hh:mm:ss" required @change="checktimeformat"></b-form-input>
+        <b-form-group v-if="model.pacingMethod='time'" label="Target Time">
+          <b-form-input ref="planformtimeinput" type="text" v-model="model.timeF" v-mask="'##:##:##'" placeholder="hh:mm:ss" required @change="checktimeformat('time')"></b-form-input>
+        </b-form-group>
+        <b-form-group v-if="model.pacingMethod='pace'" label="Target Pace">
+          <b-form-input ref="planformpaceinput" type="text" v-model="model.paceF" v-mask="'##:##'" placeholder="mm:ss" required @change="checktimeformat('pace')"></b-form-input>
+        </b-form-group>
+        <b-form-group v-if="model.pacingMethod='gap'" label="Target Pace (Normalized)">
+          <b-form-input ref="planformgapinput" type="text" v-model="model.gapF" v-mask="'##:##'" placeholder="mm:ss" required @change="checktimeformat('gap')"></b-form-input>
         </b-form-group>
         <b-form-group label="Description">
           <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
@@ -55,12 +61,26 @@ export default {
       } else {
         this.model = Object.assign({}, this.defaults)
       }
-      if (this.model.pacingTarget) {
-        var d = new Date(null)
-        d.setSeconds(this.model.pacingTarget)
-        this.model.pacingTargetFormatted = d.toISOString().substr(11, 8)
+      if (this.model.pace) {
+        var p = new Date(null)
+        p.setSeconds(this.model.pace / units.distScale)
+        this.model.paceF = p.toISOString().substr(11, 5)
       } else {
-        this.model.pacingTargetFormatted = ''
+        this.model.paceF = ''
+      }
+      if (this.model.gap) {
+        var g = new Date(null)
+        g.setSeconds(this.model.pace / units.distScale)
+        this.model.gapF = g.toISOString().substr(11, 5)
+      } else {
+        this.model.gapF = ''
+      }
+      if (this.model.time) {
+        var t = new Date(null)
+        t.setSeconds(this.model.pacingTarget)
+        this.model.timeF = d.toISOString().substr(11, 8)
+      } else {
+        this.model.timeF = ''
       }
       this.$bvModal.show('plan-edit-modal')
     }
@@ -101,7 +121,7 @@ export default {
     clear () {
       this.model = Object.assign({}, this.defaults)
     },
-    checktimeformat (val) {
+    checktimeformat (ref, val) {
       console.log(val)
       var pass = true
       if (val.length === 8) {
