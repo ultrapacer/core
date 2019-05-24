@@ -57,8 +57,8 @@ export default {
     }
   },
   computed: {
-    locationMax: function() {
-      return Number((this.course.distance * this.units.distScale).toFixed(2)) - .01
+    locationMax: function () {
+      return Number((this.course.distance * this.units.distScale).toFixed(2)) - 0.01
     },
     waypointTypes: function () {
       if (this.model.type === 'start') {

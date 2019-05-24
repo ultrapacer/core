@@ -15,14 +15,8 @@
         <b-form-group label="Pacing Method">
           <b-form-select type="number" v-model="model.pacingMethod" :options="pacingMethods" required></b-form-select>
         </b-form-group>
-        <b-form-group v-if="model.pacingMethod='time'" label="Target Time">
-          <b-form-input ref="planformtimeinput" type="text" v-model="model.timeF" v-mask="'##:##:##'" placeholder="hh:mm:ss" required @change="checktimeformat('time')"></b-form-input>
-        </b-form-group>
-        <b-form-group v-if="model.pacingMethod='pace'" label="Target Pace">
-          <b-form-input ref="planformpaceinput" type="text" v-model="model.paceF" v-mask="'##:##'" placeholder="mm:ss" required @change="checktimeformat('pace')"></b-form-input>
-        </b-form-group>
-        <b-form-group v-if="model.pacingMethod='gap'" label="Target Pace (Normalized)">
-          <b-form-input ref="planformgapinput" type="text" v-model="model.gapF" v-mask="'##:##'" placeholder="mm:ss" required @change="checktimeformat('gap')"></b-form-input>
+        <b-form-group v-bind:label="targetLabel">
+          <b-form-input ref="planformtimeinput" type="text" v-model="model.pacingTargetF" min="0" v-mask="'##:##:##'" placeholder="hh:mm:ss" required @change="checktimeformat"></b-form-input>
         </b-form-group>
         <b-form-group label="Description">
           <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
@@ -39,7 +33,7 @@
 <script>
 import api from '@/api'
 export default {
-  props: ['course', 'plan', 'points'],
+  props: ['course', 'plan', 'points', 'units'],
   data () {
     return {
       defaults: {
@@ -61,35 +55,29 @@ export default {
       } else {
         this.model = Object.assign({}, this.defaults)
       }
-      if (this.model.pace) {
-        var p = new Date(null)
-        p.setSeconds(this.model.pace / units.distScale)
-        this.model.paceF = p.toISOString().substr(11, 5)
+      if (this.model.pacingTarget) {
+        var d = new Date(null)
+        var s = this.model.pacingTarget
+        if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+          s = s / this.units.distScale
+        }
+        d.setSeconds(s)
+        this.model.pacingTargetF = d.toISOString().substr(11, 8)
       } else {
-        this.model.paceF = ''
-      }
-      if (this.model.gap) {
-        var g = new Date(null)
-        g.setSeconds(this.model.pace / units.distScale)
-        this.model.gapF = g.toISOString().substr(11, 5)
-      } else {
-        this.model.gapF = ''
-      }
-      if (this.model.time) {
-        var t = new Date(null)
-        t.setSeconds(this.model.pacingTarget)
-        this.model.timeF = d.toISOString().substr(11, 8)
-      } else {
-        this.model.timeF = ''
+        this.model.pacingTargetF = ''
       }
       this.$bvModal.show('plan-edit-modal')
     }
   },
   computed: {
     targetLabel: function () {
+      var str = ' [hh:mm:ss]'
+      if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+        str = ` [(mm:ss)/${this.units.dist}]`
+      }
       for (var i = 0; i < this.pacingMethods.length; i++) {
         if (this.pacingMethods[i].value === this.model.pacingMethod) {
-          return this.pacingMethods[i].text
+          return this.pacingMethods[i].text + str
         }
       }
     }
@@ -104,8 +92,12 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
-      var arr = this.model.pacingTargetFormatted.split(':')
-      this.model.pacingTarget = 3600 * Number(arr[0]) + 60 * Number(arr[1]) + Number(arr[2])
+      var arr = this.model.pacingTargetF.split(':')
+      var s = 3600 * Number(arr[0]) + 60 * Number(arr[1]) + Number(arr[2])
+      if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+        s = s * this.units.distScale
+      }
+      this.model.pacingTarget = s
       var p = {}
       if (this.model._id) {
         p = await api.updatePlan(this.model._id, this.model)
@@ -121,8 +113,7 @@ export default {
     clear () {
       this.model = Object.assign({}, this.defaults)
     },
-    checktimeformat (ref, val) {
-      console.log(val)
+    checktimeformat (val) {
       var pass = true
       if (val.length === 8) {
         var arr = val.split(':')

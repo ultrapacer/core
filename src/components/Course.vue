@@ -69,7 +69,7 @@
         </b-tabs>
       </b-col>
     </b-row>
-    <plan-edit :plan="planEdit" :course="course" :points="points" @refresh="refreshPlan"></plan-edit>
+    <plan-edit :plan="planEdit" :course="course" :points="points" :units="units" @refresh="refreshPlan"></plan-edit>
     <waypoint-edit :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
     <segment-edit :segment="segment" @refresh="refreshWaypoints"></segment-edit>
   </div>
