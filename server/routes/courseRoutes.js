@@ -110,7 +110,8 @@ courseRoutes.route('/:course').get(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.course).populate(['_gpx', '_plan']).exec()
     if (course._user.equals(user._id) || course.public) {
-      course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
+      var waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
+      course.waypoints = validateWaypoints(course, waypoints)
       course.plans = await Plan.find({ _course: course }).sort('name').exec()
       res.json(course)
     } else {
@@ -120,5 +121,74 @@ courseRoutes.route('/:course').get(async function (req, res) {
     res.status(400).send(err)
   }
 })
+
+// GET WAYPOINT LIST
+courseRoutes.route('/waypoints/:course').get(async function (req, res) {
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var course = await Course.findById(req.params.course).exec()
+    if (course._user.equals(user._id) || course.public) {
+      var waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
+      waypoints = validateWaypoints(course, waypoints)
+      res.json(waypoints)
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
+// GET PLAN LIST
+courseRoutes.route('/plans/:course').get(async function (req, res) {
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var course = await Course.findById(req.params.course).exec()
+    if (course._user.equals(user._id) || course.public) {
+      var plans = await Plan.find({ _course: course }).sort('name').exec()
+      res.json(plans)
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
+function validateWaypoints(course, waypoints) {
+  // make sure a start and finish waypoint exist
+  if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
+    var gpx = await GPX.findOne({_id: course._gpx}).exec()
+    if (!waypoints.find(waypoint => waypoint.type === 'start')) {
+      var ws = new Waypoint({
+        name: 'Start',
+        type: 'start',
+        location: 0,
+        _course: course._id,
+        elevation: gpx.points[0].alt,
+        lat: gpx.points[0].lat,
+        lon: gpx.points[0].lon
+      })
+      await ws.save()
+      waypoints.unshift(ws)
+    }
+    if (!waypoints.find(waypoint => waypoint.type === 'finish')) {
+      var wf = new Waypoint({
+        name: 'Finish',
+        type: 'finish',
+        location: course.distance,
+        _course: course._id,
+        elevation: gpx.points[gpx.points.length - 1].alt,
+        lat: gpx.points[gpx.points.length - 1].lat,
+        lon: gpx.points[gpx.points.length - 1].lon
+      })
+      await wf.save()
+      waypoints.push(wf)
+    }
+  }
+  return waypoints
+}
 
 module.exports = courseRoutes
