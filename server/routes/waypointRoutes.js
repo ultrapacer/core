@@ -2,51 +2,7 @@
 var express = require('express')
 var waypointRoutes = express.Router()
 var Waypoint = require('../models/Waypoint')
-var Course = require('../models/Course')
-var GPX = require('../models/GPX')
 var User = require('../models/User')
-
-// GET LIST
-waypointRoutes.route('/list/:courseID').get(async function (req, res) {
-  try {
-    var waypoints = await Waypoint.find({ _course: req.params.courseID }).sort('location').exec()
-    // check to make sure start and end waypoints exists:
-    if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
-      var course = await Course.findOne({ _id: req.params.courseID }).exec()
-      var gpx = await GPX.findOne({_id: course._gpx}).exec()
-      if (!waypoints.find(waypoint => waypoint.type === 'start')) {
-        var ws = new Waypoint({
-          name: 'Start',
-          type: 'start',
-          location: 0,
-          _course: req.params.courseID,
-          elevation: gpx.points[0].alt,
-          lat: gpx.points[0].lat,
-          lon: gpx.points[0].lon
-        })
-        await ws.save()
-        waypoints.unshift(ws)
-      }
-      if (!waypoints.find(waypoint => waypoint.type === 'finish')) {
-        var wf = new Waypoint({
-          name: 'Finish',
-          type: 'finish',
-          location: course.distance,
-          _course: req.params.courseID,
-          elevation: gpx.points[gpx.points.length - 1].alt,
-          lat: gpx.points[gpx.points.length - 1].lat,
-          lon: gpx.points[gpx.points.length - 1].lon
-        })
-        await wf.save()
-        waypoints.push(wf)
-      }
-    }
-    res.json(waypoints)
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
-  }
-})
 
 // SAVE NEW
 waypointRoutes.route('/').post(async function (req, res) {
