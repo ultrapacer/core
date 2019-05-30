@@ -123,7 +123,7 @@ courseRoutes.route('/:course').get(async function (req, res) {
 })
 
 // GET WAYPOINT LIST
-courseRoutes.route('/waypoints/:course').get(async function (req, res) {
+courseRoutes.route('/:course/waypoints').get(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.course).exec()
@@ -141,7 +141,7 @@ courseRoutes.route('/waypoints/:course').get(async function (req, res) {
 })
 
 // GET PLAN LIST
-courseRoutes.route('/plans/:course').get(async function (req, res) {
+courseRoutes.route('/:course/plans').get(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.course).exec()
