@@ -9,6 +9,7 @@ var Course = require('../models/Course')
 var User = require('../models/User')
 var GPX = require('../models/GPX')
 var Plan = require('../models/Plan')
+var Waypoint = require('../models/Waypoint')
 
 // Defined store route
 courseRoutes.route('/').post(upload.single('file'), function (req, res) {
@@ -109,6 +110,8 @@ courseRoutes.route('/:course').get(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.course).populate(['_gpx', '_plan']).exec()
     if (course._user.equals(user._id) || course.public) {
+      course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
+      course.plans = await Plan.find({ _course: course }).sort('name').exec()
       res.json(course)
     } else {
       res.status(403).send('No permission')
