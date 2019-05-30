@@ -69,9 +69,9 @@
         </b-tabs>
       </b-col>
     </b-row>
-    <plan-edit :plan="planEdit" :course="course" :points="points" :units="units" @refresh="refreshPlan"></plan-edit>
-    <waypoint-edit :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
-    <segment-edit :segment="segment" @refresh="refreshWaypoints"></segment-edit>
+    <plan-edit v-if="owner" :plan="planEdit" :course="course" :points="points" :units="units" @refresh="refreshPlan"></plan-edit>
+    <waypoint-edit v-if="owner" :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
+    <segment-edit v-if="owner" :segment="segment" @refresh="refreshWaypoints"></segment-edit>
   </div>
 </template>
 
