@@ -275,9 +275,9 @@ export default {
     this.$title = this.course.name
     this.points = utilities.addLoc(this.course._gpx.points)
     this.updateMapLatLon()
-    this.waypoints = await api.getWaypoints(this.course._id, this.isAuthenticated)
+    this.waypoints = this.course.waypoints
     this.updateChartProfile()
-    this.plans = await api.getPlans(this.course._id, this.isAuthenticated)
+    this.plans = this.course.plans
     // calc grade adjustment:
     var tot = 0
     var grade = 0
@@ -296,7 +296,7 @@ export default {
       this.waypoint = {}
     },
     async refreshWaypoints () {
-      this.waypoints = await api.getWaypoints(this.course._id, this.isAuthenticated)
+      this.waypoints = await api.getWaypoints(this.course._id)
     },
     async deleteWaypoint (id) {
       if (confirm('Are you sure you want to delete this waypoint?')) {
@@ -358,7 +358,7 @@ export default {
       this.planEdit = Object.assign({}, this.course._plan)
     },
     async refreshPlan (plan) {
-      this.plans = await api.getPlans(this.course._id, this.isAuthenticated)
+      this.plans = await api.getPlans(this.course._id)
       for (var i = 0, il = this.plans.length; i < il; i++) {
         if (this.plans[i]._id === plan._id) {
           this.course._plan = this.plans[i]
