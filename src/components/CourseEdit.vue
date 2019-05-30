@@ -20,7 +20,7 @@
         <b-form-group label="Description">
           <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
         </b-form-group>
-        <b-form-group label="GPX File" v-show="!model._id">
+        <b-form-group label="GPX File" v-if="!model._id">
           <b-form-file
               :state="Boolean(file)"
               v-model="file"

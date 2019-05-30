@@ -9,6 +9,7 @@ const userRoutes = require('./server/routes/userRoutes')
 const courseRoutes = require('./server/routes/courseRoutes')
 const waypointRoutes = require('./server/routes/waypointRoutes')
 const planRoutes = require('./server/routes/planRoutes')
+const publicRoutes = require('./server/routes/publicRoutes')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
 const authConfig = require('./config/auth_config.json')
@@ -40,10 +41,14 @@ mongoose.connect(dbconfig.DB).then(
 app.use(cors())
 app.use(bodyParser.json())
 
+// authenticated api routes:
 app.use('/api/user', checkJwt, userRoutes)
 app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes)
 app.use('/api/waypoint', checkJwt, waypointRoutes)
 app.use('/api/plan', checkJwt, planRoutes)
+
+// unauthenticated api routes:
+app.use('/api-public', publicRoutes)
 
 app.get('/*', (req, res) => {
   res.sendFile(HTML_FILE)

@@ -56,10 +56,7 @@ let router = new Router({
     {
       path: '/course/:course',
       name: 'course',
-      component: Course,
-      meta: {
-        requiresAuth: true
-      }
+      component: Course
     },
     {
       path: '*',
