@@ -60,7 +60,7 @@ export default {
     return this.executeAuth('delete', `/api/courses/${id}`)
   },
   getWaypoints (courseID) {
-    return this.executeAuth('get', `/api/waypoint/list/${courseID}`)
+    return this.executeAuth('get', `/api/course/waypoints/${courseID}`)
   },
   createWaypoint (data) {
     return this.executeAuth('post', `/api/waypoint`, data)
@@ -75,7 +75,7 @@ export default {
     return this.executeAuth('delete', `/api/waypoint/${id}`)
   },
   getPlans (courseID) {
-    return this.executeAuth('get', `/api/plan/list/${courseID}`)
+    return this.executeAuth('get', `/api/course/plans/${courseID}`)
   },
   createPlan (data) {
     return this.executeAuth('post', `/api/plan`, data)
