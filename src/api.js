@@ -59,12 +59,8 @@ export default {
   deleteCourse (id) {
     return this.executeAuth('delete', `/api/courses/${id}`)
   },
-  getWaypoints (courseID, authenticated) {
-    if (typeof (authenticated) === 'undefined' || authenticated) {
-      return this.executeAuth('get', `/api/waypoint/list/${courseID}`)
-    } else {
-      return this.executePublic('get', `/api-public/course/waypoints/${courseID}`)
-    }
+  getWaypoints (courseID) {
+    return this.executeAuth('get', `/api/waypoint/list/${courseID}`)
   },
   createWaypoint (data) {
     return this.executeAuth('post', `/api/waypoint`, data)
@@ -78,12 +74,8 @@ export default {
   deleteWaypoint (id) {
     return this.executeAuth('delete', `/api/waypoint/${id}`)
   },
-  getPlans (courseID, authenticated) {
-    if (typeof (authenticated) === 'undefined' || authenticated) {
-      return this.executeAuth('get', `/api/plan/list/${courseID}`)
-    } else {
-      return this.executePublic('get', `/api-public/course/plans/${courseID}`)
-    }
+  getPlans (courseID) {
+    return this.executeAuth('get', `/api/plan/list/${courseID}`)
   },
   createPlan (data) {
     return this.executeAuth('post', `/api/plan`, data)
