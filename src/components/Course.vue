@@ -6,21 +6,21 @@
       </b-col>
       <b-col v-if="!initializing" style="text-align:right">
         <b-row>
-          <b-col v-if="plans.length" >
+          <b-col v-if="plansSelect.length" >
             <b-form-group label-size="sm" label="Plan" label-cols="4"  label-cols-lg="2">
               <b-form-select type="number" v-model="course._plan" :options="plansSelect" @change="calcPlan" size="sm"></b-form-select>
             </b-form-group>
           </b-col>
-          <b-col cols="4" md="4" lg="3" xl="3" style="text-align:left" v-if="owner && plans.length">
+          <b-col cols="4" md="4" lg="3" xl="3" style="text-align:left" v-if="owner && plansSelect.length">
             <b-btn @click="editPlan()" class="mr-1" size="sm">
               <v-icon name="edit"></v-icon>
             </b-btn>
             <b-btn variant="success" @click.prevent="newPlan()" size="sm">
               <v-icon name="plus"></v-icon>
-              <span v-if="!plans.length" >New Plan</span>
+              <span v-if="!plansSelect.length" >New Plan</span>
             </b-btn>
           </b-col>
-          <b-col v-if="owner && !plans.length">
+          <b-col v-if="owner && !plansSelect.length">
             <b-btn variant="success" @click.prevent="newPlan()" size="sm">
               <v-icon name="plus"></v-icon>
               New Plan
@@ -39,7 +39,7 @@
             <split-table :course="course" :plan="plan" :splits="splits" :units="units" :pacing="pacing"></split-table>
           </b-tab>
           <b-tab title="Waypoints">
-            <waypoint-table :course="course" :waypoints="waypoints" :units="units" :owner="owner" :editFn="editWaypoint" :delFn="deleteWaypoint" :points="points"></waypoint-table>
+            <waypoint-table :course="course" :waypoints="course.waypoints" :units="units" :owner="owner" :editFn="editWaypoint" :delFn="deleteWaypoint" :points="points"></waypoint-table>
             <div v-if="owner">
               <b-btn variant="success" @click.prevent="newWaypoint()">
                 <v-icon name="plus"></v-icon><span>New Waypoint</span>
@@ -63,7 +63,7 @@
                 :lat-lngs="mapLatLon"
                 color="red">
             </l-polyline>
-            <l-marker v-for="waypoint in waypoints" :key="waypoint._id" :lat-lng="[waypoint.lat, waypoint.lon]" ></l-marker>
+            <l-marker v-for="waypoint in course.waypoints" :key="waypoint._id" :lat-lng="[waypoint.lat, waypoint.lon]" ></l-marker>
           </l-map>
           </b-tab>
         </b-tabs>
@@ -111,11 +111,9 @@ export default {
       course: {},
       gradeAdjustment: 0,
       plan: {},
-      plans: [],
       planEdit: false,
       segment: {},
       waypoint: {},
-      waypoints: [],
       pacing: {},
       points: [],
       chartColors: {
@@ -163,10 +161,10 @@ export default {
   computed: {
     plansSelect: function () {
       var p = []
-      for (var i = 0, il = this.plans.length; i < il; i++) {
+      for (var i = 0, il = this.course.plans.length; i < il; i++) {
         p.push({
-          value: this.plans[i],
-          text: this.plans[i].name
+          value: this.course.plans[i],
+          text: this.course.plans[i].name
         })
       }
       return p
@@ -183,17 +181,17 @@ export default {
     },
     segments: function () {
       if (!this.points.length) { return [] }
-      if (!this.waypoints.length) { return [] }
+      if (!this.course.waypoints.length) { return [] }
       var arr = []
       var breaks = []
-      for (var i = 0, il = this.waypoints.length; i < il; i++) {
-        breaks.push(this.waypoints[i].location)
+      for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
+        breaks.push(this.course.waypoints[i].location)
       }
       var splits = utilities.calcSegments(this.points, breaks, this.pacing)
       for (var j = 0, jl = splits.length; j < jl; j++) {
         arr.push({
-          start: this.waypoints[j],
-          end: this.waypoints[j + 1],
+          start: this.course.waypoints[j],
+          end: this.course.waypoints[j + 1],
           len: splits[j].len,
           gain: splits[j].gain,
           loss: splits[j].loss,
@@ -225,7 +223,7 @@ export default {
       }
     },
     chartPoints: function () {
-      if (!this.waypoints.length) { return [] }
+      if (!this.course.waypoints.length) { return [] }
       var d = {
         data: [],
         backgroundColor: [],
@@ -236,12 +234,12 @@ export default {
         pointHoverRadius: 10,
         showLine: false
       }
-      for (var i = 0, il = this.waypoints.length; i < il; i++) {
+      for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
         d.data.push({
-          x: this.waypoints[i].location * this.units.distScale,
-          y: this.waypoints[i].elevation * this.units.altScale
+          x: this.course.waypoints[i].location * this.units.distScale,
+          y: this.course.waypoints[i].elevation * this.units.altScale
         })
-        if (this.waypoints[i].type === 'landmark') {
+        if (this.course.waypoints[i].type === 'landmark') {
           d.pointRadius.push(6)
           d.pointStyle.push('triangle')
           d.backgroundColor.push(this.chartColors.darkgreen)
@@ -266,7 +264,7 @@ export default {
   },
   async created () {
     try {
-      this.course = await api.getCourse(this.$route.params.course, this.isAuthenticated)
+      this.course = await api.getCourse(this.$route.params.course)
     } catch (err) {
       console.log(err)
       this.$router.push({path: '/'})
@@ -275,9 +273,7 @@ export default {
     this.$title = this.course.name
     this.points = utilities.addLoc(this.course._gpx.points)
     this.updateMapLatLon()
-    this.waypoints = this.course.waypoints
     this.updateChartProfile()
-    this.plans = this.course.plans
     // calc grade adjustment:
     var tot = 0
     var grade = 0
@@ -296,7 +292,7 @@ export default {
       this.waypoint = {}
     },
     async refreshWaypoints () {
-      this.waypoints = await api.getWaypoints(this.course._id)
+      this.course.waypoints = await api.getWaypoints(this.course._id)
     },
     async deleteWaypoint (id) {
       if (confirm('Are you sure you want to delete this waypoint?')) {
@@ -358,10 +354,10 @@ export default {
       this.planEdit = Object.assign({}, this.course._plan)
     },
     async refreshPlan (plan) {
-      this.plans = await api.getPlans(this.course._id)
-      for (var i = 0, il = this.plans.length; i < il; i++) {
-        if (this.plans[i]._id === plan._id) {
-          this.course._plan = this.plans[i]
+      this.course.plans = await api.getPlans(this.course._id)
+      for (var i = 0, il = this.course.plans.length; i < il; i++) {
+        if (this.course.plans[i]._id === plan._id) {
+          this.course._plan = this.course.plans[i]
         }
       }
       this.calcPlan()

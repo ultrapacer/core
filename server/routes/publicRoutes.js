@@ -5,13 +5,14 @@ var Course = require('../models/Course')
 var Waypoint = require('../models/Waypoint')
 var Plan = require('../models/Plan')
 
-// GET PLAN LIST
-publicRoutes.route('/course/plans/:courseID').get(async function (req, res) {
+// GET COURSE
+publicRoutes.route('/course/:course').get(async function (req, res) {
   try {
-    var course = await Course.findById(req.params.courseID).exec()
+    var course = await Course.findById(req.params.course).populate(['_gpx', '_plan']).exec()
     if (course.public) {
-      var plans = await Plan.find({ _course: req.params.courseID }).sort('name').exec()
-      res.json(plans)
+      course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
+      course.plans = await Plan.find({ _course: course }).sort('name').exec()
+      res.json(course)
     } else {
       res.status(403).send('No permission')
     }

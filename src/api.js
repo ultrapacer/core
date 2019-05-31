@@ -17,7 +17,6 @@ export default {
         Authorization: `Bearer ${accessToken}`
       }
     }).then(req => {
-      console.log(req)
       return req.data
     })
   },
@@ -27,7 +26,6 @@ export default {
       url: resource,
       data
     }).then(req => {
-      console.log(req)
       return req.data
     })
   },
@@ -40,10 +38,12 @@ export default {
   getCourses () {
     return this.executeAuth('get', '/api/courses')
   },
-  getCourse (id, authenticated) {
-    if (typeof (authenticated) === 'undefined' || authenticated) {
+  async getCourse (id) {
+    try {
+      await Vue.prototype.$auth.getAccessToken()
       return this.executeAuth('get', `/api/course/${id}`)
-    } else {
+    } catch (err) {
+      console.log('Not authenticated. Attempting public access.')
       return this.executePublic('get', `/api-public/course/${id}`)
     }
   },

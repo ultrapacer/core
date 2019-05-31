@@ -110,8 +110,8 @@ courseRoutes.route('/:course').get(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.course).populate(['_gpx', '_plan']).exec()
     if (course._user.equals(user._id) || course.public) {
-      var waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
-      course.waypoints = validateWaypoints(course, waypoints)
+      course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
+      await validateWaypoints(course, course.waypoints)
       course.plans = await Plan.find({ _course: course }).sort('name').exec()
       res.json(course)
     } else {
@@ -129,7 +129,7 @@ courseRoutes.route('/:course/waypoints').get(async function (req, res) {
     var course = await Course.findById(req.params.course).exec()
     if (course._user.equals(user._id) || course.public) {
       var waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
-      waypoints = validateWaypoints(course, waypoints)
+      await validateWaypoints(course, waypoints)
       res.json(waypoints)
     } else {
       res.status(403).send('No permission')
@@ -157,7 +157,7 @@ courseRoutes.route('/:course/plans').get(async function (req, res) {
   }
 })
 
-function validateWaypoints(course, waypoints) {
+async function validateWaypoints(course, waypoints) {
   // make sure a start and finish waypoint exist
   if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
     var gpx = await GPX.findOne({_id: course._gpx}).exec()
