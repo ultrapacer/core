@@ -5,23 +5,6 @@ var User = require('../models/User')
 var Plan = require('../models/Plan')
 var Course = require('../models/Course')
 
-// GET LIST
-planRoutes.route('/list/:courseID').get(async function (req, res) {
-  try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.courseID).exec()
-    if (course._user.equals(user._id) || course.public) {
-      var plans = await Plan.find({ _course: req.params.courseID }).sort('name').exec()
-      res.json(plans)
-    } else {
-      res.status(403).send('No permission')
-    }
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
-  }
-})
-
 // SAVE NEW
 planRoutes.route('/').post(async function (req, res) {
   try {

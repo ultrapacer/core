@@ -17,7 +17,6 @@ export default {
         Authorization: `Bearer ${accessToken}`
       }
     }).then(req => {
-      console.log(req)
       return req.data
     })
   },
@@ -27,7 +26,6 @@ export default {
       url: resource,
       data
     }).then(req => {
-      console.log(req)
       return req.data
     })
   },
@@ -40,10 +38,12 @@ export default {
   getCourses () {
     return this.executeAuth('get', '/api/courses')
   },
-  getCourse (id, authenticated) {
-    if (typeof (authenticated) === 'undefined' || authenticated) {
+  async getCourse (id) {
+    try {
+      await Vue.prototype.$auth.getAccessToken()
       return this.executeAuth('get', `/api/course/${id}`)
-    } else {
+    } catch (err) {
+      console.log('Not authenticated. Attempting public access.')
       return this.executePublic('get', `/api-public/course/${id}`)
     }
   },
@@ -59,12 +59,8 @@ export default {
   deleteCourse (id) {
     return this.executeAuth('delete', `/api/courses/${id}`)
   },
-  getWaypoints (courseID, authenticated) {
-    if (typeof (authenticated) === 'undefined' || authenticated) {
-      return this.executeAuth('get', `/api/waypoint/list/${courseID}`)
-    } else {
-      return this.executePublic('get', `/api-public/course/waypoints/${courseID}`)
-    }
+  getWaypoints (courseID) {
+    return this.executeAuth('get', `/api/course/${courseID}/waypoints`)
   },
   createWaypoint (data) {
     return this.executeAuth('post', `/api/waypoint`, data)
@@ -78,12 +74,8 @@ export default {
   deleteWaypoint (id) {
     return this.executeAuth('delete', `/api/waypoint/${id}`)
   },
-  getPlans (courseID, authenticated) {
-    if (typeof (authenticated) === 'undefined' || authenticated) {
-      return this.executeAuth('get', `/api/plan/list/${courseID}`)
-    } else {
-      return this.executePublic('get', `/api-public/course/plans/${courseID}`)
-    }
+  getPlans (courseID) {
+    return this.executeAuth('get', `/api/course/${courseID}/plans`)
   },
   createPlan (data) {
     return this.executeAuth('post', `/api/plan`, data)

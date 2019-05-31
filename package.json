@@ -9,7 +9,8 @@
     "unit": "jest --config test/unit/jest.conf.js --coverage",
     "e2e": "node test/e2e/runner.js",
     "test": "npm run unit && npm run e2e",
-    "lint": "eslint --ext .js,.vue src test/unit test/e2e/specs",
+    "lint": "eslint --ext .js,.vue server.js src shared server",
+    "lintfix": "eslint --ext .js,.vue --fix server.js src shared server",
     "build": "node build/build.js",
     "devserver": "nodemon server.js",
     "dev": "npm-run-all --parallel webpack devserver"

@@ -37,13 +37,21 @@ var CourseSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Plan'
   },
+  plans: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Plan'
+  }],
   terrainIndex: {
     type: Number,
     default: 3
   },
   gradeAdjustment: {
     type: Number
-  }
+  },
+  waypoints: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Waypoint'
+  }],
 }, {
   collection: 'courses'
 })
