@@ -70,7 +70,7 @@
       </b-col>
     </b-row>
     <plan-edit v-if="owner" :plan="planEdit" :course="course" :points="points" :units="units" @refresh="refreshPlan" @delete="deletePlan"></plan-edit>
-    <waypoint-edit v-if="owner" :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
+    <waypoint-edit v-if="owner" :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints" @delete="deleteWaypoint"></waypoint-edit>
     <segment-edit v-if="owner" :segment="segment" @refresh="refreshWaypoints"></segment-edit>
   </div>
 </template>
@@ -294,14 +294,20 @@ export default {
     async refreshWaypoints () {
       this.course.waypoints = await api.getWaypoints(this.course._id)
     },
-    async deleteWaypoint (id) {
-      if (confirm('Are you sure you want to delete this waypoint?')) {
+    async deleteWaypoint (waypoint, cb) {
+      if (confirm('Are you sure you want to delete this waypoint?\n' + waypoint.name)) {
         // if we are editing a waypoint we deleted, remove it from the form
-        if (this.waypoint._id === id) {
+        if (this.waypoint._id === waypoint._id) {
           this.waypoint = {}
         }
-        await api.deleteWaypoint(id)
-        await this.refreshWaypoints()
+        await api.deleteWaypoint(waypoint._id)
+        var index = this.course.waypoints.indexOf(waypoint)
+        if (index > -1) {
+          this.course.waypoints.splice(index, 1)
+        }
+        if (cb) { cb(true) }
+      } else {
+        if (cb) { cb(false) }
       }
     },
     async editWaypoint (waypoint) {
@@ -355,7 +361,7 @@ export default {
     },
     async deletePlan (plan) {
       await api.deletePlan(plan._id)
-      if (this.course._plan._id = plan._id) {
+      if (this.course._plan._id === plan._id) {
         this.course._plan = {}
         this.pacing = {}
       }

@@ -31,9 +31,20 @@
             ></b-form-file>
         </b-form-group>
       </form>
-      <template slot="modal-ok" slot-scope="{ ok }">
-        <b-spinner v-show="saving" small></b-spinner>
-        Save Course
+      <template slot="modal-footer" slot-scope="{ ok, cancel }">
+        <div v-if="model._id" style="text-align: left; flex: auto">
+          <b-button size="sm" variant="danger" @click="remove">
+            <b-spinner v-show="deleting" small></b-spinner>
+            Delete
+          </b-button>
+        </div>
+        <b-button variant="secondary" @click="cancel()">
+          Cancel
+        </b-button>
+        <b-button variant="primary" @click="ok()">
+          <b-spinner v-show="saving" small></b-spinner>
+          Save Course
+        </b-button>
       </template>
     </b-modal>
   </div>
@@ -47,7 +58,8 @@ export default {
     return {
       file: null,
       model: {},
-      saving: false
+      saving: false,
+      deleting: false
     }
   },
   watch: {
@@ -85,6 +97,15 @@ export default {
     },
     clear () {
       this.model = {}
+    },
+    async remove () {
+      this.deleting = true
+      this.$emit('delete', this.course, async (removed) => {
+        if (removed) {
+          await this.$bvModal.hide('course-edit-modal')
+        }
+        this.deleting = false
+      })
     }
   }
 }
