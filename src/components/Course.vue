@@ -313,10 +313,10 @@ export default {
       }, 100)
     },
     async editWaypoint (waypoint) {
-      this.waypoint = Object.assign({}, waypoint)
+      this.waypoint = waypoint
     },
     async editSegment (waypoint) {
-      this.segment = Object.assign({}, waypoint)
+      this.segment = waypoint
     },
     updateChartProfile: function () {
       var data = []
