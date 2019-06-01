@@ -48,7 +48,7 @@ export default {
         {
           key: 'type',
           formatter: (value, key, item) => {
-            var types = { 
+            var types = {
               start: 'Start',
               finish: 'Finish',
               aid: 'Aid Station',
