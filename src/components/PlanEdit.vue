@@ -44,11 +44,11 @@
         </b-form-group>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
-        <div style="text-align: left; flex: auto">
-        <b-button size="sm" variant="danger" @click="remove">
-          <b-spinner v-show="deleting" small></b-spinner>
-          Delete
-        </b-button>
+        <div v-if="model._id" style="text-align: left; flex: auto">
+          <b-button size="sm" variant="danger" @click="remove">
+            <b-spinner v-show="deleting" small></b-spinner>
+            Delete
+          </b-button>
         </div>
         <b-button variant="secondary" @click="cancel()">
           Cancel
