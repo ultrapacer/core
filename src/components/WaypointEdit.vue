@@ -17,7 +17,7 @@
           <b-form-input type="number" step="0.01" v-model="model.locUserUnit" min="0.01" v-bind:max="locationMax" required></b-form-input>
         </b-form-group>
         <b-form-group label="Type">
-          <b-form-select type="number" v-model="model.type" :options="waypointTypes"></b-form-select>
+          <b-form-select type="text" v-model="model.type" :options="waypointTypes"></b-form-select>
         </b-form-group>
         <b-form-group label="Description">
           <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
@@ -64,7 +64,9 @@ export default {
       } else {
         this.model = Object.assign({}, this.defaults)
       }
-      this.model.locUserUnit = (this.model.location * this.units.distScale).toFixed(2)
+      if (this.model.location) {
+        this.model.locUserUnit = (this.model.location * this.units.distScale).toFixed(2)
+      }
       this.$bvModal.show('waypoint-edit-modal')
     }
   },
