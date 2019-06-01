@@ -14,7 +14,7 @@
             <b-button size="sm" @click="editCourse(row.item)" class="mr-1">
               <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
             </b-button>
-            <b-button size="sm" @click="deleteCourse(row.item._id)" class="mr-1">
+            <b-button size="sm" @click="deleteCourse(row.item)" class="mr-1">
               <v-icon name="trash"></v-icon><span class="d-none d-md-inline">Delete</span>
             </b-button>
           </template>
@@ -27,7 +27,7 @@
         </div>
       </b-col>
     </b-row>
-    <course-edit :course="course" @refresh="refreshCourses"></course-edit>
+    <course-edit :course="course" @refresh="refreshCourses" @delete="deleteCourse"></course-edit>
   </div>
 </template>
 
@@ -108,11 +108,19 @@ export default {
     async editCourse (course) {
       this.course = course
     },
-    async deleteCourse (id) {
-      if (confirm('Are you sure you want to delete this course?')) {
-        await api.deleteCourse(id)
-        await this.refreshCourses()
-      }
+    async deleteCourse (course, cb) {
+      setTimeout(async () => {
+        if (confirm('Are you sure you want to delete this course?\n' + course.name)) {
+          await api.deleteCourse(course._id)
+          var index = this.courses.indexOf(course)
+          if (index > -1) {
+            this.courses.splice(index, 1)
+          }
+          if (cb) cb()
+        } else {
+          if (cb) cb(new Error('not deleted'))
+        }
+      }, 100)
     }
   }
 }

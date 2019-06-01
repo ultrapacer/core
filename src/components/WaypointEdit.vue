@@ -23,9 +23,20 @@
           <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
         </b-form-group>
       </form>
-      <template slot="modal-ok" slot-scope="{ ok }">
-        <b-spinner v-show="saving" small></b-spinner>
-        Save Waypoint
+      <template slot="modal-footer" slot-scope="{ ok, cancel }">
+        <div v-if="model._id && model.type !== 'start' && model.type !== 'finish'" style="text-align: left; flex: auto">
+          <b-button size="sm" variant="danger" @click="remove">
+            <b-spinner v-show="deleting" small></b-spinner>
+            Delete
+          </b-button>
+        </div>
+        <b-button variant="secondary" @click="cancel()">
+          Cancel
+        </b-button>
+        <b-button variant="primary" @click="ok()">
+          <b-spinner v-show="saving" small></b-spinner>
+          Save Waypoint
+        </b-button>
       </template>
     </b-modal>
   </div>
@@ -38,6 +49,7 @@ export default {
   props: ['waypoint', 'course', 'points', 'units'],
   data () {
     return {
+      deleting: false,
       model: {},
       saving: false,
       defaults: {
@@ -98,6 +110,15 @@ export default {
     },
     clear () {
       this.model = Object.assign({}, this.defaults)
+    },
+    async remove () {
+      this.deleting = true
+      this.$emit('delete', this.waypoint, async (err) => {
+        if (!err) {
+          this.$bvModal.hide('waypoint-edit-modal')
+        }
+        this.deleting = false
+      })
     }
   }
 }

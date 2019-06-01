@@ -91,7 +91,6 @@ export default {
         this.model = Object.assign({}, this.defaults)
       }
       if (this.model.pacingTarget) {
-        var d = new Date(null)
         var s = this.model.pacingTarget
         if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
           s = s / this.units.distScale
@@ -167,13 +166,14 @@ export default {
       this.validateTime(this.$refs.planformdelayinput, val)
     },
     async remove () {
-      if (confirm('Are you sure you want to delete this plan?\n' + this.plan.name)) {
-        this.deleting = true
-        await this.$emit('delete', this.plan)
+      this.deleting = true
+      this.$emit('delete', this.plan, async (err) => {
+        if (!err) {
+          this.clear()
+          this.$bvModal.hide('plan-edit-modal')
+        }
         this.deleting = false
-        this.clear()
-        this.$bvModal.hide('plan-edit-modal')
-      }
+      })
     },
     validateTime (el, val) {
       var pass = true

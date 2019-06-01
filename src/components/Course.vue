@@ -70,7 +70,7 @@
       </b-col>
     </b-row>
     <plan-edit v-if="owner" :plan="planEdit" :course="course" :points="points" :units="units" @refresh="refreshPlan" @delete="deletePlan"></plan-edit>
-    <waypoint-edit v-if="owner" :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
+    <waypoint-edit v-if="owner" :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints" @delete="deleteWaypoint"></waypoint-edit>
     <segment-edit v-if="owner" :segment="segment" @refresh="refreshWaypoints"></segment-edit>
   </div>
 </template>
@@ -294,15 +294,23 @@ export default {
     async refreshWaypoints () {
       this.course.waypoints = await api.getWaypoints(this.course._id)
     },
-    async deleteWaypoint (id) {
-      if (confirm('Are you sure you want to delete this waypoint?')) {
-        // if we are editing a waypoint we deleted, remove it from the form
-        if (this.waypoint._id === id) {
-          this.waypoint = {}
+    async deleteWaypoint (waypoint, cb) {
+      setTimeout(async () => {
+        if (confirm('Are you sure you want to delete this waypoint?\n' + waypoint.name)) {
+          // if we are editing a waypoint we deleted, remove it from the form
+          if (this.waypoint._id === waypoint._id) {
+            this.waypoint = {}
+          }
+          await api.deleteWaypoint(waypoint._id)
+          var index = this.course.waypoints.indexOf(waypoint)
+          if (index > -1) {
+            this.course.waypoints.splice(index, 1)
+          }
+          if (cb) { cb() }
+        } else {
+          if (cb) cb(new Error('not deleted'))
         }
-        await api.deleteWaypoint(id)
-        await this.refreshWaypoints()
-      }
+      }, 100)
     },
     async editWaypoint (waypoint) {
       this.waypoint = Object.assign({}, waypoint)
@@ -338,7 +346,7 @@ export default {
     },
     transparentize: function (color, opacity) {
       var alpha = opacity === undefined ? 0.5 : 1 - opacity
-      return Color(color).alpha(alpha).rgbString()
+      return window.Color(color).alpha(alpha).rgbString()
     },
     updateMapLatLon: function () {
       var arr = []
@@ -353,13 +361,20 @@ export default {
     async editPlan () {
       this.planEdit = Object.assign({}, this.course._plan)
     },
-    async deletePlan (plan) {
-      await api.deletePlan(plan._id)
-      if (this.course._plan._id = plan._id) {
-        this.course._plan = {}
-        this.pacing = {}
-      }
-      this.course.plans = await api.getPlans(this.course._id)
+    async deletePlan (plan, cb) {
+      setTimeout(async () => {
+        if (confirm('Are you sure you want to delete this plan?\n' + plan.name)) {
+          await api.deletePlan(plan._id)
+          if (this.course._plan._id === plan._id) {
+            this.course._plan = {}
+            this.pacing = {}
+          }
+          this.course.plans = await api.getPlans(this.course._id)
+          if (cb) { cb() }
+        } else {
+          if (cb) cb(new Error('not deleted'))
+        }
+      }, 100)
     },
     async refreshPlan (plan) {
       this.course.plans = await api.getPlans(this.course._id)
