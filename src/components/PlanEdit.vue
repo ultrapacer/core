@@ -64,7 +64,7 @@
 
 <script>
 import api from '@/api'
-
+import timeUtil from '../../shared/timeUtilities'
 export default {
   props: ['course', 'plan', 'points', 'units'],
   data () {
@@ -94,14 +94,14 @@ export default {
         var s = this.model.pacingTarget
         if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
           s = s / this.units.distScale
-          this.model.pacingTargetF = this.sec2string(s, 'mm:ss')
+          this.model.pacingTargetF = timeUtil.sec2string(s, 'mm:ss')
         } else {
-          this.model.pacingTargetF = this.sec2string(s, 'hh:mm:ss')
+          this.model.pacingTargetF = timeUtil.sec2string(s, 'hh:mm:ss')
         }
       } else {
         this.model.pacingTargetF = ''
       }
-      this.model.waypointDelayF = this.sec2string(this.model.waypointDelay, 'mm:ss')
+      this.model.waypointDelayF = timeUtil.sec2string(this.model.waypointDelay, 'mm:ss')
       this.$bvModal.show('plan-edit-modal')
     }
   },
@@ -142,8 +142,8 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
-      this.model.pacingTarget = this.string2sec(this.model.pacingTargetF)
-      this.model.waypointDelay = this.string2sec(this.model.waypointDelayF)
+      this.model.pacingTarget = timeUtil.string2sec(this.model.pacingTargetF) * this.units.distScale
+      this.model.waypointDelay = timeUtil.string2sec(this.model.waypointDelayF)
       var p = {}
       if (this.model._id) {
         p = await api.updatePlan(this.model._id, this.model)
@@ -191,23 +191,6 @@ export default {
         el.setCustomValidity('')
       } else {
         el.setCustomValidity(`Enter time as "${el._props.placeholder}"`)
-      }
-    },
-    string2sec (val) {
-      var arr = val.split(':')
-      var s = 0
-      for (var i = 0, il = arr.length; i < il; i++) {
-        s += Number(arr[i]) * (60 ** (arr.length - 1 - i))
-      }
-      return s
-    },
-    sec2string (val, format) {
-      var d = new Date(null)
-      d.setSeconds(val)
-      if (format === 'mm:ss') {
-        return d.toISOString().substr(14, 5)
-      } else {
-        return d.toISOString().substr(11, 8)
       }
     }
   }

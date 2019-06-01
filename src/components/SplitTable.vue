@@ -9,6 +9,7 @@
 </template>
 
 <script>
+import timeUtil from '../../shared/timeUtilities'
 export default {
   props: ['course', 'splits', 'units', 'plan', 'pacing'],
   filters: {
@@ -17,13 +18,7 @@ export default {
     },
     formatTime (val) {
       if (!val) { return '' }
-      var date = new Date(null)
-      date.setSeconds(val)
-      if (val > 3600) {
-        return date.toISOString().substr(11, 8)
-      } else {
-        return date.toISOString().substr(14, 5)
-      }
+      return timeUtil.sec2string(val, '[h]:m:ss')
     }
   },
   computed: {
@@ -71,13 +66,7 @@ export default {
           key: 'time',
           label: 'Moving Time',
           formatter: (value, key, item) => {
-            var date = new Date(null)
-            date.setSeconds(value)
-            if (value > 3600) {
-              return date.toISOString().substr(11, 8)
-            } else {
-              return date.toISOString().substr(14, 5)
-            }
+            return timeUtil.sec2string(value, '[h]:m:ss')
           },
           thClass: 'text-right',
           tdClass: 'text-right'
