@@ -295,20 +295,22 @@ export default {
       this.course.waypoints = await api.getWaypoints(this.course._id)
     },
     async deleteWaypoint (waypoint, cb) {
-      if (confirm('Are you sure you want to delete this waypoint?\n' + waypoint.name)) {
-        // if we are editing a waypoint we deleted, remove it from the form
-        if (this.waypoint._id === waypoint._id) {
-          this.waypoint = {}
+      setTimeout(async () => {
+        if (confirm('Are you sure you want to delete this waypoint?\n' + waypoint.name)) {
+          // if we are editing a waypoint we deleted, remove it from the form
+          if (this.waypoint._id === waypoint._id) {
+            this.waypoint = {}
+          }
+          await api.deleteWaypoint(waypoint._id)
+          var index = this.course.waypoints.indexOf(waypoint)
+          if (index > -1) {
+            this.course.waypoints.splice(index, 1)
+          }
+          if (cb) { cb(true) }
+        } else {
+          if (cb) { cb(false) }
         }
-        await api.deleteWaypoint(waypoint._id)
-        var index = this.course.waypoints.indexOf(waypoint)
-        if (index > -1) {
-          this.course.waypoints.splice(index, 1)
-        }
-        if (cb) { cb(true) }
-      } else {
-        if (cb) { cb(false) }
-      }
+      }, 100)
     },
     async editWaypoint (waypoint) {
       this.waypoint = Object.assign({}, waypoint)

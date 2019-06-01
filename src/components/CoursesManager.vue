@@ -109,16 +109,18 @@ export default {
       this.course = course
     },
     async deleteCourse (course, cb) {
-      if (confirm('Are you sure you want to delete this course?\n' + course.name)) {
-        await api.deleteCourse(course._id)
-        var index = this.courses.indexOf(course)
-        if (index > -1) {
-          this.courses.splice(index, 1)
+      setTimeout(async () => {
+        if (confirm('Are you sure you want to delete this course?\n' + course.name)) {
+          await api.deleteCourse(course._id)
+          var index = this.courses.indexOf(course)
+          if (index > -1) {
+            this.courses.splice(index, 1)
+          }
+          if (cb) cb(true)
+        } else {
+          if (cb) cb(false)
         }
-        if (cb) cb(true)
-      } else {
-        if (cb) cb(false)
-      }
+      }, 100)
     }
   }
 }

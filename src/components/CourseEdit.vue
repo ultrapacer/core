@@ -102,7 +102,7 @@ export default {
       this.deleting = true
       this.$emit('delete', this.course, async (removed) => {
         if (removed) {
-          await this.$bvModal.hide('course-edit-modal')
+          this.$bvModal.hide('course-edit-modal')
         }
         this.deleting = false
       })
