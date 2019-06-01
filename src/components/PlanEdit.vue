@@ -142,7 +142,10 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
-      this.model.pacingTarget = timeUtil.string2sec(this.model.pacingTargetF) * this.units.distScale
+      this.model.pacingTarget = timeUtil.string2sec(this.model.pacingTargetF)
+      if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+        this.model.pacingTarget = this.model.pacingTarget * this.units.distScale
+      }
       this.model.waypointDelay = timeUtil.string2sec(this.model.waypointDelayF)
       var p = {}
       if (this.model._id) {
