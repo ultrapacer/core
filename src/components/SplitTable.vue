@@ -4,7 +4,7 @@
     <template slot="FOOT_gain">{{ course.gain | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
-    <template slot="FOOT_time">{{ pacing.time | formatTime }}</template>
+    <template slot="FOOT_time">{{ (pacing.time - pacing.delay)| formatTime }}</template>
   </b-table>
 </template>
 
@@ -69,6 +69,7 @@ export default {
       if (this.splits[0].time) {
         f.push({
           key: 'time',
+          label: 'Moving Time',
           formatter: (value, key, item) => {
             var date = new Date(null)
             date.setSeconds(value)

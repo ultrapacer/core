@@ -28,6 +28,10 @@ var PlanSchema = new Schema({
   gap: {
     type: Number
   },
+  waypointDelay: {
+    type: Number,
+    default: 60
+  },
   waypointDelays: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'PlanWaypointDelay'

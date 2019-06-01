@@ -46,6 +46,20 @@ export default {
           key: 'name'
         },
         {
+          key: 'type',
+          formatter: (value, key, item) => {
+            var types = { 
+              start: 'Start',
+              finish: 'Finish',
+              aid: 'Aid Station',
+              landmark: 'Landmark'
+            }
+            return types[value]
+          },
+          thClass: 'd-none d-md-table-cell',
+          tdClass: 'd-none d-md-table-cell'
+        },
+        {
           key: 'location',
           label: 'Location [' + this.units.dist + ']',
           formatter: (value, key, item) => {

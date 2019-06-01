@@ -372,23 +372,32 @@ export default {
     updatePacing () {
       if (!this.course._plan) { return }
       var time = 0
+      var delay = 0
       var pace = 0
       var gap = 0
+
+      for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
+        if (this.course.waypoints[i].type === 'aid') {
+          delay += this.course._plan.waypointDelay
+        }
+      }
+
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
-        pace = time / this.points[this.points.length - 1].loc
+        pace = (time - delay) / this.points[this.points.length - 1].loc
         gap = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
-        time = pace * this.points[this.points.length - 1].loc
+        time = pace * this.points[this.points.length - 1].loc + delay
         gap = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'gap') {
         gap = this.course._plan.pacingTarget
         pace = gap * this.gradeAdjustment
-        time = pace * this.points[this.points.length - 1].loc
+        time = pace * this.points[this.points.length - 1].loc + delay
       }
       this.pacing = {
         time: time,
+        delay: delay,
         pace: pace,
         gap: gap
       }

@@ -7,7 +7,7 @@
     <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_start.terrainIndex">&nbsp;</template>
-    <template slot="FOOT_time">{{ pacing.time | formatTime }}</template>
+    <template slot="FOOT_time">{{ (pacing.time - pacing.delay) | formatTime }}</template>
     <template slot="actions" slot-scope="row">
       <b-button size="sm" @click="editFn(row.item.start)" class="mr-1">
         <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
@@ -90,6 +90,7 @@ export default {
       if (this.segments[0].time) {
         f.push({
           key: 'time',
+          label: 'Moving Time',
           formatter: (value, key, item) => {
             var date = new Date(null)
             date.setSeconds(value)

@@ -16,7 +16,28 @@
           <b-form-select type="number" v-model="model.pacingMethod" :options="pacingMethods" required></b-form-select>
         </b-form-group>
         <b-form-group v-bind:label="targetLabel">
-          <b-form-input ref="planformtimeinput" type="text" v-model="model.pacingTargetF" min="0" v-mask="'##:##:##'" placeholder="hh:mm:ss" required @change="checktimeformat"></b-form-input>
+          <b-form-input
+            ref="planformtimeinput"
+            type="text"
+            v-model="model.pacingTargetF"
+            min="0"
+            v-mask="targetMask"
+            v-bind:placeholder="targetPlaceholder"
+            required
+            @change="checkTargetFormat"
+          ></b-form-input>
+        </b-form-group>
+        <b-form-group label="Typical Aid Station Delay [mm:ss]">
+          <b-form-input
+            ref="planformdelayinput"
+            type="text"
+            v-model="model.waypointDelayF"
+            min="0"
+            v-mask="'##:##'"
+            placeholder="mm:ss"
+            required
+            @change="checkDelayFormat"
+          ></b-form-input>
         </b-form-group>
         <b-form-group label="Description">
           <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
@@ -32,12 +53,14 @@
 
 <script>
 import api from '@/api'
+
 export default {
   props: ['course', 'plan', 'points', 'units'],
   data () {
     return {
       defaults: {
-        pacingMethod: 'time'
+        pacingMethod: 'time',
+        waypointDelay: 60
       },
       model: {},
       pacingMethods: [
@@ -60,12 +83,14 @@ export default {
         var s = this.model.pacingTarget
         if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
           s = s / this.units.distScale
+          this.model.pacingTargetF = this.sec2string(s, 'mm:ss')
+        } else {
+          this.model.pacingTargetF = this.sec2string(s, 'hh:mm:ss')
         }
-        d.setSeconds(s)
-        this.model.pacingTargetF = d.toISOString().substr(11, 8)
       } else {
         this.model.pacingTargetF = ''
       }
+      this.model.waypointDelayF = this.sec2string(this.model.waypointDelay, 'mm:ss')
       this.$bvModal.show('plan-edit-modal')
     }
   },
@@ -80,6 +105,20 @@ export default {
           return this.pacingMethods[i].text + str
         }
       }
+    },
+    targetPlaceholder: function () {
+      if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+        return 'mm:ss'
+      } else {
+        return 'hh:mm:ss'
+      }
+    },
+    targetMask: function () {
+      if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+        return '##:##'
+      } else {
+        return '##:##:##'
+      }
     }
   },
   methods: {
@@ -92,12 +131,8 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
-      var arr = this.model.pacingTargetF.split(':')
-      var s = 3600 * Number(arr[0]) + 60 * Number(arr[1]) + Number(arr[2])
-      if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
-        s = s * this.units.distScale
-      }
-      this.model.pacingTarget = s
+      this.model.pacingTarget = this.string2sec(this.model.pacingTargetF)
+      this.model.waypointDelay = this.string2sec(this.model.waypointDelayF)
       var p = {}
       if (this.model._id) {
         p = await api.updatePlan(this.model._id, this.model)
@@ -113,20 +148,45 @@ export default {
     clear () {
       this.model = Object.assign({}, this.defaults)
     },
-    checktimeformat (val) {
+    checkTargetFormat (val) {
+      this.validateTime(this.$refs.planformtimeinput, val)
+    },
+    checkDelayFormat (val, ref) {
+      this.validateTime(this.$refs.planformdelayinput, val)
+    },
+    validateTime (el, val) {
       var pass = true
-      if (val.length === 8) {
+      if (val.length === el._props.placeholder.length) {
         var arr = val.split(':')
-        if (Number(arr[1]) >= 60 || Number(arr[2]) >= 60) {
-          pass = false
+        for (var i = arr.length - 1; i > 0; i--) {
+          if (Number(arr[i]) >= 60) {
+            pass = false
+          }
         }
       } else {
         pass = false
       }
       if (pass) {
-        this.$refs.planformtimeinput.setCustomValidity('')
+        el.setCustomValidity('')
       } else {
-        this.$refs.planformtimeinput.setCustomValidity('Enter time in "hh:mm:ss".')
+        el.setCustomValidity(`Enter time as "${el._props.placeholder}"`)
+      }
+    },
+    string2sec (val) {
+      var arr = val.split(':')
+      var s = 0
+      for (var i = 0, il = arr.length; i < il; i++) {
+        s += Number(arr[i]) * (60 ** (arr.length - 1 - i))
+      }
+      return s
+    },
+    sec2string (val, format) {
+      var d = new Date(null)
+      d.setSeconds(val)
+      if (format === 'mm:ss') {
+        return d.toISOString().substr(14, 5)
+      } else {
+        return d.toISOString().substr(11, 8)
       }
     }
   }

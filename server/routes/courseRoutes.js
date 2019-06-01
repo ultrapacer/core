@@ -157,7 +157,7 @@ courseRoutes.route('/:course/plans').get(async function (req, res) {
   }
 })
 
-async function validateWaypoints(course, waypoints) {
+async function validateWaypoints (course, waypoints) {
   // make sure a start and finish waypoint exist
   if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
     var gpx = await GPX.findOne({_id: course._gpx}).exec()
