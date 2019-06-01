@@ -113,8 +113,8 @@ export default {
     },
     async remove () {
       this.deleting = true
-      this.$emit('delete', this.waypoint, async (removed) => {
-        if (removed) {
+      this.$emit('delete', this.waypoint, async (err) => {
+        if (!err) {
           this.$bvModal.hide('waypoint-edit-modal')
         }
         this.deleting = false

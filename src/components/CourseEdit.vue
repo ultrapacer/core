@@ -100,8 +100,8 @@ export default {
     },
     async remove () {
       this.deleting = true
-      this.$emit('delete', this.course, async (removed) => {
-        if (removed) {
+      this.$emit('delete', this.course, async (err) => {
+        if (!err) {
           this.$bvModal.hide('course-edit-modal')
         }
         this.deleting = false

@@ -306,9 +306,9 @@ export default {
           if (index > -1) {
             this.course.waypoints.splice(index, 1)
           }
-          if (cb) { cb(true) }
+          if (cb) { cb() }
         } else {
-          if (cb) { cb(false) }
+          if (cb) cb(new Error('not deleted'))
         }
       }, 100)
     },
@@ -346,7 +346,7 @@ export default {
     },
     transparentize: function (color, opacity) {
       var alpha = opacity === undefined ? 0.5 : 1 - opacity
-      return Color(color).alpha(alpha).rgbString()
+      return window.Color(color).alpha(alpha).rgbString()
     },
     updateMapLatLon: function () {
       var arr = []
@@ -361,13 +361,20 @@ export default {
     async editPlan () {
       this.planEdit = Object.assign({}, this.course._plan)
     },
-    async deletePlan (plan) {
-      await api.deletePlan(plan._id)
-      if (this.course._plan._id === plan._id) {
-        this.course._plan = {}
-        this.pacing = {}
-      }
-      this.course.plans = await api.getPlans(this.course._id)
+    async deletePlan (plan, cb) {
+      setTimeout(async () => {
+        if (confirm('Are you sure you want to delete this plan?\n' + plan.name)) {
+          await api.deletePlan(plan._id)
+          if (this.course._plan._id === plan._id) {
+            this.course._plan = {}
+            this.pacing = {}
+          }
+          this.course.plans = await api.getPlans(this.course._id)
+          if (cb) { cb() }
+        } else {
+          if (cb) cb(new Error('not deleted'))
+        }
+      }, 100)
     },
     async refreshPlan (plan) {
       this.course.plans = await api.getPlans(this.course._id)

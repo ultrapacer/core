@@ -116,9 +116,9 @@ export default {
           if (index > -1) {
             this.courses.splice(index, 1)
           }
-          if (cb) cb(true)
+          if (cb) cb()
         } else {
-          if (cb) cb(false)
+          if (cb) cb(new Error('not deleted'))
         }
       }, 100)
     }
