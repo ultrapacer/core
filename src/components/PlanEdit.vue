@@ -43,9 +43,20 @@
           <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
         </b-form-group>
       </form>
-      <template slot="modal-ok" slot-scope="{ ok }">
-        <b-spinner v-show="saving" small></b-spinner>
-        Save Plan
+      <template slot="modal-footer" slot-scope="{ ok, cancel }">
+        <div style="text-align: left; flex: auto">
+        <b-button size="sm" variant="danger" @click="remove">
+          <b-spinner v-show="deleting" small></b-spinner>
+          Delete
+        </b-button>
+        </div>
+        <b-button variant="secondary" @click="cancel()">
+          Cancel
+        </b-button>
+        <b-button variant="primary" @click="ok()">
+          <b-spinner v-show="saving" small></b-spinner>
+          Save Plan
+        </b-button>
       </template>
     </b-modal>
   </div>
@@ -68,7 +79,8 @@ export default {
         { value: 'pace', text: 'Average Pace' },
         { value: 'gap', text: 'Grade Adjusted Pace' }
       ],
-      saving: false
+      saving: false,
+      deleting: false
     }
   },
   watch: {
@@ -153,6 +165,15 @@ export default {
     },
     checkDelayFormat (val, ref) {
       this.validateTime(this.$refs.planformdelayinput, val)
+    },
+    async remove () {
+      if (confirm('Are you sure you want to delete this plan?\n' + this.plan.name)) {
+        this.deleting = true
+        await this.$emit('delete', this.plan)
+        this.deleting = false
+        this.clear()
+        this.$bvModal.hide('plan-edit-modal')
+      }
     },
     validateTime (el, val) {
       var pass = true

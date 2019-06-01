@@ -69,7 +69,7 @@
         </b-tabs>
       </b-col>
     </b-row>
-    <plan-edit v-if="owner" :plan="planEdit" :course="course" :points="points" :units="units" @refresh="refreshPlan"></plan-edit>
+    <plan-edit v-if="owner" :plan="planEdit" :course="course" :points="points" :units="units" @refresh="refreshPlan" @delete="deletePlan"></plan-edit>
     <waypoint-edit v-if="owner" :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints"></waypoint-edit>
     <segment-edit v-if="owner" :segment="segment" @refresh="refreshWaypoints"></segment-edit>
   </div>
@@ -350,8 +350,16 @@ export default {
     async newPlan () {
       this.planEdit = {}
     },
-    async editPlan (waypoint) {
+    async editPlan () {
       this.planEdit = Object.assign({}, this.course._plan)
+    },
+    async deletePlan (plan) {
+      await api.deletePlan(plan._id)
+      if (this.course._plan._id = plan._id) {
+        this.course._plan = {}
+        this.pacing = {}
+      }
+      this.course.plans = await api.getPlans(this.course._id)
     },
     async refreshPlan (plan) {
       this.course.plans = await api.getPlans(this.course._id)
