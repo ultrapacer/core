@@ -1,6 +1,6 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema
-const GPX = require('./GPX')
+const Track = require('./Track')
 const Waypoint = require('./Waypoint')
 const Plan = require('./Plan')
 
@@ -15,10 +15,6 @@ var CourseSchema = new Schema({
   },
   description: {
     type: String
-  },
-  _gpx: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'GPX'
   },
   distance: {
     type: Number
@@ -45,6 +41,10 @@ var CourseSchema = new Schema({
     type: Number,
     default: 3
   },
+  track: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Track'
+  },
   gradeAdjustment: {
     type: Number
   },
@@ -57,9 +57,13 @@ var CourseSchema = new Schema({
 })
 
 CourseSchema.pre('remove', function () {
-  GPX.remove({_id: this._gpx}).exec()
+  Track.remove({ course: this._id }).exec()
   Plan.remove({_course: this._id}).exec()
   Waypoint.remove({_course: this._id}).exec()
+})
+
+CourseSchema.post('find', async function (course, next) {
+  await course.track = Track.findOne({ _course: course }).select('-points').exec()
   next()
 })
 
