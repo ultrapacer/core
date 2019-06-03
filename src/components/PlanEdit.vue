@@ -66,7 +66,7 @@
 import api from '@/api'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'plan', 'points', 'units'],
+  props: ['course', 'plan', 'units'],
   data () {
     return {
       defaults: {

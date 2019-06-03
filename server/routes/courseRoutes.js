@@ -7,42 +7,41 @@ const utilities = require('../../shared/utilities')
 const upload = multer()
 var Course = require('../models/Course')
 var User = require('../models/User')
-var GPX = require('../models/GPX')
+var Track = require('../models/Track')
 var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
 
 // Defined store route
-courseRoutes.route('/').post(upload.single('file'), function (req, res) {
-  var query = { auth0ID: req.user.sub }
-  User.findOne(query).exec(function (err, user) {
-    console.log(user)
-    gpxParse.parseGpx(req.file.buffer.toString(), function (error, data) {
+courseRoutes.route('/').post(upload.single('track.fileFormData.file'), async function (req, res) {
+  try {
+    console.log(req.body)
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    gpxParse.parseGpx(req.file.buffer.toString(), async function (error, data) {
       if (error) throw error
 
-      var course = new Course(JSON.parse(req.body.model))
+      var course = new Course(req.body)
       course._user = user
-      console.log(course._user)
-      var gpx = new GPX()
-
-      gpx.filename = req.file.path
-      gpx.points = utilities.cleanPoints(data.tracks[0].segments[0])
-      var stats = utilities.calcStats(gpx.points)
+      await course.save()
+      var track = new Track(req.body.track)
+      
+      track.course = course
+      track.points = utilities.cleanPoints(data.tracks[0].segments[0])
+      await track.save()
+      
+      var stats = utilities.calcStats(track.points)
       course.distance = stats.distance
       course.gain = stats.gain
       course.loss = stats.loss
-
-      gpx.save(function (err, record) {
-        course._gpx = record
-        course.save().then(post => {
-          res.status(200).json({'post': 'Course added successfully'})
-        })
-          .catch(err => {
-            console.log(err)
-            res.status(400).send('unable to save to database')
-          })
-      })
+      
+      await course.save()
+      
+      res.status(200).json({'post': 'Course added successfully'})
+      
     })
-  })
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
 })
 
 // GET COURSES
@@ -108,11 +107,9 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 courseRoutes.route('/:course').get(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.course).populate(['_gpx', '_plan']).exec()
+    var course = await Course.findOne({ _id: req.params.course }).populate(['track', '_plan']).exec()
     if (course._user.equals(user._id) || course.public) {
-      course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
       await validateWaypoints(course, course.waypoints)
-      course.plans = await Plan.find({ _course: course }).sort('name').exec()
       res.json(course)
     } else {
       res.status(403).send('No permission')
@@ -160,16 +157,16 @@ courseRoutes.route('/:course/plans').get(async function (req, res) {
 async function validateWaypoints (course, waypoints) {
   // make sure a start and finish waypoint exist
   if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
-    var gpx = await GPX.findOne({_id: course._gpx}).exec()
+    var track = await Track.findOne({_id: course._gpx}).exec()
     if (!waypoints.find(waypoint => waypoint.type === 'start')) {
       var ws = new Waypoint({
         name: 'Start',
         type: 'start',
         location: 0,
         _course: course._id,
-        elevation: gpx.points[0].alt,
-        lat: gpx.points[0].lat,
-        lon: gpx.points[0].lon
+        elevation: track.points[0].alt,
+        lat: track.points[0].lat,
+        lon: track.points[0].lon
       })
       await ws.save()
       waypoints.unshift(ws)
@@ -180,9 +177,9 @@ async function validateWaypoints (course, waypoints) {
         type: 'finish',
         location: course.distance,
         _course: course._id,
-        elevation: gpx.points[gpx.points.length - 1].alt,
-        lat: gpx.points[gpx.points.length - 1].lat,
-        lon: gpx.points[gpx.points.length - 1].lon
+        elevation: track.points[track.points.length - 1].alt,
+        lat: track.points[track.points.length - 1].lat,
+        lon: track.points[track.points.length - 1].lon
       })
       await wf.save()
       waypoints.push(wf)

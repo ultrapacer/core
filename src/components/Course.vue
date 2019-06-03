@@ -39,7 +39,7 @@
             <split-table :course="course" :plan="plan" :splits="splits" :units="units" :pacing="pacing"></split-table>
           </b-tab>
           <b-tab title="Waypoints">
-            <waypoint-table :course="course" :waypoints="course.waypoints" :units="units" :owner="owner" :editFn="editWaypoint" :delFn="deleteWaypoint" :points="points"></waypoint-table>
+            <waypoint-table :course="course" :waypoints="course.waypoints" :units="units" :owner="owner" :editFn="editWaypoint" :delFn="deleteWaypoint"></waypoint-table>
             <div v-if="owner">
               <b-btn variant="success" @click.prevent="newWaypoint()">
                 <v-icon name="plus"></v-icon><span>New Waypoint</span>
@@ -69,8 +69,8 @@
         </b-tabs>
       </b-col>
     </b-row>
-    <plan-edit v-if="owner" :plan="planEdit" :course="course" :points="points" :units="units" @refresh="refreshPlan" @delete="deletePlan"></plan-edit>
-    <waypoint-edit v-if="owner" :course="course" :points="points" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints" @delete="deleteWaypoint"></waypoint-edit>
+    <plan-edit v-if="owner" :plan="planEdit" :course="course" :units="units" @refresh="refreshPlan" @delete="deletePlan"></plan-edit>
+    <waypoint-edit v-if="owner" :course="course" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints" @delete="deleteWaypoint"></waypoint-edit>
     <segment-edit v-if="owner" :segment="segment" @refresh="refreshWaypoints"></segment-edit>
   </div>
 </template>
@@ -115,7 +115,6 @@ export default {
       segment: {},
       waypoint: {},
       pacing: {},
-      points: [],
       chartColors: {
         red: 'rgb(255, 99, 132)',
         orange: 'rgb(255, 159, 64)',
@@ -177,17 +176,17 @@ export default {
       }
     },
     splits: function () {
-      return utilities.calcSplits(this.points, this.units.dist, this.pacing)
+      return utilities.calcSplits(this.course.track.points, this.units.dist, this.pacing)
     },
     segments: function () {
-      if (!this.points.length) { return [] }
+      if (!this.course.track.points.length) { return [] }
       if (!this.course.waypoints.length) { return [] }
       var arr = []
       var breaks = []
       for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
         breaks.push(this.course.waypoints[i].location)
       }
-      var splits = utilities.calcSegments(this.points, breaks, this.pacing)
+      var splits = utilities.calcSegments(this.course.track.points, breaks, this.pacing)
       for (var j = 0, jl = splits.length; j < jl; j++) {
         arr.push({
           start: this.course.waypoints[j],
@@ -271,19 +270,19 @@ export default {
       return
     }
     this.$title = this.course.name
-    this.points = utilities.addLoc(this.course._gpx.points)
+    this.course.track.points = utilities.addLoc(this.course.track.points)
     this.updateMapLatLon()
     this.updateChartProfile()
     // calc grade adjustment:
     var tot = 0
     var grade = 0
     var len = 0
-    for (var j = 1, jl = this.points.length; j < jl; j++) {
-      len = this.points[j].loc - this.points[j - 1].loc
-      grade = (this.points[j].alt - this.points[j - 1].alt) / len / 10
+    for (var j = 1, jl = this.course.track.points.length; j < jl; j++) {
+      len = this.course.track.points[j].loc - this.course.track.points[j - 1].loc
+      grade = (this.course.track.points[j].alt - this.course.track.points[j - 1].alt) / len / 10
       tot += gapModel(grade) * len
     }
-    this.gradeAdjustment = tot / this.points[this.points.length - 1].loc
+    this.gradeAdjustment = tot / this.course.track.points[this.course.track.points.length - 1].loc
     this.updatePacing()
     this.initializing = false
   },
@@ -320,20 +319,20 @@ export default {
     },
     updateChartProfile: function () {
       var data = []
-      if (this.points.length < 400) {
-        for (var i = 0, il = this.points.length; i < il; i++) {
+      if (this.course.track.points.length < 400) {
+        for (var i = 0, il = this.course.track.points.length; i < il; i++) {
           data.push({
-            x: this.points[i].loc * this.units.distScale,
-            y: this.points[i].alt * this.units.altScale
+            x: this.course.track.points[i].loc * this.units.distScale,
+            y: this.course.track.points[i].alt * this.units.altScale
           })
         }
       } else {
-        var max = this.points[this.points.length - 1].loc
+        var max = this.course.track.points[this.course.track.points.length - 1].loc
         var xs = []
         for (var j = 0; j <= 400; j++) {
           xs.push((j / 400) * max)
         }
-        var ys = utilities.getElevation(this.points, xs)
+        var ys = utilities.getElevation(this.course.track.points, xs)
         for (i = 0, il = xs.length; i < il; i++) {
           data.push({
             x: xs[i] * this.units.distScale,
@@ -350,8 +349,8 @@ export default {
     },
     updateMapLatLon: function () {
       var arr = []
-      for (var i = 0, il = this.points.length; i < il; i++) {
-        arr.push([this.points[i].lat, this.points[i].lon])
+      for (var i = 0, il = this.course.track.points.length; i < il; i++) {
+        arr.push([this.course.track.points[i].lat, this.course.track.points[i].lon])
       }
       this.mapLatLon = arr
     },
@@ -407,16 +406,16 @@ export default {
 
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
-        pace = (time - delay) / this.points[this.points.length - 1].loc
+        pace = (time - delay) / this.course.track.points[this.course.track.points.length - 1].loc
         gap = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
-        time = pace * this.points[this.points.length - 1].loc + delay
+        time = pace * this.course.track.points[this.course.track.points.length - 1].loc + delay
         gap = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'gap') {
         gap = this.course._plan.pacingTarget
         pace = gap * this.gradeAdjustment
-        time = pace * this.points[this.points.length - 1].loc + delay
+        time = pace * this.course.track.points[this.course.track.points.length - 1].loc + delay
       }
       this.pacing = {
         time: time,

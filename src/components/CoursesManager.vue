@@ -72,7 +72,7 @@ export default {
           label: 'Actions',
           tdClass: 'actionButtonColumn'
         }
-      ]
+      ],
     }
   },
   computed: {

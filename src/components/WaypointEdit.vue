@@ -46,7 +46,7 @@
 import api from '@/api'
 import wputil from '../../shared/waypointUtilities'
 export default {
-  props: ['waypoint', 'course', 'points', 'units'],
+  props: ['waypoint', 'course', 'units'],
   data () {
     return {
       deleting: false,
@@ -98,7 +98,7 @@ export default {
       if (this.saving) { return }
       this.saving = true
       this.model.location = this.model.locUserUnit / this.units.distScale
-      wputil.updateLLA(this.model, this.points)
+      wputil.updateLLA(this.model, this.course.track.points)
       if (this.model._id) {
         await api.updateWaypoint(this.model._id, this.model)
       } else {
