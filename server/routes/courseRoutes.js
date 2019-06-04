@@ -14,7 +14,6 @@ courseRoutes.route('/').post(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     req.body.track = new Track(req.body.track)
     var course = new Course(req.body)
-    console.log(course.track)
     course._user = user
     var stats = utilities.calcStats(course.track.points)
     course.distance = stats.distance
@@ -140,18 +139,16 @@ courseRoutes.route('/:course/plans').get(async function (req, res) {
 })
 
 async function validateWaypoints (course, waypoints) {
-  // make sure a start and finish waypoint exist
   if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
-    var track = await Track.findOne({_id: course._gpx}).exec()
     if (!waypoints.find(waypoint => waypoint.type === 'start')) {
       var ws = new Waypoint({
         name: 'Start',
         type: 'start',
         location: 0,
         _course: course._id,
-        elevation: track.points[0].alt,
-        lat: track.points[0].lat,
-        lon: track.points[0].lon
+        elevation: course.track.points[0].alt,
+        lat: course.track.points[0].lat,
+        lon: course.track.points[0].lon
       })
       await ws.save()
       waypoints.unshift(ws)
@@ -162,9 +159,9 @@ async function validateWaypoints (course, waypoints) {
         type: 'finish',
         location: course.distance,
         _course: course._id,
-        elevation: track.points[track.points.length - 1].alt,
-        lat: track.points[track.points.length - 1].lat,
-        lon: track.points[track.points.length - 1].lon
+        elevation: course.track.points[course.track.points.length - 1].alt,
+        lat: course.track.points[course.track.points.length - 1].lat,
+        lon: course.track.points[course.track.points.length - 1].lon
       })
       await wf.save()
       waypoints.push(wf)
