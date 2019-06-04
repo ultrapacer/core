@@ -33,6 +33,7 @@
                 placeholder="Choose a GPX file..."
                 drop-placeholder="Drop GPX file here..."
                 accept=".gpx"
+                @change="loadGPX"
                 required
               ></b-form-file>
           </b-form-group>
@@ -68,6 +69,7 @@
 
 <script>
 import api from '@/api'
+import utilities from '../../shared/utilities'
 const gpxParse = require('gpx-parse')
 export default {
   props: ['course'],
@@ -108,21 +110,8 @@ export default {
       if (this.saving) { return }
       this.saving = true
       if (this.model.track.source === 'gpx') {
-        var reader = new FileReader()
-        reader.onload = function(e) {
-          var text = reader.result;
-        }
-        console.log(reader.readAsText(this.file))
-       // gpxParse.parseGpx(reader.readAsText(this.file), function (error, data) {
-         
-        //  console.log(data)
-        //})
-        const formData = new FormData()
-        formData.append('file', this.file)
-        this.model.track.fileFormData = formData
         this.model.track.name = this.file.name
       }
-      console.log(this.model)
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
       } else {
@@ -144,6 +133,16 @@ export default {
         }
         this.deleting = false
       })
+    },
+    async loadGPX (f) {
+      const reader = new FileReader()
+      reader.onload = e => {
+        console.log(e.target.result)
+        gpxParse.parseGpx(e.target.result, (error, data) => {
+          this.model.track.points = utilities.cleanPoints(data.tracks[0].segments[0])
+        })
+      }
+      reader.readAsText(f.target.files[0])
     }
   }
 }

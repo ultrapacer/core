@@ -1,10 +1,7 @@
 // courseRoutes.js
 var express = require('express')
 var courseRoutes = express.Router()
-const multer = require('multer')
-const gpxParse = require('gpx-parse')
 const utilities = require('../../shared/utilities')
-const upload = multer()
 var Course = require('../models/Course')
 var User = require('../models/User')
 var Track = require('../models/Track')
@@ -12,32 +9,20 @@ var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
 
 // Defined store route
-courseRoutes.route('/').post(upload.single('track.fileFormData.file'), async function (req, res) {
+courseRoutes.route('/').post(async function (req, res) {
   try {
-    console.log(req.body)
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    gpxParse.parseGpx(req.file.buffer.toString(), async function (error, data) {
-      if (error) throw error
-
-      var course = new Course(req.body)
-      course._user = user
-      await course.save()
-      var track = new Track(req.body.track)
-      
-      track.course = course
-      track.points = utilities.cleanPoints(data.tracks[0].segments[0])
-      await track.save()
-      
-      var stats = utilities.calcStats(track.points)
-      course.distance = stats.distance
-      course.gain = stats.gain
-      course.loss = stats.loss
-      
-      await course.save()
-      
-      res.status(200).json({'post': 'Course added successfully'})
-      
-    })
+    req.body.track = new Track(req.body.track)
+    var course = new Course(req.body)
+    console.log(course.track)
+    course._user = user
+    var stats = utilities.calcStats(course.track.points)
+    course.distance = stats.distance
+    course.gain = stats.gain
+    course.loss = stats.loss
+    await course.track.save()
+    await course.save()
+    res.status(200).json({'post': 'Course added successfully'})
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
@@ -47,7 +32,7 @@ courseRoutes.route('/').post(upload.single('track.fileFormData.file'), async fun
 // GET COURSES
 courseRoutes.route('/').get(async function (req, res) {
   var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-  var courses = await Course.find({ _user: user }).exec()
+  var courses = await Course.find({ _user: user }).populate('track', '-points').exec()
   res.json(courses)
 })
 

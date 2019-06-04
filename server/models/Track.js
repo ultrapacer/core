@@ -2,10 +2,6 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 
 var Track = new Schema({
-  course: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Course'
-  },
   name: {
     type: String
   },

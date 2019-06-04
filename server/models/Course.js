@@ -62,14 +62,7 @@ CourseSchema.pre('remove', function () {
   Waypoint.remove({_course: this._id}).exec()
 })
 
-CourseSchema.post('find', async function (course, next) {
-  // populate track fields without all points
-  course.track = await Track.findOne({ _course: course }).select('-points').exec()
-  next()
-})
-
 CourseSchema.post('findOne', async function (course, next) {
-  course.track = await Track.findOne({ course: course }).exec()
   course.plans = await Plan.find({ _course: course }).sort('name').exec()
   course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
   next()

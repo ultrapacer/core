@@ -23,7 +23,6 @@
     "gpx-parse": "^0.10.4",
     "jwks-rsa": "^1.4.0",
     "mongoose": "^5.5.2",
-    "multer": "^1.4.1",
     "sgeo": "0.0.5",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1"
