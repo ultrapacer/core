@@ -31,7 +31,7 @@ courseRoutes.route('/').post(async function (req, res) {
 // GET COURSES
 courseRoutes.route('/').get(async function (req, res) {
   var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-  var courses = await Course.find({ _user: user }).populate('track', '-points').exec()
+  var courses = await Course.find({ _user: user }).populate('track', '-points').sort('name').exec()
   res.json(courses)
 })
 

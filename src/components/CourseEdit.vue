@@ -17,10 +17,10 @@
             Visible to public
           </b-form-checkbox>
         </b-form-group>
-        <b-form-group v-if="!showTrackForms" label="Source">
-          {{ sources[course.track.source] }}: {{ course.track.name }} ()
+        <b-form-group v-if="!showTrackForms && model.track" label="Source">
+          {{ sources[course.track.source] }}: {{ course.track.name }} (<b-link @click="changeTrack">change</b-link>)
         </b-form-group>
-        <div v-if="showTrackForms">
+        <div v-if="showTrackForms && model.track">
           <b-form-group label="Source">
             <b-form-radio v-model="model.track.source" value="gpx">GPX file</b-form-radio>
             <b-form-radio v-model="model.track.source" value="stravaRoute" disabled>Strava Route</b-form-radio>
@@ -28,8 +28,8 @@
           </b-form-group>
           <b-form-group v-if="model.track.source==='gpx'">
             <b-form-file
-                :state="Boolean(file)"
-                v-model="file"
+                :state="Boolean(gpxFile)"
+                v-model="gpxFile"
                 placeholder="Choose a GPX file..."
                 drop-placeholder="Drop GPX file here..."
                 accept=".gpx"
@@ -69,14 +69,16 @@
 
 <script>
 import api from '@/api'
-import utilities from '../../shared/utilities'
+import util from '../../shared/utilities'
 const gpxParse = require('gpx-parse')
 export default {
   props: ['course'],
   data () {
     return {
-      file: null,
-      model: { track: { source: 'gpx' } },
+      defaults: { track: { source: 'gpx' } },
+      gpxFile: null,
+      gpxPoints: [],
+      model: {},
       saving: false,
       deleting: false,
       showTrackForms: true,
@@ -93,7 +95,7 @@ export default {
         this.model = Object.assign({}, val)
         this.showTrackForms = false
       } else {
-        this.model = { track: { source: 'gpx' } }
+        this.model = Object.assign({}, this.defaults)
         this.showTrackForms = true
       }
       this.$bvModal.show('course-edit-modal')
@@ -109,8 +111,9 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
-      if (this.model.track.source === 'gpx') {
-        this.model.track.name = this.file.name
+      if (this.model.track.source === 'gpx' && this.gpxPoints.length) {
+        this.model.track.points = this.gpxPoints
+        this.model.track.name = this.gpxFile.name
       }
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
@@ -123,7 +126,8 @@ export default {
       this.$bvModal.hide('course-edit-modal')
     },
     clear () {
-      this.model = {}
+      this.showTrackForms = true
+      this.model = Object.assign({}, this.defaults)
     },
     async remove () {
       this.deleting = true
@@ -134,12 +138,18 @@ export default {
         this.deleting = false
       })
     },
+    async changeTrack () {
+      this.showTrackForms = true
+    },
     async loadGPX (f) {
       const reader = new FileReader()
       reader.onload = e => {
-        console.log(e.target.result)
         gpxParse.parseGpx(e.target.result, (error, data) => {
-          this.model.track.points = utilities.cleanPoints(data.tracks[0].segments[0])
+          if (error) {
+            throw error
+          } else {
+            this.gpxPoints = util.cleanPoints(data.tracks[0].segments[0])
+          }
         })
       }
       reader.readAsText(f.target.files[0])
