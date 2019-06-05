@@ -49,6 +49,9 @@ courseRoutes.route('/:id').put(async function (req, res) {
         course.points = req.body.points
         course.source = req.body.source
         updateCourseStats(course)
+        var finishWaypoint = await Waypoint.findOne({ _course: course, type: 'finish' }).exec()
+        finishWaypoint.location = course.distance
+        await finishWaypoint.save()
       }
       await course.save()
       res.json('Update complete')
@@ -56,6 +59,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
       res.status(403).send('No permission')
     }
   } catch (err) {
+    console.log(err)
     res.status(400).send(err)
   }
 })

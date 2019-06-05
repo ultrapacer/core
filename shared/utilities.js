@@ -47,6 +47,9 @@ function calcSplits (points, units, pacing) {
 }
 
 function calcSegments (points, breaks, pacing) {
+  console.log(points)
+  console.log(breaks)
+  console.log(pacing)
   var segments = []
   var alts = getElevation(points, breaks)
   for (var i = 1, il = breaks.length; i < il; i++) {
@@ -72,7 +75,7 @@ function calcSegments (points, breaks, pacing) {
   var j = 0
   var j0 = 0
   var delta0 = 0
-  for (i = 1, il = points.length; i < il; i++) {
+  for (var i = 1, il = points.length; i < il; i++) {
     if (i === il - 1) {
       j = segments.length - 1
     } else {
