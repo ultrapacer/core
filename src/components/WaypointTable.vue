@@ -104,11 +104,11 @@ export default {
       var loc = waypoint.location + delta / this.units.distScale
       if (loc < 0.01 / this.units.distScale) {
         loc = 0.01
-      } else if (loc >= this.course.track.points[this.course.track.points.length - 1].loc) {
-        loc = this.course.track.points[this.course.track.points.length - 1].loc - (0.01 / this.units.distScale)
+      } else if (loc >= this.course.points[this.course.points.length - 1].loc) {
+        loc = this.course.points[this.course.points.length - 1].loc - (0.01 / this.units.distScale)
       }
       waypoint.location = loc
-      wputil.updateLLA(waypoint, this.course.track.points)
+      wputil.updateLLA(waypoint, this.course.points)
       wputil.sortWaypointsByDistance(this.waypoints)
       if (String(waypoint._id) === this.updatingWaypointTimeoutID) {
         clearTimeout(this.updatingWaypointTimeout)
