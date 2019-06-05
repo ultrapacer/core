@@ -63,24 +63,12 @@ function calcSegments (points, breaks, pacing) {
       time: 0
     })
   }
-  function getSegmentIndex (dist) {
-    for (var i = 0, il = segments.length; i < il; i++) {
-      if (dist > segments[i].start && dist <= segments[i].end) {
-        return i
-      }
-    }
-    return -1
-  }
   var delta = 0
   var j = 0
   var j0 = 0
   var delta0 = 0
   for (var i = 1, il = points.length; i < il; i++) {
-    if (i === il - 1) {
-      j = segments.length - 1
-    } else {
-      j = getSegmentIndex(points[i].loc)
-    }
+    j = segments.findIndex(s => s.start < points[i].loc && s.end >= points[i].loc)
     if (j > j0) {
       // interpolate
       delta0 = (points[i].alt - points[i - 1].alt) * (segments[j].start - points[i - 1].loc) / (points[i].loc - points[i - 1].loc)
@@ -89,17 +77,11 @@ function calcSegments (points, breaks, pacing) {
       delta = points[i].alt - points[i - 1].alt
       delta0 = 0
     }
-    if (delta < 0) {
-      segments[j].loss += delta
-    } else {
-      segments[j].gain += delta
+    if (j >= 0) {
+      (delta < 0) ? segments[j].loss += delta : segments[j].gain += delta
     }
-    if (delta0) {
-      if (delta0 < 0) {
-        segments[j0].loss += delta0
-      } else {
-        segments[j0].gain += delta0
-      }
+    if (j0 >= 0) {
+      (delta0 < 0) ? segments[j0].loss += delta0 : segments[j0].gain += delta0
     }
     if (pacing) {
       var len = 0
@@ -107,9 +89,11 @@ function calcSegments (points, breaks, pacing) {
       len = points[i].loc - points[i - 1].loc
       grade = (delta + delta0) / len / 10
       if (j > j0) {
-        segments[j0].time += pacing.gap * gapModel(grade) * (segments[j].start - points[i - 1].loc)
+        if (j0 >= 0) {
+          segments[j0].time += pacing.gap * gapModel(grade) * (segments[j].start - points[i - 1].loc)
+        }
         segments[j].time += pacing.gap * gapModel(grade) * (points[i].loc - segments[j].start)
-      } else {
+      } else if (j >= 0) {
         segments[j].time += pacing.gap * gapModel(grade) * len
       }
     }
