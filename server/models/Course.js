@@ -37,13 +37,11 @@ var CourseSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Plan'
   }],
+  points: [{}],
+  source: {},
   terrainIndex: {
     type: Number,
     default: 3
-  },
-  track: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Track'
   },
   gradeAdjustment: {
     type: Number
@@ -57,7 +55,6 @@ var CourseSchema = new Schema({
 })
 
 CourseSchema.pre('remove', function () {
-  Track.remove({ course: this._id }).exec()
   Plan.remove({_course: this._id}).exec()
   Waypoint.remove({_course: this._id}).exec()
 })
