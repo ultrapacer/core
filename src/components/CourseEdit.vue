@@ -17,16 +17,16 @@
             Visible to public
           </b-form-checkbox>
         </b-form-group>
-        <b-form-group v-if="!showTrackForms && model.track" label="Source">
-          {{ sources[course.track.source] }}: {{ course.track.name }} (<b-link @click="changeTrack">change</b-link>)
+        <b-form-group v-if="!showTrackForms && model.source" label="Source">
+          {{ sources[course.source.type] }}: {{ course.source.name }} (<b-link @click="changeTrack">change</b-link>)
         </b-form-group>
-        <div v-if="showTrackForms && model.track">
+        <div v-if="showTrackForms && model.source">
           <b-form-group label="Source">
-            <b-form-radio v-model="model.track.source" value="gpx">GPX file</b-form-radio>
-            <b-form-radio v-model="model.track.source" value="stravaRoute" disabled>Strava Route</b-form-radio>
-            <b-form-radio v-model="model.track.source" value="stravaActivity" disabled>Strava Activity</b-form-radio>
+            <b-form-radio v-model="model.source.type" value="gpx">GPX file</b-form-radio>
+            <b-form-radio v-model="model.soirce.type" value="stravaRoute" disabled>Strava Route</b-form-radio>
+            <b-form-radio v-model="model.source.type" value="stravaActivity" disabled>Strava Activity</b-form-radio>
           </b-form-group>
-          <b-form-group v-if="model.track.source==='gpx'">
+          <b-form-group v-if="model.source.type==='gpx'">
             <b-form-file
                 :state="Boolean(gpxFile)"
                 v-model="gpxFile"
@@ -37,10 +37,10 @@
                 required
               ></b-form-file>
           </b-form-group>
-          <b-form-group v-if="model.track.source==='stravaRoute'">
+          <b-form-group v-if="model.source.type==='stravaRoute'">
             <p class="lead">Strava integration coming soon...</p>
           </b-form-group>
-          <b-form-group v-if="model.track.source==='stravaActivity'">
+          <b-form-group v-if="model.source.type==='stravaActivity'">
             <p class="lead">Strava integration coming soon...</p>
           </b-form-group>
         </div>
@@ -75,7 +75,7 @@ export default {
   props: ['course'],
   data () {
     return {
-      defaults: { track: { source: 'gpx' } },
+      defaults: { source: { type: 'gpx' } },
       gpxFile: null,
       gpxPoints: [],
       model: {},
@@ -111,9 +111,9 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
-      if (this.model.track.source === 'gpx' && this.gpxPoints.length) {
-        this.model.track.points = this.gpxPoints
-        this.model.track.name = this.gpxFile.name
+      if (this.model.source.type === 'gpx' && this.gpxPoints.length) {
+        this.model.points = this.gpxPoints
+        this.model.source.name = this.gpxFile.name
       }
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
