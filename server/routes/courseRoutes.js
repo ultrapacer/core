@@ -4,7 +4,6 @@ var courseRoutes = express.Router()
 const utilities = require('../../shared/utilities')
 var Course = require('../models/Course')
 var User = require('../models/User')
-var Track = require('../models/Track')
 var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
 
@@ -12,14 +11,12 @@ var Waypoint = require('../models/Waypoint')
 courseRoutes.route('/').post(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    req.body.track = new Track(req.body.track)
     var course = new Course(req.body)
     course._user = user
-    var stats = utilities.calcStats(course.track.points)
+    var stats = utilities.calcStats(course.points)
     course.distance = stats.distance
     course.gain = stats.gain
     course.loss = stats.loss
-    await course.track.save()
     await course.save()
     res.status(200).json({'post': 'Course added successfully'})
   } catch (err) {
@@ -31,7 +28,7 @@ courseRoutes.route('/').post(async function (req, res) {
 // GET COURSES
 courseRoutes.route('/').get(async function (req, res) {
   var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-  var courses = await Course.find({ _user: user }).populate('track', '-points').sort('name').exec()
+  var courses = await Course.find({ _user: user }).select('-points').sort('name').exec()
   res.json(courses)
 })
 
@@ -146,9 +143,9 @@ async function validateWaypoints (course, waypoints) {
         type: 'start',
         location: 0,
         _course: course._id,
-        elevation: course.track.points[0].alt,
-        lat: course.track.points[0].lat,
-        lon: course.track.points[0].lon
+        elevation: course.points[0].alt,
+        lat: course.points[0].lat,
+        lon: course.points[0].lon
       })
       await ws.save()
       waypoints.unshift(ws)
@@ -159,9 +156,9 @@ async function validateWaypoints (course, waypoints) {
         type: 'finish',
         location: course.distance,
         _course: course._id,
-        elevation: course.track.points[course.track.points.length - 1].alt,
-        lat: course.track.points[course.track.points.length - 1].lat,
-        lon: course.track.points[course.track.points.length - 1].lon
+        elevation: course.points[course.points.length - 1].alt,
+        lat: course.points[course.points.length - 1].lat,
+        lon: course.points[course.points.length - 1].lon
       })
       await wf.save()
       waypoints.push(wf)
