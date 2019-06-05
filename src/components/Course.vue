@@ -290,8 +290,9 @@ export default {
     async newWaypoint () {
       this.waypoint = {}
     },
-    async refreshWaypoints () {
+    async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
+      if (typeof callback === 'function') callback()
     },
     async deleteWaypoint (waypoint, cb) {
       setTimeout(async () => {
@@ -375,7 +376,7 @@ export default {
         }
       }, 100)
     },
-    async refreshPlan (plan) {
+    async refreshPlan (plan, callback) {
       this.course.plans = await api.getPlans(this.course._id)
       for (var i = 0, il = this.course.plans.length; i < il; i++) {
         if (this.course.plans[i]._id === plan._id) {
@@ -383,6 +384,7 @@ export default {
         }
       }
       this.calcPlan()
+      if (typeof callback === 'function') callback()
     },
     calcPlan () {
       if (!this.course._plan) { return }
