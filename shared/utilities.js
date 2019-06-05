@@ -1,3 +1,4 @@
+/* eslint new-cap: 0 */
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
 const gapModel = require('./gapModel')
@@ -71,7 +72,7 @@ function calcSegments (points, breaks, pacing) {
   var j = 0
   var j0 = 0
   var delta0 = 0
-  for (var i = 1, il = points.length; i < il; i++) {
+  for (i = 1, il = points.length; i < il; i++) {
     if (i === il - 1) {
       j = segments.length - 1
     } else {
@@ -197,9 +198,9 @@ function getLatLonFromDistance (points, location) {
         if (points[i + 1].loc === points[i].loc) {
           lls.push([points[i].lat, points[i].lon])
         } else {
-          var P1 = new sgeo.latlon(points[i].lat, points[i].lon)
-          var P2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
-          var inp = P1.interpolate(P2, 3)
+          var p1 = new sgeo.latlon(points[i].lat, points[i].lon)
+          var p2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
+          var inp = p1.interpolate(p2, 3)
           lls.push([inp[1].lat, inp[1].lng])
         }
       }
@@ -220,16 +221,15 @@ function getLatLonAltFromDistance (points, location, start) {
   // if the start index is passed, make sure you go the right direction:
   var i0 = start || 0
   if (i0 > 0 && points[i0].loc > location) {
-    for (var i = i0; i >= 0; i--) {
-      if (points[i].loc <= location) {
-        i0 = i
+    for (var j = i0; j >= 0; j--) {
+      if (points[j].loc <= location) {
+        i0 = j
         break
       }
     }
   }
   var locs = []
   var llas = []
-  var num = 0
   if (Array.isArray(location)) {
     locs = [...location]
   } else {
@@ -255,9 +255,9 @@ function getLatLonAltFromDistance (points, location, start) {
             ind: i
           })
         } else {
-          var P1 = new sgeo.latlon(points[i].lat, points[i].lon)
-          var P2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
-          var inp = P1.interpolate(P2, 3)
+          var p1 = new sgeo.latlon(points[i].lat, points[i].lon)
+          var p2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
+          var inp = p1.interpolate(p2, 3)
           llas.push({
             lat: inp[1].lat,
             lon: inp[1].lng,

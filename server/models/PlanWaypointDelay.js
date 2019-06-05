@@ -2,8 +2,8 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 
 var PlanWaypointDelaySchema = new Schema({
-  _waypoint: {
-    mongoose.Schema.Types.ObjectId,
+  waypoint: {
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Waypoint'
   },
   delay: {
@@ -13,6 +13,7 @@ var PlanWaypointDelaySchema = new Schema({
   notes: {
     type: String
   }
+}, {
   collection: 'plan-waypoint-delays'
 })
 

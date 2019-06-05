@@ -1,6 +1,5 @@
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema
-const Track = require('./Track')
 const Waypoint = require('./Waypoint')
 const Plan = require('./Plan')
 

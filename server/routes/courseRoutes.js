@@ -7,7 +7,7 @@ var User = require('../models/User')
 var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
 
-function updateCourseStats(course){
+function updateCourseStats (course) {
   var stats = utilities.calcStats(course.points)
   course.distance = stats.distance
   course.gain = stats.gain
