@@ -96,8 +96,9 @@ export default {
     this.initializing = false
   },
   methods: {
-    async refreshCourses () {
+    async refreshCourses (callback) {
       this.courses = await api.getCourses()
+      (typeof callback === 'function') && callback()
     },
     async goToCourse (course) {
       this.$router.push({path: '/course/' + course._id})
