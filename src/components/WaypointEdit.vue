@@ -105,10 +105,11 @@ export default {
         this.model._course = this.course._id
         await api.createWaypoint(this.model)
       }
-      await this.$emit('refresh')
-      this.saving = false
-      this.clear()
-      this.$bvModal.hide('waypoint-edit-modal')
+      this.$emit('refresh', () => {
+        this.saving = false
+        this.clear()
+        this.$bvModal.hide('waypoint-edit-modal')
+      })
     },
     clear () {
       this.model = Object.assign({}, this.defaults)
