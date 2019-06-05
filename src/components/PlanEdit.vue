@@ -154,10 +154,11 @@ export default {
         this.model._course = this.course._id
         p = await api.createPlan(this.model)
       }
-      await this.$emit('refresh', p)
-      this.saving = false
-      this.clear()
-      this.$bvModal.hide('plan-edit-modal')
+      await this.$emit('refresh', p, () => {
+        this.saving = false
+        this.clear()
+        this.$bvModal.hide('plan-edit-modal')
+      }
     },
     clear () {
       this.model = Object.assign({}, this.defaults)
