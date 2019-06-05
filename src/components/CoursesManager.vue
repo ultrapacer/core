@@ -112,13 +112,13 @@ export default {
       setTimeout(async () => {
         if (confirm('Are you sure you want to delete this course?\n' + course.name)) {
           await api.deleteCourse(course._id)
-          var index = this.courses.indexOf(this.courses.find(x => x._id === course._id))
+          var index = this.courses.findIndex(x => x._id === course._id)
           if (index > -1) {
             this.courses.splice(index, 1)
           }
-          if (cb) cb()
+          cb()
         } else {
-          if (cb) cb(new Error('not deleted'))
+          cb(new Error('not deleted'))
         }
       }, 100)
     }
