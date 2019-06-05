@@ -123,10 +123,11 @@ export default {
       } else {
         await api.createCourse(this.model)
       }
-      await this.$emit('refresh')
-      this.saving = false
-      this.clear()
-      this.$bvModal.hide('course-edit-modal')
+      this.$emit('refresh', () => {
+        this.saving = false
+        this.clear()
+        this.$bvModal.hide('course-edit-modal')
+      })
     },
     clear () {
       this.showTrackForms = true
