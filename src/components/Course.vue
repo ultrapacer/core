@@ -301,13 +301,13 @@ export default {
             this.waypoint = {}
           }
           await api.deleteWaypoint(waypoint._id)
-          var index = this.course.waypoints.indexOf(this.course.waypoints.find(x => x._id === waypoint._id))
+          var index = this.course.waypoints.findIndex(x => x._id === waypoint._id)
           if (index > -1) {
             this.course.waypoints.splice(index, 1)
           }
-          if (cb) { cb() }
+          cb()
         } else {
-          if (cb) cb(new Error('not deleted'))
+          cb(new Error('not deleted'))
         }
       }, 100)
     },
