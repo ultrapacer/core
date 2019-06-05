@@ -106,13 +106,13 @@ export default {
       this.course = {}
     },
     async editCourse (course) {
-      this.course = course
+      this.course = Object.assign({}, course)
     },
     async deleteCourse (course, cb) {
       setTimeout(async () => {
         if (confirm('Are you sure you want to delete this course?\n' + course.name)) {
           await api.deleteCourse(course._id)
-          var index = this.courses.indexOf(course)
+          var index = this.courses.indexOf(this.courses.find(x => x._id === course._id))
           if (index > -1) {
             this.courses.splice(index, 1)
           }

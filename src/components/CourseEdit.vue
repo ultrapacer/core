@@ -23,7 +23,7 @@
         <div v-if="showTrackForms && model.source">
           <b-form-group label="Source">
             <b-form-radio v-model="model.source.type" value="gpx">GPX file</b-form-radio>
-            <b-form-radio v-model="model.soirce.type" value="stravaRoute" disabled>Strava Route</b-form-radio>
+            <b-form-radio v-model="model.source.type" value="stravaRoute" disabled>Strava Route</b-form-radio>
             <b-form-radio v-model="model.source.type" value="stravaActivity" disabled>Strava Activity</b-form-radio>
           </b-form-group>
           <b-form-group v-if="model.source.type==='gpx'">
@@ -93,6 +93,9 @@ export default {
     course: function (val) {
       if (val._id) {
         this.model = Object.assign({}, val)
+        if (this.model.points) {
+          delete this.model.points
+        }
         this.showTrackForms = false
       } else {
         this.model = Object.assign({}, this.defaults)

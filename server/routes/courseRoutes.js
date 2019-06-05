@@ -7,16 +7,20 @@ var User = require('../models/User')
 var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
 
+function updateCourseStats(course){
+  var stats = utilities.calcStats(course.points)
+  course.distance = stats.distance
+  course.gain = stats.gain
+  course.loss = stats.loss
+}
+
 // Defined store route
 courseRoutes.route('/').post(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = new Course(req.body)
     course._user = user
-    var stats = utilities.calcStats(course.points)
-    course.distance = stats.distance
-    course.gain = stats.gain
-    course.loss = stats.loss
+    updateCourseStats(course)
     await course.save()
     res.status(200).json({'post': 'Course added successfully'})
   } catch (err) {
@@ -41,6 +45,11 @@ courseRoutes.route('/:id').put(async function (req, res) {
       course.name = req.body.name
       course.description = req.body.description
       course.public = req.body.public
+      if (req.body.points) {
+        course.points = req.body.points
+        course.source = req.body.source
+        updateCourseStats(course)
+      }
       await course.save()
       res.json('Update complete')
     } else {
@@ -96,6 +105,7 @@ courseRoutes.route('/:course').get(async function (req, res) {
       res.status(403).send('No permission')
     }
   } catch (err) {
+    console.log(err)
     res.status(400).send(err)
   }
 })
