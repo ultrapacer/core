@@ -6,16 +6,28 @@
     </div>
     <b-row v-if="!initializing">
       <b-col>
-        <b-table :items="courses" :fields="fields" primary-key="_id" @row-clicked="goToCourse" hover>
-          <template slot="HEAD_distance">Distance [{{ user.distUnits }}]</template>
-          <template slot="HEAD_elevation">Elevation [{{ user.elevUnits }}]</template>
+        <b-table
+          :items="courses"
+          :fields="fields"
+          primary-key="_id"
+          @row-clicked="goToCourse"
+          hover
+          >
+          <template slot="HEAD_distance">
+            Distance [{{ user.distUnits }}]
+          </template>
+          <template slot="HEAD_elevation">
+            Elevation [{{ user.elevUnits }}]
+          </template>
           <template slot="HEAD_actions">&nbsp;</template>
           <template slot="actions" slot-scope="row">
             <b-button size="sm" @click="editCourse(row.item)" class="mr-1">
-              <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
+              <v-icon name="edit"></v-icon>
+              <span class="d-none d-md-inline">Edit</span>
             </b-button>
             <b-button size="sm" @click="deleteCourse(row.item)" class="mr-1">
-              <v-icon name="trash"></v-icon><span class="d-none d-md-inline">Delete</span>
+              <v-icon name="trash"></v-icon>
+              <span class="d-none d-md-inline">Delete</span>
             </b-button>
           </template>
         </b-table>
@@ -27,7 +39,11 @@
         </div>
       </b-col>
     </b-row>
-    <course-edit :course="course" @refresh="refreshCourses" @delete="deleteCourse"></course-edit>
+    <course-edit
+      :course="course"
+      @refresh="refreshCourses"
+      @delete="deleteCourse"
+      ></course-edit>
   </div>
 </template>
 
@@ -62,7 +78,8 @@ export default {
         {
           key: 'elevation',
           formatter: (value, key, item) => {
-            return '+' + (item.gain * this.altScale).toFixed(0) + '/' + (item.loss * this.altScale).toFixed(0)
+            return '+' + (item.gain * this.altScale).toFixed(0) + '/' +
+              (item.loss * this.altScale).toFixed(0)
           },
           thClass: 'd-none d-sm-table-cell',
           tdClass: 'd-none d-sm-table-cell'
@@ -96,8 +113,9 @@ export default {
     this.initializing = false
   },
   methods: {
-    async refreshCourses () {
+    async refreshCourses (callback) {
       this.courses = await api.getCourses()
+      if (typeof callback === 'function') callback()
     },
     async goToCourse (course) {
       this.$router.push({path: '/course/' + course._id})
@@ -106,19 +124,20 @@ export default {
       this.course = {}
     },
     async editCourse (course) {
-      this.course = course
+      this.course = Object.assign({}, course)
     },
     async deleteCourse (course, cb) {
       setTimeout(async () => {
-        if (confirm('Are you sure you want to delete this course?\n' + course.name)) {
+        if (confirm('Are you sure you want to delete this course?\n' +
+          course.name)) {
           await api.deleteCourse(course._id)
-          var index = this.courses.indexOf(course)
+          var index = this.courses.findIndex(x => x._id === course._id)
           if (index > -1) {
             this.courses.splice(index, 1)
           }
-          if (cb) cb()
+          (typeof (cb) === 'function') && cb()
         } else {
-          if (cb) cb(new Error('not deleted'))
+          (typeof (cb) === 'function') && cb(new Error('not deleted'))
         }
       }, 100)
     }

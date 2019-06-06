@@ -32,7 +32,7 @@
 import wputil from '../../shared/waypointUtilities'
 import api from '@/api'
 export default {
-  props: ['course', 'waypoints', 'units', 'owner', 'editFn', 'delFn', 'updFn', 'points'],
+  props: ['course', 'waypoints', 'units', 'owner', 'editFn', 'delFn', 'updFn'],
   data () {
     return {
       updatingWaypointTimeout: null,
@@ -104,11 +104,11 @@ export default {
       var loc = waypoint.location + delta / this.units.distScale
       if (loc < 0.01 / this.units.distScale) {
         loc = 0.01
-      } else if (loc >= this.points[this.points.length - 1].loc) {
-        loc = this.points[this.points.length - 1].loc - (0.01 / this.units.distScale)
+      } else if (loc >= this.course.points[this.course.points.length - 1].loc) {
+        loc = this.course.points[this.course.points.length - 1].loc - (0.01 / this.units.distScale)
       }
       waypoint.location = loc
-      wputil.updateLLA(waypoint, this.points)
+      wputil.updateLLA(waypoint, this.course.points)
       wputil.sortWaypointsByDistance(this.waypoints)
       if (String(waypoint._id) === this.updatingWaypointTimeoutID) {
         clearTimeout(this.updatingWaypointTimeout)

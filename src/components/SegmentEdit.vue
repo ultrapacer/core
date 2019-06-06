@@ -56,10 +56,11 @@ export default {
       if (this.saving) { return }
       this.saving = true
       await api.updateSegment(this.model._id, this.model)
-      await this.$emit('refresh')
-      this.saving = false
-      this.clear()
-      this.$bvModal.hide('segment-edit-modal')
+      await this.$emit('refresh', () => {
+        this.saving = false
+        this.clear()
+        this.$bvModal.hide('segment-edit-modal')
+      })
     },
     clear () {
       this.model = {}

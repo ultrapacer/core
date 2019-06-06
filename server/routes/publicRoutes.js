@@ -8,7 +8,7 @@ var Plan = require('../models/Plan')
 // GET COURSE
 publicRoutes.route('/course/:course').get(async function (req, res) {
   try {
-    var course = await Course.findById(req.params.course).populate(['_gpx', '_plan']).exec()
+    var course = await Course.find({ _id: req.params.course }).populate(['_plan']).exec()
     if (course.public) {
       course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
       course.plans = await Plan.find({ _course: course }).sort('name').exec()

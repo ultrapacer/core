@@ -39,7 +39,7 @@ mongoose.connect(dbconfig.DB).then(
 )
 
 app.use(cors())
-app.use(bodyParser.json())
+app.use(bodyParser.json({ limit: '50mb' }))
 
 // authenticated api routes:
 app.use('/api/user', checkJwt, userRoutes)

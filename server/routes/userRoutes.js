@@ -3,41 +3,36 @@ var express = require('express')
 var userRoutes = express.Router()
 var User = require('../models/User')
 
-// Defined get data(index or listing) route
-userRoutes.route('/').get(function (req, res) {
-  console.log(req.user.sub)
-  var query = { auth0ID: req.user.sub }
-  User.findOne(query).exec(function (err, user) {
-    if (err) {
-      console.log(err)
+// GET
+userRoutes.route('/').get(async function (req, res) {
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    if (user == null) {
+      console.log('CREATING NEW USER')
+      user = new User({auth0ID: req.user.sub})
+      await user.save()
+      res.json(user)
     } else {
-      console.log(user)
-      if (user == null) {
-        console.log('CREATING NEW USER')
-        user = new User({auth0ID: req.user.sub})
-        user.save(function (err, record) {
-          res.json(record)
-        })
-      } else {
-        res.json(user)
-      }
+      res.json(user)
     }
-  })
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
 })
 
-userRoutes.route('/:id').put(function (req, res) {
-  User.findById(req.params.id, function (err, user) {
-    if (!user) { return next(new Error('Could not load Document')) } else {
-      user.distUnits = req.body.distUnits
-      user.elevUnits = req.body.elevUnits
-      user.save().then(post => {
-        res.json('Update complete')
-      })
-        .catch(err => {
-          res.status(400).send('unable to update the database')
-        })
-    }
-  })
+// UPDATE
+userRoutes.route('/:id').put(async function (req, res) {
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    user.distUnits = req.body.distUnits
+    user.elevUnits = req.body.elevUnits
+    await user.save()
+    res.json('Update complete')
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
 })
 
 module.exports = userRoutes

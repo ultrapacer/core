@@ -1,3 +1,4 @@
+/* eslint new-cap: 0 */
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
 const gapModel = require('./gapModel')
@@ -59,24 +60,12 @@ function calcSegments (points, breaks, pacing) {
       time: 0
     })
   }
-  function getSegmentIndex (dist) {
-    for (var i = 0, il = segments.length; i < il; i++) {
-      if (dist > segments[i].start && dist <= segments[i].end) {
-        return i
-      }
-    }
-    return -1
-  }
   var delta = 0
   var j = 0
   var j0 = 0
   var delta0 = 0
   for (var i = 1, il = points.length; i < il; i++) {
-    if (i === il - 1) {
-      j = segments.length - 1
-    } else {
-      j = getSegmentIndex(points[i].loc)
-    }
+    j = segments.findIndex(s => s.start < points[i].loc && s.end >= points[i].loc)
     if (j > j0) {
       // interpolate
       delta0 = (points[i].alt - points[i - 1].alt) * (segments[j].start - points[i - 1].loc) / (points[i].loc - points[i - 1].loc)
@@ -85,17 +74,11 @@ function calcSegments (points, breaks, pacing) {
       delta = points[i].alt - points[i - 1].alt
       delta0 = 0
     }
-    if (delta < 0) {
-      segments[j].loss += delta
-    } else {
-      segments[j].gain += delta
+    if (j >= 0) {
+      (delta < 0) ? segments[j].loss += delta : segments[j].gain += delta
     }
-    if (delta0) {
-      if (delta0 < 0) {
-        segments[j0].loss += delta0
-      } else {
-        segments[j0].gain += delta0
-      }
+    if (j0 >= 0) {
+      (delta0 < 0) ? segments[j0].loss += delta0 : segments[j0].gain += delta0
     }
     if (pacing) {
       var len = 0
@@ -103,9 +86,11 @@ function calcSegments (points, breaks, pacing) {
       len = points[i].loc - points[i - 1].loc
       grade = (delta + delta0) / len / 10
       if (j > j0) {
-        segments[j0].time += pacing.gap * gapModel(grade) * (segments[j].start - points[i - 1].loc)
+        if (j0 >= 0) {
+          segments[j0].time += pacing.gap * gapModel(grade) * (segments[j].start - points[i - 1].loc)
+        }
         segments[j].time += pacing.gap * gapModel(grade) * (points[i].loc - segments[j].start)
-      } else {
+      } else if (j >= 0) {
         segments[j].time += pacing.gap * gapModel(grade) * len
       }
     }
@@ -197,9 +182,9 @@ function getLatLonFromDistance (points, location) {
         if (points[i + 1].loc === points[i].loc) {
           lls.push([points[i].lat, points[i].lon])
         } else {
-          var P1 = new sgeo.latlon(points[i].lat, points[i].lon)
-          var P2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
-          var inp = P1.interpolate(P2, 3)
+          var p1 = new sgeo.latlon(points[i].lat, points[i].lon)
+          var p2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
+          var inp = p1.interpolate(p2, 3)
           lls.push([inp[1].lat, inp[1].lng])
         }
       }
@@ -220,16 +205,15 @@ function getLatLonAltFromDistance (points, location, start) {
   // if the start index is passed, make sure you go the right direction:
   var i0 = start || 0
   if (i0 > 0 && points[i0].loc > location) {
-    for (var i = i0; i >= 0; i--) {
-      if (points[i].loc <= location) {
-        i0 = i
+    for (var j = i0; j >= 0; j--) {
+      if (points[j].loc <= location) {
+        i0 = j
         break
       }
     }
   }
   var locs = []
   var llas = []
-  var num = 0
   if (Array.isArray(location)) {
     locs = [...location]
   } else {
@@ -255,9 +239,9 @@ function getLatLonAltFromDistance (points, location, start) {
             ind: i
           })
         } else {
-          var P1 = new sgeo.latlon(points[i].lat, points[i].lon)
-          var P2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
-          var inp = P1.interpolate(P2, 3)
+          var p1 = new sgeo.latlon(points[i].lat, points[i].lon)
+          var p2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
+          var inp = p1.interpolate(p2, 3)
           llas.push({
             lat: inp[1].lat,
             lon: inp[1].lng,

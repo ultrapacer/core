@@ -11,20 +11,37 @@
     >
       <form ref="waypointform" @submit.prevent="">
         <b-form-group label="Name">
-          <b-form-input type="text" v-model="model.name" required></b-form-input>
+          <b-form-input type="text" v-model="model.name" required>
+          </b-form-input>
         </b-form-group>
-        <b-form-group v-bind:label="'Location [' + units.dist + ']'" v-show="model.type != 'start' && model.type != 'finish'">
-          <b-form-input type="number" step="0.01" v-model="model.locUserUnit" min="0.01" v-bind:max="locationMax" required></b-form-input>
+        <b-form-group
+          v-bind:label="'Location [' + units.dist + ']'"
+          v-if="model.type != 'start' && model.type != 'finish'">
+          <b-form-input
+            type="number"
+            step="0.01"
+            v-model="model.locUserUnit"
+            min="0.01"
+            v-bind:max="locationMax"
+            required>
+          </b-form-input>
         </b-form-group>
         <b-form-group label="Type">
-          <b-form-select type="text" v-model="model.type" :options="waypointTypes"></b-form-select>
+          <b-form-select
+            type="text"
+            v-model="model.type"
+            :options="waypointTypes">
+          </b-form-select>
         </b-form-group>
         <b-form-group label="Description">
-          <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
+          <b-form-textarea rows="4" v-model="model.description">
+          </b-form-textarea>
         </b-form-group>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
-        <div v-if="model._id && model.type !== 'start' && model.type !== 'finish'" style="text-align: left; flex: auto">
+        <div
+          v-if="model._id && model.type !== 'start' && model.type !== 'finish'"
+          style="text-align: left; flex: auto">
           <b-button size="sm" variant="danger" @click="remove">
             <b-spinner v-show="deleting" small></b-spinner>
             Delete
@@ -46,7 +63,7 @@
 import api from '@/api'
 import wputil from '../../shared/waypointUtilities'
 export default {
-  props: ['waypoint', 'course', 'points', 'units'],
+  props: ['waypoint', 'course', 'units'],
   data () {
     return {
       deleting: false,
@@ -65,14 +82,16 @@ export default {
         this.model = Object.assign({}, this.defaults)
       }
       if (this.model.location) {
-        this.model.locUserUnit = (this.model.location * this.units.distScale).toFixed(2)
+        this.model.locUserUnit =
+          (this.model.location * this.units.distScale).toFixed(2)
       }
       this.$bvModal.show('waypoint-edit-modal')
     }
   },
   computed: {
     locationMax: function () {
-      return Number((this.course.distance * this.units.distScale).toFixed(2)) - 0.01
+      return Number((this.course.distance * this.units.distScale).toFixed(2)) -
+        0.01
     },
     waypointTypes: function () {
       if (this.model.type === 'start') {
@@ -98,17 +117,18 @@ export default {
       if (this.saving) { return }
       this.saving = true
       this.model.location = this.model.locUserUnit / this.units.distScale
-      wputil.updateLLA(this.model, this.points)
+      wputil.updateLLA(this.model, this.course.points)
       if (this.model._id) {
         await api.updateWaypoint(this.model._id, this.model)
       } else {
         this.model._course = this.course._id
         await api.createWaypoint(this.model)
       }
-      await this.$emit('refresh')
-      this.saving = false
-      this.clear()
-      this.$bvModal.hide('waypoint-edit-modal')
+      this.$emit('refresh', () => {
+        this.saving = false
+        this.clear()
+        this.$bvModal.hide('waypoint-edit-modal')
+      })
     },
     clear () {
       this.model = Object.assign({}, this.defaults)
