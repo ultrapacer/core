@@ -245,7 +245,13 @@ function getLatLonAltFromDistance (points, location, start) {
           llas.push({
             lat: inp[1].lat,
             lon: inp[1].lng,
-            alt: points[i].alt + (location - points[i].loc) * (points[i + 1].alt - points[i].alt) / (points[i + 1].loc - points[i].loc),
+            alt: interp(
+              points[i].loc,
+              points[i + 1].loc,
+              points[i].alt,
+              points[i + 1].alt,
+              location
+            ),
             ind: i
           })
         }
@@ -263,8 +269,30 @@ function getLatLonAltFromDistance (points, location, start) {
   }
 }
 
+function resampleLLA (points) {
+  addLoc(points)
+  var l = points[points.length - 1].loc
+  var n = Math.floor(l/0.005) + 1
+  if (n < points.length) {
+    var locs = Array.from({length: n}, (v, k) => 0.005*k++)
+    var p = getLatLonAltFromDistance (points, locs)
+    p.forEach(function(v){
+      delete v.loc
+      delete v.ind
+    })
+    return p
+  } else {
+    points.forEach(function(v){ delete v.loc })
+    return points
+  }
+}
+
 function round (num, digits) {
   return Math.round(num * (10 ** digits)) / 10 ** digits
+}
+
+function interp (x0, x1, y0, y1, x) {
+  return y0 + (x - x0)/(x1 - x0) * (y1 - y0)
 }
 
 module.exports = {
@@ -275,5 +303,6 @@ module.exports = {
   calcSegments: calcSegments,
   getElevation: getElevation,
   getLatLonFromDistance: getLatLonFromDistance,
-  getLatLonAltFromDistance: getLatLonAltFromDistance
+  getLatLonAltFromDistance: getLatLonAltFromDistance,
+  resampleLLA: resampleLLA
 }
