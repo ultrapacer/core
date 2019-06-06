@@ -26,6 +26,6 @@ module.exports = {
     // allow debugger during development
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     // specify max line length
-    'max-len': ["warn", { "code": 80 }]
+    'max-len': ["error", { "code": 80 }]
   }
 }

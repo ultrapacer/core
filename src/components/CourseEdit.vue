@@ -10,21 +10,38 @@
     >
       <form ref="courseform" @submit.prevent="">
         <b-form-group label="Name">
-          <b-form-input type="text" v-model="model.name" required></b-form-input>
+          <b-form-input type="text" v-model="model.name" required>
+          </b-form-input>
         </b-form-group>
         <b-form-group label="Privacy">
-          <b-form-checkbox v-model="model.public" value="true" unchecked-value="false">
+          <b-form-checkbox
+            v-model="model.public"
+            value="true"
+            unchecked-value="false">
             Visible to public
           </b-form-checkbox>
         </b-form-group>
         <b-form-group v-if="!showTrackForms && model.source" label="Source">
-          {{ sources[course.source.type] }}: {{ course.source.name }} (<b-link @click="changeTrack">change</b-link>)
+          {{ sources[course.source.type] }}: {{ course.source.name }}
+          (<b-link @click="changeTrack">change</b-link>)
         </b-form-group>
         <div v-if="showTrackForms && model.source">
           <b-form-group label="Source">
-            <b-form-radio v-model="model.source.type" value="gpx">GPX file</b-form-radio>
-            <b-form-radio v-model="model.source.type" value="stravaRoute" disabled>Strava Route</b-form-radio>
-            <b-form-radio v-model="model.source.type" value="stravaActivity" disabled>Strava Activity</b-form-radio>
+            <b-form-radio v-model="model.source.type" value="gpx">
+              GPX file
+            </b-form-radio>
+            <b-form-radio
+              v-model="model.source.type"
+              value="stravaRoute"
+              disabled>
+              Strava Route
+            </b-form-radio>
+            <b-form-radio
+              v-model="model.source.type"
+              value="stravaActivity"
+              disabled>
+              Strava Activity
+            </b-form-radio>
           </b-form-group>
           <b-form-group v-if="model.source.type==='gpx'">
             <b-form-file
@@ -45,7 +62,8 @@
           </b-form-group>
         </div>
         <b-form-group label="Description">
-          <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
+          <b-form-textarea rows="4" v-model="model.description">
+          </b-form-textarea>
         </b-form-group>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">

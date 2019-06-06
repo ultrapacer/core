@@ -158,7 +158,7 @@ export default {
         this.saving = false
         this.clear()
         this.$bvModal.hide('plan-edit-modal')
-      }
+      })
     },
     clear () {
       this.model = Object.assign({}, this.defaults)
