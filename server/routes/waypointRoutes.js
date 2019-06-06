@@ -21,7 +21,7 @@ waypointRoutes.route('/').post(async function (req, res) {
 waypointRoutes.route('/:id').put(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var waypoint = await Waypoint.findById(req.params.id).populate('_course').exec()
+    var waypoint = await Waypoint.findById(req.params.id).populate('_course','_user').exec()
     if (waypoint._course._user.equals(user._id)) {
       waypoint.name = req.body.name
       waypoint.location = req.body.location
@@ -38,6 +38,7 @@ waypointRoutes.route('/:id').put(async function (req, res) {
       res.status(403).send('No permission')
     }
   } catch (err) {
+    console.log(err)
     res.status(400).send(err)
   }
 })
@@ -46,7 +47,7 @@ waypointRoutes.route('/:id').put(async function (req, res) {
 waypointRoutes.route('/:id/segment').put(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var waypoint = await Waypoint.findById(req.params.id).populate('_course').exec()
+    var waypoint = await Waypoint.findById(req.params.id).populate('_course','_user').exec()
     if (waypoint._course._user.equals(user._id)) {
       waypoint.terrainIndex = req.body.terrainIndex
       waypoint.segmentNotes = req.body.segmentNotes
@@ -65,7 +66,7 @@ waypointRoutes.route('/:id/segment').put(async function (req, res) {
 waypointRoutes.route('/:id').delete(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var waypoint = await Waypoint.findById(req.params.id).populate('_course').exec()
+    var waypoint = await Waypoint.findById(req.params.id).populate('_course','_user').exec()
     if (waypoint._course._user.equals(user._id)) {
       await waypoint.remove()
       res.json('Successfully removed')

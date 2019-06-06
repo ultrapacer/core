@@ -103,7 +103,7 @@ courseRoutes.route('/:course').get(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findOne({ _id: req.params.course }).populate(['track', '_plan']).exec()
     if (course._user.equals(user._id) || course.public) {
-      await validateWaypoints(course, course.waypoints)
+      await validateWaypoints(course.waypoints)
       res.json(course)
     } else {
       res.status(403).send('No permission')
@@ -118,10 +118,10 @@ courseRoutes.route('/:course').get(async function (req, res) {
 courseRoutes.route('/:course/waypoints').get(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.course).exec()
+    var course = await Course.findById(req.params.course).select('_user').exec()
     if (course._user.equals(user._id) || course.public) {
       var waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
-      await validateWaypoints(course, waypoints)
+      await validateWaypoints(waypoints)
       res.json(waypoints)
     } else {
       res.status(403).send('No permission')
@@ -136,7 +136,7 @@ courseRoutes.route('/:course/waypoints').get(async function (req, res) {
 courseRoutes.route('/:course/plans').get(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.course).exec()
+    var course = await Course.findById(req.params.course).select('_user').exec()
     if (course._user.equals(user._id) || course.public) {
       var plans = await Plan.find({ _course: course }).sort('name').exec()
       res.json(plans)
@@ -149,8 +149,9 @@ courseRoutes.route('/:course/plans').get(async function (req, res) {
   }
 })
 
-async function validateWaypoints (course, waypoints) {
+async function validateWaypoints (waypoints) {
   if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
+    var course = await Course.findOne({ _id: req.params.course }).exec()
     if (!waypoints.find(waypoint => waypoint.type === 'start')) {
       var ws = new Waypoint({
         name: 'Start',
