@@ -16,7 +16,7 @@
         </b-form-group>
         <b-form-group
           v-bind:label="'Location [' + units.dist + ']'"
-          v-show="model.type != 'start' && model.type != 'finish'">
+          v-if="model.type != 'start' && model.type != 'finish'">
           <b-form-input
             type="number"
             step="0.01"

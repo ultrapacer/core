@@ -135,9 +135,9 @@ export default {
           if (index > -1) {
             this.courses.splice(index, 1)
           }
-          (typeof(cb) === 'function') && cb()
+          (typeof (cb) === 'function') && cb()
         } else {
-          (typeof(cb) === 'function') && cb(new Error('not deleted'))
+          (typeof (cb) === 'function') && cb(new Error('not deleted'))
         }
       }, 100)
     }
