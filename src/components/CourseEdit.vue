@@ -170,9 +170,7 @@ export default {
           if (error) {
             throw error
           } else {
-            this.gpxPoints = util.resampleLLA(
-              util.cleanPoints(data.tracks[0].segments[0])
-            )
+            this.gpxPoints = util.cleanPoints(data.tracks[0].segments[0])
           }
         })
       }

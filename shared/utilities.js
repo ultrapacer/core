@@ -165,42 +165,6 @@ function getElevation (points, location) {
   }
 }
 
-function getLatLonFromDistance (points, location) {
-  var locs = []
-  var lls = []
-  if (Array.isArray(location)) {
-    locs = [...location]
-  } else {
-    locs = [location]
-  }
-  location = locs.shift()
-  for (var i = 0, il = points.length; i < il; i++) {
-    if (points[i].loc >= location || i === il - 1) {
-      if (points[i].loc === location || i === il - 1) {
-        lls.push([points[i].lat, points[i].lon])
-      } else {
-        if (points[i + 1].loc === points[i].loc) {
-          lls.push([points[i].lat, points[i].lon])
-        } else {
-          var p1 = new sgeo.latlon(points[i].lat, points[i].lon)
-          var p2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
-          var inp = p1.interpolate(p2, 3)
-          lls.push([inp[1].lat, inp[1].lng])
-        }
-      }
-      location = locs.shift()
-      if (location == null) {
-        break
-      }
-    }
-  }
-  if (lls.length > 1) {
-    return lls
-  } else {
-    return lls[0]
-  }
-}
-
 function getLatLonAltFromDistance (points, location, start) {
   // if the start index is passed, make sure you go the right direction:
   var i0 = start || 0
@@ -239,17 +203,20 @@ function getLatLonAltFromDistance (points, location, start) {
             ind: i
           })
         } else {
-          var p1 = new sgeo.latlon(points[i].lat, points[i].lon)
-          var p2 = new sgeo.latlon(points[i + 1].lat, points[i + 1].lon)
+          var p1 = new sgeo.latlon(points[i - 1].lat, points[i - 1].lon)
+          var p2 = new sgeo.latlon(points[i].lat, points[i].lon)
+          var dist = location - points[i - 1].loc
+          var brng = p1.bearingTo(p2)
+          var p3 = p1.destinationPoint(brng, dist)
           var inp = p1.interpolate(p2, 3)
           llas.push({
-            lat: inp[1].lat,
-            lon: inp[1].lng,
+            lat: p3.lat,
+            lat: p3.lon,
             alt: interp(
+              points[i - 1].loc,
               points[i].loc,
-              points[i + 1].loc,
+              points[i - 1].alt,
               points[i].alt,
-              points[i + 1].alt,
               location
             ),
             ind: i
@@ -270,12 +237,16 @@ function getLatLonAltFromDistance (points, location, start) {
 }
 
 function resampleLLA (points) {
+  // this routine isn't ready yet
   addLoc(points)
   var l = points[points.length - 1].loc
   var n = Math.floor(l/0.005) + 1
   if (n < points.length) {
     var locs = Array.from({length: n}, (v, k) => 0.005*k++)
-    var p = getLatLonAltFromDistance (points, locs)
+    var p = []
+    for (var i = 0, il = locs.length; i < il; i++) {
+      p.push(getLatLonAltFromDistance (points, locs[i]))
+    }
     p.forEach(function(v){
       delete v.loc
       delete v.ind
@@ -302,7 +273,6 @@ module.exports = {
   cleanPoints: cleanPoints,
   calcSegments: calcSegments,
   getElevation: getElevation,
-  getLatLonFromDistance: getLatLonFromDistance,
   getLatLonAltFromDistance: getLatLonAltFromDistance,
   resampleLLA: resampleLLA
 }
