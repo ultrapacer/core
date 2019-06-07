@@ -279,8 +279,8 @@ function getElevation (points, location) {
 
 function getLatLonAltFromDistance (points, location, start) {
   // if the start index is passed, make sure you go the right direction:
-  var i0 = start || 0
-  if (i0 > 0 && points[i0].loc > location) {
+  var i0 = Math.min(start, points.length - 1) || 0
+  if (i0 > 0 && (points[i0].loc > location)) {
     for (var j = i0; j >= 0; j--) {
       if (points[j].loc <= location) {
         i0 = j
@@ -320,10 +320,9 @@ function getLatLonAltFromDistance (points, location, start) {
           var dist = location - points[i - 1].loc
           var brng = p1.bearingTo(p2)
           var p3 = p1.destinationPoint(brng, dist)
-          var inp = p1.interpolate(p2, 3)
           llas.push({
-            lat: p3.lat,
-            lat: p3.lon,
+            lat: Number(p3.lat),
+            lon: Number(p3.lng),
             alt: interp(
               points[i - 1].loc,
               points[i].loc,

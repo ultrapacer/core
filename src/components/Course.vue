@@ -312,9 +312,9 @@ export default {
           if (index > -1) {
             this.course.waypoints.splice(index, 1)
           }
-          cb()
+          if (typeof cb === 'function') cb()
         } else {
-          cb(new Error('not deleted'))
+          if (typeof cb === 'function') cb(new Error('not deleted'))
         }
       }, 100)
     },
