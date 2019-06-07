@@ -125,17 +125,121 @@ function addLoc (p) {
     d += (gpxParse.utils.calculateDistance(p[i - 1].lat, p[i - 1].lon, p[i].lat, p[i].lon))
     p[i].loc = d
   }
-  var pc = []
   for (i = 0, il < p.length; i < il; i++) {
-    p.filter(x => x.loc >= p[i].loc - 0.1 && x.loc <= p[i].loc + 0.1).forEach((x) => {
-     
+    var a2s = 0
+    var w = 0
+    var p2 = p.filter(x => x.loc >= p[i].loc - 0.1 && x.loc <= p[i].loc + 0.100)
+    var xyr = []
+    p2.forEach((x) => {
+      w = (1 - ((Math.abs(p[i].loc - x.loc) / 0.100) ** 3)) ** 3
+      xyr.push([x.loc,x.alt,w])
     })
+    if (i % 1000 === 0) {
+      console.log(i)
+      console.log(xyr)
+    }
+    var ab = linear_regression(xyr)
+    p[i].grade = round(ab[0] / 10, 2)
+    if (p[i].grade > 50) { p[i].grade = 50 }
+    else if (p[i].grade < -50) { p[i].grade = -50 }
   }
-  
-    p[i - 1].grade = round((p[i].alt - p[i - 1].alt) / (p[i].loc - p[i - 1].loc) / 10, 2)
-  
-  p[p.length - 1].grade = 0
   return p
+}
+
+function wls(values_x, values_y, weights) {
+    var sum_x = 0;
+    var sum_y = 0;
+    var sum_xy = 0;
+    var sum_xx = 0;
+    var count = 0;
+
+    /*
+     * We'll use those variables for faster read/write access.
+     */
+    var x = 0;
+    var y = 0;
+    var values_length = values_x.length;
+
+    if (values_length != values_y.length) {
+        throw new Error('The parameters values_x and values_y need to have same size!');
+    }
+
+    /*
+     * Nothing to do.
+     */
+    if (values_length === 0) {
+        return [ [], [] ];
+    }
+
+    /*
+     * Calculate the sum for each of the parts necessary.
+     */
+    for (var v = 0; v < values_length; v++) {
+        x = values_x[v];
+        y = values_y[v];
+        sum_x += x;
+        sum_y += y;
+        sum_xx += x*x;
+        sum_xy += x*y;
+        count++;
+    }
+
+    /*
+     * Calculate m and b for the formular:
+     * y = x * m + b
+     */
+    var m = (count*sum_xy - sum_x*sum_y) / (count*sum_xx - sum_x*sum_x);
+    var b = (sum_y/count) - (m*sum_x)/count;
+
+    /*
+     * We will make the x and y result line now
+     */
+    var result_values_x = [];
+    var result_values_y = [];
+
+    for (var v = 0; v < values_length; v++) {
+        x = values_x[v];
+        y = x * m + b;
+        result_values_x.push(x);
+        result_values_y.push(y);
+    }
+
+    return { xs: result_values_x, ys: result_values_y}
+}
+
+function linear_regression( xyr )
+{
+    var i, 
+        x, y, r,
+        sumx=0, sumy=0, sumx2=0, sumy2=0, sumxy=0, sumr=0,
+        a, b;
+
+    for(i=0;i<xyr.length;i++)
+    {   
+        // this is our data pair
+        x = xyr[i][0]; y = xyr[i][1]; 
+
+        // this is the weight for that pair
+        // set to 1 (and simplify code accordingly, ie, sumr becomes xy.length) if weighting is not needed
+        r = xyr[i][2];  
+
+        // consider checking for NaN in the x, y and r variables here 
+        // (add a continue statement in that case)
+
+        sumr += r;
+        sumx += r*x;
+        sumx2 += r*(x*x);
+        sumy += r*y;
+        sumy2 += r*(y*y);
+        sumxy += r*(x*y);
+    }
+
+    // note: the denominator is the variance of the random variable X
+    // the only case when it is 0 is the degenerate case X==constant
+    b = (sumy*sumx2 - sumx*sumxy)/(sumr*sumx2-sumx*sumx);
+    a = (sumr*sumxy - sumx*sumy)/(sumr*sumx2-sumx*sumx);
+
+    return [a, b];
 }
 
 function getElevation (points, location) {

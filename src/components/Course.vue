@@ -126,6 +126,7 @@ export default {
         grey: 'rgb(201, 203, 207)'
       },
       chartProfile: [],
+      chartGrade: [],
       chartOptions: {
         scales: {
           xAxes: [{
@@ -217,6 +218,11 @@ export default {
             pointRadius: 0,
             pointHoverRadius: 0,
             backgroundColor: this.transparentize(this.chartColors.blue)
+          },
+          { data: this.chartGrade,
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            showLine: true
           }
         ]
       }
@@ -343,6 +349,14 @@ export default {
       }
       this.chartOptions.scales.xAxes[0].ticks.max = (xs[xs.length - 1] * this.units.distScale) + 0.01
       this.chartProfile = data
+      var data2 = []
+      for (var j = 1, jl = this.course.points.length; j < jl; j++) {
+        data2.push({
+          x: this.course.points[j].loc * this.units.distScale,
+          y: this.course.points[j].grade * 100
+        })
+      }
+      this.chartGrade = data2
     },
     transparentize: function (color, opacity) {
       var alpha = opacity === undefined ? 0.5 : 1 - opacity
