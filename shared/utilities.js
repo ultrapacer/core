@@ -68,7 +68,13 @@ function calcSegments (points, breaks, pacing) {
     j = segments.findIndex(s => s.start < points[i].loc && s.end >= points[i].loc)
     if (j > j0) {
       // interpolate
-      delta0 = (points[i].alt - points[i - 1].alt) * (segments[j].start - points[i - 1].loc) / (points[i].loc - points[i - 1].loc)
+      delta0 = interp(
+        points[i - 1].loc,
+        points[i].loc,
+        points[i - 1].alt,
+        points[i].alt,
+        segments[j].start
+      ) - points[i].alt
       delta = points[i].alt - points[i - 1].alt - delta0
     } else {
       delta = points[i].alt - points[i - 1].alt
@@ -84,7 +90,11 @@ function calcSegments (points, breaks, pacing) {
       var len = 0
       var grade = 0
       len = points[i].loc - points[i - 1].loc
-      grade = (delta + delta0) / len / 10
+      if (i === 0 || i === points.length - 1) {
+        grade = points[i].grade
+      } else {
+        grade = (points[i - 1].grade + points[i].grade) / 2
+      }
       if (j > j0) {
         if (j0 >= 0) {
           segments[j0].time += pacing.gap * gapModel(grade) * (segments[j].start - points[i - 1].loc)
@@ -130,6 +140,8 @@ function addLoc (p) {
     var w = 0
     var p2 = p.filter(x => x.loc >= p[i].loc - 0.1 && x.loc <= p[i].loc + 0.100)
     var xyr = []
+    // need to update this to make sure at least one other point is selected 
+    // ahead and behind
     p2.forEach((x) => {
       w = (1 - ((Math.abs(p[i].loc - x.loc) / 0.100) ** 3)) ** 3
       xyr.push([x.loc,x.alt,w])

@@ -281,12 +281,10 @@ export default {
     this.updateChartProfile()
     // calc grade adjustment:
     var tot = 0
-    var grade = 0
     var len = 0
     for (var j = 1, jl = this.course.points.length; j < jl; j++) {
       len = this.course.points[j].loc - this.course.points[j - 1].loc
-      grade = (this.course.points[j].alt - this.course.points[j - 1].alt) / len / 10
-      tot += gapModel(grade) * len
+      tot += gapModel(this.course.points[j].grade) * len
     }
     this.gradeAdjustment = tot / this.course.points[this.course.points.length - 1].loc
     this.updatePacing()
