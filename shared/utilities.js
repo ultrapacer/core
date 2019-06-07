@@ -118,16 +118,24 @@ function cleanPoints (points) {
   return points2
 }
 
-function addLoc (points) {
+function addLoc (p) {
   var d = 0
-  points[0].loc = 0
-  for (var i = 1, il = points.length; i < il; i++) {
-    d += (gpxParse.utils.calculateDistance(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon))
-    points[i].loc = d
-    points[i - 1].grade = round((points[i].alt - points[i - 1].alt) / (points[i].loc - points[i - 1].loc) / 10, 2)
+  p[0].loc = 0
+  for (var i = 1, il = p.length; i < il; i++) {
+    d += (gpxParse.utils.calculateDistance(p[i - 1].lat, p[i - 1].lon, p[i].lat, p[i].lon))
+    p[i].loc = d
   }
-  points[points.length - 1].grade = 0
-  return points
+  var pc = []
+  for (i = 0, il < p.length; i < il; i++) {
+    p.filter(x => x.loc >= p[i].loc - 0.1 && x.loc <= p[i].loc + 0.1).forEach((x) => {
+     
+    })
+  }
+  
+    p[i - 1].grade = round((p[i].alt - p[i - 1].alt) / (p[i].loc - p[i - 1].loc) / 10, 2)
+  
+  p[p.length - 1].grade = 0
+  return p
 }
 
 function getElevation (points, location) {
@@ -236,8 +244,17 @@ function getLatLonAltFromDistance (points, location, start) {
   }
 }
 
-function resampleLLA (points) {
+function resampleLLA (lla) {
   // this routine isn't ready yet
+  var th = 0.010 // threshold, meters
+  var lla2 = []
+  var l0 = 0
+  var l = 0
+  for (var i = 1, il = lla.length; i < il; i++) {
+    var p1 = new sgeo.latlon(points[i - 1].lat, points[i - 1].lon)
+    var p2 = new sgeo.latlon(points[i].lat, points[i].lon)
+    l += Number(p1.distanceTo(p2))
+  }
   addLoc(points)
   var l = points[points.length - 1].loc
   var n = Math.floor(l/0.005) + 1
