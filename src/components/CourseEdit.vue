@@ -171,6 +171,7 @@ export default {
             throw error
           } else {
             this.gpxPoints = util.cleanPoints(data.tracks[0].segments[0])
+            util.addLoc(this.gpxPoints)
           }
         })
       }
