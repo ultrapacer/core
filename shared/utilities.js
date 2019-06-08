@@ -145,17 +145,34 @@ function addLoc (p) {
     var w = 0
     var gxyr = []
     var axyr = []
-    // need to update this to make sure at least one other point is selected
-    // ahead and behind
     while (Math.abs(p[a].loc - x.loc) > Math.max(at, gt)) { a++ }
     while (b < p.length - 1 && Math.abs(p[b].loc - x.loc) < Math.max(at, gt)) { b++ }
+    
+    // make sure we include at least 2 points for least squares fit:
+    if (a === i && i > 0) { a-- }
+    if (b === i && i < p.length - 1) { b++ }
+    
+    // if necessary, increase threshold to include one point on either side:
+    var ilo = i > 0 ? i - 1 : 0
+    var ihi = i < p.length - 1 ? i + 1 : p.length - 1
+    var igt = Math.max(
+      gt,
+      Math.abs(x.loc - p[ilo].loc) + .001,
+      Math.abs(x.loc - p[ihi].loc) + .001
+    )
+    var iat = Math.max(
+      at,
+      Math.abs(x.loc - p[ilo].loc) + .001,
+      Math.abs(x.loc - p[ihi].loc) + .001
+    )
+
     for (var i = a; i <= b; i++) {
-      if (Math.abs(x.loc - p[i].loc) <= gt) {
-        w = (1 - ((Math.abs(x.loc - p[i].loc) / gt) ** 3)) ** 3
+      if (Math.abs(x.loc - p[i].loc) <= igt) {
+        w = (1 - ((Math.abs(x.loc - p[i].loc) / igt) ** 3)) ** 3
         gxyr.push([p[i].loc, p[i].alt0, w])
       }
-      if (Math.abs(x.loc - p[i].loc) <= at) {
-        w = (1 - ((Math.abs(x.loc - p[i].loc) / at) ** 3)) ** 3
+      if (Math.abs(x.loc - p[i].loc) <= iat) {
+        w = (1 - ((Math.abs(x.loc - p[i].loc) / iat) ** 3)) ** 3
         axyr.push([p[i].loc, p[i].alt0, w])
       }
     }
