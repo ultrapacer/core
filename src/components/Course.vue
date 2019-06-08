@@ -126,6 +126,7 @@ export default {
         grey: 'rgb(201, 203, 207)'
       },
       chartProfile: [],
+      chartGrade: [],
       chartOptions: {
         scales: {
           xAxes: [{
@@ -141,6 +142,16 @@ export default {
                 }
               }
             }
+          }],
+          yAxes: [{
+            display: true,
+            position: 'left',
+            id: 'y-axis-1'
+          }, {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            id: 'y-axis-2'
           }]
         },
         tooltips: {
@@ -216,7 +227,14 @@ export default {
           { data: this.chartProfile,
             pointRadius: 0,
             pointHoverRadius: 0,
-            backgroundColor: this.transparentize(this.chartColors.blue)
+            backgroundColor: this.transparentize(this.chartColors.blue),
+            yAxisID: 'y-axis-1'
+          },
+          { data: this.chartGrade,
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            showLine: true,
+            yAxisID: 'y-axis-2'
           }
         ]
       }
@@ -270,17 +288,17 @@ export default {
       return
     }
     this.$title = this.course.name
-    this.course.points = utilities.addLoc(this.course.points)
+    if (!this.course.points[0].hasOwnProperty('loc')) {
+      this.course.points = utilities.addLoc(this.course.points)
+    }
     this.updateMapLatLon()
     this.updateChartProfile()
     // calc grade adjustment:
     var tot = 0
-    var grade = 0
     var len = 0
     for (var j = 1, jl = this.course.points.length; j < jl; j++) {
       len = this.course.points[j].loc - this.course.points[j - 1].loc
-      grade = (this.course.points[j].alt - this.course.points[j - 1].alt) / len / 10
-      tot += gapModel(grade) * len
+      tot += gapModel(this.course.points[j].grade) * len
     }
     this.gradeAdjustment = tot / this.course.points[this.course.points.length - 1].loc
     this.updatePacing()
@@ -319,30 +337,41 @@ export default {
       this.segment = waypoint
     },
     updateChartProfile: function () {
+      var plimit = 500
       var data = []
-      if (this.course.points.length < 400) {
+      var data2 = []
+      if (this.course.points.length < plimit) {
         for (var i = 0, il = this.course.points.length; i < il; i++) {
           data.push({
             x: this.course.points[i].loc * this.units.distScale,
             y: this.course.points[i].alt * this.units.altScale
           })
+          data2.push({
+            x: this.course.points[i].loc * this.units.distScale,
+            y: this.course.points[i].grade
+          })
         }
       } else {
         var max = this.course.points[this.course.points.length - 1].loc
         var xs = []
-        for (var j = 0; j <= 400; j++) {
-          xs.push((j / 400) * max)
+        for (var j = 0; j <= plimit; j++) {
+          xs.push((j / plimit) * max)
         }
-        var ys = utilities.getElevation(this.course.points, xs)
+        var ys = utilities.getLatLonAltFromDistance(this.course.points, xs)
         for (i = 0, il = xs.length; i < il; i++) {
           data.push({
             x: xs[i] * this.units.distScale,
-            y: ys[i] * this.units.altScale
+            y: ys[i].alt * this.units.altScale
+          })
+          data2.push({
+            x: xs[i] * this.units.distScale,
+            y: ys[i].grade
           })
         }
       }
       this.chartOptions.scales.xAxes[0].ticks.max = (xs[xs.length - 1] * this.units.distScale) + 0.01
       this.chartProfile = data
+      this.chartGrade = data2
     },
     transparentize: function (color, opacity) {
       var alpha = opacity === undefined ? 0.5 : 1 - opacity

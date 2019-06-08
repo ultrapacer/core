@@ -68,7 +68,13 @@ function calcSegments (points, breaks, pacing) {
     j = segments.findIndex(s => s.start < points[i].loc && s.end >= points[i].loc)
     if (j > j0) {
       // interpolate
-      delta0 = (points[i].alt - points[i - 1].alt) * (segments[j].start - points[i - 1].loc) / (points[i].loc - points[i - 1].loc)
+      delta0 = interp(
+        points[i - 1].loc,
+        points[i].loc,
+        points[i - 1].alt,
+        points[i].alt,
+        segments[j].start
+      ) - points[i].alt
       delta = points[i].alt - points[i - 1].alt - delta0
     } else {
       delta = points[i].alt - points[i - 1].alt
@@ -84,7 +90,11 @@ function calcSegments (points, breaks, pacing) {
       var len = 0
       var grade = 0
       len = points[i].loc - points[i - 1].loc
-      grade = (delta + delta0) / len / 10
+      if (i === 0 || i === points.length - 1) {
+        grade = points[i].grade
+      } else {
+        grade = (points[i - 1].grade + points[i].grade) / 2
+      }
       if (j > j0) {
         if (j0 >= 0) {
           segments[j0].time += pacing.gap * gapModel(grade) * (segments[j].start - points[i - 1].loc)
@@ -118,16 +128,77 @@ function cleanPoints (points) {
   return points2
 }
 
-function addLoc (points) {
+function addLoc (p) {
+  var gt = 0.075 // grade smoothing threshold
+  var at = 0.050 // altitude smoothing threshold
   var d = 0
-  points[0].loc = 0
-  for (var i = 1, il = points.length; i < il; i++) {
-    d += (gpxParse.utils.calculateDistance(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon))
-    points[i].loc = d
-    points[i - 1].grade = round((points[i].alt - points[i - 1].alt) / (points[i].loc - points[i - 1].loc) / 10, 2)
+  p[0].loc = 0
+  for (var i = 1, il = p.length; i < il; i++) {
+    d += (gpxParse.utils.calculateDistance(p[i - 1].lat, p[i - 1].lon, p[i].lat, p[i].lon))
+    p[i].loc = d
   }
-  points[points.length - 1].grade = 0
-  return points
+  p.forEach(x => { x.alt0 = x.alt })
+  var a = 0
+  var b = 0
+  p.forEach((x, i) => {
+    var a2s = 0
+    var w = 0
+    var gxyr = []
+    var axyr = []
+    // need to update this to make sure at least one other point is selected
+    // ahead and behind
+    while (Math.abs(p[a].loc - x.loc) > Math.max(at, gt)) { a++ }
+    while (b < p.length - 1 && Math.abs(p[b].loc - x.loc) < Math.max(at, gt)) { b++ }
+    for (var i = a; i <= b; i++) {
+      if (Math.abs(x.loc - p[i].loc) <= gt) {
+        w = (1 - ((Math.abs(x.loc - p[i].loc) / gt) ** 3)) ** 3
+        gxyr.push([p[i].loc, p[i].alt0, w])
+      }
+      if (Math.abs(x.loc - p[i].loc) <= at) {
+        w = (1 - ((Math.abs(x.loc - p[i].loc) / at) ** 3)) ** 3
+        axyr.push([p[i].loc, p[i].alt0, w])
+      }
+    }
+    var gab = linear_regression(gxyr)
+    var aab = linear_regression(axyr)
+    x.grade = round(gab[0] / 10, 2)
+    if (x.grade > 50) { x.grade = 50 } else if (x.grade < -50) { x.grade = -50 }
+    x.alt = round((x.loc * aab[0]) + aab[1], 2)
+  })
+  return p
+}
+
+function linear_regression (xyr) {
+  var i,
+    x, y, r,
+    sumx = 0, sumy = 0, sumx2 = 0, sumy2 = 0, sumxy = 0, sumr = 0,
+    a, b
+
+  for (i = 0; i < xyr.length; i++) {
+    // this is our data pair
+    x = xyr[i][0]; y = xyr[i][1]
+
+    // this is the weight for that pair
+    // set to 1 (and simplify code accordingly, ie, sumr becomes xy.length) if weighting is not needed
+    r = xyr[i][2]
+
+    // consider checking for NaN in the x, y and r variables here
+    // (add a continue statement in that case)
+
+    sumr += r
+    sumx += r * x
+    sumx2 += r * (x * x)
+    sumy += r * y
+    sumy2 += r * (y * y)
+    sumxy += r * (x * y)
+  }
+
+  // note: the denominator is the variance of the random variable X
+  // the only case when it is 0 is the degenerate case X==constant
+  b = (sumy * sumx2 - sumx * sumxy) / (sumr * sumx2 - sumx * sumx)
+  a = (sumr * sumxy - sumx * sumy) / (sumr * sumx2 - sumx * sumx)
+
+  return [a, b]
 }
 
 function getElevation (points, location) {
@@ -192,6 +263,7 @@ function getLatLonAltFromDistance (points, location, start) {
           lat: points[i].lat,
           lon: points[i].lon,
           alt: points[i].alt,
+          grade: points[i].grade,
           ind: i
         })
       } else {
@@ -200,6 +272,7 @@ function getLatLonAltFromDistance (points, location, start) {
             lat: points[i].lat,
             lon: points[i].lon,
             alt: (points[i + 1].alt + points[i].alt) / 2,
+            grade: (points[i + 1].grade + points[i].grade) / 2,
             ind: i
           })
         } else {
@@ -216,6 +289,13 @@ function getLatLonAltFromDistance (points, location, start) {
               points[i].loc,
               points[i - 1].alt,
               points[i].alt,
+              location
+            ),
+            grade: interp(
+              points[i - 1].loc,
+              points[i].loc,
+              points[i - 1].grade,
+              points[i].grade,
               location
             ),
             ind: i
@@ -235,34 +315,12 @@ function getLatLonAltFromDistance (points, location, start) {
   }
 }
 
-function resampleLLA (points) {
-  // this routine isn't ready yet
-  addLoc(points)
-  var l = points[points.length - 1].loc
-  var n = Math.floor(l/0.005) + 1
-  if (n < points.length) {
-    var locs = Array.from({length: n}, (v, k) => 0.005*k++)
-    var p = []
-    for (var i = 0, il = locs.length; i < il; i++) {
-      p.push(getLatLonAltFromDistance (points, locs[i]))
-    }
-    p.forEach(function(v){
-      delete v.loc
-      delete v.ind
-    })
-    return p
-  } else {
-    points.forEach(function(v){ delete v.loc })
-    return points
-  }
-}
-
 function round (num, digits) {
   return Math.round(num * (10 ** digits)) / 10 ** digits
 }
 
 function interp (x0, x1, y0, y1, x) {
-  return y0 + (x - x0)/(x1 - x0) * (y1 - y0)
+  return y0 + (x - x0) / (x1 - x0) * (y1 - y0)
 }
 
 module.exports = {
@@ -272,6 +330,5 @@ module.exports = {
   cleanPoints: cleanPoints,
   calcSegments: calcSegments,
   getElevation: getElevation,
-  getLatLonAltFromDistance: getLatLonAltFromDistance,
-  resampleLLA: resampleLLA
+  getLatLonAltFromDistance: getLatLonAltFromDistance
 }
