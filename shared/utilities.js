@@ -132,51 +132,64 @@ function addLoc (p) {
   var gt = 0.075 // grade smoothing threshold
   var at = 0.050 // altitude smoothing threshold
   var d = 0
-  var t0 = 0, t1=0, t2=0,t3=0,st01=0,st12=0, st23=0
+  var t0 = 0, t1=0, t2=0,t3=0,st01=0,st12=0, st23=0, st03=0
   p[0].loc = 0
   for (var i = 1, il = p.length; i < il; i++) {
     d += (gpxParse.utils.calculateDistance(p[i - 1].lat, p[i - 1].lon, p[i].lat, p[i].lon))
     p[i].loc = d
   }
   p.forEach(x=>{x.alt0 = x.alt})
-  for (i = 0, il < p.length; i < il; i++) {
+  var a = 0, b = 0
+  p.forEach((x, i) => {
     var a2s = 0
     var w = 0
     t0 = performance.now()
-    var p2 = p.filter(x => x.loc >= p[i].loc - gt && x.loc <= p[i].loc + gt)
+    //var p2 = p.filter(y => Math.abs(x.loc - y.loc) <= gt)
     t1 = performance.now()
     var gxyr = []
     var axyr = []
     // need to update this to make sure at least one other point is selected 
     // ahead and behind
-    p2.forEach((x) => {
-      w = (1 - ((Math.abs(p[i].loc - x.loc) / gt) ** 3)) ** 3
-      gxyr.push([x.loc, x.alt0, w])
-      if (Math.abs(p[i].loc - x.loc) <= at) {
-        w = (1 - ((Math.abs(p[i].loc - x.loc) / at) ** 3)) ** 3
-        axyr.push([x.loc, x.alt0, w])
+    while (Math.abs( p[a].loc - x.loc) > Math.max(at, gt)) { a++ }
+    while (b < p.length - 1 && Math.abs(p[b].loc - x.loc) < Math.max(at, gt)) { b++ }
+    for (var i = a; i <= b; i++) {
+      if (Math.abs(x.loc - p[i].loc) <= gt) {
+        w = (1 - ((Math.abs(x.loc - p[i].loc) / gt) ** 3)) ** 3
+        gxyr.push([p[i].loc, p[i].alt0, w])
       }
-    })
+      if (Math.abs(x.loc - p[i].loc) <= at) {
+        w = (1 - ((Math.abs(x.loc - p[i].loc) / at) ** 3)) ** 3
+        axyr.push([p[i].loc, p[i].alt0, w])
+      }
+    }
+   /*  p2.forEach((y) => {
+      w = (1 - ((Math.abs(x.loc - y.loc) / gt) ** 3)) ** 3
+      gxyr.push([y.loc, y.alt0, w])
+      if (Math.abs(x.loc - y.loc) <= at) {
+        w = (1 - ((Math.abs(x.loc - y.loc) / at) ** 3)) ** 3
+        axyr.push([y.loc, y.alt0, w])
+      }
+    }) */
     t2 = performance.now()
     var gab = linear_regression(gxyr)
     var aab = linear_regression(axyr)
     t3 = performance.now()
-    p[i].grade = round(gab[0] / 10, 2)
-    if (p[i].grade > 50) { p[i].grade = 50 }
-    else if (p[i].grade < -50) { p[i].grade = -50 }
-    p[i].alt = round((p[i].loc * aab[0]) + aab[1], 2)
+    x.grade = round(gab[0] / 10, 2)
+    if (x.grade > 50) { x.grade = 50 }
+    else if (x.grade < -50) { x.grade = -50 }
+    x.alt = round((x.loc * aab[0]) + aab[1], 2)
     st01 += t1 - t0
     st12 += t2 - t1
     st23 += t3 - t2
-  }
+    st03 += t3 - t0
+  })
   console.log(p)
   console.log('st01 ' + st01)
   console.log('st12 ' + st12)
   console.log('st23 ' + st23)
+  console.log('st03 ' + st03)
   return p
 }
-
-
 
 function linear_regression( xyr )
 {
