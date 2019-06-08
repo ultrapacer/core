@@ -129,6 +129,8 @@ function cleanPoints (points) {
 }
 
 function addLoc (p) {
+  var gt = 0.075 // grade smoothing threshold
+  var at = 0.050 // altitude smoothing threshold
   var d = 0
   var t0 = 0, t1=0, t2=0,t3=0,st01=0,st12=0, st23=0
   p[0].loc = 0
@@ -141,26 +143,28 @@ function addLoc (p) {
     var a2s = 0
     var w = 0
     t0 = performance.now()
-    var p2 = p.filter(x => x.loc >= p[i].loc - 0.075 && x.loc <= p[i].loc + 0.075)
+    var p2 = p.filter(x => x.loc >= p[i].loc - gt && x.loc <= p[i].loc + gt)
     t1 = performance.now()
-    var xyr = []
+    var gxyr = []
+    var axyr = []
     // need to update this to make sure at least one other point is selected 
     // ahead and behind
     p2.forEach((x) => {
-      w = (1 - ((Math.abs(p[i].loc - x.loc) / 0.075) ** 3)) ** 3
-      xyr.push([x.loc, x.alt0, w])
+      w = (1 - ((Math.abs(p[i].loc - x.loc) / gt) ** 3)) ** 3
+      gxyr.push([x.loc, x.alt0, w])
+      if (Math.abs(p[i].loc - x.loc) <= at) {
+        w = (1 - ((Math.abs(p[i].loc - x.loc) / at) ** 3)) ** 3
+        axyr.push([x.loc, x.alt0, w])
+      }
     })
-    if (i % 1000 === 0) {
-      console.log(i)
-      console.log(xyr)
-    }
     t2 = performance.now()
-    var ab = linear_regression(xyr)
+    var gab = linear_regression(gxyr)
+    var aab = linear_regression(axyr)
     t3 = performance.now()
-    p[i].grade = round(ab[0] / 10, 2)
+    p[i].grade = round(gab[0] / 10, 2)
     if (p[i].grade > 50) { p[i].grade = 50 }
     else if (p[i].grade < -50) { p[i].grade = -50 }
-    p[i].alt = round((p[i].loc * ab[0]) + ab[1], 2)
+    p[i].alt = round((p[i].loc * aab[0]) + aab[1], 2)
     st01 += t1 - t0
     st12 += t2 - t1
     st23 += t3 - t2
