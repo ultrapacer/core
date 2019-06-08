@@ -1,7 +1,6 @@
 // courseRoutes.js
 var express = require('express')
 var courseRoutes = express.Router()
-const utilities = require('../../shared/utilities')
 var Course = require('../models/Course')
 var User = require('../models/User')
 var Plan = require('../models/Plan')
@@ -40,7 +39,9 @@ courseRoutes.route('/:id').put(async function (req, res) {
       if (req.body.points) {
         course.points = req.body.points
         course.source = req.body.source
-        updateCourseStats(course)
+        course.distance = req.body.distance
+        course.gain = req.body.gain
+        course.loss = req.body.loss
         var finishWaypoint = await Waypoint.findOne({ _course: course, type: 'finish' }).exec()
         finishWaypoint.location = course.distance
         await finishWaypoint.save()

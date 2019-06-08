@@ -142,6 +142,16 @@ export default {
                 }
               }
             }
+          }],
+          yAxes: [{
+            display: true,
+            position: 'left',
+            id: 'y-axis-1'
+          }, {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            id: 'y-axis-2'
           }]
         },
         tooltips: {
@@ -217,12 +227,14 @@ export default {
           { data: this.chartProfile,
             pointRadius: 0,
             pointHoverRadius: 0,
-            backgroundColor: this.transparentize(this.chartColors.blue)
+            backgroundColor: this.transparentize(this.chartColors.blue),
+            yAxisID: 'y-axis-1'
           },
           { data: this.chartGrade,
             pointRadius: 0,
             pointHoverRadius: 0,
-            showLine: true
+            showLine: true,
+            yAxisID: 'y-axis-2'
           }
         ]
       }
@@ -325,37 +337,40 @@ export default {
       this.segment = waypoint
     },
     updateChartProfile: function () {
+      var plimit = 500
       var data = []
-      if (this.course.points.length < 400) {
+      var data2 = []
+      if (this.course.points.length < plimit) {
         for (var i = 0, il = this.course.points.length; i < il; i++) {
           data.push({
             x: this.course.points[i].loc * this.units.distScale,
             y: this.course.points[i].alt * this.units.altScale
           })
+          data2.push({
+            x: this.course.points[i].loc * this.units.distScale,
+            y: this.course.points[i].grade
+          })
         }
       } else {
         var max = this.course.points[this.course.points.length - 1].loc
         var xs = []
-        for (var j = 0; j <= 400; j++) {
-          xs.push((j / 400) * max)
+        for (var j = 0; j <= plimit; j++) {
+          xs.push((j / plimit) * max)
         }
-        var ys = utilities.getElevation(this.course.points, xs)
+        var ys = utilities.getLatLonAltFromDistance(this.course.points, xs)
         for (i = 0, il = xs.length; i < il; i++) {
           data.push({
             x: xs[i] * this.units.distScale,
-            y: ys[i] * this.units.altScale
+            y: ys[i].alt * this.units.altScale
+          })
+          data2.push({
+            x: xs[i] * this.units.distScale,
+            y: ys[i].grade
           })
         }
       }
       this.chartOptions.scales.xAxes[0].ticks.max = (xs[xs.length - 1] * this.units.distScale) + 0.01
       this.chartProfile = data
-      var data2 = []
-      for (var j = 1, jl = this.course.points.length; j < jl; j++) {
-        data2.push({
-          x: this.course.points[j].loc * this.units.distScale,
-          y: this.course.points[j].grade * 100
-        })
-      }
       this.chartGrade = data2
     },
     transparentize: function (color, opacity) {
