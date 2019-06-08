@@ -276,7 +276,9 @@ export default {
       return
     }
     this.$title = this.course.name
-    this.course.points = utilities.addLoc(this.course.points)
+    if (!this.course.points[0].hasOwnProperty('loc')) {
+      this.course.points = utilities.addLoc(this.course.points)
+    }
     this.updateMapLatLon()
     this.updateChartProfile()
     // calc grade adjustment:

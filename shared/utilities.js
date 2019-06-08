@@ -136,18 +136,19 @@ function addLoc (p) {
     d += (gpxParse.utils.calculateDistance(p[i - 1].lat, p[i - 1].lon, p[i].lat, p[i].lon))
     p[i].loc = d
   }
+  p.forEach(x=>{x.alt0 = x.alt})
   for (i = 0, il < p.length; i < il; i++) {
     var a2s = 0
     var w = 0
     t0 = performance.now()
-    var p2 = p.filter(x => x.loc >= p[i].loc - 0.1 && x.loc <= p[i].loc + 0.100)
+    var p2 = p.filter(x => x.loc >= p[i].loc - 0.075 && x.loc <= p[i].loc + 0.075)
     t1 = performance.now()
     var xyr = []
     // need to update this to make sure at least one other point is selected 
     // ahead and behind
     p2.forEach((x) => {
-      w = (1 - ((Math.abs(p[i].loc - x.loc) / 0.100) ** 3)) ** 3
-      xyr.push([x.loc,x.alt,w])
+      w = (1 - ((Math.abs(p[i].loc - x.loc) / 0.075) ** 3)) ** 3
+      xyr.push([x.loc, x.alt0, w])
     })
     if (i % 1000 === 0) {
       console.log(i)
@@ -159,10 +160,12 @@ function addLoc (p) {
     p[i].grade = round(ab[0] / 10, 2)
     if (p[i].grade > 50) { p[i].grade = 50 }
     else if (p[i].grade < -50) { p[i].grade = -50 }
+    p[i].alt = round((p[i].loc * ab[0]) + ab[1], 2)
     st01 += t1 - t0
     st12 += t2 - t1
     st23 += t3 - t2
   }
+  console.log(p)
   console.log('st01 ' + st01)
   console.log('st12 ' + st12)
   console.log('st23 ' + st23)

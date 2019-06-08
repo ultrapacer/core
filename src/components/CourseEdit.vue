@@ -133,8 +133,13 @@ export default {
       if (this.saving) { return }
       this.saving = true
       if (this.model.source.type === 'gpx' && this.gpxPoints.length) {
-        this.model.points = this.gpxPoints
         this.model.source.name = this.gpxFile.name
+        this.model.points = this.gpxPoints
+        util.addLoc(this.model.points)
+        var stats = util.calcStats(this.model.points)
+        this.model.distance = stats.distance
+        this.model.gain = stats.gain
+        this.model.loss = stats.loss
       }
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
@@ -171,7 +176,6 @@ export default {
             throw error
           } else {
             this.gpxPoints = util.cleanPoints(data.tracks[0].segments[0])
-            util.addLoc(this.gpxPoints)
           }
         })
       }
