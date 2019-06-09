@@ -54,11 +54,12 @@ courseRoutes.route('/:id').put(async function (req, res) {
           } else {
             wp.location = wp.location * course.distance / old
           }
-          // resolve closest distance for waypoint LLA
           if (wp.type !== 'start' && wp.type !== 'finish') {
             try {
               var wpdelta = Math.abs(wpold - wp.location)
+              // iteration threshold th:
               var th = Math.max(0.5, Math.min(wpdelta, course.distance))
+              // resolve closest distance for waypoint LLA
               wp.location = wputil.nearestLoc(wp, course.points, th)
             } catch (err) {
               console.log(err)
