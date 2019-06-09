@@ -1,4 +1,5 @@
 const util = require('./utilities')
+const sgeo = require('sgeo')
 
 function updateLLA (waypoint, points) {
   if (waypoint.type === 'start') {
@@ -32,7 +33,31 @@ function sortWaypointsByDistance (waypoints) {
   waypoints.sort(compareWaypointsForSort)
 }
 
+function nearestLoc(waypoint, p, th) {
+  var its = 0
+  var loc = waypoint.location
+  var LLA1 = new sgeo.latlon(waypoint.lat, waypoint.lon)
+  while (th >= 0.010) {
+    var locs = []
+    for (i = -5; i <= 5; i++) {
+      locs.push(loc + th * 2*i/10)
+    }
+    var llas = util.getLatLonAltFromDistance(p, locs)
+    llas.forEach(lla => {
+      var LLA2 = new sgeo.latlon(lla.lat, lla.lon)
+      lla.dist = Number(LLA1.distanceTo(LLA2))
+      its ++
+    })
+    var min = llas.reduce((min, b) => Math.min(min, b.dist), llas[0].dist)
+    var i = llas.findIndex( x => x.dist === min)
+    loc = locs[i]
+    th = th / 10
+  }
+  return loc
+}
+
 module.exports = {
   updateLLA: updateLLA,
-  sortWaypointsByDistance: sortWaypointsByDistance
+  sortWaypointsByDistance: sortWaypointsByDistance,
+  nearestLoc: nearestLoc
 }
