@@ -51,7 +51,10 @@ courseRoutes.route('/:id').put(async function (req, res) {
             wp.location = course.distance
           } else if (delta && wp.type !== 'start') {
             try {
-              var th = 2 * delta * wp.location / course.distance
+              var th = Math.min(
+                2 * delta * wp.location / course.distance,
+                course.distance
+              )
               wp.location = wputil.nearestLoc(wp, course.points, th)
             } catch (err) {
               console.log(err)

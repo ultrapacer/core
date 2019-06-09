@@ -35,12 +35,15 @@ function sortWaypointsByDistance (waypoints) {
 
 function nearestLoc(waypoint, p, th) {
   var its = 0
-  var loc = waypoint.location
+  var loc = Math.min(p[p.length - 1].loc, waypoint.location)
   var LLA1 = new sgeo.latlon(waypoint.lat, waypoint.lon)
   while (th >= 0.010) {
     var locs = []
-    for (i = -5; i <= 5; i++) {
-      locs.push(loc + th * 2*i/10)
+    for (var i = -5; i <= 5; i++) {
+      var l = loc + th * 2*i/10
+      if (l > 0 && l <= p[p.length - 1].loc) {
+        locs.push(l)
+      }
     }
     var llas = util.getLatLonAltFromDistance(p, locs)
     llas.forEach(lla => {
@@ -49,8 +52,8 @@ function nearestLoc(waypoint, p, th) {
       its ++
     })
     var min = llas.reduce((min, b) => Math.min(min, b.dist), llas[0].dist)
-    var i = llas.findIndex( x => x.dist === min)
-    loc = locs[i]
+    var j = llas.findIndex( x => x.dist === min)
+    loc = locs[j]
     th = th / 10
   }
   return loc
