@@ -147,19 +147,19 @@ function addLoc (p) {
     var axyr = []
     while (a + 1 < i && Math.abs(p[a].loc - x.loc) > Math.max(at, gt)) { a++ }
     while (b < p.length - 1 && (b <= i || Math.abs(p[b].loc - x.loc) < Math.max(at, gt))) { b++ }
-    
+
     // if necessary, increase threshold to include one point on either side:
     var ilo = i > 0 ? i - 1 : 0
     var ihi = i < p.length - 1 ? i + 1 : p.length - 1
     var igt = Math.max(
       gt,
-      Math.abs(x.loc - p[ilo].loc) + .001,
-      Math.abs(x.loc - p[ihi].loc) + .001
+      Math.abs(x.loc - p[ilo].loc) + 0.001,
+      Math.abs(x.loc - p[ihi].loc) + 0.001
     )
     var iat = Math.max(
       at,
-      Math.abs(x.loc - p[ilo].loc) + .001,
-      Math.abs(x.loc - p[ihi].loc) + .001
+      Math.abs(x.loc - p[ilo].loc) + 0.001,
+      Math.abs(x.loc - p[ihi].loc) + 0.001
     )
 
     for (var i = a; i <= b; i++) {
@@ -172,8 +172,8 @@ function addLoc (p) {
         axyr.push([p[i].loc, p[i].alt0, w])
       }
     }
-    var gab = linear_regression(gxyr)
-    var aab = linear_regression(axyr)
+    var gab = linearRegression(gxyr)
+    var aab = linearRegression(axyr)
     x.grade = round(gab[0] / 10, 2)
     if (x.grade > 50) { x.grade = 50 } else if (x.grade < -50) { x.grade = -50 }
     x.alt = round((x.loc * aab[0]) + aab[1], 2)
@@ -181,7 +181,7 @@ function addLoc (p) {
   return p
 }
 
-function linear_regression (xyr) {
+function linearRegression (xyr) {
   var i,
     x, y, r,
     sumx = 0, sumy = 0, sumx2 = 0, sumy2 = 0, sumxy = 0, sumr = 0,
@@ -269,9 +269,10 @@ function getLatLonAltFromDistance (points, location, start) {
   }
   location = locs.shift()
 
-  for (var i = i0, il = points.length; i < il; i++) {
-    if (points[i].loc >= location || i === il - 1) {
-      if (points[i].loc === location || i === il - 1) {
+  var i = 0
+  while (i < points.length) {
+    if (points[i].loc >= location || i === points.length - 1) {
+      if (points[i].loc === location || i === points.length - 1) {
         llas.push({
           lat: points[i].lat,
           lon: points[i].lon,
@@ -319,6 +320,8 @@ function getLatLonAltFromDistance (points, location, start) {
       if (location == null) {
         break
       }
+    } else {
+      i++
     }
   }
   if (llas.length > 1) {

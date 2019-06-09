@@ -1,3 +1,4 @@
+/* eslint new-cap: 0 */
 const util = require('./utilities')
 const sgeo = require('sgeo')
 
@@ -33,14 +34,16 @@ function sortWaypointsByDistance (waypoints) {
   waypoints.sort(compareWaypointsForSort)
 }
 
-function nearestLoc(waypoint, p, th) {
-  var its = 0
+function nearestLoc (waypoint, p, th) {
+  // iterate to new location based on waypoint lat/lon
+  var steps = 5
   var loc = Math.min(p[p.length - 1].loc, waypoint.location)
   var LLA1 = new sgeo.latlon(waypoint.lat, waypoint.lon)
-  while (th >= 0.010) {
+  while (th > 0.025) {
+    var size = th / steps
     var locs = []
-    for (var i = -5; i <= 5; i++) {
-      var l = loc + th * 2*i/10
+    for (var i = -steps; i <= steps; i++) {
+      var l = loc + (size * i)
       if (l > 0 && l <= p[p.length - 1].loc) {
         locs.push(l)
       }
@@ -49,12 +52,11 @@ function nearestLoc(waypoint, p, th) {
     llas.forEach(lla => {
       var LLA2 = new sgeo.latlon(lla.lat, lla.lon)
       lla.dist = Number(LLA1.distanceTo(LLA2))
-      its ++
     })
     var min = llas.reduce((min, b) => Math.min(min, b.dist), llas[0].dist)
-    var j = llas.findIndex( x => x.dist === min)
+    var j = llas.findIndex(x => x.dist === min)
     loc = locs[j]
-    th = th / 10
+    th = th / steps // downsize iteration
   }
   return loc
 }
