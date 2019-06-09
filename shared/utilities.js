@@ -129,6 +129,17 @@ function cleanPoints (points) {
 }
 
 function addLoc (p) {
+  var locs = p.map(x => x.loc)
+  var adj = pointWLSQ(p, locs)
+  p.forEach((x, i) => {
+    p.grade = adj[i].grade
+    p.alt0 = p.alt
+    p.alt = adj[i].alt
+  })
+  return p
+}
+
+function pointWLSQ (p, locs) {
   var gt = 0.075 // grade smoothing threshold
   var at = 0.050 // altitude smoothing threshold
   var d = 0
