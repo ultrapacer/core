@@ -40,6 +40,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
       if (req.body.points) {
         course.points = req.body.points
         course.source = req.body.source
+        var old = course.distance
         var delta = Math.abs(req.body.distance - course.distance)
         course.distance = req.body.distance
         course.gain = req.body.gain
@@ -47,14 +48,15 @@ courseRoutes.route('/:id').put(async function (req, res) {
         var waypoints = await Waypoint.find({ _course: course })
           .sort('location').exec()
         await Promise.all(waypoints.map(async wp => {
-          if (wp.type === 'finish') {
-            wp.location = course.distance
-          } else if (delta && wp.type !== 'start') {
+          var wpold = wp.location
+          // scale waypoint location for new course distance:
+          wp.location = wp.location * course.distance / old
+          var wpdelta = Math.abs(wpold - wp.location)
+          if (wp.type !== 'start' && wp.type !== 'finish') {
             try {
               var th = Math.min(
-                2 * delta * wp.location / course.distance,
-                course.distance
-              )
+                wpdelta,
+                course.distance)
               wp.location = wputil.nearestLoc(wp, course.points, th)
             } catch (err) {
               console.log(err)

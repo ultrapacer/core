@@ -56,6 +56,7 @@ function nearestLoc(waypoint, p, th) {
     loc = locs[j]
     th = th / 10
   }
+  console.log(its)
   return loc
 }
 
