@@ -5,6 +5,7 @@ var Course = require('../models/Course')
 var User = require('../models/User')
 var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
+import wputil from '../../shared/waypointUtilities'
 
 // Defined store route
 courseRoutes.route('/').post(async function (req, res) {
@@ -42,9 +43,13 @@ courseRoutes.route('/:id').put(async function (req, res) {
         course.distance = req.body.distance
         course.gain = req.body.gain
         course.loss = req.body.loss
-        var finishWaypoint = await Waypoint.findOne({ _course: course, type: 'finish' }).exec()
-        finishWaypoint.location = course.distance
-        await finishWaypoint.save()
+        var waypoints = await Waypoint.find({ _course: course })
+          .sort('location').exec()
+        waypoints.forEach( async wp => {
+          if (wp.type === 'finish') { wp.location = course.distance }
+          wputil.updateLLA(wp, course.points)
+          await wp.save()
+        })
       }
       await course.save()
       res.json('Update complete')
