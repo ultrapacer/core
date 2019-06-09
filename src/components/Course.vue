@@ -79,7 +79,7 @@
 import LineChart from './LineChart.js'
 import {LMap, LTileLayer, LPolyline, LMarker} from 'vue2-leaflet'
 import api from '@/api'
-import utilities from '../../shared/utilities'
+import util from '../../shared/utilities'
 import gapModel from '../../shared/gapModel'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
@@ -187,7 +187,7 @@ export default {
       }
     },
     splits: function () {
-      return utilities.calcSplits(this.course.points, this.units.dist, this.pacing)
+      return util.calcSplits(this.course.points, this.units.dist, this.pacing)
     },
     segments: function () {
       if (!this.course.points.length) { return [] }
@@ -197,7 +197,7 @@ export default {
       for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
         breaks.push(this.course.waypoints[i].location)
       }
-      var splits = utilities.calcSegments(this.course.points, breaks, this.pacing)
+      var splits = util.calcSegments(this.course.points, breaks, this.pacing)
       for (var j = 0, jl = splits.length; j < jl; j++) {
         arr.push({
           start: this.course.waypoints[j],
@@ -289,7 +289,7 @@ export default {
     }
     this.$title = this.course.name
     if (!this.course.points[0].hasOwnProperty('loc')) {
-      this.course.points = utilities.addLoc(this.course.points)
+      this.course.points = util.addLoc(this.course.points)
     }
     this.updateMapLatLon()
     this.updateChartProfile()
@@ -357,15 +357,24 @@ export default {
         for (var j = 0; j <= plimit; j++) {
           xs.push((j / plimit) * max)
         }
-        var ys = utilities.getLatLonAltFromDistance(this.course.points, xs)
+        var ysa = util.pointWLSQ(
+          this.course.points,
+          xs,
+          this.course.distance / plimit / 5
+        )
+        var ysg = util.pointWLSQ(
+          this.course.points,
+          xs,
+          5 * this.course.distance / plimit
+        )
         for (i = 0, il = xs.length; i < il; i++) {
           data.push({
             x: xs[i] * this.units.distScale,
-            y: ys[i].alt * this.units.altScale
+            y: ysa[i].alt * this.units.altScale
           })
           data2.push({
             x: xs[i] * this.units.distScale,
-            y: ys[i].grade
+            y: ysg[i].grade
           })
         }
       }

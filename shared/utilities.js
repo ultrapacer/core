@@ -135,7 +135,7 @@ function addLoc (p) {
     d += (gpxParse.utils.calculateDistance(p[i - 1].lat, p[i - 1].lon, p[i].lat, p[i].lon))
     p[i].loc = d
   }
-  
+
   var locs = p.map(x => x.loc)
   var adj = pointWLSQ(p, locs, 0.05)
   p.forEach((x, i) => {
@@ -163,14 +163,14 @@ function pointWLSQ (p, locs, gt) {
       Math.abs(x - p[a].loc) + 0.001,
       Math.abs(x - p[b].loc) + 0.001
     )
-    
+
     var xyr = []
     var w = 0
     for (var i = a; i <= b; i++) {
       w = (1 - ((Math.abs(x - p[i].loc) / igt) ** 3)) ** 3
       xyr.push([p[i].loc, p[i].alt, w])
     }
-    
+
     var ab = linearRegression(xyr)
     var grade = round(ab[0] / 10, 2)
     if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
@@ -348,5 +348,6 @@ module.exports = {
   cleanPoints: cleanPoints,
   calcSegments: calcSegments,
   getElevation: getElevation,
-  getLatLonAltFromDistance: getLatLonAltFromDistance
+  getLatLonAltFromDistance: getLatLonAltFromDistance,
+  pointWLSQ: pointWLSQ
 }
