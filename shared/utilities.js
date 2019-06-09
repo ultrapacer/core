@@ -137,66 +137,50 @@ function addLoc (p) {
   }
   
   var locs = p.map(x => x.loc)
-  var adj = pointWLSQ(p, locs, 0.075, 0.050)
+  var adj = pointWLSQ(p, locs, 0.05)
   p.forEach((x, i) => {
-    p.grade = adj[i].grade
-    p.alt0 = p.alt
-    p.alt = adj[i].alt
+    x.grade = adj[i].grade
+    x.alt0 = x.alt
+    x.alt = adj[i].alt
   })
   return p
 }
 
-function pointWLSQ (p, locs, gt, at) {
+function pointWLSQ (p, locs, gt) {
   // p: points array of {loc, lat, lon, alt}
   // locs: array of locations (km)
   // gt: grade smoothing threshold
-  // at: altitude smoothing threshold
-  var res = []
+  var ga = []
   var a = 0 // lower limit of p array
   var b = 0 // upper limit of p array
   locs.forEach(x => {
-    var a2s = 0
-    var w = 0
-    var gxyr = []
-    var axyr = []
-    while (a + 1 < i && Math.abs(p[a].loc - x) > Math.max(at, gt)) { a++ }
-    while (b < p.length - 1 && (b <= i || Math.abs(p[b].loc - x) < Math.max(at, gt))) { b++ }
+    while (p[a].loc < x - gt) { a++ }
+    while (b < p.length - 1 && p[b + 1].loc <= x + gt) { b++ }
 
-    // if necessary, increase threshold to include one point on either side:
-    var ilo = i > 0 ? i - 1 : 0
-    var ihi = i < p.length - 1 ? i + 1 : p.length - 1
+    // if necessary, increase threshold to include the point on either side:
     var igt = Math.max(
       gt,
-      Math.abs(x - p[ilo].loc) + 0.001,
-      Math.abs(x - p[ihi].loc) + 0.001
+      Math.abs(x - p[a].loc) + 0.001,
+      Math.abs(x - p[b].loc) + 0.001
     )
-    var iat = Math.max(
-      at,
-      Math.abs(x - p[ilo].loc) + 0.001,
-      Math.abs(x - p[ihi].loc) + 0.001
-    )
-
+    
+    var xyr = []
+    var w = 0
     for (var i = a; i <= b; i++) {
-      if (Math.abs(x - p[i].loc) <= igt) {
-        w = (1 - ((Math.abs(x - p[i].loc) / igt) ** 3)) ** 3
-        gxyr.push([p[i].loc, p[i].alt, w])
-      }
-      if (Math.abs(x - p[i].loc) <= iat) {
-        w = (1 - ((Math.abs(x - p[i].loc) / iat) ** 3)) ** 3
-        axyr.push([p[i].loc, p[i].alt, w])
-      }
+      w = (1 - ((Math.abs(x - p[i].loc) / igt) ** 3)) ** 3
+      xyr.push([p[i].loc, p[i].alt, w])
     }
-    var gab = linearRegression(gxyr)
-    var aab = linearRegression(axyr)
-    var grade = round(gab[0] / 10, 2)
+    
+    var ab = linearRegression(xyr)
+    var grade = round(ab[0] / 10, 2)
     if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
-    var alt = round((x * aab[0]) + aab[1], 2)
-    res.push({
+    var alt = round((x * ab[0]) + ab[1], 2)
+    ga.push({
       grade: grade,
       alt: alt
     })
   })
-  return p
+  return ga
 }
 
 function linearRegression (xyr) {
