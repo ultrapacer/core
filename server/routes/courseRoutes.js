@@ -45,8 +45,10 @@ courseRoutes.route('/:id').put(async function (req, res) {
         course.loss = req.body.loss
         var waypoints = await Waypoint.find({ _course: course })
           .sort('location').exec()
-        waypoints.forEach( async wp => {
-          if (wp.type === 'finish') { wp.location = course.distance }
+        await Promise.all(waypoints.map(async wp => {
+          if (wp.type === 'finish') {
+            wp.location = course.distance
+          }
           wputil.updateLLA(wp, course.points)
           await wp.save()
         })
