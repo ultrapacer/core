@@ -145,12 +145,8 @@ function addLoc (p) {
     var w = 0
     var gxyr = []
     var axyr = []
-    while (Math.abs(p[a].loc - x.loc) > Math.max(at, gt)) { a++ }
-    while (b < p.length - 1 && Math.abs(p[b].loc - x.loc) < Math.max(at, gt)) { b++ }
-    
-    // make sure we include at least 2 points for least squares fit:
-    if (a === i && i > 0) { a-- }
-    if (b === i && i < p.length - 1) { b++ }
+    while (a + 1 < i && Math.abs(p[a].loc - x.loc) > Math.max(at, gt)) { a++ }
+    while (b < p.length - 1 && (b <= i || Math.abs(p[b].loc - x.loc) < Math.max(at, gt))) { b++ }
     
     // if necessary, increase threshold to include one point on either side:
     var ilo = i > 0 ? i - 1 : 0
