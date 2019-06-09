@@ -269,9 +269,10 @@ function getLatLonAltFromDistance (points, location, start) {
   }
   location = locs.shift()
 
-  for (var i = i0, il = points.length; i < il; i++) {
-    if (points[i].loc >= location || i === il - 1) {
-      if (points[i].loc === location || i === il - 1) {
+  var i = 0
+  while (i < points.length) {
+    if (points[i].loc >= location || i === points.length - 1) {
+      if (points[i].loc === location || i === points.length - 1) {
         llas.push({
           lat: points[i].lat,
           lon: points[i].lon,
@@ -319,6 +320,8 @@ function getLatLonAltFromDistance (points, location, start) {
       if (location == null) {
         break
       }
+    } else {
+      i++
     }
   }
   if (llas.length > 1) {
