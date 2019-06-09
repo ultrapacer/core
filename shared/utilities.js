@@ -129,56 +129,60 @@ function cleanPoints (points) {
 }
 
 function addLoc (p) {
-  var gt = 0.075 // grade smoothing threshold
-  var at = 0.050 // altitude smoothing threshold
   var d = 0
   p[0].loc = 0
   for (var i = 1, il = p.length; i < il; i++) {
     d += (gpxParse.utils.calculateDistance(p[i - 1].lat, p[i - 1].lon, p[i].lat, p[i].lon))
     p[i].loc = d
   }
-  p.forEach(x => { x.alt0 = x.alt })
-  var a = 0
-  var b = 0
+
+  var locs = p.map(x => x.loc)
+  var adj = pointWLSQ(p, locs, 0.05)
   p.forEach((x, i) => {
-    var a2s = 0
-    var w = 0
-    var gxyr = []
-    var axyr = []
-    while (a + 1 < i && Math.abs(p[a].loc - x.loc) > Math.max(at, gt)) { a++ }
-    while (b < p.length - 1 && (b <= i || Math.abs(p[b].loc - x.loc) < Math.max(at, gt))) { b++ }
-
-    // if necessary, increase threshold to include one point on either side:
-    var ilo = i > 0 ? i - 1 : 0
-    var ihi = i < p.length - 1 ? i + 1 : p.length - 1
-    var igt = Math.max(
-      gt,
-      Math.abs(x.loc - p[ilo].loc) + 0.001,
-      Math.abs(x.loc - p[ihi].loc) + 0.001
-    )
-    var iat = Math.max(
-      at,
-      Math.abs(x.loc - p[ilo].loc) + 0.001,
-      Math.abs(x.loc - p[ihi].loc) + 0.001
-    )
-
-    for (var i = a; i <= b; i++) {
-      if (Math.abs(x.loc - p[i].loc) <= igt) {
-        w = (1 - ((Math.abs(x.loc - p[i].loc) / igt) ** 3)) ** 3
-        gxyr.push([p[i].loc, p[i].alt0, w])
-      }
-      if (Math.abs(x.loc - p[i].loc) <= iat) {
-        w = (1 - ((Math.abs(x.loc - p[i].loc) / iat) ** 3)) ** 3
-        axyr.push([p[i].loc, p[i].alt0, w])
-      }
-    }
-    var gab = linearRegression(gxyr)
-    var aab = linearRegression(axyr)
-    x.grade = round(gab[0] / 10, 2)
-    if (x.grade > 50) { x.grade = 50 } else if (x.grade < -50) { x.grade = -50 }
-    x.alt = round((x.loc * aab[0]) + aab[1], 2)
+    x.grade = adj[i].grade
+    x.alt0 = x.alt
+    x.alt = adj[i].alt
   })
   return p
+}
+
+function pointWLSQ (p, locs, gt) {
+  // p: points array of {loc, lat, lon, alt}
+  // locs: array of locations (km)
+  // gt: grade smoothing threshold
+  var ga = []
+  var a = 0 // lower limit of p array
+  var b = 0 // upper limit of p array
+  locs.forEach(x => {
+    while (p[a].loc < x - gt) { a++ }
+    if (a > 0 && p[a].loc >= x) { a-- }
+    while (b < p.length - 1 && p[b + 1].loc <= x + gt) { b++ }
+    if (b < p.length - 1 && p[b].loc <= x) { b++ }
+
+    // if necessary, increase threshold to include the point on either side:
+    var igt = Math.max(
+      gt,
+      Math.abs(x - p[a].loc) + 0.001,
+      Math.abs(x - p[b].loc) + 0.001
+    )
+
+    var xyr = []
+    var w = 0
+    for (var i = a; i <= b; i++) {
+      w = (1 - ((Math.abs(x - p[i].loc) / igt) ** 3)) ** 3
+      xyr.push([p[i].loc, p[i].alt, w])
+    }
+    
+    var ab = linearRegression(xyr)
+    var grade = round(ab[0] / 10, 2)
+    if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
+    var alt = round((x * ab[0]) + ab[1], 2)
+    ga.push({
+      grade: grade,
+      alt: alt
+    })
+  })
+  return ga
 }
 
 function linearRegression (xyr) {
@@ -346,5 +350,6 @@ module.exports = {
   cleanPoints: cleanPoints,
   calcSegments: calcSegments,
   getElevation: getElevation,
-  getLatLonAltFromDistance: getLatLonAltFromDistance
+  getLatLonAltFromDistance: getLatLonAltFromDistance,
+  pointWLSQ: pointWLSQ
 }
