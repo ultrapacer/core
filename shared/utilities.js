@@ -155,7 +155,9 @@ function pointWLSQ (p, locs, gt) {
   var b = 0 // upper limit of p array
   locs.forEach(x => {
     while (p[a].loc < x - gt) { a++ }
+    if (a > 0 && p[a].loc >= x) { a-- }
     while (b < p.length - 1 && p[b + 1].loc <= x + gt) { b++ }
+    if (b < p.length - 1 && p[b].loc <= x) { b++ }
 
     // if necessary, increase threshold to include the point on either side:
     var igt = Math.max(
@@ -170,7 +172,7 @@ function pointWLSQ (p, locs, gt) {
       w = (1 - ((Math.abs(x - p[i].loc) / igt) ** 3)) ** 3
       xyr.push([p[i].loc, p[i].alt, w])
     }
-
+    
     var ab = linearRegression(xyr)
     var grade = round(ab[0] / 10, 2)
     if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
