@@ -5,7 +5,7 @@ var Course = require('../models/Course')
 var User = require('../models/User')
 var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
-import wputil from '../../shared/waypointUtilities'
+var wputil = require('../../shared/waypointUtilities')
 
 // Defined store route
 courseRoutes.route('/').post(async function (req, res) {
@@ -51,7 +51,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
           }
           wputil.updateLLA(wp, course.points)
           await wp.save()
-        })
+        }))
       }
       await course.save()
       res.json('Update complete')
