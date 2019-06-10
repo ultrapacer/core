@@ -172,7 +172,7 @@ function pointWLSQ (p, locs, gt) {
       w = (1 - ((Math.abs(x - p[i].loc) / igt) ** 3)) ** 3
       xyr.push([p[i].loc, p[i].alt, w])
     }
-    
+
     var ab = linearRegression(xyr)
     var grade = round(ab[0] / 10, 2)
     if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
