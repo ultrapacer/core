@@ -31,7 +31,6 @@
 <script>
 import {LMap, LTileLayer, LPolyline, LCircleMarker} from 'vue2-leaflet'
 export default {
-  title: 'Loading',
   props: ['course', 'focus'],
   components: {
     LMap,

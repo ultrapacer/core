@@ -2,7 +2,10 @@
   <b-table
     :items="splits"
     :fields="fields"
-    @row-clicked="selectRow"
+    primary-key="start._id"
+    selectable
+    select-mode="single"
+    @row-selected="selectRow"
     hover
     foot-clone
     small
@@ -84,7 +87,11 @@ export default {
   },
   methods: {
     selectRow: function (s) {
-      this.$emit('select', [s.start, s.end])
+      if (s.length) {
+        this.$emit('select', [s[0].start, s[0].end])
+      } else {
+        this.$emit('select', [])
+      }
     }
   }
 }

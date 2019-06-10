@@ -3,10 +3,13 @@
     :items="segments"
     :fields="fields"
     primary-key="start._id"
-    @row-clicked="selectRow"
+    selectable
+    select-mode="single"
+    @row-selected="selectRow"
     hover
     foot-clone
-    small>
+    small
+  >
     <template slot="FOOT_start.name">&nbsp;</template>
     <template slot="FOOT_end.name">&nbsp;</template>
     <template slot="FOOT_len">{{ course.distance | formatDist(units.distScale) }}</template>
@@ -105,7 +108,11 @@ export default {
   },
   methods: {
     selectRow: function (s) {
-      this.$emit('select', [s.start.location, s.end.location])
+      if (s.length) {
+        this.$emit('select', [s[0].start.location, s[0].end.location])
+      } else {
+        this.$emit('select', [])
+      }
     }
   }
 }
