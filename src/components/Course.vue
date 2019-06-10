@@ -457,7 +457,8 @@ export default {
         time: time,
         delay: delay,
         pace: pace,
-        gap: gap
+        gap: gap,
+        drift: this.course._plan.drift
       }
     },
     updateFocus: function (focus) {
