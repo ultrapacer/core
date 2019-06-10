@@ -1,5 +1,12 @@
 <template>
-  <b-table :items="splits" :fields="fields" hover foot-clone small>
+  <b-table
+    :items="splits"
+    :fields="fields"
+    @row-clicked="selectRow"
+    hover
+    foot-clone
+    small
+  >
     <template slot="FOOT_end">&nbsp;</template>
     <template slot="FOOT_gain">{{ course.gain | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
@@ -73,6 +80,11 @@ export default {
         })
       }
       return f
+    }
+  },
+  methods: {
+    selectRow: function (s) {
+      this.$emit('select', [s.start, s.end])
     }
   }
 }

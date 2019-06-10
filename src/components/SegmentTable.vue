@@ -1,5 +1,12 @@
 <template>
-  <b-table :items="segments" :fields="fields" primary-key="start._id" hover foot-clone small>
+  <b-table
+    :items="segments"
+    :fields="fields"
+    primary-key="start._id"
+    @row-clicked="selectRow"
+    hover
+    foot-clone
+    small>
     <template slot="FOOT_start.name">&nbsp;</template>
     <template slot="FOOT_end.name">&nbsp;</template>
     <template slot="FOOT_len">{{ course.distance | formatDist(units.distScale) }}</template>
@@ -94,6 +101,11 @@ export default {
         })
       }
       return f
+    }
+  },
+  methods: {
+    selectRow: function (s) {
+      this.$emit('select', [s.start.location, s.end.location])
     }
   }
 }
