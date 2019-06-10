@@ -66,9 +66,18 @@
             <l-tile-layer :url="mapLayerURL"></l-tile-layer>
             <l-polyline
                 :lat-lngs="mapLatLon"
-                color="red">
+                color="blue">
             </l-polyline>
-            <l-marker v-for="waypoint in course.waypoints" :key="waypoint._id" :lat-lng="[waypoint.lat, waypoint.lon]" ></l-marker>
+            <l-circle-marker
+                v-for="waypoint in course.waypoints"
+                :key="waypoint._id"
+                :lat-lng="[waypoint.lat, waypoint.lon]"
+                :radius="8"
+                :fill=true
+                :color="markerColors[waypoint.type]"
+                :fillColor="markerColors[waypoint.type]"
+                fillOpacity="0.5"
+              />
           </l-map>
           </b-tab>
         </b-tabs>
@@ -82,7 +91,7 @@
 
 <script>
 import LineChart from './LineChart.js'
-import {LMap, LTileLayer, LPolyline, LMarker} from 'vue2-leaflet'
+import {LMap, LTileLayer, LPolyline, LCircleMarker} from 'vue2-leaflet'
 import api from '@/api'
 import util from '../../shared/utilities'
 import gapModel from '../../shared/gapModel'
@@ -101,7 +110,7 @@ export default {
     LMap,
     LTileLayer,
     LPolyline,
-    LMarker,
+    LCircleMarker,
     SplitTable,
     SegmentTable,
     WaypointTable,
@@ -170,7 +179,13 @@ export default {
         }
       },
       mapLatLon: [],
-      mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png'
+      mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
+      markerColors: {
+        start: 'black',
+        finish: 'black',
+        aid: 'red',
+        landmark: 'green'
+      }
     }
   },
   computed: {
