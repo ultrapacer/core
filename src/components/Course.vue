@@ -57,7 +57,12 @@
             <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
           </b-tab>
           <b-tab title="Map" active>
-            <l-map ref="courseMap" style="height: 600px; width: 100%" :center="mapLatLon[1]" :zoom="12">
+            <l-map
+              ref="courseMap"
+              style="height: 600px; width: 100%"
+              :center="mapLatLon[1]"
+              :zoom="12"
+              :max-zoom="20">
             <l-tile-layer :url="mapLayerURL"></l-tile-layer>
             <l-polyline
                 :lat-lngs="mapLatLon"
