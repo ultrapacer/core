@@ -36,7 +36,14 @@
       <b-col order="2">
         <b-tabs content-class="mt-3">
           <b-tab title="Splits" active>
-            <split-table :course="course" :plan="plan" :splits="splits" :units="units" :pacing="pacing"></split-table>
+            <split-table
+                :course="course"
+                :plan="plan"
+                :splits="splits"
+                :units="units"
+                :pacing="pacing"
+                @select="updateFocus"
+              ></split-table>
           </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table :course="course" :waypoints="course.waypoints" :units="units" :owner="owner" :editFn="editWaypoint" :delFn="deleteWaypoint"></waypoint-table>
@@ -47,7 +54,15 @@
             </div>
           </b-tab>
           <b-tab title="Segments">
-            <segment-table :course="course" :segments="segments" :units="units" :owner="owner" :editFn="editSegment" :pacing="pacing"></segment-table>
+            <segment-table
+                :course="course"
+                :segments="segments"
+                :units="units"
+                :owner="owner"
+                :editFn="editSegment"
+                :pacing="pacing"
+                @select="updateFocus"
+              ></segment-table>
           </b-tab>
         </b-tabs>
       </b-col>
@@ -57,7 +72,7 @@
             <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
           </b-tab>
           <b-tab title="Map" active>
-            <course-map :course="course"></course-map>
+            <course-map :course="course" :focus="mapFocus"></course-map>
           </b-tab>
         </b-tabs>
       </b-col>
@@ -153,7 +168,8 @@ export default {
         legend: {
           display: false
         }
-      }
+      },
+      mapFocus: []
     }
   },
   computed: {
@@ -443,6 +459,9 @@ export default {
         pace: pace,
         gap: gap
       }
+    },
+    updateFocus: function (focus) {
+      this.mapFocus = focus
     }
   }
 }
