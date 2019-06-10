@@ -62,7 +62,7 @@
               style="height: 600px; width: 100%"
               :center="mapLatLon[1]"
               :zoom="12"
-              :max-zoom="20">
+              :max-zoom="16">
             <l-tile-layer :url="mapLayerURL"></l-tile-layer>
             <l-polyline
                 :lat-lngs="mapLatLon"
