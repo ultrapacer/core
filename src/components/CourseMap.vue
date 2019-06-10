@@ -2,8 +2,8 @@
   <l-map
     ref="courseMap"
     style="height: 600px; width: 100%"
-    :center="mapLatLon[1]"
-    :zoom="12"
+    :center="center"
+    :bounds="bounds"
     :max-zoom="16">
   <l-tile-layer :url="mapLayerURL"></l-tile-layer>
   <l-polyline
@@ -36,6 +36,8 @@ export default {
   },
   data () {
     return {
+      bounds: [],
+      center: [],
       initializing: true,
       mapLatLon: [],
       mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
@@ -55,10 +57,23 @@ export default {
   methods: {
     updateMapLatLon: function () {
       var arr = []
-      for (var i = 0, il = this.course.points.length; i < il; i++) {
-        arr.push([this.course.points[i].lat, this.course.points[i].lon])
-      }
+      var xmin = this.course.points[0].lat
+      var xmax = xmin
+      var ymin = this.course.points[0].lon
+      var ymax = ymin
+      this.course.points.forEach(p => {
+        if (p.lat < xmin) xmin = p.lat
+        else if (p.lat > xmax) xmax = p.lat
+        if (p.lon < ymin) ymin = p.lon
+        else if (p.lon > ymax) ymax = p.lon
+        arr.push([p.lat, p.lon])
+      })
       this.mapLatLon = arr
+      this.center = [(xmin + xmax) / 2, (ymin + ymax) / 2]
+      this.bounds = [
+        { lat: xmin, lng: ymin },
+        { lat: xmax, lng: ymax }
+      ]
     }
   }
 }
