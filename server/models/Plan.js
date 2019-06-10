@@ -28,6 +28,10 @@ var PlanSchema = new Schema({
   gap: {
     type: Number
   },
+  drift: {
+    type: Number,
+    default: 0
+  },
   waypointDelay: {
     type: Number,
     default: 60

@@ -27,6 +27,10 @@
             @change="checkTargetFormat"
           ></b-form-input>
         </b-form-group>
+        <b-form-group label="Pace drift [%]">
+          <b-form-input type="text" v-model="model.drift" required>
+          </b-form-input>
+        </b-form-group>
         <b-form-group label="Typical Aid Station Delay [mm:ss]">
           <b-form-input
             ref="planformdelayinput"
@@ -71,7 +75,8 @@ export default {
     return {
       defaults: {
         pacingMethod: 'time',
-        waypointDelay: 60
+        waypointDelay: 60,
+        drift: 0
       },
       model: {},
       pacingMethods: [

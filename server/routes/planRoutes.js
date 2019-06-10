@@ -32,6 +32,7 @@ planRoutes.route('/:id').put(async function (req, res) {
       plan.time = req.body.time
       plan.pace = req.body.pace
       plan.gap = req.body.gap
+      plan.drift = req.body.drift
       plan.waypointDelay = req.body.waypointDelay
       await plan.save()
       res.json(plan)

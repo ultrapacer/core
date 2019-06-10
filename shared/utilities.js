@@ -47,6 +47,8 @@ function calcSplits (points, units, pacing) {
 }
 
 function calcSegments (points, breaks, pacing) {
+  var cLen = points[points.length - 1].loc
+  var cMid = cLen / 2
   var segments = []
   var alts = getElevation(points, breaks)
   for (var i = 1, il = breaks.length; i < il; i++) {
@@ -64,6 +66,14 @@ function calcSegments (points, breaks, pacing) {
   var j = 0
   var j0 = 0
   var delta0 = 0
+  function driftFact(mid) {
+    if (pacing.drift) {
+      var mid = (points[i].loc + points[i - 1].loc) / 2
+      return 1 + (mid - cMid) / cLen * (pacing.drift / 100)
+    } else {
+      return 1
+    }
+  }
   for (var i = 1, il = points.length; i < il; i++) {
     j = segments.findIndex(s => s.start < points[i].loc && s.end >= points[i].loc)
     if (j > j0) {
@@ -87,9 +97,7 @@ function calcSegments (points, breaks, pacing) {
       (delta0 < 0) ? segments[j0].loss += delta0 : segments[j0].gain += delta0
     }
     if (pacing) {
-      var len = 0
       var grade = 0
-      len = points[i].loc - points[i - 1].loc
       if (i === 0 || i === points.length - 1) {
         grade = points[i].grade
       } else {
@@ -97,11 +105,17 @@ function calcSegments (points, breaks, pacing) {
       }
       if (j > j0) {
         if (j0 >= 0) {
-          segments[j0].time += pacing.gap * gapModel(grade) * (segments[j].start - points[i - 1].loc)
+          var len = segments[j].start - points[i - 1].loc
+          var mid = (segments[j].start + points[i - 1].loc) / 2
+          segments[j0].time += pacing.gap * gapModel(grade) * driftFact(mid) * len
         }
-        segments[j].time += pacing.gap * gapModel(grade) * (points[i].loc - segments[j].start)
+        var len = points[i].loc - segments[j].start
+        var mid = (points[i].loc + segments[j].start) / 2
+        segments[j].time += pacing.gap * gapModel(grade) * driftFact(mid) * len
       } else if (j >= 0) {
-        segments[j].time += pacing.gap * gapModel(grade) * len
+        var len = points[i].loc - points[i - 1].loc
+        var mid = (points[i].loc + points[i - 1].loc) / 2
+        segments[j].time += pacing.gap * gapModel(grade) * driftFact(mid) * len
       }
     }
     j0 = j
