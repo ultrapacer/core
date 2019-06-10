@@ -57,28 +57,7 @@
             <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
           </b-tab>
           <b-tab title="Map" active>
-            <l-map
-              ref="courseMap"
-              style="height: 600px; width: 100%"
-              :center="mapLatLon[1]"
-              :zoom="12"
-              :max-zoom="16">
-            <l-tile-layer :url="mapLayerURL"></l-tile-layer>
-            <l-polyline
-                :lat-lngs="mapLatLon"
-                color="blue">
-            </l-polyline>
-            <l-circle-marker
-                v-for="waypoint in course.waypoints"
-                :key="waypoint._id"
-                :lat-lng="[waypoint.lat, waypoint.lon]"
-                :radius="8"
-                :fill=true
-                :color="markerColors[waypoint.type]"
-                :fillColor="markerColors[waypoint.type]"
-                fillOpacity="0.5"
-              />
-          </l-map>
+            <course-map :course="course"></course-map>
           </b-tab>
         </b-tabs>
       </b-col>
@@ -91,10 +70,10 @@
 
 <script>
 import LineChart from './LineChart.js'
-import {LMap, LTileLayer, LPolyline, LCircleMarker} from 'vue2-leaflet'
 import api from '@/api'
 import util from '../../shared/utilities'
 import gapModel from '../../shared/gapModel'
+import CourseMap from './CourseMap'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
@@ -107,10 +86,7 @@ export default {
   props: ['isAuthenticated', 'user'],
   components: {
     LineChart,
-    LMap,
-    LTileLayer,
-    LPolyline,
-    LCircleMarker,
+    CourseMap,
     SplitTable,
     SegmentTable,
     WaypointTable,
@@ -177,14 +153,6 @@ export default {
         legend: {
           display: false
         }
-      },
-      mapLatLon: [],
-      mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
-      markerColors: {
-        start: 'black',
-        finish: 'black',
-        aid: 'red',
-        landmark: 'green'
       }
     }
   },
@@ -311,7 +279,6 @@ export default {
     if (!this.course.points[0].hasOwnProperty('loc')) {
       this.course.points = util.addLoc(this.course.points)
     }
-    this.updateMapLatLon()
     this.updateChartProfile()
     // calc grade adjustment:
     var tot = 0
@@ -405,13 +372,6 @@ export default {
     transparentize: function (color, opacity) {
       var alpha = opacity === undefined ? 0.5 : 1 - opacity
       return window.Color(color).alpha(alpha).rgbString()
-    },
-    updateMapLatLon: function () {
-      var arr = []
-      for (var i = 0, il = this.course.points.length; i < il; i++) {
-        arr.push([this.course.points[i].lat, this.course.points[i].lon])
-      }
-      this.mapLatLon = arr
     },
     async newPlan () {
       this.planEdit = {}
