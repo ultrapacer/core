@@ -14,7 +14,7 @@
     <template slot="FOOT_gain">{{ course.gain | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
-    <template slot="FOOT_time">{{ (pacing.time - pacing.delay)| formatTime }}</template>
+    <template slot="FOOT_time">{{ time | formatTime }}</template>
   </b-table>
 </template>
 
@@ -83,6 +83,15 @@ export default {
         })
       }
       return f
+    },
+    time: function () {
+      if (this.splits[0].time) {
+        var t = 0
+        this.splits.forEach(s => t += s.time)
+        return t
+      } else {
+        return 0
+      }
     }
   },
   methods: {

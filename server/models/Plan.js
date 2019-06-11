@@ -25,7 +25,7 @@ var PlanSchema = new Schema({
   pace: {
     type: Number
   },
-  gap: {
+  gnp: {
     type: Number
   },
   drift: {

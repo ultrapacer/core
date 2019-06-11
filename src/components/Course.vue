@@ -95,7 +95,7 @@
 import LineChart from './LineChart.js'
 import api from '@/api'
 import util from '../../shared/utilities'
-import gapModel from '../../shared/gapModel'
+import gnpModel from '../../shared/gnp'
 import CourseMap from './CourseMap'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
@@ -309,11 +309,13 @@ export default {
     // calc grade adjustment:
     var tot = 0
     var len = 0
-    for (var j = 1, jl = this.course.points.length; j < jl; j++) {
-      len = this.course.points[j].loc - this.course.points[j - 1].loc
-      tot += gapModel(this.course.points[j].grade) * len
+    var p = this.course.points
+    for (var j = 1, jl = p.length; j < jl; j++) {
+      len = p[j].loc - p[j - 1].loc
+      var grd = (p[j - 1].grade + p[j].grade) / 2
+      tot += gnpModel(grd) * len
     }
-    this.gradeAdjustment = tot / this.course.points[this.course.points.length - 1].loc
+    this.gradeAdjustment = tot / p[p.length - 1].loc
     this.updatePacing()
     this.initializing = false
   },
@@ -442,7 +444,7 @@ export default {
       if (!this.course._plan) { return }
       var time = 0
       var pace = 0
-      var gap = 0
+      var gnp = 0
 
       var nwp = this.course.waypoints.filter(wp => wp.type === 'aid').length
       var delay = nwp * this.course._plan.waypointDelay
@@ -450,24 +452,23 @@ export default {
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
         pace = (time - delay) / this.course.distance
-        gap = pace / this.gradeAdjustment
+        gnp = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
         time = pace * this.course.distance + delay
-        gap = pace / this.gradeAdjustment
-      } else if (this.course._plan.pacingMethod === 'gap') {
-        gap = this.course._plan.pacingTarget
-        pace = gap * this.gradeAdjustment
+        gnp = pace / this.gradeAdjustment
+      } else if (this.course._plan.pacingMethod === 'gnp') {
+        gnp = this.course._plan.pacingTarget
+        pace = gnp * this.gradeAdjustment
         time = pace * this.course.distance + delay
       }
       this.pacing = {
         time: time,
         delay: delay,
         pace: pace,
-        gap: gap,
+        gnp: gnp,
         drift: this.course._plan.drift
       }
-      console.log(this.pacing)
     },
     updateFocus: function (focus) {
       this.mapFocus = focus

@@ -25,7 +25,7 @@
     </p>
     <p class="mb-1">
       Grade Normalized Pace:
-      <b>{{ sec2string(fPace(pacing.gap), 'mm:ss') }}</b>
+      <b>{{ sec2string(fPace(pacing.gnp), 'mm:ss') }}</b>
     </p>
   </b-list-group-item>
   <b-list-group-item>
@@ -71,7 +71,7 @@ export default {
       methods: {
         time: 'Finish Time',
         pace: 'Average Pace',
-        gap: 'Grade Adjusted Pace'
+        gnp: 'Grade Normalized Pace'
       }
     }
   },
@@ -86,7 +86,7 @@ export default {
         var s = this.plan.pacingTarget
         if (
           this.plan.pacingMethod === 'pace' ||
-          this.plan.pacingMethod === 'gap'
+          this.plan.pacingMethod === 'gnp'
         ) {
           s = s / this.units.distScale
           return timeUtil.sec2string(s, 'mm:ss')
@@ -98,10 +98,10 @@ export default {
       }
     },
     startPace: function () {
-      return this.pacing.gap * (1 - this.plan.drift / 200)
+      return this.pacing.gnp * (1 - this.plan.drift / 200)
     },
     endPace: function () {
-      return this.pacing.gap * (1 + this.plan.drift / 200)
+      return this.pacing.gnp * (1 + this.plan.drift / 200)
     }
   },
   methods: {

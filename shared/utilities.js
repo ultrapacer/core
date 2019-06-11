@@ -1,7 +1,7 @@
 /* eslint new-cap: 0 */
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
-const gapModel = require('./gapModel')
+const gnp = require('./gnp')
 
 function calcStats (points) {
   var distance = 0
@@ -107,15 +107,15 @@ function calcSegments (points, breaks, pacing) {
         if (j0 >= 0) {
           var len = segments[j].start - points[i - 1].loc
           var mid = (segments[j].start + points[i - 1].loc) / 2
-          segments[j0].time += pacing.gap * gapModel(grade) * driftFact(mid) * len
+          segments[j0].time += pacing.gnp * gnp(grade) * driftFact(mid) * len
         }
         var len = points[i].loc - segments[j].start
         var mid = (points[i].loc + segments[j].start) / 2
-        segments[j].time += pacing.gap * gapModel(grade) * driftFact(mid) * len
+        segments[j].time += pacing.gnp * gnp(grade) * driftFact(mid) * len
       } else if (j >= 0) {
         var len = points[i].loc - points[i - 1].loc
         var mid = (points[i].loc + points[i - 1].loc) / 2
-        segments[j].time += pacing.gap * gapModel(grade) * driftFact(mid) * len
+        segments[j].time += pacing.gnp * gnp(grade) * driftFact(mid) * len
       }
     }
     j0 = j

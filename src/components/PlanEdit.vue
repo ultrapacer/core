@@ -82,7 +82,7 @@ export default {
       pacingMethods: [
         { value: 'time', text: 'Finish Time' },
         { value: 'pace', text: 'Average Pace' },
-        { value: 'gap', text: 'Grade Adjusted Pace' }
+        { value: 'gnp', text: 'Grade Normalized Pace' }
       ],
       saving: false,
       deleting: false
@@ -97,7 +97,10 @@ export default {
       }
       if (this.model.pacingTarget) {
         var s = this.model.pacingTarget
-        if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+        if (
+          this.model.pacingMethod === 'pace' ||
+          this.model.pacingMethod === 'gnp'
+        ) {
           s = s / this.units.distScale
           this.model.pacingTargetF = timeUtil.sec2string(s, 'mm:ss')
         } else {
@@ -113,7 +116,10 @@ export default {
   computed: {
     targetLabel: function () {
       var str = ' [hh:mm:ss]'
-      if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+      if (
+        this.model.pacingMethod === 'pace' ||
+        this.model.pacingMethod === 'gnp'
+      ) {
         str = ` [(mm:ss)/${this.units.dist}]`
       }
       for (var i = 0; i < this.pacingMethods.length; i++) {
@@ -123,14 +129,20 @@ export default {
       }
     },
     targetPlaceholder: function () {
-      if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+      if (
+        this.model.pacingMethod === 'pace' ||
+        this.model.pacingMethod === 'gnp'
+      ) {
         return 'mm:ss'
       } else {
         return 'hh:mm:ss'
       }
     },
     targetMask: function () {
-      if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+      if (
+        this.model.pacingMethod === 'pace' ||
+        this.model.pacingMethod === 'gnp'
+      ) {
         return '##:##'
       } else {
         return '##:##:##'
@@ -148,7 +160,10 @@ export default {
       if (this.saving) { return }
       this.saving = true
       this.model.pacingTarget = timeUtil.string2sec(this.model.pacingTargetF)
-      if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'gap') {
+      if (
+        this.model.pacingMethod === 'pace' ||
+        this.model.pacingMethod === 'gnp'
+      ) {
         this.model.pacingTarget = this.model.pacingTarget * this.units.distScale
       }
       this.model.waypointDelay = timeUtil.string2sec(this.model.waypointDelayF)
