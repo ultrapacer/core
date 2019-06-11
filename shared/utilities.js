@@ -66,7 +66,7 @@ function calcSegments (points, breaks, pacing) {
   var j = 0
   var j0 = 0
   var delta0 = 0
-  function driftFact(mid) {
+  function driftFact (mid) {
     if (pacing.drift) {
       var mid = (points[i].loc + points[i - 1].loc) / 2
       return 1 + (mid - cMid) / cLen * (pacing.drift / 100)

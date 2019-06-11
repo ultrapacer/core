@@ -74,6 +74,14 @@
           <b-tab title="Map" active>
             <course-map :course="course" :focus="mapFocus"></course-map>
           </b-tab>
+          <b-tab v-if="course._plan" title="Plan">
+            <plan-details
+                :course="course"
+                :plan="course._plan"
+                :pacing="pacing"
+                :units="units"
+              ></plan-details>
+          </b-tab>
         </b-tabs>
       </b-col>
     </b-row>
@@ -92,6 +100,7 @@ import CourseMap from './CourseMap'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
+import PlanDetails from './PlanDetails'
 import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
 import SegmentEdit from './SegmentEdit'
@@ -105,6 +114,7 @@ export default {
     SplitTable,
     SegmentTable,
     WaypointTable,
+    PlanDetails,
     PlanEdit,
     WaypointEdit,
     SegmentEdit
@@ -313,6 +323,7 @@ export default {
     },
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
+      this.updatePacing()
       if (typeof callback === 'function') callback()
     },
     async deleteWaypoint (waypoint, cb) {
