@@ -52,13 +52,14 @@ function calcSegments (points, breaks, pacing) {
   var segments = []
   var alts = getElevation(points, breaks)
   for (var i = 1, il = breaks.length; i < il; i++) {
+    var len = breaks[i] - breaks[i - 1]
     segments.push({
       start: breaks[i - 1],
       end: breaks[i],
-      len: breaks[i] - breaks[i - 1],
+      len: len,
       gain: 0,
       loss: 0,
-      grade: round((alts[i] - alts[i - 1]) / (breaks[i] - breaks[i - 1]) / 10, 4),
+      grade: round((alts[i] - alts[i - 1]) / len / 10, 4),
       time: 0
     })
   }
