@@ -10,11 +10,11 @@
     <h5 class="mb-1">Time</h5>
     <p class="mb-1">
       Total Time:
-      <b>{{ sec2string(fPace(pacing.time), '[h]:m:ss') }}</b>
+      <b>{{ sec2string(pacing.time, '[h]:m:ss') }}</b>
     </p>
     <p class="mb-1">
       Moving Time:
-      <b>{{ sec2string(fPace(pacing.time - pacing.delay), '[h]:m:ss') }}</b>
+      <b>{{ sec2string(pacing.time - pacing.delay, '[h]:m:ss') }}</b>
     </p>
   </b-list-group-item>
   <b-list-group-item>
@@ -42,6 +42,22 @@
       Total Aid Station Delay:
       <b>{{ sec2string(pacing.delay, '[h]:m:ss') }}</b>
     </p>
+  </b-list-group-item>
+  <b-list-group-item>
+    <h5 class="mb-1">Pace Drift</h5>
+    <p class="mb-1">
+      Pace Drift:
+      <b>{{ plan.drift }} %</b>
+    </p>
+    <p class="mb-1">
+      Starting Pace:
+      <b>{{ sec2string(fPace(startPace), 'mm:ss') }}</b> *
+    </p>
+    <p class="mb-1">
+      Ending Pace:
+      <b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *
+    </p>
+    <small>&nbsp; *Grade Normalized</small>
   </b-list-group-item>
 </b-list-group>
 </template>
@@ -80,11 +96,17 @@ export default {
       } else {
         return ''
       }
+    },
+    startPace: function () {
+      return this.pacing.gap * (1 - this.plan.drift / 200)
+    },
+    endPace: function () {
+      return this.pacing.gap * (1 + this.plan.drift / 200)
     }
   },
   methods: {
     fPace: function (p) {
-      return p = p / this.units.distScale
+      return p / this.units.distScale
     },
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)

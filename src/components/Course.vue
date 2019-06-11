@@ -441,28 +441,24 @@ export default {
     updatePacing () {
       if (!this.course._plan) { return }
       var time = 0
-      var delay = 0
       var pace = 0
       var gap = 0
 
-      for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
-        if (this.course.waypoints[i].type === 'aid') {
-          delay += this.course._plan.waypointDelay
-        }
-      }
+      var nwp = this.course.waypoints.filter(wp => wp.type === 'aid').length
+      var delay = nwp * this.course._plan.waypointDelay
 
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
-        pace = (time - delay) / this.course.points[this.course.points.length - 1].loc
+        pace = (time - delay) / this.course.distance
         gap = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
-        time = pace * this.course.points[this.course.points.length - 1].loc + delay
+        time = pace * this.course.distance + delay
         gap = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'gap') {
         gap = this.course._plan.pacingTarget
         pace = gap * this.gradeAdjustment
-        time = pace * this.course.points[this.course.points.length - 1].loc + delay
+        time = pace * this.course.distance + delay
       }
       this.pacing = {
         time: time,
@@ -471,6 +467,7 @@ export default {
         gap: gap,
         drift: this.course._plan.drift
       }
+      console.log(this.pacing)
     },
     updateFocus: function (focus) {
       this.mapFocus = focus
