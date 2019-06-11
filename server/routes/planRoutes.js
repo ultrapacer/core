@@ -29,9 +29,6 @@ planRoutes.route('/:id').put(async function (req, res) {
       plan.description = req.body.description
       plan.pacingMethod = req.body.pacingMethod
       plan.pacingTarget = req.body.pacingTarget
-      plan.time = req.body.time
-      plan.pace = req.body.pace
-      plan.gnp = req.body.gnp
       plan.drift = req.body.drift
       plan.waypointDelay = req.body.waypointDelay
       await plan.save()

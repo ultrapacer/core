@@ -19,15 +19,6 @@ var PlanSchema = new Schema({
   pacingTarget: {
     type: Number
   },
-  time: {
-    type: Number
-  },
-  pace: {
-    type: Number
-  },
-  gnp: {
-    type: Number
-  },
   drift: {
     type: Number,
     default: 0

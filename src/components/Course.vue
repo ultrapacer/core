@@ -451,7 +451,7 @@ export default {
 
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
-        pace = (time - delay) / this.course.distance
+        pace = (time - delay) / this.course.points[this.course.points.length - 1].loc
         gnp = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
