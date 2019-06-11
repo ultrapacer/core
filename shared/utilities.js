@@ -98,7 +98,7 @@ function calcSegments (points, breaks, pacing) {
     }
     if (pacing) {
       var grade = 0
-      if (i === 0 || i === points.length - 1) {
+      if (i === 0) {
         grade = points[i].grade
       } else {
         grade = (points[i - 1].grade + points[i].grade) / 2
