@@ -302,9 +302,7 @@ export default {
       return
     }
     this.$title = this.course.name
-    if (!this.course.points[0].hasOwnProperty('loc')) {
-      this.course.points = util.addLoc(this.course.points)
-    }
+    util.addLoc(this.course.points)
     this.updateChartProfile()
     // calc grade adjustment:
     var tot = 0
@@ -445,22 +443,23 @@ export default {
       var time = 0
       var pace = 0
       var gnp = 0
+      var l = this.course.points[this.course.points.length - 1].loc
 
       var nwp = this.course.waypoints.filter(wp => wp.type === 'aid').length
       var delay = nwp * this.course._plan.waypointDelay
 
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
-        pace = (time - delay) / this.course.points[this.course.points.length - 1].loc
+        pace = (time - delay) / l
         gnp = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
-        time = pace * this.course.distance + delay
+        time = pace * l + delay
         gnp = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'gnp') {
         gnp = this.course._plan.pacingTarget
         pace = gnp * this.gradeAdjustment
-        time = pace * this.course.distance + delay
+        time = pace * l + delay
       }
       this.pacing = {
         time: time,

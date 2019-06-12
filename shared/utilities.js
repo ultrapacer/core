@@ -1,7 +1,7 @@
 /* eslint new-cap: 0 */
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
-const gnp = require('./gnp')
+const gnpFact = require('./gnp')
 
 function calcStats (points) {
   var distance = 0
@@ -48,8 +48,9 @@ function calcSplits (points, units, pacing) {
 
 function calcSegments (p, breaks, pacing) {
   // p: points array of {loc, lat, lon, alt}
+  // breaks: array of [loc,loc,...] to break on
+  // pacing: pacing object with gnp and drift fields
   var cLen = p[p.length - 1].loc
-  var cMid = cLen / 2
   var s = [] // segments array
   var alts = getElevation(p, breaks)
   for (var i = 1, il = breaks.length; i < il; i++) {
@@ -60,7 +61,7 @@ function calcSegments (p, breaks, pacing) {
       len: len,
       gain: 0,
       loss: 0,
-      grade: round((alts[i] - alts[i - 1]) / len / 10, 4),
+      grade: (alts[i] - alts[i - 1]) / len / 10,
       time: 0
     })
   }
@@ -96,7 +97,7 @@ function calcSegments (p, breaks, pacing) {
     }
     if (pacing) {
       grade = (p[i - 1].grade + p[i].grade) / 2
-      gnpF = gnp(grade)
+      gnpF = gnpFact(grade)
       if (j > j0) {
         if (j0 >= 0) {
           len = s[j].start - p[i - 1].loc
@@ -107,9 +108,8 @@ function calcSegments (p, breaks, pacing) {
         dF = driftFact([p[i].loc, s[j].start], pacing.drift, cLen)
         s[j].time += pacing.gnp * (1 + gnpF + dF) * len
       } else if (j >= 0) {
-        len = p[i].loc - p[i - 1].loc
         dF = driftFact([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
-        s[j].time += pacing.gnp * (1 + gnpF + dF) * len
+        s[j].time += pacing.gnp * (1 + gnpF + dF) * p[i].dloc
       }
     }
     j0 = j
@@ -136,31 +136,46 @@ function driftFact (loc, drift, length) {
   }
 }
 
-function cleanPoints (points) {
-  var points2 = []
+function cleanPoints (p) {
+  // remove points with same lat/lon
+  // p: points array of {lat, lon, elevation}
+  // NOTE: elevation field gets renamed to alt here
+  var p2 = []
   var avgQty = 1
-  for (var i = 0, il = points.length; i < il; i++) {
-    if (i > 0 && points[i].lat === points[i - 1].lat && points[i].lon === points[i - 1].lon) {
-      points2[points2.length - 1].alt = round(((avgQty * points2[points2.length - 1].alt) + points[i].elevation) / (avgQty + 1), 2)
+  for (var i = 0, il = p.length; i < il; i++) {
+    if (i > 0 && p[i].lat === p[i - 1].lat && p[i].lon === p[i - 1].lon) {
+      p2[p2.length - 1].alt = round(((avgQty * p2[p2.length - 1].alt) + p[i].elevation) / (avgQty + 1), 2)
       avgQty += 1
     } else {
       avgQty = 1
-      points2.push({
-        alt: points[i].elevation,
-        lat: points[i].lat,
-        lon: points[i].lon
+      p2.push({
+        alt: p[i].elevation,
+        lat: p[i].lat,
+        lon: p[i].lon
       })
     }
   }
-  return points2
+  return p2
 }
 
 function addLoc (p) {
+  // add loc, dloc, grade fields
+  // update alt field with smoothed value
+  // p: points array of {lat, lon, alt}
   var d = 0
+  var l = 0
   p[0].loc = 0
+  p[0].dloc = 0
   for (var i = 1, il = p.length; i < il; i++) {
-    d += (gpxParse.utils.calculateDistance(p[i - 1].lat, p[i - 1].lon, p[i].lat, p[i].lon))
-    p[i].loc = d
+    d = gpxParse.utils.calculateDistance(
+      p[i - 1].lat,
+      p[i - 1].lon,
+      p[i].lat,
+      p[i].lon
+    )
+    l += d
+    p[i].dloc = d
+    p[i].loc = l
   }
 
   var locs = p.map(x => x.loc)
