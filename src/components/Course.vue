@@ -309,9 +309,8 @@ export default {
     var len = 0
     var p = this.course.points
     for (var j = 1, jl = p.length; j < jl; j++) {
-      len = p[j].loc - p[j - 1].loc
       var grd = (p[j - 1].grade + p[j].grade) / 2
-      tot += (1 + gnpFactor(grd)) * len
+      tot += (1 + gnpFactor(grd)) * p[j].dloc
     }
     this.gradeAdjustment = tot / p[p.length - 1].loc
     this.updatePacing()

@@ -278,7 +278,7 @@ function getElevation (points, location) {
         if (points[i + 1].loc === points[i].loc) {
           elevs.push((points[i + 1].alt + points[i].alt) / 2)
         } else {
-          num = points[i].alt + (location - points[i].loc) * (points[i + 1].alt - points[i].alt) / (points[i + 1].loc - points[i].loc)
+          num = points[i].alt + (location - points[i].loc) * (points[i + 1].alt - points[i].alt) / (points[i + 1].dloc)
           elevs.push(round(num, 2))
         }
       }
