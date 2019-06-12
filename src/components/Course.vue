@@ -303,10 +303,10 @@ export default {
     }
     this.$title = this.course.name
     util.addLoc(this.course.points)
+    this.course.len = this.course.points[this.course.points.length - 1].loc
     this.updateChartProfile()
     // calc grade adjustment:
     var tot = 0
-    var len = 0
     var p = this.course.points
     for (var j = 1, jl = p.length; j < jl; j++) {
       var grd = (p[j - 1].grade + p[j].grade) / 2
@@ -350,50 +350,45 @@ export default {
       this.segment = waypoint
     },
     updateChartProfile: function () {
-      var plimit = 500
-      var data = []
-      var data2 = []
-      if (this.course.points.length < plimit) {
-        for (var i = 0, il = this.course.points.length; i < il; i++) {
-          data.push({
-            x: this.course.points[i].loc * this.units.distScale,
-            y: this.course.points[i].alt * this.units.altScale
-          })
-          data2.push({
-            x: this.course.points[i].loc * this.units.distScale,
-            y: this.course.points[i].grade
-          })
-        }
+      var pmax = 500 // number of points (+1)
+      var xs = [] // x's array
+      var ysa = [] // y's array for altitude
+      var ysg = [] // y's array for grade
+      var chartProfile = []
+      var chartGrade = []
+      if (this.course.points.length < pmax) {
+        xs = this.course.points.map(x => x.loc)
+        ysa = this.course.points.map(x => x.alt)
+        ysg = this.course.points.map(x => x.grade)
       } else {
-        var max = this.course.points[this.course.points.length - 1].loc
-        var xs = []
-        for (var j = 0; j <= plimit; j++) {
-          xs.push((j / plimit) * max)
-        }
-        var ysa = util.pointWLSQ(
+        xs = Array(pmax + 1).fill(0).map((e, i) => i++ * this.course.len / pmax)
+        ysa = util.pointWLSQ(
           this.course.points,
           xs,
-          this.course.distance / plimit / 5
+          this.course.len / pmax / 5
         )
-        var ysg = util.pointWLSQ(
+        ysg = util.pointWLSQ(
           this.course.points,
           xs,
-          5 * this.course.distance / plimit
+          5 * this.course.len / pmax
         )
-        for (i = 0, il = xs.length; i < il; i++) {
-          data.push({
-            x: xs[i] * this.units.distScale,
-            y: ysa[i].alt * this.units.altScale
-          })
-          data2.push({
-            x: xs[i] * this.units.distScale,
-            y: ysg[i].grade
-          })
-        }
       }
-      this.chartOptions.scales.xAxes[0].ticks.max = (xs[xs.length - 1] * this.units.distScale) + 0.01
-      this.chartProfile = data
-      this.chartGrade = data2
+      xs.forEach((x, i) => {
+        chartProfile.push({
+          x: x * this.units.distScale,
+          y: ysa[i].alt * this.units.altScale
+        })
+        chartGrade.push({
+          x: x * this.units.distScale,
+          y: ysg[i].grade
+        })
+      })
+      // this is a hack to make the finish waypoint show up:
+      this.chartOptions.scales.xAxes[0].ticks.max = (
+        (xs[xs.length - 1] * this.units.distScale) + 0.01
+      )
+      this.chartProfile = chartProfile
+      this.chartGrade = chartGrade
     },
     transparentize: function (color, opacity) {
       var alpha = opacity === undefined ? 0.5 : 1 - opacity
