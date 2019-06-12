@@ -46,14 +46,15 @@ function calcSplits (points, units, pacing) {
   }
 }
 
-function calcSegments (points, breaks, pacing) {
-  var cLen = points[points.length - 1].loc
+function calcSegments (p, breaks, pacing) {
+  // p: points array of {loc, lat, lon, alt}
+  var cLen = p[p.length - 1].loc
   var cMid = cLen / 2
-  var segments = []
-  var alts = getElevation(points, breaks)
+  var s = [] // segments array
+  var alts = getElevation(p, breaks)
   for (var i = 1, il = breaks.length; i < il; i++) {
     var len = breaks[i] - breaks[i - 1]
-    segments.push({
+    s.push({
       start: breaks[i - 1],
       end: breaks[i],
       len: len,
@@ -67,61 +68,72 @@ function calcSegments (points, breaks, pacing) {
   var j = 0
   var j0 = 0
   var delta0 = 0
-  function driftFact (mid) {
-    if (pacing.drift) {
-      var mid = (points[i].loc + points[i - 1].loc) / 2
-      return 1 + (mid - cMid) / cLen * (pacing.drift / 100)
-    } else {
-      return 1
-    }
-  }
-  for (var i = 1, il = points.length; i < il; i++) {
-    j = segments.findIndex(s => s.start < points[i].loc && s.end >= points[i].loc)
+  var len = 0
+  var dF = 0
+  var grade = 0
+  var gnpF = 0
+  for (var i = 1, il = p.length; i < il; i++) {
+    j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
     if (j > j0) {
       // interpolate
       delta0 = interp(
-        points[i - 1].loc,
-        points[i].loc,
-        points[i - 1].alt,
-        points[i].alt,
-        segments[j].start
-      ) - points[i].alt
-      delta = points[i].alt - points[i - 1].alt - delta0
+        p[i - 1].loc,
+        p[i].loc,
+        p[i - 1].alt,
+        p[i].alt,
+        s[j].start
+      ) - p[i].alt
+      delta = p[i].alt - p[i - 1].alt - delta0
     } else {
-      delta = points[i].alt - points[i - 1].alt
+      delta = p[i].alt - p[i - 1].alt
       delta0 = 0
     }
     if (j >= 0) {
-      (delta < 0) ? segments[j].loss += delta : segments[j].gain += delta
+      (delta < 0) ? s[j].loss += delta : s[j].gain += delta
     }
     if (j0 >= 0) {
-      (delta0 < 0) ? segments[j0].loss += delta0 : segments[j0].gain += delta0
+      (delta0 < 0) ? s[j0].loss += delta0 : s[j0].gain += delta0
     }
     if (pacing) {
-      var grade = 0
-      if (i === 0) {
-        grade = points[i].grade
-      } else {
-        grade = (points[i - 1].grade + points[i].grade) / 2
-      }
+      grade = (p[i - 1].grade + p[i].grade) / 2
+      gnpF = gnp(grade)
       if (j > j0) {
         if (j0 >= 0) {
-          var len = segments[j].start - points[i - 1].loc
-          var mid = (segments[j].start + points[i - 1].loc) / 2
-          segments[j0].time += pacing.gnp * gnp(grade) * driftFact(mid) * len
+          len = s[j].start - p[i - 1].loc
+          dF = driftFact([p[i - 1].loc, s[j].start], pacing.drift, cLen)
+          s[j0].time += pacing.gnp * (1 + gnpF + dF) * len
         }
-        var len = points[i].loc - segments[j].start
-        var mid = (points[i].loc + segments[j].start) / 2
-        segments[j].time += pacing.gnp * gnp(grade) * driftFact(mid) * len
+        len = p[i].loc - s[j].start
+        dF = driftFact([p[i].loc, s[j].start], pacing.drift, cLen)
+        s[j].time += pacing.gnp * (1 + gnpF + dF) * len
       } else if (j >= 0) {
-        var len = points[i].loc - points[i - 1].loc
-        var mid = (points[i].loc + points[i - 1].loc) / 2
-        segments[j].time += pacing.gnp * gnp(grade) * driftFact(mid) * len
+        len = p[i].loc - p[i - 1].loc
+        dF = driftFact([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
+        s[j].time += pacing.gnp * (1 + gnpF + dF) * len
       }
     }
     j0 = j
   }
-  return segments
+  return s
+}
+
+function driftFact (loc, drift, length) {
+  // returns a linear drift factor
+  // loc: point or array [start, end] [km]
+  // drift: in %
+  // length: total course length [km]
+  if (drift) {
+    var mid = 0
+    if (Array.isArray(loc)) {
+      mid = (loc[0] + loc[1]) / 2
+    } else {
+      mid = loc
+    }
+    var dF = ((-drift / 2) + (mid / length * drift)) / 100
+    return dF
+  } else {
+    return 0
+  }
 }
 
 function cleanPoints (points) {

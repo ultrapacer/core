@@ -95,7 +95,7 @@
 import LineChart from './LineChart.js'
 import api from '@/api'
 import util from '../../shared/utilities'
-import gnpModel from '../../shared/gnp'
+import gnpFactor from '../../shared/gnp'
 import CourseMap from './CourseMap'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
@@ -313,7 +313,7 @@ export default {
     for (var j = 1, jl = p.length; j < jl; j++) {
       len = p[j].loc - p[j - 1].loc
       var grd = (p[j - 1].grade + p[j].grade) / 2
-      tot += gnpModel(grd) * len
+      tot += (1 + gnpFactor(grd)) * len
     }
     this.gradeAdjustment = tot / p[p.length - 1].loc
     this.updatePacing()

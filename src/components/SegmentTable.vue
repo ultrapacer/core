@@ -108,7 +108,7 @@ export default {
     time: function () {
       if (this.segments[0].time) {
         var t = 0
-        this.segments.forEach(s => t += s.time)
+        this.segments.forEach(s => { t += s.time })
         return t
       } else {
         return 0

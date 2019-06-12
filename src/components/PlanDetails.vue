@@ -2,7 +2,7 @@
 <b-list-group>
   <b-list-group-item>
     <h5 class="mb-1">Pacing Calculation Basis</h5>
-    <p class="mb-1">{{ methods[plan.pacingMethod] }}
+    <p class="mb-1"><b>{{ methods[plan.pacingMethod] }}</b>
       of <b>{{ pacingTargetF }}</b>
     </p>
   </b-list-group-item>
@@ -18,15 +18,20 @@
     </p>
   </b-list-group-item>
   <b-list-group-item>
-    <h5 class="mb-1">Moving Paces</h5>
+    <h5 class="mb-1">Paces</h5>
     <p class="mb-1">
       Average Pace:
-      <b>{{ sec2string(fPace(pacing.pace), 'mm:ss') }}</b>
+      <b>{{ sec2string(fPace(pacing.pace), 'mm:ss') }}</b> *
     </p>
     <p class="mb-1">
-      Grade Normalized Pace:
-      <b>{{ sec2string(fPace(pacing.gnp), 'mm:ss') }}</b>
+      Average Grade Normalized Pace:
+      <b>{{ sec2string(fPace(pacing.gnp), 'mm:ss') }}</b> *
     </p>
+    <p class="mb-1">
+      Average Overall Pace:
+      <b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b>
+    </p>
+    <small>&nbsp; *While Moving</small>
   </b-list-group-item>
   <b-list-group-item>
     <h5 class="mb-1">Delays</h5>
@@ -52,6 +57,10 @@
     <p class="mb-1">
       Starting Pace:
       <b>{{ sec2string(fPace(startPace), 'mm:ss') }}</b> *
+    </p>
+    <p class="mb-1">
+      Average Pace:
+      <b>{{ sec2string(fPace(pacing.gnp), 'mm:ss') }}</b> *
     </p>
     <p class="mb-1">
       Ending Pace:

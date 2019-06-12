@@ -87,7 +87,7 @@ export default {
     time: function () {
       if (this.splits[0].time) {
         var t = 0
-        this.splits.forEach(s => t += s.time)
+        this.splits.forEach(s => { t += s.time })
         return t
       } else {
         return 0
