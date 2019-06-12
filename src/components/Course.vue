@@ -74,6 +74,14 @@
           <b-tab title="Map" active>
             <course-map :course="course" :focus="mapFocus"></course-map>
           </b-tab>
+          <b-tab v-if="course._plan" title="Plan">
+            <plan-details
+                :course="course"
+                :plan="course._plan"
+                :pacing="pacing"
+                :units="units"
+              ></plan-details>
+          </b-tab>
         </b-tabs>
       </b-col>
     </b-row>
@@ -87,11 +95,12 @@
 import LineChart from './LineChart.js'
 import api from '@/api'
 import util from '../../shared/utilities'
-import gapModel from '../../shared/gapModel'
+import gnpFactor from '../../shared/gnp'
 import CourseMap from './CourseMap'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
+import PlanDetails from './PlanDetails'
 import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
 import SegmentEdit from './SegmentEdit'
@@ -105,6 +114,7 @@ export default {
     SplitTable,
     SegmentTable,
     WaypointTable,
+    PlanDetails,
     PlanEdit,
     WaypointEdit,
     SegmentEdit
@@ -292,18 +302,17 @@ export default {
       return
     }
     this.$title = this.course.name
-    if (!this.course.points[0].hasOwnProperty('loc')) {
-      this.course.points = util.addLoc(this.course.points)
-    }
+    util.addLoc(this.course.points)
     this.updateChartProfile()
     // calc grade adjustment:
     var tot = 0
     var len = 0
-    for (var j = 1, jl = this.course.points.length; j < jl; j++) {
-      len = this.course.points[j].loc - this.course.points[j - 1].loc
-      tot += gapModel(this.course.points[j].grade) * len
+    var p = this.course.points
+    for (var j = 1, jl = p.length; j < jl; j++) {
+      var grd = (p[j - 1].grade + p[j].grade) / 2
+      tot += (1 + gnpFactor(grd)) * p[j].dloc
     }
-    this.gradeAdjustment = tot / this.course.points[this.course.points.length - 1].loc
+    this.gradeAdjustment = tot / p[p.length - 1].loc
     this.updatePacing()
     this.initializing = false
   },
@@ -313,6 +322,7 @@ export default {
     },
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
+      this.updatePacing()
       if (typeof callback === 'function') callback()
     },
     async deleteWaypoint (waypoint, cb) {
@@ -430,34 +440,31 @@ export default {
     updatePacing () {
       if (!this.course._plan) { return }
       var time = 0
-      var delay = 0
       var pace = 0
-      var gap = 0
+      var gnp = 0
+      var l = this.course.points[this.course.points.length - 1].loc
 
-      for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
-        if (this.course.waypoints[i].type === 'aid') {
-          delay += this.course._plan.waypointDelay
-        }
-      }
+      var nwp = this.course.waypoints.filter(wp => wp.type === 'aid').length
+      var delay = nwp * this.course._plan.waypointDelay
 
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
-        pace = (time - delay) / this.course.points[this.course.points.length - 1].loc
-        gap = pace / this.gradeAdjustment
+        pace = (time - delay) / l
+        gnp = pace / this.gradeAdjustment
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
-        time = pace * this.course.points[this.course.points.length - 1].loc + delay
-        gap = pace / this.gradeAdjustment
-      } else if (this.course._plan.pacingMethod === 'gap') {
-        gap = this.course._plan.pacingTarget
-        pace = gap * this.gradeAdjustment
-        time = pace * this.course.points[this.course.points.length - 1].loc + delay
+        time = pace * l + delay
+        gnp = pace / this.gradeAdjustment
+      } else if (this.course._plan.pacingMethod === 'gnp') {
+        gnp = this.course._plan.pacingTarget
+        pace = gnp * this.gradeAdjustment
+        time = pace * l + delay
       }
       this.pacing = {
         time: time,
         delay: delay,
         pace: pace,
-        gap: gap,
+        gnp: gnp,
         drift: this.course._plan.drift
       }
     },
