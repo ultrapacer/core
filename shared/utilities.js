@@ -144,7 +144,7 @@ function cleanPoints (p) {
   var avgQty = 1
   for (var i = 0, il = p.length; i < il; i++) {
     if (i > 0 && p[i].lat === p[i - 1].lat && p[i].lon === p[i - 1].lon) {
-      p2[p2.length - 1].alt = round(((avgQty * p2[p2.length - 1].alt) + p[i].elevation) / (avgQty + 1), 2)
+      p2[p2.length - 1].alt = ((avgQty * p2[p2.length - 1].alt) + p[i].elevation) / (avgQty + 1)
       avgQty += 1
     } else {
       avgQty = 1
@@ -216,9 +216,9 @@ function pointWLSQ (p, locs, gt) {
     }
 
     var ab = linearRegression(xyr)
-    var grade = round(ab[0] / 10, 2)
+    var grade = ab[0] / 10
     if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
-    var alt = round((x * ab[0]) + ab[1], 2)
+    var alt = (x * ab[0]) + ab[1]
     ga.push({
       grade: grade,
       alt: alt
@@ -238,7 +238,8 @@ function linearRegression (xyr) {
     x = xyr[i][0]; y = xyr[i][1]
 
     // this is the weight for that pair
-    // set to 1 (and simplify code accordingly, ie, sumr becomes xy.length) if weighting is not needed
+    // set to 1 (and simplify code accordingly, ie, sumr becomes xy.length) if
+    // weighting is not needed
     r = xyr[i][2]
 
     // consider checking for NaN in the x, y and r variables here
@@ -279,7 +280,7 @@ function getElevation (points, location) {
           elevs.push((points[i + 1].alt + points[i].alt) / 2)
         } else {
           num = points[i].alt + (location - points[i].loc) * (points[i + 1].alt - points[i].alt) / (points[i + 1].dloc)
-          elevs.push(round(num, 2))
+          elevs.push(num)
         }
       }
       location = locs.shift()

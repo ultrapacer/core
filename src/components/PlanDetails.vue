@@ -24,14 +24,15 @@
       <b>{{ sec2string(fPace(pacing.pace), 'mm:ss') }}</b> *
     </p>
     <p class="mb-1">
-      Average Grade Normalized Pace:
-      <b>{{ sec2string(fPace(pacing.gnp), 'mm:ss') }}</b> *
+      Average GNP:
+      <b>{{ sec2string(fPace(pacing.gnp), 'mm:ss') }}</b> *,**
     </p>
     <p class="mb-1">
       Average Overall Pace:
       <b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b>
     </p>
     <small>&nbsp; *While Moving</small>
+    <small>&nbsp; ** GNP: Grade Normalized Pace</small>
   </b-list-group-item>
   <b-list-group-item>
     <h5 class="mb-1">Delays</h5>
