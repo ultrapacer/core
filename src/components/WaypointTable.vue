@@ -15,12 +15,16 @@
             Adjust Location:
           </b-col>
           <b-col sm="8">
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-1)">&lt;&lt;&lt;</b-button>
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-0.1)">&lt;&lt;</b-button>
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-0.01)">&lt;</b-button>
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,0.01)">&gt;</b-button>
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,0.1)">&gt;&gt;</b-button>
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,1)">&gt;&gt;&gt;</b-button>
+            <b-button
+                v-for="sb in shiftButtons"
+                v-bind:key="sb.value"
+                size="sm"
+                class="mr-1"
+                variant="outline-primary"
+                @click="shiftWaypoint(row.item, sb.value)"
+              >
+              {{ sb.display }}
+            </b-button>
           </b-col>
         </b-row>
       </b-card>
@@ -36,7 +40,15 @@ export default {
   data () {
     return {
       updatingWaypointTimeout: null,
-      updatingWaypointTimeoutID: null
+      updatingWaypointTimeoutID: null,
+      shiftButtons: [
+        { value: -1, display: '<<<' },
+        { value: -0.1, display: '<<' },
+        { value: -0.01, display: '<' },
+        { value: 0.01, display: '>' },
+        { value: 0.1, display: '>>' },
+        { value: 1, display: '>>>' }
+      ]
     }
   },
   computed: {
