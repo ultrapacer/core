@@ -47,6 +47,7 @@
     <delete-modal
       :object="deleteObj"
       :type="'Course'"
+      :cb="deleteCB"
       @delete="deleteCourse"
       @cancel="cancelDelete"
     ></delete-modal>
@@ -70,6 +71,7 @@ export default {
       course: {},
       courses: [],
       courseEditor: false,
+      deleteCB: null,
       deleteObj: {},
       fields: [
         {
@@ -136,10 +138,12 @@ export default {
       this.course = Object.assign({}, course)
     },
     async confirmDelete (course, cb) {
+      if (typeof (cb) === 'function') this.deleteCB = cb
       this.deleteObj = Object.assign({}, course)
     },
-    async cancelDelete (course, cb) {
+    async cancelDelete (cb) {
       this.deleteObj = {}
+      if (typeof (cb) === 'function') cb(new Error())
     },
     async deleteCourse (course, cb) {
       await api.deleteCourse(course._id)
@@ -147,7 +151,7 @@ export default {
       if (index > -1) {
         this.courses.splice(index, 1)
       }
-      (typeof (cb) === 'function') && cb()
+      if (typeof (cb) === 'function') cb()
     }
   }
 }

@@ -21,7 +21,7 @@
 
 <script>
 export default {
-  props: ['object', 'type'],
+  props: ['object', 'type', 'cb'],
   data () {
     return {
       model: {},
@@ -41,7 +41,7 @@ export default {
       this.remove()
     },
     clear () {
-      this.$emit('cancel')
+      this.$emit('cancel', this.cb)
     },
     async remove () {
       this.deleting = true
@@ -50,6 +50,7 @@ export default {
           this.$bvModal.hide('delete-modal')
         }
         this.deleting = false
+        if (typeof (this.cb) === 'function') this.cb()
       })
     }
   }
