@@ -25,7 +25,7 @@
               <v-icon name="edit"></v-icon>
               <span class="d-none d-md-inline">Edit</span>
             </b-button>
-            <b-button size="sm" @click="deleteCourse(row.item)" class="mr-1">
+            <b-button size="sm" @click="confirmDelete(row.item)" class="mr-1">
               <v-icon name="trash"></v-icon>
               <span class="d-none d-md-inline">Delete</span>
             </b-button>
@@ -42,19 +42,27 @@
     <course-edit
       :course="course"
       @refresh="refreshCourses"
+      @delete="confirmDelete"
+    ></course-edit>
+    <delete-modal
+      :object="deleteObj"
+      :type="'Course'"
       @delete="deleteCourse"
-      ></course-edit>
+      @cancel="cancelDelete"
+    ></delete-modal>
   </div>
 </template>
 
 <script>
 import api from '@/api'
 import CourseEdit from './CourseEdit'
+import DeleteModal from './DeleteModal'
 export default {
   title: 'Courses',
   props: ['user'],
   components: {
-    CourseEdit
+    CourseEdit,
+    DeleteModal
   },
   data () {
     return {
@@ -62,6 +70,7 @@ export default {
       course: {},
       courses: [],
       courseEditor: false,
+      deleteObj: {},
       fields: [
         {
           key: 'name',
@@ -126,20 +135,19 @@ export default {
     async editCourse (course) {
       this.course = Object.assign({}, course)
     },
+    async confirmDelete (course, cb) {
+      this.deleteObj = Object.assign({}, course)
+    },
+    async cancelDelete (course, cb) {
+      this.deleteObj = {}
+    },
     async deleteCourse (course, cb) {
-      setTimeout(async () => {
-        if (confirm('Are you sure you want to delete this course?\n' +
-          course.name)) {
-          await api.deleteCourse(course._id)
-          var index = this.courses.findIndex(x => x._id === course._id)
-          if (index > -1) {
-            this.courses.splice(index, 1)
-          }
-          (typeof (cb) === 'function') && cb()
-        } else {
-          (typeof (cb) === 'function') && cb(new Error('not deleted'))
-        }
-      }, 100)
+      await api.deleteCourse(course._id)
+      var index = this.courses.findIndex(x => x._id === course._id)
+      if (index > -1) {
+        this.courses.splice(index, 1)
+      }
+      (typeof (cb) === 'function') && cb()
     }
   }
 }
