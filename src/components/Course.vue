@@ -46,7 +46,14 @@
               ></split-table>
           </b-tab>
           <b-tab title="Waypoints">
-            <waypoint-table :course="course" :waypoints="course.waypoints" :units="units" :owner="owner" :editFn="editWaypoint" :delFn="deleteWaypoint"></waypoint-table>
+            <waypoint-table
+                :course="course"
+                :waypoints="course.waypoints"
+                :units="units"
+                :owner="owner"
+                :editFn="editWaypoint"
+                :delFn="deleteWaypoint"
+              ></waypoint-table>
             <div v-if="owner">
               <b-btn variant="success" @click.prevent="newWaypoint()">
                 <v-icon name="plus"></v-icon><span>New Waypoint</span>
@@ -69,7 +76,8 @@
       <b-col lg="5" order="1">
         <b-tabs content-class="mt-3" v-if="!initializing" class="sticky-top mt-3" >
           <b-tab title="Profile" >
-            <line-chart :chart-data="chartData" :options="chartOptions"></line-chart>
+            <line-chart :chart-data="chartData" :options="chartOptions">
+            </line-chart>
           </b-tab>
           <b-tab title="Map" active>
             <course-map :course="course" :focus="mapFocus"></course-map>
@@ -85,9 +93,27 @@
         </b-tabs>
       </b-col>
     </b-row>
-    <plan-edit v-if="owner" :plan="planEdit" :course="course" :units="units" @refresh="refreshPlan" @delete="deletePlan"></plan-edit>
-    <waypoint-edit v-if="owner" :course="course" :waypoint="waypoint" :units="units" @refresh="refreshWaypoints" @delete="deleteWaypoint"></waypoint-edit>
-    <segment-edit v-if="owner" :segment="segment" @refresh="refreshWaypoints"></segment-edit>
+    <plan-edit
+      v-if="owner"
+      :plan="planEdit"
+      :course="course"
+      :units="units"
+      @refresh="refreshPlan"
+      @delete="deletePlan"
+    ></plan-edit>
+    <waypoint-edit
+      v-if="owner"
+      :course="course"
+      :waypoint="waypoint"
+      :units="units"
+      @refresh="refreshWaypoints"
+      @delete="deleteWaypoint"
+    ></waypoint-edit>
+    <segment-edit
+      v-if="owner"
+      :segment="segment"
+      @refresh="refreshWaypoints"
+    ></segment-edit>
   </div>
 </template>
 

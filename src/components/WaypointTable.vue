@@ -1,11 +1,20 @@
 <template>
-  <b-table :items="waypoints" :fields="fields" primary-key="_id" @row-clicked="toggleRowDetails" hover small>
+  <b-table
+    :items="waypoints"
+    :fields="fields"
+    primary-key="_id"
+    @row-clicked="toggleRowDetails"
+    hover
+    small
+  >
     <template slot="actions" slot-scope="row">
       <b-button size="sm" @click="editFn(row.item)" class="mr-1">
-        <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
+        <v-icon name="edit"></v-icon>
+        <span class="d-none d-md-inline">Edit</span>
       </b-button>
       <b-button size="sm" @click="delFn(row.item)" class="mr-1">
-        <v-icon name="trash"></v-icon><span class="d-none d-md-inline">Delete</span>
+        <v-icon name="trash"></v-icon>
+        <span class="d-none d-md-inline">Delete</span>
       </b-button>
     </template>
     <template slot="row-details" slot-scope="row">
@@ -116,8 +125,8 @@ export default {
       var loc = waypoint.location + delta / this.units.distScale
       if (loc < 0.01 / this.units.distScale) {
         loc = 0.01
-      } else if (loc >= this.course.points[this.course.points.length - 1].loc) {
-        loc = this.course.points[this.course.points.length - 1].loc - (0.01 / this.units.distScale)
+      } else if (loc >= this.course.len) {
+        loc = this.course.len - (0.01 / this.units.distScale)
       }
       waypoint.location = loc
       wputil.updateLLA(waypoint, this.course.points)
