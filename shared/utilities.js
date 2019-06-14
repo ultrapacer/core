@@ -53,8 +53,11 @@ function calcSegments (p, breaks, pacing) {
   var cLen = p[p.length - 1].loc
   var s = [] // segments array
   var alts = getElevation(p, breaks)
-  for (var i = 1, il = breaks.length; i < il; i++) {
-    var len = breaks[i] - breaks[i - 1]
+  var len = 0
+  var i
+  var il
+  for (i = 1, il = breaks.length; i < il; i++) {
+    len = breaks[i] - breaks[i - 1]
     s.push({
       start: breaks[i - 1],
       end: breaks[i],
@@ -69,11 +72,10 @@ function calcSegments (p, breaks, pacing) {
   var j = 0
   var j0 = 0
   var delta0 = 0
-  var len = 0
   var dF = 0
   var grade = 0
   var gnpF = 0
-  for (var i = 1, il = p.length; i < il; i++) {
+  for (i = 1, il = p.length; i < il; i++) {
     j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
     if (j > j0) {
       // interpolate
@@ -228,10 +230,17 @@ function pointWLSQ (p, locs, gt) {
 }
 
 function linearRegression (xyr) {
-  var i,
-    x, y, r,
-    sumx = 0, sumy = 0, sumx2 = 0, sumy2 = 0, sumxy = 0, sumr = 0,
-    a, b
+  var i
+  var x
+  var y
+  var r
+  var sumx = 0
+  var sumy = 0
+  var sumx2 = 0
+  var sumxy = 0
+  var sumr = 0
+  var a
+  var b
 
   for (i = 0; i < xyr.length; i++) {
     // this is our data pair
@@ -249,7 +258,6 @@ function linearRegression (xyr) {
     sumx += r * x
     sumx2 += r * (x * x)
     sumy += r * y
-    sumy2 += r * (y * y)
     sumxy += r * (x * y)
   }
 

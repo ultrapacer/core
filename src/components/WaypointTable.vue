@@ -1,11 +1,20 @@
 <template>
-  <b-table :items="waypoints" :fields="fields" primary-key="_id" @row-clicked="toggleRowDetails" hover small>
+  <b-table
+    :items="waypoints"
+    :fields="fields"
+    primary-key="_id"
+    @row-clicked="toggleRowDetails"
+    hover
+    small
+  >
     <template slot="actions" slot-scope="row">
       <b-button size="sm" @click="editFn(row.item)" class="mr-1">
-        <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
+        <v-icon name="edit"></v-icon>
+        <span class="d-none d-md-inline">Edit</span>
       </b-button>
       <b-button size="sm" @click="delFn(row.item)" class="mr-1">
-        <v-icon name="trash"></v-icon><span class="d-none d-md-inline">Delete</span>
+        <v-icon name="trash"></v-icon>
+        <span class="d-none d-md-inline">Delete</span>
       </b-button>
     </template>
     <template slot="row-details" slot-scope="row">
@@ -15,12 +24,16 @@
             Adjust Location:
           </b-col>
           <b-col sm="8">
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-1)">&lt;&lt;&lt;</b-button>
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-0.1)">&lt;&lt;</b-button>
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,-0.01)">&lt;</b-button>
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,0.01)">&gt;</b-button>
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,0.1)">&gt;&gt;</b-button>
-            <b-button size="sm" class="mr-1" variant="outline-primary" @click="shiftWaypoint(row.item,1)">&gt;&gt;&gt;</b-button>
+            <b-button
+                v-for="sb in shiftButtons"
+                v-bind:key="sb.value"
+                size="sm"
+                class="mr-1"
+                variant="outline-primary"
+                @click="shiftWaypoint(row.item, sb.value)"
+              >
+              {{ sb.display }}
+            </b-button>
           </b-col>
         </b-row>
       </b-card>
@@ -36,7 +49,15 @@ export default {
   data () {
     return {
       updatingWaypointTimeout: null,
-      updatingWaypointTimeoutID: null
+      updatingWaypointTimeoutID: null,
+      shiftButtons: [
+        { value: -1, display: '<<<' },
+        { value: -0.1, display: '<<' },
+        { value: -0.01, display: '<' },
+        { value: 0.01, display: '>' },
+        { value: 0.1, display: '>>' },
+        { value: 1, display: '>>>' }
+      ]
     }
   },
   computed: {
@@ -104,8 +125,8 @@ export default {
       var loc = waypoint.location + delta / this.units.distScale
       if (loc < 0.01 / this.units.distScale) {
         loc = 0.01
-      } else if (loc >= this.course.points[this.course.points.length - 1].loc) {
-        loc = this.course.points[this.course.points.length - 1].loc - (0.01 / this.units.distScale)
+      } else if (loc >= this.course.len) {
+        loc = this.course.len - (0.01 / this.units.distScale)
       }
       waypoint.location = loc
       wputil.updateLLA(waypoint, this.course.points)

@@ -43,18 +43,23 @@
       :course="course"
       @refresh="refreshCourses"
       @delete="deleteCourse"
-      ></course-edit>
+    ></course-edit>
+    <delete-modal
+      ref="delModal"
+    ></delete-modal>
   </div>
 </template>
 
 <script>
 import api from '@/api'
 import CourseEdit from './CourseEdit'
+import DeleteModal from './DeleteModal'
 export default {
   title: 'Courses',
   props: ['user'],
   components: {
-    CourseEdit
+    CourseEdit,
+    DeleteModal
   },
   data () {
     return {
@@ -127,19 +132,23 @@ export default {
       this.course = Object.assign({}, course)
     },
     async deleteCourse (course, cb) {
-      setTimeout(async () => {
-        if (confirm('Are you sure you want to delete this course?\n' +
-          course.name)) {
+      this.$refs.delModal.show(
+        'Course',
+        course,
+        async () => {
           await api.deleteCourse(course._id)
           var index = this.courses.findIndex(x => x._id === course._id)
           if (index > -1) {
             this.courses.splice(index, 1)
           }
-          (typeof (cb) === 'function') && cb()
-        } else {
-          (typeof (cb) === 'function') && cb(new Error('not deleted'))
+        },
+        (err) => {
+          if (typeof (cb) === 'function') {
+            if (err) cb(err)
+            else cb()
+          }
         }
-      }, 100)
+      )
     }
   }
 }
