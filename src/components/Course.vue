@@ -76,8 +76,7 @@
       <b-col lg="5" order="1">
         <b-tabs content-class="mt-3" v-if="!initializing" class="sticky-top mt-3" >
           <b-tab title="Profile" >
-            <line-chart :chart-data="chartData" :options="chartOptions">
-            </line-chart>
+            <course-profile :course="course" :units="units"></course-profile>
           </b-tab>
           <b-tab title="Map" active>
             <course-map :course="course" :focus="mapFocus"></course-map>
@@ -121,11 +120,11 @@
 </template>
 
 <script>
-import LineChart from './LineChart.js'
 import api from '@/api'
 import util from '../../shared/utilities'
 import gnpFactor from '../../shared/gnp'
 import CourseMap from './CourseMap'
+import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
@@ -139,8 +138,8 @@ export default {
   title: 'Loading',
   props: ['isAuthenticated', 'user'],
   components: {
-    LineChart,
     CourseMap,
+    CourseProfile,
     DeleteModal,
     SplitTable,
     SegmentTable,
@@ -161,55 +160,6 @@ export default {
       segment: {},
       waypoint: {},
       pacing: {},
-      chartColors: {
-        red: 'rgb(255, 99, 132)',
-        orange: 'rgb(255, 159, 64)',
-        yellow: 'rgb(255, 205, 86)',
-        green: 'rgb(75, 192, 192)',
-        darkgreen: 'rgb(50, 150, 150)',
-        blue: 'rgb(54, 162, 235)',
-        purple: 'rgb(153, 102, 255)',
-        grey: 'rgb(201, 203, 207)'
-      },
-      chartProfile: [],
-      chartGrade: [],
-      chartOptions: {
-        scales: {
-          xAxes: [{
-            type: 'linear',
-            position: 'bottom',
-            ticks: {
-              stepSize: 5,
-              callback: function (value, index, values) {
-                if (value % 5 === 0) {
-                  return value
-                } else {
-                  return ''
-                }
-              }
-            }
-          }],
-          yAxes: [{
-            display: true,
-            position: 'left',
-            id: 'y-axis-1'
-          }, {
-            type: 'linear',
-            display: true,
-            position: 'right',
-            id: 'y-axis-2'
-          }]
-        },
-        tooltips: {
-          enabled: true,
-          filter: function (tooltipItem) {
-            return tooltipItem.datasetIndex === 0
-          }
-        },
-        legend: {
-          display: false
-        }
-      },
       mapFocus: []
     }
   },
@@ -264,56 +214,6 @@ export default {
       u.distScale = (u.dist === 'mi') ? 0.621371 : 1
       u.altScale = (u.alt === 'ft') ? 3.28084 : 1
       return u
-    },
-    chartData: function () {
-      return {
-        datasets: [
-          this.chartPoints,
-          { data: this.chartProfile,
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            backgroundColor: this.transparentize(this.chartColors.blue),
-            yAxisID: 'y-axis-1'
-          },
-          { data: this.chartGrade,
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            showLine: true,
-            yAxisID: 'y-axis-2'
-          }
-        ]
-      }
-    },
-    chartPoints: function () {
-      if (!this.course.waypoints.length) { return [] }
-      var d = {
-        data: [],
-        backgroundColor: [],
-        borderColor: [],
-        fill: false,
-        pointRadius: [],
-        pointStyle: [],
-        pointHoverRadius: 10,
-        showLine: false
-      }
-      for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
-        d.data.push({
-          x: this.course.waypoints[i].location * this.units.distScale,
-          y: this.course.waypoints[i].elevation * this.units.altScale
-        })
-        if (this.course.waypoints[i].type === 'landmark') {
-          d.pointRadius.push(6)
-          d.pointStyle.push('triangle')
-          d.backgroundColor.push(this.chartColors.darkgreen)
-          d.borderColor.push(this.chartColors.darkgreen)
-        } else {
-          d.pointRadius.push(6)
-          d.pointStyle.push('circle')
-          d.backgroundColor.push(this.chartColors.red)
-          d.borderColor.push(this.chartColors.red)
-        }
-      }
-      return d
     }
   },
   filters: {
@@ -335,7 +235,6 @@ export default {
     this.$title = this.course.name
     util.addLoc(this.course.points)
     this.course.len = this.course.points[this.course.points.length - 1].loc
-    this.updateChartProfile()
     // calc grade adjustment:
     var tot = 0
     var p = this.course.points
@@ -351,10 +250,8 @@ export default {
     async newWaypoint () {
       this.waypoint = {}
     },
-    async refreshWaypoints (callback) {
-      this.course.waypoints = await api.getWaypoints(this.course._id)
-      this.updatePacing()
-      if (typeof callback === 'function') callback()
+    async editWaypoint (waypoint) {
+      this.waypoint = waypoint
     },
     async deleteWaypoint (waypoint, cb) {
       this.$refs.delModal.show(
@@ -379,56 +276,13 @@ export default {
         }
       )
     },
-    async editWaypoint (waypoint) {
-      this.waypoint = waypoint
+    async refreshWaypoints (callback) {
+      this.course.waypoints = await api.getWaypoints(this.course._id)
+      this.updatePacing()
+      if (typeof callback === 'function') callback()
     },
     async editSegment (waypoint) {
       this.segment = waypoint
-    },
-    updateChartProfile: function () {
-      var pmax = 500 // number of points (+1)
-      var xs = [] // x's array
-      var ysa = [] // y's array for altitude
-      var ysg = [] // y's array for grade
-      var chartProfile = []
-      var chartGrade = []
-      if (this.course.points.length < pmax) {
-        xs = this.course.points.map(x => x.loc)
-        ysa = this.course.points.map(x => x.alt)
-        ysg = this.course.points.map(x => x.grade)
-      } else {
-        xs = Array(pmax + 1).fill(0).map((e, i) => i++ * this.course.len / pmax)
-        ysa = util.pointWLSQ(
-          this.course.points,
-          xs,
-          this.course.len / pmax / 5
-        )
-        ysg = util.pointWLSQ(
-          this.course.points,
-          xs,
-          5 * this.course.len / pmax
-        )
-      }
-      xs.forEach((x, i) => {
-        chartProfile.push({
-          x: x * this.units.distScale,
-          y: ysa[i].alt * this.units.altScale
-        })
-        chartGrade.push({
-          x: x * this.units.distScale,
-          y: ysg[i].grade
-        })
-      })
-      // this is a hack to make the finish waypoint show up:
-      this.chartOptions.scales.xAxes[0].ticks.max = (
-        (xs[xs.length - 1] * this.units.distScale) + 0.01
-      )
-      this.chartProfile = chartProfile
-      this.chartGrade = chartGrade
-    },
-    transparentize: function (color, opacity) {
-      var alpha = opacity === undefined ? 0.5 : 1 - opacity
-      return window.Color(color).alpha(alpha).rgbString()
     },
     async newPlan () {
       this.planEdit = {}
