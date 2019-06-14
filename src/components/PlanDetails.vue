@@ -1,5 +1,5 @@
 <template>
-<b-list-group>
+<b-list-group v-if="plan && plan.name && pacing && pacing.time">
   <b-list-group-item>
     <h5 class="mb-1">Pacing Calculation Basis</h5>
     <p class="mb-1"><b>{{ methods[plan.pacingMethod] }}</b>
@@ -84,8 +84,6 @@ export default {
         gnp: 'Grade Normalized Pace'
       }
     }
-  },
-  watch: {
   },
   computed: {
     aidStationCount: function () {

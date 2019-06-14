@@ -21,18 +21,13 @@
 
 <script>
 export default {
-  props: ['object', 'type', 'cb'],
   data () {
     return {
+      deleting: false,
+      delFun: null,
       model: {},
-      deleting: false
-    }
-  },
-  watch: {
-    object: function (val) {
-      if (val.hasOwnProperty('name')) {
-        this.$bvModal.show('delete-modal')
-      }
+      object: {},
+      type: ''
     }
   },
   methods: {
@@ -41,17 +36,22 @@ export default {
       this.remove()
     },
     clear () {
-      this.$emit('cancel', this.cb)
+      this.deleting = false
+      if (typeof (this.cb) === 'function') this.cb(new Error('User cancelled'))
     },
     async remove () {
       this.deleting = true
-      this.$emit('delete', this.object, async (err) => {
-        if (!err) {
-          this.$bvModal.hide('delete-modal')
-        }
-        this.deleting = false
-        if (typeof (this.cb) === 'function') this.cb()
-      })
+      await this.delFun(this.object)
+      this.$bvModal.hide('delete-modal')
+      this.deleting = false
+      if (typeof (this.cb) === 'function') this.cb()
+    },
+    async show (type, object, delFun, cb) {
+      this.type = type
+      this.object = object
+      this.delFun = delFun
+      this.cb = cb
+      this.$bvModal.show('delete-modal')
     }
   }
 }

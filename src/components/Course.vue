@@ -82,7 +82,7 @@
           <b-tab title="Map" active>
             <course-map :course="course" :focus="mapFocus"></course-map>
           </b-tab>
-          <b-tab v-if="course._plan" title="Plan">
+          <b-tab v-if="course._plan && course._plan.name" title="Plan">
             <plan-details
                 :course="course"
                 :plan="course._plan"
@@ -114,6 +114,9 @@
       :segment="segment"
       @refresh="refreshWaypoints"
     ></segment-edit>
+    <delete-modal
+      ref="delModal"
+    ></delete-modal>
   </div>
 </template>
 
@@ -123,6 +126,7 @@ import api from '@/api'
 import util from '../../shared/utilities'
 import gnpFactor from '../../shared/gnp'
 import CourseMap from './CourseMap'
+import DeleteModal from './DeleteModal'
 import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
@@ -137,6 +141,7 @@ export default {
   components: {
     LineChart,
     CourseMap,
+    DeleteModal,
     SplitTable,
     SegmentTable,
     WaypointTable,
@@ -352,8 +357,10 @@ export default {
       if (typeof callback === 'function') callback()
     },
     async deleteWaypoint (waypoint, cb) {
-      setTimeout(async () => {
-        if (confirm('Are you sure you want to delete this waypoint?\n' + waypoint.name)) {
+      this.$refs.delModal.show(
+        'Waypoint',
+        waypoint,
+        async () => {
           // if we are editing a waypoint we deleted, remove it from the form
           if (this.waypoint._id === waypoint._id) {
             this.waypoint = {}
@@ -363,11 +370,14 @@ export default {
           if (index > -1) {
             this.course.waypoints.splice(index, 1)
           }
-          if (typeof cb === 'function') cb()
-        } else {
-          if (typeof cb === 'function') cb(new Error('not deleted'))
+        },
+        (err) => {
+          if (typeof (cb) === 'function') {
+            if (err) cb(err)
+            else cb()
+          }
         }
-      }, 100)
+      )
     },
     async editWaypoint (waypoint) {
       this.waypoint = waypoint
@@ -427,19 +437,24 @@ export default {
       this.planEdit = Object.assign({}, this.course._plan)
     },
     async deletePlan (plan, cb) {
-      setTimeout(async () => {
-        if (confirm('Are you sure you want to delete this plan?\n' + plan.name)) {
+      this.$refs.delModal.show(
+        'Plan',
+        plan,
+        async () => {
           await api.deletePlan(plan._id)
           if (this.course._plan._id === plan._id) {
             this.course._plan = {}
             this.pacing = {}
           }
           this.course.plans = await api.getPlans(this.course._id)
-          if (cb) { cb() }
-        } else {
-          if (cb) cb(new Error('not deleted'))
+        },
+        (err) => {
+          if (typeof (cb) === 'function') {
+            if (err) cb(err)
+            else cb()
+          }
         }
-      }, 100)
+      )
     },
     async refreshPlan (plan, callback) {
       this.course.plans = await api.getPlans(this.course._id)
@@ -460,6 +475,7 @@ export default {
     },
     updatePacing () {
       if (!this.course._plan) { return }
+      if (!this.course._plan.name) { return }
       var time = 0
       var pace = 0
       var gnp = 0

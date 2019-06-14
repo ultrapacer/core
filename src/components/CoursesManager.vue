@@ -25,7 +25,7 @@
               <v-icon name="edit"></v-icon>
               <span class="d-none d-md-inline">Edit</span>
             </b-button>
-            <b-button size="sm" @click="confirmDelete(row.item)" class="mr-1">
+            <b-button size="sm" @click="deleteCourse(row.item)" class="mr-1">
               <v-icon name="trash"></v-icon>
               <span class="d-none d-md-inline">Delete</span>
             </b-button>
@@ -42,14 +42,10 @@
     <course-edit
       :course="course"
       @refresh="refreshCourses"
-      @delete="confirmDelete"
+      @delete="deleteCourse"
     ></course-edit>
     <delete-modal
-      :object="deleteObj"
-      :type="'Course'"
-      :cb="deleteCB"
-      @delete="deleteCourse"
-      @cancel="cancelDelete"
+      ref="delModal"
     ></delete-modal>
   </div>
 </template>
@@ -71,8 +67,6 @@ export default {
       course: {},
       courses: [],
       courseEditor: false,
-      deleteCB: null,
-      deleteObj: {},
       fields: [
         {
           key: 'name',
@@ -137,21 +131,24 @@ export default {
     async editCourse (course) {
       this.course = Object.assign({}, course)
     },
-    async confirmDelete (course, cb) {
-      if (typeof (cb) === 'function') this.deleteCB = cb
-      this.deleteObj = Object.assign({}, course)
-    },
-    async cancelDelete (cb) {
-      this.deleteObj = {}
-      if (typeof (cb) === 'function') cb(new Error())
-    },
     async deleteCourse (course, cb) {
-      await api.deleteCourse(course._id)
-      var index = this.courses.findIndex(x => x._id === course._id)
-      if (index > -1) {
-        this.courses.splice(index, 1)
-      }
-      if (typeof (cb) === 'function') cb()
+      this.$refs.delModal.show(
+        'Course',
+        course,
+        async () => {
+          await api.deleteCourse(course._id)
+          var index = this.courses.findIndex(x => x._id === course._id)
+          if (index > -1) {
+            this.courses.splice(index, 1)
+          }
+        },
+        (err) => {
+          if (typeof (cb) === 'function') {
+            if (err) cb(err)
+            else cb()
+          }
+        }
+      )
     }
   }
 }
