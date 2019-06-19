@@ -123,6 +123,7 @@
 import api from '@/api'
 import util from '../../shared/utilities'
 import gnpFactor from '../../shared/gnp'
+import altFactor from '../../shared/altFactor'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
@@ -241,9 +242,6 @@ export default {
     var totg = 0
     var tota = 0
     var p = this.course.points
-    function altFactor(alt) {
-      return 0.0068 * alt
-    }
     for (var j = 1, jl = p.length; j < jl; j++) {
       var grd = (p[j - 1].grade + p[j].grade) / 2
       totg += (1 + gnpFactor(grd)) * p[j].dloc
