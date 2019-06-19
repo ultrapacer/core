@@ -155,6 +155,8 @@ export default {
       saving: false,
       course: {},
       gradeAdjustment: 0,
+      altAdjustment: 0,
+      totAdjustment: 0,
       plan: {},
       planEdit: false,
       segment: {},
@@ -236,13 +238,21 @@ export default {
     util.addLoc(this.course.points)
     this.course.len = this.course.points[this.course.points.length - 1].loc
     // calc grade adjustment:
-    var tot = 0
+    var totg = 0
+    var tota = 0
     var p = this.course.points
+    function altFactor(alt) {
+      return 0.0068 * alt
+    }
     for (var j = 1, jl = p.length; j < jl; j++) {
       var grd = (p[j - 1].grade + p[j].grade) / 2
-      tot += (1 + gnpFactor(grd)) * p[j].dloc
+      totg += (1 + gnpFactor(grd)) * p[j].dloc
+      var alt = (p[j - 1].alt + p[j].alt) / 2
+      tota += (1 + altFactor(alt)) * p[j].dloc
     }
-    this.gradeAdjustment = tot / p[p.length - 1].loc
+    this.gradeAdjustment = (totg / this.course.len) - 1
+    this.altAdjustment = (tota / this.course.len) - 1
+    this.totAdjustment = this.gradeAdjustment + this.altAdjustment
     this.updatePacing()
     this.initializing = false
   },
@@ -332,30 +342,29 @@ export default {
       if (!this.course._plan.name) { return }
       var time = 0
       var pace = 0
-      var gnp = 0
-      var l = this.course.points[this.course.points.length - 1].loc
+      var np = 0
 
       var nwp = this.course.waypoints.filter(wp => wp.type === 'aid').length
       var delay = nwp * this.course._plan.waypointDelay
 
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
-        pace = (time - delay) / l
-        gnp = pace / this.gradeAdjustment
+        pace = (time - delay) / this.course.len
+        np = pace / (1 + this.totAdjustment)
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
-        time = pace * l + delay
-        gnp = pace / this.gradeAdjustment
-      } else if (this.course._plan.pacingMethod === 'gnp') {
-        gnp = this.course._plan.pacingTarget
-        pace = gnp * this.gradeAdjustment
-        time = pace * l + delay
+        time = pace * this.course.len + delay
+        np = pace / (1 + this.totAdjustment)
+      } else if (this.course._plan.pacingMethod === 'np') {
+        np = this.course._plan.pacingTarget
+        pace = np * (1 + this.totAdjustment)
+        time = pace * this.course.len + delay
       }
       this.pacing = {
         time: time,
         delay: delay,
         pace: pace,
-        gnp: gnp,
+        np: np,
         drift: this.course._plan.drift
       }
     },
