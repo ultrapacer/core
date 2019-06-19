@@ -2,7 +2,7 @@
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
 const gnpFact = require('./gnp')
-const altFact = require('./altFact')
+const altFact = require('./altFactor')
 
 function calcStats (points) {
   var distance = 0
