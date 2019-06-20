@@ -12,7 +12,8 @@ var UserSchema = new Schema({
   elevUnits: {
     type: String,
     default: 'ft'
-  }
+  },
+  altModel: {}
 }, {
   collection: 'users'
 })

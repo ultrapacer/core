@@ -5,11 +5,48 @@
     <b-card>
       <form @submit.prevent="saveSettings">
         <b-form-group label="Distance Units">
-          <b-form-select v-model="user.distUnits" :options="distUnits"></b-form-select>
+          <b-form-select v-model="user.distUnits" :options="distUnits">
+          </b-form-select>
         </b-form-group>
         <b-form-group label="Elevation Units">
-          <b-form-select v-model="user.elevUnits" :options="elevUnits"></b-form-select>
+          <b-form-select v-model="user.elevUnits" :options="elevUnits">
+          </b-form-select>
         </b-form-group>
+        <b-form-group label="Custom Altitude Factor">
+          <b-form-checkbox
+              v-model="customAltModel"
+              value="false"
+              unchecked-value="false"
+            >
+            Use Custom Altitude Factor
+          </b-form-checkbox>
+        </b-form-group>
+        <b-card v-if="customAltModel">
+          <b-form-group label="Percent Decrease [%]">
+            <b-form-input
+                type="number"
+                v-model="altModel.rate"
+                required
+              >
+            </b-form-input>
+          </b-form-group>
+          <b-form-group :label="'Per 1,000 [' + user.elevUnits + ']'">
+            <b-form-input
+                type="number"
+                v-model="altModel.span"
+                required
+              >
+            </b-form-input>
+          </b-form-group>
+          <b-form-group :label="'Starting at altitude of [' + user.elevUnits + ']'">
+            <b-form-input
+                type="number"
+                v-model="altModel.threshold"
+                required
+              >
+            </b-form-input>
+          </b-form-group>
+        </b-card>
         <div>
           <b-btn type="submit" variant="success">Save Settings</b-btn>
         </div>
@@ -25,6 +62,7 @@ export default {
   props: ['user'],
   data () {
     return {
+      customAltModel: false,
       loading: false,
       distUnits: [
         {
@@ -45,11 +83,15 @@ export default {
           value: 'm',
           text: 'Meters'
         }
-      ]
+      ],
+      model: {},
+      altModel: {}
     }
   },
   methods: {
     async saveSettings () {
+      if (model.customAltModel) {
+      }
       await api.updateSettings(this.user._id, this.user)
       await api.getUser()
       this.$emit('user', this.user)
