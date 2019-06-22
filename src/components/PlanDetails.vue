@@ -24,15 +24,14 @@
       <b>{{ sec2string(fPace(pacing.pace), 'mm:ss') }}</b> *
     </p>
     <p class="mb-1">
-      Average GNP:
-      <b>{{ sec2string(fPace(pacing.gnp), 'mm:ss') }}</b> *,**
+      Average Normalized Pace:
+      <b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *,**
     </p>
     <p class="mb-1">
       Average Overall Pace:
       <b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b>
     </p>
     <small>&nbsp; *While Moving</small>
-    <small>&nbsp; ** GNP: Grade Normalized Pace</small>
   </b-list-group-item>
   <b-list-group-item>
     <h5 class="mb-1">Delays</h5>
@@ -61,13 +60,13 @@
     </p>
     <p class="mb-1">
       Average Pace:
-      <b>{{ sec2string(fPace(pacing.gnp), 'mm:ss') }}</b> *
+      <b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *
     </p>
     <p class="mb-1">
       Ending Pace:
       <b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *
     </p>
-    <small>&nbsp; *Grade Normalized</small>
+    <small>&nbsp; *Normalized for Grade, Altitude</small>
   </b-list-group-item>
 </b-list-group>
 </template>
@@ -106,10 +105,10 @@ export default {
       }
     },
     startPace: function () {
-      return this.pacing.gnp * (1 - this.plan.drift / 200)
+      return this.pacing.np * (1 - this.plan.drift / 200)
     },
     endPace: function () {
-      return this.pacing.gnp * (1 + this.plan.drift / 200)
+      return this.pacing.np * (1 + this.plan.drift / 200)
     }
   },
   methods: {

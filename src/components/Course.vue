@@ -122,8 +122,7 @@
 <script>
 import api from '@/api'
 import util from '../../shared/utilities'
-import gnpFactor from '../../shared/gnp'
-import altFactor from '../../shared/altFactor'
+import {gradeFactor, altFactor} from '../../shared/normFactor'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
@@ -155,9 +154,6 @@ export default {
       initializing: true,
       saving: false,
       course: {},
-      gradeAdjustment: 0,
-      altAdjustment: 0,
-      totAdjustment: 0,
       plan: {},
       planEdit: false,
       segment: {},
@@ -167,6 +163,15 @@ export default {
     }
   },
   computed: {
+    altModel: function () {
+      if (this.owner & typeof (this.user.altModel) !== 'undefined') {
+        return this.user.altModel
+      } else if (typeof (this.course.altModel) !== 'undefined') {
+        return this.course.altModel
+      } else {
+        return {}
+      }
+    },
     plansSelect: function () {
       var p = []
       for (var i = 0, il = this.course.plans.length; i < il; i++) {
@@ -244,13 +249,13 @@ export default {
     var p = this.course.points
     for (var j = 1, jl = p.length; j < jl; j++) {
       var grd = (p[j - 1].grade + p[j].grade) / 2
-      totg += (1 + gnpFactor(grd)) * p[j].dloc
+      totg += (1 + gradeFactor(grd)) * p[j].dloc
       var alt = (p[j - 1].alt + p[j].alt) / 2
-      tota += (1 + altFactor(alt)) * p[j].dloc
+      tota += (1 + altFactor(alt, this.altModel)) * p[j].dloc
     }
-    this.gradeAdjustment = (totg / this.course.len) - 1
-    this.altAdjustment = (tota / this.course.len) - 1
-    this.totAdjustment = this.gradeAdjustment + this.altAdjustment
+    var gnorm = (totg / this.course.len) - 1
+    var anorm = (tota / this.course.len) - 1
+    this.course.norm = gnorm + anorm + 1
     this.updatePacing()
     this.initializing = false
   },
@@ -348,14 +353,14 @@ export default {
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
         pace = (time - delay) / this.course.len
-        np = pace / (1 + this.totAdjustment)
+        np = pace / this.course.norm
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
         time = pace * this.course.len + delay
-        np = pace / (1 + this.totAdjustment)
+        np = pace / this.course.norm
       } else if (this.course._plan.pacingMethod === 'np') {
         np = this.course._plan.pacingTarget
-        pace = np * (1 + this.totAdjustment)
+        pace = np * this.course.norm
         time = pace * this.course.len + delay
       }
       this.pacing = {
@@ -363,7 +368,8 @@ export default {
         delay: delay,
         pace: pace,
         np: np,
-        drift: this.course._plan.drift
+        drift: this.course._plan.drift,
+        altModel: this.altModel
       }
     },
     updateFocus: function (focus) {

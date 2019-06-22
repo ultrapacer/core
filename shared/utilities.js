@@ -1,8 +1,7 @@
 /* eslint new-cap: 0 */
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
-const gnpFact = require('./gnp')
-const altFact = require('./altFactor')
+const nF = require('./normFactor')
 
 function calcStats (points) {
   var distance = 0
@@ -103,21 +102,21 @@ function calcSegments (p, breaks, pacing) {
     }
     if (pacing) {
       grade = (p[i - 1].grade + p[i].grade) / 2
-      gF = gnpFact(grade)
+      gF = nF.gradeFactor(grade)
       if (j > j0) {
         if (j0 >= 0) {
           len = s[j].start - p[i - 1].loc
           dF = driftFact([p[i - 1].loc, s[j].start], pacing.drift, cLen)
-          aF = altFact([p[i - 1].alt, s[j].alt1])
+          aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
           s[j0].time += pacing.np * (1 + gF + dF + aF) * len
         }
         len = p[i].loc - s[j].start
         dF = driftFact([p[i].loc, s[j].start], pacing.drift, cLen)
-        aF = altFact([p[i].alt, s[j].alt1])
+        aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
         s[j].time += pacing.np * (1 + gF + dF + aF) * len
       } else if (j >= 0) {
         dF = driftFact([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
-        aF = altFact([p[i - 1].alt, p[i].alt])
+        aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
         s[j].time += pacing.np * (1 + gF + dF + aF) * p[i].dloc
       }
     }

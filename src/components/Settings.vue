@@ -15,8 +15,7 @@
         <b-form-group label="Custom Altitude Factor">
           <b-form-checkbox
               v-model="customAltModel"
-              value="false"
-              unchecked-value="false"
+              :unchecked-value="false"
             >
             Use Custom Altitude Factor
           </b-form-checkbox>
@@ -88,9 +87,19 @@ export default {
       altModel: {}
     }
   },
+  async created () {
+    if (this.user.hasOwnProperty('altModel') &&
+      this.user.altModel.hasOwnProperty('rate')) {
+      this.customAltModel = true
+      this.altModel = Object.assign({}, this.user.altModel)
+    }
+  },
   methods: {
     async saveSettings () {
-      if (model.customAltModel) {
+      if (this.customAltModel) {
+        this.user.altModel = this.altModel
+      } else {
+        this.user.altModel = {}
       }
       await api.updateSettings(this.user._id, this.user)
       await api.getUser()

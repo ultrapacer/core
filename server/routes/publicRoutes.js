@@ -12,6 +12,8 @@ publicRoutes.route('/course/:course').get(async function (req, res) {
     if (course.public) {
       course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
       course.plans = await Plan.find({ _course: course }).sort('name').exec()
+      user = await User.find({ _id: _course._user._id }).select('altModel').exec()
+      course.altModel = user.altModel
       res.json(course)
     } else {
       res.status(403).send('No permission')
