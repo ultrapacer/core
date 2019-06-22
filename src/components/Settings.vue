@@ -5,11 +5,15 @@
     <b-card>
       <form @submit.prevent="saveSettings">
         <b-form-group label="Distance Units">
-          <b-form-select v-model="user.distUnits" :options="distUnits">
+          <b-form-select v-model="model.distUnits" :options="distUnits">
           </b-form-select>
         </b-form-group>
         <b-form-group label="Elevation Units">
-          <b-form-select v-model="user.elevUnits" :options="elevUnits">
+          <b-form-select
+              v-model="model.elevUnits"
+              :options="elevUnits"
+              @change="updateAltUnits"
+            >
           </b-form-select>
         </b-form-group>
         <b-form-group label="Custom Altitude Factor">
@@ -21,26 +25,21 @@
           </b-form-checkbox>
         </b-form-group>
         <b-card v-if="customAltModel">
-          <b-form-group label="Percent Decrease [%]">
+          <b-form-group
+            :label="'Percent Decrease [%] per 1,000 ' + model.elevUnits"
+          >
             <b-form-input
                 type="number"
-                v-model="altModel.rate"
+                v-model="model.altModel.rate"
+                step="0.01"
                 required
               >
             </b-form-input>
           </b-form-group>
-          <b-form-group :label="'Per 1,000 [' + user.elevUnits + ']'">
+          <b-form-group :label="'Starting at altitude of [' + model.elevUnits + ']'">
             <b-form-input
                 type="number"
-                v-model="altModel.span"
-                required
-              >
-            </b-form-input>
-          </b-form-group>
-          <b-form-group :label="'Starting at altitude of [' + user.elevUnits + ']'">
-            <b-form-input
-                type="number"
-                v-model="altModel.threshold"
+                v-model="model.altModel.thresholdF"
                 required
               >
             </b-form-input>
@@ -83,28 +82,52 @@ export default {
           text: 'Meters'
         }
       ],
-      model: {},
-      altModel: {}
+      model: {}
+    }
+  },
+  computed: {
+    units: function () {
+      var u = {
+        dist: this.model.distUnits,
+        alt: this.model.elevUnits
+      }
+      u.distScale = (u.dist === 'mi') ? 0.621371 : 1
+      u.altScale = (u.alt === 'ft') ? 3.28084 : 1
+      return u
     }
   },
   async created () {
-    if (this.user.hasOwnProperty('altModel') &&
-      this.user.altModel.hasOwnProperty('rate')) {
-      this.customAltModel = true
-      this.altModel = Object.assign({}, this.user.altModel)
-    }
+    this.populateForm()
   },
   methods: {
     async saveSettings () {
       if (this.customAltModel) {
-        this.user.altModel = this.altModel
+        this.model.altModel.treshold =
+          this.model.altModel.thresholdF / this.units.altScale
       } else {
-        this.user.altModel = {}
+        this.model.altModel = {}
       }
-      await api.updateSettings(this.user._id, this.user)
+      await api.updateSettings(this.user._id, this.model)
       await api.getUser()
-      this.$emit('user', this.user)
+      Object.assign(this.user, this.model)
       this.$router.go(-1)
+    },
+    updateAltUnits (val) {
+
+    },
+    populateForm () {
+      this.model = Object.assign({}, this.user)
+      if (this.model.hasOwnProperty('altModel') &&
+        this.model.altModel.hasOwnProperty('rate')) {
+        this.customAltModel = true
+        this.model.altModel.thresholdF =
+          this.model.altModel.thresholdF * this.units.altScale
+      }
+    }
+  },
+  watch: {
+    user: function () {
+      this.populateForm()
     }
   }
 }
