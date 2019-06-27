@@ -39,7 +39,7 @@
           <b-form-group :label="'Starting at altitude of [' + model.elevUnits + ']'">
             <b-form-input
                 type="number"
-                v-model="model.altModel.thresholdF"
+                v-model="model.altModel.thF"
                 required
               >
             </b-form-input>
@@ -55,6 +55,7 @@
 
 <script>
 import api from '@/api'
+import {defaults} from '../../shared/normFactor'
 export default {
   title: 'Settings',
   props: ['user'],
@@ -102,8 +103,8 @@ export default {
   methods: {
     async saveSettings () {
       if (this.customAltModel) {
-        this.model.altModel.treshold =
-          this.model.altModel.thresholdF / this.units.altScale
+        this.model.altModel.th =
+          this.model.altModel.thF / this.units.altScale
       } else {
         this.model.altModel = {}
       }
@@ -120,9 +121,11 @@ export default {
       if (this.model.hasOwnProperty('altModel') &&
         this.model.altModel.hasOwnProperty('rate')) {
         this.customAltModel = true
-        this.model.altModel.thresholdF =
-          this.model.altModel.thresholdF * this.units.altScale
+      } else {
+        this.model.altModel = Object.assign({}, defaults.altFactor)
       }
+      this.model.altModel.thF =
+        this.model.altModel.th * this.units.altScale
     }
   },
   watch: {

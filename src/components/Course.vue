@@ -151,6 +151,7 @@ export default {
   },
   data () {
     return {
+      altModel: {},
       initializing: true,
       saving: false,
       course: {},
@@ -163,15 +164,6 @@ export default {
     }
   },
   computed: {
-    altModel: function () {
-      if (this.owner & typeof (this.user.altModel) !== 'undefined') {
-        return this.user.altModel
-      } else if (typeof (this.course.altModel) !== 'undefined') {
-        return this.course.altModel
-      } else {
-        return {}
-      }
-    },
     plansSelect: function () {
       var p = []
       for (var i = 0, il = this.course.plans.length; i < il; i++) {
@@ -244,6 +236,15 @@ export default {
     util.addLoc(this.course.points)
     this.course.len = this.course.points[this.course.points.length - 1].loc
     // calc grade adjustment:
+    
+      if (this.owner & typeof (this.user.altModel) !== 'undefined') {
+        this.altModel = this.user.altModel
+      } else if (typeof (this.course.altModel) !== 'undefined') {
+        this.altModel = this.course.altModel
+      } else {
+        this.altModel =  {}
+      }
+    
     var totg = 0
     var tota = 0
     var p = this.course.points
