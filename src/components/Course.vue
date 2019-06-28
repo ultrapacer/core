@@ -236,15 +236,14 @@ export default {
     util.addLoc(this.course.points)
     this.course.len = this.course.points[this.course.points.length - 1].loc
     // calc grade adjustment:
-    
-      if (this.owner & typeof (this.user.altModel) !== 'undefined') {
-        this.altModel = this.user.altModel
-      } else if (typeof (this.course.altModel) !== 'undefined') {
-        this.altModel = this.course.altModel
-      } else {
-        this.altModel =  {}
-      }
-    
+
+    if (this.owner) {
+      this.altModel = this.user.altModel
+    } else {
+      this.altModel = this.course.altModel
+    }
+    console.log(this.altModel)
+
     var totg = 0
     var tota = 0
     var p = this.course.points

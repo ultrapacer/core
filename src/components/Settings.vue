@@ -26,7 +26,7 @@
         </b-form-group>
         <b-card v-if="customAltModel">
           <b-form-group
-            :label="'Percent Decrease [%] per 1,000 ' + model.elevUnits"
+            label="Time Increase [%] per 1,000 m"
           >
             <b-form-input
                 type="number"
@@ -36,10 +36,10 @@
               >
             </b-form-input>
           </b-form-group>
-          <b-form-group :label="'Starting at altitude of [' + model.elevUnits + ']'">
+          <b-form-group label="Starting at altitude of [m]">
             <b-form-input
                 type="number"
-                v-model="model.altModel.thF"
+                v-model="model.altModel.th"
                 required
               >
             </b-form-input>
@@ -102,11 +102,10 @@ export default {
   },
   methods: {
     async saveSettings () {
-      if (this.customAltModel) {
-        this.model.altModel.th =
-          this.model.altModel.thF / this.units.altScale
+      if (!this.customAltModel) {
+        this.model.altModel = null
       } else {
-        this.model.altModel = {}
+        this.model.altModel.th = defaults.altModel.th
       }
       await api.updateSettings(this.user._id, this.model)
       await api.getUser()
@@ -119,13 +118,11 @@ export default {
     populateForm () {
       this.model = Object.assign({}, this.user)
       if (this.model.hasOwnProperty('altModel') &&
-        this.model.altModel.hasOwnProperty('rate')) {
+        this.model.altModel !== null) {
         this.customAltModel = true
       } else {
         this.model.altModel = Object.assign({}, defaults.altFactor)
       }
-      this.model.altModel.thF =
-        this.model.altModel.th * this.units.altScale
     }
   },
   watch: {
