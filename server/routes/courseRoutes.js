@@ -167,7 +167,6 @@ courseRoutes.route('/:course/plans').get(async function (req, res) {
 
 async function validateWaypoints (course, waypoints) {
   if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
-    course = await Course.findOne({ _id: course._id }).exec()
     if (!waypoints.find(waypoint => waypoint.type === 'start')) {
       var ws = new Waypoint({
         name: 'Start',

@@ -151,7 +151,6 @@ export default {
   },
   data () {
     return {
-      altModel: {},
       initializing: true,
       saving: false,
       course: {},
@@ -235,14 +234,6 @@ export default {
     this.$title = this.course.name
     util.addLoc(this.course.points)
     this.course.len = this.course.points[this.course.points.length - 1].loc
-    // calc grade adjustment:
-
-    if (this.owner) {
-      this.altModel = this.user.altModel
-    } else {
-      this.altModel = this.course.altModel
-    }
-
     this.updatePacing()
     this.initializing = false
   },
@@ -337,7 +328,7 @@ export default {
       for (let j = 1, jl = p.length; j < jl; j++) {
         let grd = (p[j - 1].grade + p[j].grade) / 2
         let gF = nF.gradeFactor(grd)
-        let aF = nF.altFactor([p[j - 1].alt, p[j].alt], this.altModel)
+        let aF = nF.altFactor([p[j - 1].alt, p[j].alt], this.course.altModel)
         let dF = nF.driftFactor(
           [p[j - 1].loc, p[j].loc],
           this.course._plan.drift,
@@ -375,7 +366,7 @@ export default {
         pace: pace,
         np: np,
         drift: this.course._plan.drift,
-        altModel: this.altModel
+        altModel: this.course.altModel
       }
     },
     updateFocus: function (focus) {

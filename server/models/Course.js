@@ -2,6 +2,7 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 const Waypoint = require('./Waypoint')
 const Plan = require('./Plan')
+const User = require('./User')
 
 // Define collection and schema for Posts
 var CourseSchema = new Schema({
@@ -42,6 +43,7 @@ var CourseSchema = new Schema({
     type: Number,
     default: 3
   },
+  altModel: {},
   gradeAdjustment: {
     type: Number
   },
@@ -59,6 +61,8 @@ CourseSchema.pre('remove', function () {
 })
 
 CourseSchema.post('findOne', async function (course, next) {
+  let user = await User.findOne({ _id: course._user }).exec()
+  course.altModel = user.altModel
   course.plans = await Plan.find({ _course: course }).sort('name').exec()
   course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
   next()
