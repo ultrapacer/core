@@ -1,7 +1,7 @@
 // normFactor.js
 
 var defaults = {
-  altFactor: {
+  alt: {
     rate: 4, // %
     span: 1000, // m
     th: 750 // m
@@ -23,7 +23,7 @@ function gradeFactor (grade, model) {
 
 function altFactor (alt, model) {
   if (model === null || typeof (model) === 'undefined') {
-    model = defaults.altFactor
+    model = defaults.alt
   }
   var a = 0
   if (Array.isArray(alt)) {

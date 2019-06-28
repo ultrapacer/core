@@ -12,7 +12,6 @@
           <b-form-select
               v-model="model.elevUnits"
               :options="elevUnits"
-              @change="updateAltUnits"
             >
           </b-form-select>
         </b-form-group>
@@ -26,11 +25,12 @@
         </b-form-group>
         <b-card v-if="customAltModel">
           <b-form-group
-            label="Time Increase [%] per 1,000 m"
+            :label="`Time Increase [%] per ${ altModel.span } m`"
           >
             <b-form-input
                 type="number"
-                v-model="model.altModel.rate"
+                v-model="altModel.rate"
+                min="0"
                 step="0.01"
                 required
               >
@@ -39,7 +39,7 @@
           <b-form-group label="Starting at altitude of [m]">
             <b-form-input
                 type="number"
-                v-model="model.altModel.th"
+                v-model="altModel.th"
                 required
               >
             </b-form-input>
@@ -83,18 +83,8 @@ export default {
           text: 'Meters'
         }
       ],
+      altModel: Object.assign({}, defaults.alt),
       model: {}
-    }
-  },
-  computed: {
-    units: function () {
-      var u = {
-        dist: this.model.distUnits,
-        alt: this.model.elevUnits
-      }
-      u.distScale = (u.dist === 'mi') ? 0.621371 : 1
-      u.altScale = (u.alt === 'ft') ? 3.28084 : 1
-      return u
     }
   },
   async created () {
@@ -105,23 +95,20 @@ export default {
       if (!this.customAltModel) {
         this.model.altModel = null
       } else {
-        this.model.altModel.th = defaults.altModel.th
+        this.model.altModel = this.altModel
       }
       await api.updateSettings(this.user._id, this.model)
       await api.getUser()
-      Object.assign(this.user, this.model)
+      Object.keys(this.model).forEach(x => {
+        this.user[x] = this.model[x]
+      })
       this.$router.go(-1)
-    },
-    updateAltUnits (val) {
-
     },
     populateForm () {
       this.model = Object.assign({}, this.user)
-      if (this.model.hasOwnProperty('altModel') &&
-        this.model.altModel !== null) {
+      if (this.user.altModel !== null) {
         this.customAltModel = true
-      } else {
-        this.model.altModel = Object.assign({}, defaults.altFactor)
+        this.altModel = Object.assign({}, this.user.altModel)
       }
     }
   },
