@@ -27,6 +27,7 @@ userRoutes.route('/:id').put(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     user.distUnits = req.body.distUnits
     user.elevUnits = req.body.elevUnits
+    user.altModel = req.body.altModel
     await user.save()
     res.json('Update complete')
   } catch (err) {

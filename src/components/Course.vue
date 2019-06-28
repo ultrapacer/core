@@ -81,7 +81,7 @@
           <b-tab title="Map" active>
             <course-map :course="course" :focus="mapFocus"></course-map>
           </b-tab>
-          <b-tab v-if="course._plan && course._plan.name" title="Plan">
+          <b-tab v-if="course._plan && course._plan.name" title="Plan" active>
             <plan-details
                 :course="course"
                 :plan="course._plan"
@@ -122,7 +122,7 @@
 <script>
 import api from '@/api'
 import util from '../../shared/utilities'
-import gnpFactor from '../../shared/gnp'
+import nF from '../../shared/normFactor'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
@@ -151,10 +151,10 @@ export default {
   },
   data () {
     return {
+      altModel: {},
       initializing: true,
       saving: false,
       course: {},
-      gradeAdjustment: 0,
       plan: {},
       planEdit: false,
       segment: {},
@@ -236,13 +236,13 @@ export default {
     util.addLoc(this.course.points)
     this.course.len = this.course.points[this.course.points.length - 1].loc
     // calc grade adjustment:
-    var tot = 0
-    var p = this.course.points
-    for (var j = 1, jl = p.length; j < jl; j++) {
-      var grd = (p[j - 1].grade + p[j].grade) / 2
-      tot += (1 + gnpFactor(grd)) * p[j].dloc
+
+    if (this.owner) {
+      this.altModel = this.user.altModel
+    } else {
+      this.altModel = this.course.altModel
     }
-    this.gradeAdjustment = tot / p[p.length - 1].loc
+
     this.updatePacing()
     this.initializing = false
   },
@@ -330,33 +330,52 @@ export default {
     updatePacing () {
       if (!this.course._plan) { return }
       if (!this.course._plan.name) { return }
-      var time = 0
-      var pace = 0
-      var gnp = 0
-      var l = this.course.points[this.course.points.length - 1].loc
 
+      // calculate course normalizing factor:
+      var tot = 0
+      var p = this.course.points
+      for (let j = 1, jl = p.length; j < jl; j++) {
+        let grd = (p[j - 1].grade + p[j].grade) / 2
+        let gF = nF.gradeFactor(grd)
+        let aF = nF.altFactor([p[j - 1].alt, p[j].alt], this.altModel)
+        let dF = nF.driftFactor(
+          [p[j - 1].loc, p[j].loc],
+          this.course._plan.drift,
+          this.course.len
+        )
+        tot += gF * aF * dF * p[j].dloc
+      }
+      this.course.norm = (tot / this.course.len)
+
+      // calculate delay:
       var nwp = this.course.waypoints.filter(wp => wp.type === 'aid').length
       var delay = nwp * this.course._plan.waypointDelay
 
+      // calculate time, pace, and normalized pace:
+      var time = 0
+      var pace = 0
+      var np = 0
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
-        pace = (time - delay) / l
-        gnp = pace / this.gradeAdjustment
+        pace = (time - delay) / this.course.len
+        np = pace / this.course.norm
       } else if (this.course._plan.pacingMethod === 'pace') {
         pace = this.course._plan.pacingTarget
-        time = pace * l + delay
-        gnp = pace / this.gradeAdjustment
-      } else if (this.course._plan.pacingMethod === 'gnp') {
-        gnp = this.course._plan.pacingTarget
-        pace = gnp * this.gradeAdjustment
-        time = pace * l + delay
+        time = pace * this.course.len + delay
+        np = pace / this.course.norm
+      } else if (this.course._plan.pacingMethod === 'np') {
+        np = this.course._plan.pacingTarget
+        pace = np * this.course.norm
+        time = pace * this.course.len + delay
       }
+
       this.pacing = {
         time: time,
         delay: delay,
         pace: pace,
-        gnp: gnp,
-        drift: this.course._plan.drift
+        np: np,
+        drift: this.course._plan.drift,
+        altModel: this.altModel
       }
     },
     updateFocus: function (focus) {

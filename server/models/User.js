@@ -13,7 +13,10 @@ var UserSchema = new Schema({
     type: String,
     default: 'ft'
   },
-  altModel: {}
+  altModel: {
+    type: Object,
+    default: null
+  }
 }, {
   collection: 'users'
 })

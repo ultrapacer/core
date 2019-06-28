@@ -24,15 +24,14 @@
       <b>{{ sec2string(fPace(pacing.pace), 'mm:ss') }}</b> *
     </p>
     <p class="mb-1">
-      Average GNP:
-      <b>{{ sec2string(fPace(pacing.gnp), 'mm:ss') }}</b> *,**
+      Average Normalized Pace:
+      <b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *,**
     </p>
     <p class="mb-1">
       Average Overall Pace:
       <b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b>
     </p>
     <small>&nbsp; *While Moving</small>
-    <small>&nbsp; ** GNP: Grade Normalized Pace</small>
   </b-list-group-item>
   <b-list-group-item>
     <h5 class="mb-1">Delays</h5>
@@ -61,19 +60,36 @@
     </p>
     <p class="mb-1">
       Average Pace:
-      <b>{{ sec2string(fPace(pacing.gnp), 'mm:ss') }}</b> *
+      <b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *
     </p>
     <p class="mb-1">
       Ending Pace:
       <b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *
     </p>
-    <small>&nbsp; *Grade Normalized</small>
+    <small>&nbsp; *Normalized for Grade, Altitude</small>
+  </b-list-group-item>
+  <b-list-group-item>
+    <h5 class="mb-1">Altitude Effects</h5>
+    <p class="mb-1">
+      Highest Altitude Factor:
+      <b>+{{ maxAltFactor }} %</b>
+      at
+      <b>{{ maxAltitude | formatAlt(units.altScale) }} [{{ units.alt }}]</b>
+    </p>
+    <p class="mb-1">
+      Lowest Altitude Factor:
+      <b>+{{ minAltFactor }} %</b>
+      at
+      <b>{{ minAltitude | formatAlt(units.altScale) }} [{{ units.alt }}]</b>
+    </p>
   </b-list-group-item>
 </b-list-group>
 </template>
 
 <script>
 import timeUtil from '../../shared/timeUtilities'
+import nF from '../../shared/normFactor'
+import {round} from '../../shared/utilities'
 export default {
   props: ['plan', 'pacing', 'units', 'course'],
   data () {
@@ -106,10 +122,41 @@ export default {
       }
     },
     startPace: function () {
-      return this.pacing.gnp * (1 - this.plan.drift / 200)
+      return this.pacing.np * (1 - this.plan.drift / 200)
     },
     endPace: function () {
-      return this.pacing.gnp * (1 + this.plan.drift / 200)
+      return this.pacing.np * (1 + this.plan.drift / 200)
+    },
+    maxAltitude: function () {
+      var m = Math.max.apply(
+        Math,
+        this.course.points.map(x => { return x.alt })
+      )
+      return m
+    },
+    maxAltFactor: function () {
+      return round(
+        (nF.altFactor(this.maxAltitude, this.pacing.altModel) - 1) * 100,
+        2
+      )
+    },
+    minAltitude: function () {
+      var m = Math.min.apply(
+        Math,
+        this.course.points.map(x => { return x.alt })
+      )
+      return m
+    },
+    minAltFactor: function () {
+      return round(
+        (nF.altFactor(this.minAltitude, this.pacing.altModel) - 1) * 100,
+        2
+      )
+    }
+  },
+  filters: {
+    formatAlt (val, altScale) {
+      return (val * altScale).toFixed(0)
     }
   },
   methods: {

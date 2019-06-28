@@ -1,7 +1,7 @@
 /* eslint new-cap: 0 */
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
-const gnpFact = require('./gnp')
+const nF = require('./normFactor')
 
 function calcStats (points) {
   var distance = 0
@@ -49,7 +49,7 @@ function calcSplits (points, units, pacing) {
 function calcSegments (p, breaks, pacing) {
   // p: points array of {loc, lat, lon, alt}
   // breaks: array of [loc,loc,...] to break on
-  // pacing: pacing object with gnp and drift fields
+  // pacing: pacing object with np and drift fields
   var cLen = p[p.length - 1].loc
   var s = [] // segments array
   var alts = getElevation(p, breaks)
@@ -64,6 +64,8 @@ function calcSegments (p, breaks, pacing) {
       len: len,
       gain: 0,
       loss: 0,
+      alt1: alts[i - 1], // starting altitude
+      alt2: alts[i], // ending altitude
       grade: (alts[i] - alts[i - 1]) / len / 10,
       time: 0
     })
@@ -74,7 +76,8 @@ function calcSegments (p, breaks, pacing) {
   var delta0 = 0
   var dF = 0
   var grade = 0
-  var gnpF = 0
+  var gF = 0 // grade factor
+  var aF = 0 // altitude factor
   for (i = 1, il = p.length; i < il; i++) {
     j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
     if (j > j0) {
@@ -99,43 +102,27 @@ function calcSegments (p, breaks, pacing) {
     }
     if (pacing) {
       grade = (p[i - 1].grade + p[i].grade) / 2
-      gnpF = gnpFact(grade)
+      gF = nF.gradeFactor(grade)
       if (j > j0) {
         if (j0 >= 0) {
           len = s[j].start - p[i - 1].loc
-          dF = driftFact([p[i - 1].loc, s[j].start], pacing.drift, cLen)
-          s[j0].time += pacing.gnp * (1 + gnpF + dF) * len
+          dF = nF.driftFactor([p[i - 1].loc, s[j].start], pacing.drift, cLen)
+          aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
+          s[j0].time += pacing.np * gF * dF * aF * len
         }
         len = p[i].loc - s[j].start
-        dF = driftFact([p[i].loc, s[j].start], pacing.drift, cLen)
-        s[j].time += pacing.gnp * (1 + gnpF + dF) * len
+        dF = nF.driftFactor([p[i].loc, s[j].start], pacing.drift, cLen)
+        aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
+        s[j].time += pacing.np * gF * dF * aF * len
       } else if (j >= 0) {
-        dF = driftFact([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
-        s[j].time += pacing.gnp * (1 + gnpF + dF) * p[i].dloc
+        dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
+        aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
+        s[j].time += pacing.np * gF * dF * aF * p[i].dloc
       }
     }
     j0 = j
   }
   return s
-}
-
-function driftFact (loc, drift, length) {
-  // returns a linear drift factor
-  // loc: point or array [start, end] [km]
-  // drift: in %
-  // length: total course length [km]
-  if (drift) {
-    var mid = 0
-    if (Array.isArray(loc)) {
-      mid = (loc[0] + loc[1]) / 2
-    } else {
-      mid = loc
-    }
-    var dF = ((-drift / 2) + (mid / length * drift)) / 100
-    return dF
-  } else {
-    return 0
-  }
 }
 
 function cleanPoints (p) {
@@ -402,5 +389,6 @@ module.exports = {
   calcSegments: calcSegments,
   getElevation: getElevation,
   getLatLonAltFromDistance: getLatLonAltFromDistance,
-  pointWLSQ: pointWLSQ
+  pointWLSQ: pointWLSQ,
+  round: round
 }

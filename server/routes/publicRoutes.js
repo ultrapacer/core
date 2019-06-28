@@ -2,13 +2,17 @@
 var express = require('express')
 var publicRoutes = express.Router()
 var Course = require('../models/Course')
+var User = require('../models/User')
 
 // GET COURSE
 publicRoutes.route('/course/:course').get(async function (req, res) {
   try {
-    var q = { _id: req.params.course }
+    let q = { _id: req.params.course }
     var course = await Course.findOne(q).populate(['_plan']).exec()
     if (course.public) {
+      let q = { _id: course._user._id }
+      let user = await User.findOne(q).select('altModel').exec()
+      course.altModel = user.altModel
       res.json(course)
     } else {
       res.status(403).send('No permission')
