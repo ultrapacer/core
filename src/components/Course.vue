@@ -122,7 +122,7 @@
 <script>
 import api from '@/api'
 import util from '../../shared/utilities'
-import {gradeFactor, altFactor} from '../../shared/normFactor'
+import nF from '../../shared/normFactor'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
@@ -243,18 +243,6 @@ export default {
       this.altModel = this.course.altModel
     }
 
-    var totg = 0
-    var tota = 0
-    var p = this.course.points
-    for (var j = 1, jl = p.length; j < jl; j++) {
-      var grd = (p[j - 1].grade + p[j].grade) / 2
-      totg += (1 + gradeFactor(grd)) * p[j].dloc
-      var alt = (p[j - 1].alt + p[j].alt) / 2
-      tota += (1 + altFactor(alt, this.altModel)) * p[j].dloc
-    }
-    var gnorm = (totg / this.course.len) - 1
-    var anorm = (tota / this.course.len) - 1
-    this.course.norm = gnorm + anorm + 1
     this.updatePacing()
     this.initializing = false
   },
@@ -342,13 +330,32 @@ export default {
     updatePacing () {
       if (!this.course._plan) { return }
       if (!this.course._plan.name) { return }
-      var time = 0
-      var pace = 0
-      var np = 0
 
+      // calculate course normalizing factor:
+      var tot = 0
+      var p = this.course.points
+      for (let j = 1, jl = p.length; j < jl; j++) {
+        let grd = (p[j - 1].grade + p[j].grade) / 2
+        let gF = nF.gradeFactor(grd)
+        let alt = (p[j - 1].alt + p[j].alt) / 2
+        let aF = nF.altFactor(alt, this.altModel)
+        let dF = nF.driftFactor(
+          [p[j - 1].loc, p[j].loc],
+          this.course._plan.drift,
+          this.course.len
+        )
+        tot += gF * aF * dF * p[j].dloc
+      }
+      this.course.norm = (tot / this.course.len)
+
+      // calculate delay:
       var nwp = this.course.waypoints.filter(wp => wp.type === 'aid').length
       var delay = nwp * this.course._plan.waypointDelay
 
+      // calculate time, pace, and normalized pace:
+      var time = 0
+      var pace = 0
+      var np = 0
       if (this.course._plan.pacingMethod === 'time') {
         time = this.course._plan.pacingTarget
         pace = (time - delay) / this.course.len
@@ -362,6 +369,7 @@ export default {
         pace = np * this.course.norm
         time = pace * this.course.len + delay
       }
+
       this.pacing = {
         time: time,
         delay: delay,

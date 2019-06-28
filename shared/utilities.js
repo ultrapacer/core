@@ -106,42 +106,23 @@ function calcSegments (p, breaks, pacing) {
       if (j > j0) {
         if (j0 >= 0) {
           len = s[j].start - p[i - 1].loc
-          dF = driftFact([p[i - 1].loc, s[j].start], pacing.drift, cLen)
+          dF = nF.driftFactor([p[i - 1].loc, s[j].start], pacing.drift, cLen)
           aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
-          s[j0].time += pacing.np * (1 + gF + dF + aF) * len
+          s[j0].time += pacing.np * gF * dF * aF * len
         }
         len = p[i].loc - s[j].start
-        dF = driftFact([p[i].loc, s[j].start], pacing.drift, cLen)
+        dF = nF.driftFactor([p[i].loc, s[j].start], pacing.drift, cLen)
         aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
-        s[j].time += pacing.np * (1 + gF + dF + aF) * len
+        s[j].time += pacing.np * gF * dF * aF * len
       } else if (j >= 0) {
-        dF = driftFact([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
+        dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
         aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
-        s[j].time += pacing.np * (1 + gF + dF + aF) * p[i].dloc
+        s[j].time += pacing.np * gF * dF * aF * p[i].dloc
       }
     }
     j0 = j
   }
   return s
-}
-
-function driftFact (loc, drift, length) {
-  // returns a linear drift factor
-  // loc: point or array [start, end] [km]
-  // drift: in %
-  // length: total course length [km]
-  if (drift) {
-    var mid = 0
-    if (Array.isArray(loc)) {
-      mid = (loc[0] + loc[1]) / 2
-    } else {
-      mid = loc
-    }
-    var dF = ((-drift / 2) + (mid / length * drift)) / 100
-    return dF
-  } else {
-    return 0
-  }
 }
 
 function cleanPoints (p) {

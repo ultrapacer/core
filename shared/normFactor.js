@@ -18,7 +18,8 @@ function gradeFactor (grade, model) {
   if (model === null || typeof (model) === 'undefined') {
     model = defaults.gradeFactor
   }
-  return model.a * (grade ** 2) + model.b * (grade) + model.c
+  let fact = model.a * (grade ** 2) + model.b * (grade) + model.c
+  return fact + 1
 }
 
 function altFactor (alt, model) {
@@ -33,11 +34,31 @@ function altFactor (alt, model) {
   }
   let r = model.rate / 100
   let fact = r * Math.max(0, a - model.th) / model.span
-  return fact
+  return fact + 1
+}
+
+function driftFactor (loc, drift, length) {
+  // returns a linear drift factor
+  // loc: point or array [start, end] [km]
+  // drift: in %
+  // length: total course length [km]
+  if (drift) {
+    var mid = 0
+    if (Array.isArray(loc)) {
+      mid = (loc[0] + loc[1]) / 2
+    } else {
+      mid = loc
+    }
+    var dF = ((-drift / 2) + (mid / length * drift)) / 100
+    return dF + 1
+  } else {
+    return 1
+  }
 }
 
 module.exports = {
   gradeFactor: gradeFactor,
   altFactor: altFactor,
+  driftFactor: driftFactor,
   defaults: defaults
 }
