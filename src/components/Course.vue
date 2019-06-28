@@ -242,7 +242,6 @@ export default {
     } else {
       this.altModel = this.course.altModel
     }
-    console.log(this.altModel)
 
     var totg = 0
     var tota = 0
