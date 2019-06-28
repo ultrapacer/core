@@ -81,7 +81,7 @@
           <b-tab title="Map" active>
             <course-map :course="course" :focus="mapFocus"></course-map>
           </b-tab>
-          <b-tab v-if="course._plan && course._plan.name" title="Plan">
+          <b-tab v-if="course._plan && course._plan.name" title="Plan" active>
             <plan-details
                 :course="course"
                 :plan="course._plan"
@@ -337,8 +337,7 @@ export default {
       for (let j = 1, jl = p.length; j < jl; j++) {
         let grd = (p[j - 1].grade + p[j].grade) / 2
         let gF = nF.gradeFactor(grd)
-        let alt = (p[j - 1].alt + p[j].alt) / 2
-        let aF = nF.altFactor(alt, this.altModel)
+        let aF = nF.altFactor([p[j - 1].alt, p[j].alt], this.altModel)
         let dF = nF.driftFactor(
           [p[j - 1].loc, p[j].loc],
           this.course._plan.drift,

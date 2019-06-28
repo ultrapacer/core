@@ -68,11 +68,28 @@
     </p>
     <small>&nbsp; *Normalized for Grade, Altitude</small>
   </b-list-group-item>
+  <b-list-group-item>
+    <h5 class="mb-1">Altitude Effects</h5>
+    <p class="mb-1">
+      Highest Altitude Factor:
+      <b>+{{ maxAltFactor }} %</b>
+      at
+      <b>{{ maxAltitude | formatAlt(units.altScale) }} [{{ units.alt }}]</b>
+    </p>
+    <p class="mb-1">
+      Lowest Altitude Factor:
+      <b>+{{ minAltFactor }} %</b>
+      at
+      <b>{{ minAltitude | formatAlt(units.altScale) }} [{{ units.alt }}]</b>
+    </p>
+  </b-list-group-item>
 </b-list-group>
 </template>
 
 <script>
 import timeUtil from '../../shared/timeUtilities'
+import nF from '../../shared/normFactor'
+import {round} from '../../shared/utilities'
 export default {
   props: ['plan', 'pacing', 'units', 'course'],
   data () {
@@ -109,6 +126,37 @@ export default {
     },
     endPace: function () {
       return this.pacing.np * (1 + this.plan.drift / 200)
+    },
+    maxAltitude: function () {
+      var m = Math.max.apply(
+        Math,
+        this.course.points.map(x => { return x.alt })
+      )
+      return m
+    },
+    maxAltFactor: function () {
+      return round(
+        (nF.altFactor(this.maxAltitude, this.pacing.altModel) - 1) * 100,
+        2
+      )
+    },
+    minAltitude: function () {
+      var m = Math.min.apply(
+        Math,
+        this.course.points.map(x => { return x.alt })
+      )
+      return m
+    },
+    minAltFactor: function () {
+      return round(
+        (nF.altFactor(this.minAltitude, this.pacing.altModel) - 1) * 100,
+        2
+      )
+    }
+  },
+  filters: {
+    formatAlt (val, altScale) {
+      return (val * altScale).toFixed(0)
     }
   },
   methods: {
