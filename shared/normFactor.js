@@ -56,6 +56,19 @@ function driftFactor (loc, drift, length) {
   }
 }
 
+function terrainFactor (loc, segments) {
+  // returns a linear drift factor
+  // loc: point or array [start, end] [km]
+  // segments: array of segments with terrainIndex
+  var mid = 0
+  if (Array.isArray(loc)) {
+    mid = (loc[0] + loc[1]) / 2
+  } else {
+    mid = loc
+  }
+  segments
+}
+
 module.exports = {
   gradeFactor: gradeFactor,
   altFactor: altFactor,
