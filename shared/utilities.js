@@ -390,5 +390,6 @@ module.exports = {
   getElevation: getElevation,
   getLatLonAltFromDistance: getLatLonAltFromDistance,
   pointWLSQ: pointWLSQ,
-  round: round
+  round: round,
+  interp: interp
 }

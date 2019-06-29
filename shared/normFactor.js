@@ -56,22 +56,34 @@ function driftFactor (loc, drift, length) {
   }
 }
 
-function terrainFactor (loc, segments) {
-  // returns a linear drift factor
-  // loc: point or array [start, end] [km]
-  // segments: array of segments with terrainIndex
-  var mid = 0
-  if (Array.isArray(loc)) {
-    mid = (loc[0] + loc[1]) / 2
+function terrainFactor (locs, segments) {
+  // returns a segment-based terrain factor
+  // locs: array [start, end] [km]
+  // segments: array of segments with terrainFactor
+  let s = segments.filter( x=> {
+    x.start.loc >= locs[0] && x.end.loc < locs[1]
+  })
+  if (s.length === 1) {
+    return s[0].start.terrainFactor
   } else {
-    mid = loc
+    let f = 0
+    s.forEach( x => {
+      let l = Math.min(locs[1], x.end.loc) - Math.max(locs[0], x.start.loc)
+      f += l * x.terrainFactor
+    })
+    f = f / (locs[1] - locs[0])
+    return f
   }
-  segments
 }
 
 module.exports = {
   gradeFactor: gradeFactor,
+  gF: gradeFactor,
   altFactor: altFactor,
+  aF: altFactor,
   driftFactor: driftFactor,
+  dF: driftFactor,
+  terrainFactor: terrainFactor,
+  tF: terrainFactor,
   defaults: defaults
 }
