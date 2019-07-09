@@ -9,7 +9,6 @@ publicRoutes.route('/course/:course').get(async function (req, res) {
     let q = { _id: req.params.course }
     var course = await Course.findOne(q).populate(['_plan']).exec()
     if (course.public) {
-      let q = { _id: course._user._id }
       res.json(course)
     } else {
       res.status(403).send('No permission')

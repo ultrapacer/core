@@ -102,8 +102,8 @@
     ></plan-edit>
     <waypoint-edit
       v-if="owner"
+      ref="wpEdit"
       :course="course"
-      :waypoint="waypoint"
       :units="units"
       @refresh="refreshWaypoints"
       @delete="deleteWaypoint"
@@ -239,10 +239,10 @@ export default {
   },
   methods: {
     async newWaypoint () {
-      this.waypoint = {}
+      this.$refs.wpEdit.show({})
     },
     async editWaypoint (waypoint) {
-      this.waypoint = waypoint
+      this.$refs.wpEdit.show(waypoint)
     },
     async deleteWaypoint (waypoint, cb) {
       this.$refs.delModal.show(
