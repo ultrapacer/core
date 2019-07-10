@@ -120,8 +120,8 @@ export default {
             let l = item.len * this.units.distScale
             return timeUtil.sec2string(item.time / l, '[h]:m:ss')
           },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         })
       }
       return f
