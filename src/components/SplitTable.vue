@@ -11,10 +11,16 @@
     small
   >
     <template slot="FOOT_end">&nbsp;</template>
-    <template slot="FOOT_gain">{{ course.gain | formatAlt(units.altScale) }}</template>
-    <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
+    <template slot="FOOT_gain">
+      {{ course.gain | formatAlt(units.altScale) }}
+    </template>
+    <template slot="FOOT_loss">
+      {{ course.loss | formatAlt(units.altScale) }}
+    </template>
     <template slot="FOOT_grade">&nbsp;</template>
-    <template slot="FOOT_time">{{ time | formatTime }}</template>
+    <template slot="FOOT_time">
+      {{ time | formatTime }}
+    </template>
   </b-table>
 </template>
 

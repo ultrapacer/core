@@ -12,12 +12,23 @@
   >
     <template slot="FOOT_start.name">&nbsp;</template>
     <template slot="FOOT_end.name">&nbsp;</template>
-    <template slot="FOOT_len">{{ course.distance | formatDist(units.distScale) }}</template>
-    <template slot="FOOT_gain">{{ course.gain | formatAlt(units.altScale) }}</template>
-    <template slot="FOOT_loss">{{ course.loss | formatAlt(units.altScale) }}</template>
+    <template slot="FOOT_len">
+      {{ course.distance | formatDist(units.distScale) }}
+    </template>
+    <template slot="FOOT_gain">
+      {{ course.gain | formatAlt(units.altScale) }}
+    </template>
+    <template slot="FOOT_loss">
+      {{ course.loss | formatAlt(units.altScale) }}
+    </template>
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_start.terrainIndex">&nbsp;</template>
-    <template slot="FOOT_time">{{ time | formatTime }}</template>
+    <template slot="FOOT_time">
+      {{ time | formatTime }}
+    </template>
+    <template slot="FOOT_pace">
+      {{ pacing.pace / units.distScale | formatTime }}
+    </template>
     <template slot="actions" slot-scope="row">
       <b-button size="sm" @click="editFn(row.item.start)" class="mr-1">
         <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
@@ -101,6 +112,16 @@ export default {
           },
           thClass: 'text-right',
           tdClass: 'text-right'
+        })
+        f.push({
+          key: 'pace',
+          label: `Pace [min/${this.units.dist}]`,
+          formatter: (value, key, item) => {
+            let l = item.len * this.units.distScale
+            return timeUtil.sec2string(item.time / l, '[h]:m:ss')
+          },
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         })
       }
       return f

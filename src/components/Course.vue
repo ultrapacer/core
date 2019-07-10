@@ -363,6 +363,7 @@ export default {
       this.pacing = {
         time: time,
         delay: delay,
+        moving: time - delay,
         pace: pace,
         np: np,
         drift: this.course._plan.drift,
