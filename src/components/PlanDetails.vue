@@ -31,7 +31,8 @@
       Average Overall Pace:
       <b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b>
     </p>
-    <small>&nbsp; *While Moving</small>
+    <small>&nbsp; * While Moving</small><br/>
+    <small>&nbsp; ** Normalized for Grade & Altitude</small>
   </b-list-group-item>
   <b-list-group-item>
     <h5 class="mb-1">Delays</h5>
@@ -49,39 +50,45 @@
     </p>
   </b-list-group-item>
   <b-list-group-item>
-    <h5 class="mb-1">Pace Drift</h5>
-    <p class="mb-1">
-      Pace Drift:
-      <b>{{ plan.drift }} %</b>
-    </p>
-    <p class="mb-1">
-      Starting Pace:
-      <b>{{ sec2string(fPace(startPace), 'mm:ss') }}</b> *
-    </p>
-    <p class="mb-1">
-      Average Pace:
-      <b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *
-    </p>
-    <p class="mb-1">
-      Ending Pace:
-      <b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *
-    </p>
-    <small>&nbsp; *Normalized for Grade, Altitude</small>
+    <h5 class="mb-1"><span v-if="!plan.drift">No </span>Pace Drift</h5>
+    <div v-if="plan.drift">
+      <p class="mb-1">
+        Pace Drift:
+        <b>{{ plan.drift }} %</b>
+      </p>
+      <p class="mb-1">
+        Starting Pace:
+        <b>{{ sec2string(fPace(startPace), 'mm:ss') }}</b> *
+      </p>
+      <p class="mb-1">
+        Average Pace:
+        <b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *
+      </p>
+      <p class="mb-1">
+        Ending Pace:
+        <b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *
+      </p>
+      <small>&nbsp; * Normalized for Grade & Altitude</small>
+    </div>
   </b-list-group-item>
   <b-list-group-item>
-    <h5 class="mb-1">Altitude Effects</h5>
-    <p class="mb-1">
-      Highest Altitude Factor:
-      <b>+{{ maxAltFactor }} %</b>
-      at
-      <b>{{ maxAltitude | formatAlt(units.altScale) }} [{{ units.alt }}]</b>
-    </p>
-    <p class="mb-1">
-      Lowest Altitude Factor:
-      <b>+{{ minAltFactor }} %</b>
-      at
-      <b>{{ minAltitude | formatAlt(units.altScale) }} [{{ units.alt }}]</b>
-    </p>
+    <h5 class="mb-1">
+      <span v-if="!maxAltFactor && !minAltFactor">No </span>Altitude Effects
+    </h5>
+    <div v-if="maxAltFactor || minAltFactor">
+      <p class="mb-1">
+        Highest Altitude Factor:
+        <b>+{{ maxAltFactor }} %</b>
+        at
+        <b>{{ maxAltitude | formatAlt(units.altScale) }} [{{ units.alt }}]</b>
+      </p>
+      <p class="mb-1">
+        Lowest Altitude Factor:
+        <b>+{{ minAltFactor }} %</b>
+        at
+        <b>{{ minAltitude | formatAlt(units.altScale) }} [{{ units.alt }}]</b>
+      </p>
+    </div>
   </b-list-group-item>
 </b-list-group>
 </template>
@@ -97,7 +104,7 @@ export default {
       methods: {
         time: 'Finish Time',
         pace: 'Average Pace',
-        gnp: 'Grade Normalized Pace'
+        np: 'Normalized Pace'
       }
     }
   },
@@ -110,7 +117,7 @@ export default {
         var s = this.plan.pacingTarget
         if (
           this.plan.pacingMethod === 'pace' ||
-          this.plan.pacingMethod === 'gnp'
+          this.plan.pacingMethod === 'np'
         ) {
           s = s / this.units.distScale
           return timeUtil.sec2string(s, 'mm:ss')
