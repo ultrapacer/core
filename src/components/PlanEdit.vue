@@ -13,7 +13,12 @@
           <b-form-input type="text" v-model="model.name" required></b-form-input>
         </b-form-group>
         <b-form-group label="Pacing Method">
-          <b-form-select type="number" v-model="model.pacingMethod" :options="pacingMethods" required></b-form-select>
+          <b-form-select
+              type="number"
+              v-model="model.pacingMethod"
+              :options="pacingMethods"
+              required>
+          </b-form-select>
         </b-form-group>
         <b-form-group v-bind:label="targetLabel">
           <b-form-input
@@ -70,7 +75,7 @@
 import api from '@/api'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'plan', 'units'],
+  props: ['course', 'units'],
   data () {
     return {
       defaults: {
@@ -82,35 +87,10 @@ export default {
       pacingMethods: [
         { value: 'time', text: 'Finish Time' },
         { value: 'pace', text: 'Average Pace' },
-        { value: 'gnp', text: 'Grade Normalized Pace' }
+        { value: 'np', text: 'Normalized Pace' }
       ],
       saving: false,
       deleting: false
-    }
-  },
-  watch: {
-    plan: function (val) {
-      if (this.plan._id) {
-        this.model = Object.assign({}, val)
-      } else {
-        this.model = Object.assign({}, this.defaults)
-      }
-      if (this.model.pacingTarget) {
-        var s = this.model.pacingTarget
-        if (
-          this.model.pacingMethod === 'pace' ||
-          this.model.pacingMethod === 'gnp'
-        ) {
-          s = s / this.units.distScale
-          this.model.pacingTargetF = timeUtil.sec2string(s, 'mm:ss')
-        } else {
-          this.model.pacingTargetF = timeUtil.sec2string(s, 'hh:mm:ss')
-        }
-      } else {
-        this.model.pacingTargetF = ''
-      }
-      this.model.waypointDelayF = timeUtil.sec2string(this.model.waypointDelay, 'mm:ss')
-      this.$bvModal.show('plan-edit-modal')
     }
   },
   computed: {
@@ -118,7 +98,7 @@ export default {
       var str = ' [hh:mm:ss]'
       if (
         this.model.pacingMethod === 'pace' ||
-        this.model.pacingMethod === 'gnp'
+        this.model.pacingMethod === 'np'
       ) {
         str = ` [(mm:ss)/${this.units.dist}]`
       }
@@ -131,7 +111,7 @@ export default {
     targetPlaceholder: function () {
       if (
         this.model.pacingMethod === 'pace' ||
-        this.model.pacingMethod === 'gnp'
+        this.model.pacingMethod === 'np'
       ) {
         return 'mm:ss'
       } else {
@@ -141,7 +121,7 @@ export default {
     targetMask: function () {
       if (
         this.model.pacingMethod === 'pace' ||
-        this.model.pacingMethod === 'gnp'
+        this.model.pacingMethod === 'np'
       ) {
         return '##:##'
       } else {
@@ -150,6 +130,32 @@ export default {
     }
   },
   methods: {
+    async show (plan) {
+      if (typeof (plan) !== 'undefined') {
+        this.model = Object.assign({}, plan)
+      } else {
+        this.model = Object.assign({}, this.defaults)
+      }
+      if (this.model.pacingTarget) {
+        var s = this.model.pacingTarget
+        if (
+          this.model.pacingMethod === 'pace' ||
+          this.model.pacingMethod === 'np'
+        ) {
+          s = s / this.units.distScale
+          this.model.pacingTargetF = timeUtil.sec2string(s, 'mm:ss')
+        } else {
+          this.model.pacingTargetF = timeUtil.sec2string(s, 'hh:mm:ss')
+        }
+      } else {
+        this.model.pacingTargetF = ''
+      }
+      this.model.waypointDelayF = timeUtil.sec2string(
+        this.model.waypointDelay,
+        'mm:ss'
+      )
+      this.$bvModal.show('plan-edit-modal')
+    },
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
       if (this.$refs.planform.reportValidity()) {
@@ -162,7 +168,7 @@ export default {
       this.model.pacingTarget = timeUtil.string2sec(this.model.pacingTargetF)
       if (
         this.model.pacingMethod === 'pace' ||
-        this.model.pacingMethod === 'gnp'
+        this.model.pacingMethod === 'np'
       ) {
         this.model.pacingTarget = this.model.pacingTarget * this.units.distScale
       }
@@ -191,7 +197,7 @@ export default {
     },
     async remove () {
       this.deleting = true
-      this.$emit('delete', this.plan, async (err) => {
+      this.$emit('delete', this.model, async (err) => {
         if (!err) {
           this.clear()
           this.$bvModal.hide('plan-edit-modal')

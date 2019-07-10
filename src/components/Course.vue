@@ -94,7 +94,7 @@
     </b-row>
     <plan-edit
       v-if="owner"
-      :plan="planEdit"
+      ref="planEdit"
       :course="course"
       :units="units"
       @refresh="refreshPlan"
@@ -155,7 +155,6 @@ export default {
       saving: false,
       course: {},
       plan: {},
-      planEdit: false,
       segment: {},
       waypoint: {},
       pacing: {},
@@ -276,10 +275,10 @@ export default {
       this.segment = waypoint
     },
     async newPlan () {
-      this.planEdit = {}
+      this.$refs.planEdit.show()
     },
     async editPlan () {
-      this.planEdit = Object.assign({}, this.course._plan)
+      this.$refs.planEdit.show(this.course._plan)
     },
     async deletePlan (plan, cb) {
       this.$refs.delModal.show(
