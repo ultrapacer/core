@@ -28,24 +28,18 @@
 <script>
 import api from '@/api'
 export default {
-  props: ['segment'],
+  props: ['segments'],
   data () {
     return {
       model: {},
       saving: false
     }
   },
-  watch: {
-    segment: function (val) {
-      if (val._id) {
-        this.model = Object.assign({}, val)
-      } else {
-        this.model = {}
-      }
-      this.$bvModal.show('segment-edit-modal')
-    }
-  },
   methods: {
+    async show (waypoint) {
+      this.model = Object.assign({}, waypoint)
+      this.$bvModal.show('segment-edit-modal')
+    },
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
       if (this.$refs.segmentform.reportValidity()) {
