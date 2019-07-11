@@ -29,7 +29,7 @@ var WaypointSchema = new Schema({
     type: String,
     default: 'aid'
   },
-  terrainIndex: {
+  terrainFactor: {
     type: Number,
     default: null
   },

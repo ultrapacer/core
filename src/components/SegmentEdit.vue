@@ -47,12 +47,6 @@ export default {
     terrainFactorPlaceholder: function () {
       var tFP = ''
       if (!this.model._id) return tFP
-      if (
-        this.model.terrainFactor !== null &&
-        typeof (this.model.terrainFactor) !== 'undefined'
-      ) {
-        return (this.model.terrainFactor).toFixed(0)
-      }
       return (terrainFactor(this.model.location, this.segments) * 100).toFixed(0)
     }
   },

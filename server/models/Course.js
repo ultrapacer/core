@@ -39,10 +39,6 @@ var CourseSchema = new Schema({
   }],
   points: [{}],
   source: {},
-  terrainFactor: {
-    type: Number,
-    default: null
-  },
   altModel: {},
   gradeAdjustment: {
     type: Number
