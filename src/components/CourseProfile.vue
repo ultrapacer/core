@@ -129,23 +129,17 @@ export default {
       var ysg = [] // y's array for grade
       var chartProfile = []
       var chartGrade = []
-      if (this.course.points.length < pmax) {
-        xs = this.course.points.map(x => x.loc)
-        ysa = this.course.points.map(x => x.alt)
-        ysg = this.course.points.map(x => x.grade)
-      } else {
-        xs = Array(pmax + 1).fill(0).map((e, i) => i++ * this.course.len / pmax)
-        ysa = util.pointWLSQ(
-          this.course.points,
-          xs,
-          this.course.len / pmax / 5
-        )
-        ysg = util.pointWLSQ(
-          this.course.points,
-          xs,
-          5 * this.course.len / pmax
-        )
-      }
+      xs = Array(pmax + 1).fill(0).map((e, i) => i++ * this.course.len / pmax)
+      ysa = util.pointWLSQ(
+        this.course.points,
+        xs,
+        this.course.len / pmax / 5
+      )
+      ysg = util.pointWLSQ(
+        this.course.points,
+        xs,
+        5 * this.course.len / pmax
+      )
       xs.forEach((x, i) => {
         chartProfile.push({
           x: x * this.units.distScale,

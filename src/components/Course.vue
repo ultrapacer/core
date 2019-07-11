@@ -94,7 +94,7 @@
     </b-row>
     <plan-edit
       v-if="owner"
-      :plan="planEdit"
+      ref="planEdit"
       :course="course"
       :units="units"
       @refresh="refreshPlan"
@@ -102,8 +102,8 @@
     ></plan-edit>
     <waypoint-edit
       v-if="owner"
+      ref="wpEdit"
       :course="course"
-      :waypoint="waypoint"
       :units="units"
       @refresh="refreshWaypoints"
       @delete="deleteWaypoint"
@@ -155,7 +155,6 @@ export default {
       saving: false,
       course: {},
       plan: {},
-      planEdit: false,
       segment: {},
       waypoint: {},
       pacing: {},
@@ -239,10 +238,10 @@ export default {
   },
   methods: {
     async newWaypoint () {
-      this.waypoint = {}
+      this.$refs.wpEdit.show({})
     },
     async editWaypoint (waypoint) {
-      this.waypoint = waypoint
+      this.$refs.wpEdit.show(waypoint)
     },
     async deleteWaypoint (waypoint, cb) {
       this.$refs.delModal.show(
@@ -276,10 +275,10 @@ export default {
       this.segment = waypoint
     },
     async newPlan () {
-      this.planEdit = {}
+      this.$refs.planEdit.show()
     },
     async editPlan () {
-      this.planEdit = Object.assign({}, this.course._plan)
+      this.$refs.planEdit.show(this.course._plan)
     },
     async deletePlan (plan, cb) {
       this.$refs.delModal.show(
@@ -363,6 +362,7 @@ export default {
       this.pacing = {
         time: time,
         delay: delay,
+        moving: time - delay,
         pace: pace,
         np: np,
         drift: this.course._plan.drift,

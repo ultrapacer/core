@@ -63,7 +63,7 @@
 import api from '@/api'
 import wputil from '../../shared/waypointUtilities'
 export default {
-  props: ['waypoint', 'course', 'units'],
+  props: ['course', 'units'],
   data () {
     return {
       deleting: false,
@@ -72,20 +72,6 @@ export default {
       defaults: {
         type: 'aid'
       }
-    }
-  },
-  watch: {
-    waypoint: function (val) {
-      if (val._id) {
-        this.model = Object.assign({}, val)
-      } else {
-        this.model = Object.assign({}, this.defaults)
-      }
-      if (this.model.location) {
-        this.model.locUserUnit =
-          (this.model.location * this.units.distScale).toFixed(2)
-      }
-      this.$bvModal.show('waypoint-edit-modal')
     }
   },
   computed: {
@@ -107,6 +93,18 @@ export default {
     }
   },
   methods: {
+    async show (waypoint) {
+      if (waypoint._id) {
+        this.model = Object.assign({}, waypoint)
+      } else {
+        this.model = Object.assign({}, this.defaults)
+      }
+      if (this.model.location) {
+        this.model.locUserUnit =
+          (this.model.location * this.units.distScale).toFixed(2)
+      }
+      this.$bvModal.show('waypoint-edit-modal')
+    },
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
       if (this.$refs.waypointform.reportValidity()) {
@@ -135,7 +133,7 @@ export default {
     },
     async remove () {
       this.deleting = true
-      this.$emit('delete', this.waypoint, async (err) => {
+      this.$emit('delete', this.model, async (err) => {
         if (!err) {
           this.$bvModal.hide('waypoint-edit-modal')
         }
