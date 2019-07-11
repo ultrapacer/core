@@ -110,7 +110,9 @@
     ></waypoint-edit>
     <segment-edit
       v-if="owner"
-      :segment="segment"
+      ref="segmentEdit"
+      :segments="segments"
+      :units="units"
       @refresh="refreshWaypoints"
     ></segment-edit>
     <delete-modal
@@ -183,6 +185,7 @@ export default {
       return util.calcSplits(this.course.points, this.units.dist, this.pacing)
     },
     segments: function () {
+      if (!this.course.points) { return [] }
       if (!this.course.points.length) { return [] }
       if (!this.course.waypoints.length) { return [] }
       var arr = []
@@ -191,7 +194,14 @@ export default {
         breaks.push(this.course.waypoints[i].location)
       }
       var splits = util.calcSegments(this.course.points, breaks, this.pacing)
+      var tF = 0
       for (var j = 0, jl = splits.length; j < jl; j++) {
+        if (
+          this.course.waypoints[j].terrainFactor !== null &&
+          typeof (this.course.waypoints[j].terrainFactor) !== 'undefined'
+        ) {
+          tF = this.course.waypoints[j].terrainFactor
+        }
         arr.push({
           start: this.course.waypoints[j],
           end: this.course.waypoints[j + 1],
@@ -199,9 +209,11 @@ export default {
           gain: splits[j].gain,
           loss: splits[j].loss,
           grade: splits[j].grade,
-          time: splits[j].time
+          time: splits[j].time,
+          terrainFactor: tF
         })
       }
+      console.log(arr)
       return arr
     },
     units: function () {
@@ -272,7 +284,7 @@ export default {
       if (typeof callback === 'function') callback()
     },
     async editSegment (waypoint) {
-      this.segment = waypoint
+      this.$refs.segmentEdit.show(waypoint)
     },
     async newPlan () {
       this.$refs.planEdit.show()

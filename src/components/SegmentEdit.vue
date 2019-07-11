@@ -10,11 +10,18 @@
       @ok="handleOk"
     >
       <form ref="segmentform" @submit.prevent="">
-        <b-form-group label="Terrain">
-          <b-form-input type="number" v-model="model.terrainIndex" min="0" step="0" required></b-form-input>
+        <b-form-group label="Terrain Factor [%] Increase">
+          <b-form-input
+              type="number"
+              v-model="model.terrainFactor"
+              :placeholder="terrainFactorPlaceholder"
+              min="0"
+              step="0">
+          </b-form-input>
         </b-form-group>
         <b-form-group label="Notes">
-          <b-form-textarea rows="4" v-model="model.segmentNotes"></b-form-textarea>
+          <b-form-textarea rows="4" v-model="model.segmentNotes">
+          </b-form-textarea>
         </b-form-group>
       </form>
       <template slot="modal-ok" slot-scope="{ ok }">
@@ -27,12 +34,26 @@
 
 <script>
 import api from '@/api'
+import {terrainFactor} from '../../shared/normFactor'
 export default {
-  props: ['segments'],
+  props: ['segments', 'units'],
   data () {
     return {
       model: {},
       saving: false
+    }
+  },
+  computed: {
+    terrainFactorPlaceholder: function () {
+      var tFP = ''
+      if (!this.model._id) return tFP
+      if (
+        this.model.terrainFactor !== null &&
+        typeof (this.model.terrainFactor) !== 'undefined'
+      ) {
+        return (this.model.terrainFactor).toFixed(0)
+      }
+      return (terrainFactor(this.model.location, this.segments) * 100).toFixed(0)
     }
   },
   methods: {

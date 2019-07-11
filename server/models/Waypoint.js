@@ -31,7 +31,7 @@ var WaypointSchema = new Schema({
   },
   terrainIndex: {
     type: Number,
-    default: 3
+    default: null
   },
   segmentNotes: {
     type: String

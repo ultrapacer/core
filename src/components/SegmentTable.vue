@@ -124,6 +124,13 @@ export default {
           tdClass: 'text-right'
         })
       }
+      if (this.owner) {
+        f.push({
+          key: 'actions',
+          label: '',
+          tdClass: 'actionButtonColumn'
+        })
+      }
       return f
     },
     time: function () {

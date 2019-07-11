@@ -49,7 +49,7 @@ waypointRoutes.route('/:id/segment').put(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var waypoint = await Waypoint.findById(req.params.id).populate('_course', '_user').exec()
     if (waypoint._course._user.equals(user._id)) {
-      waypoint.terrainIndex = req.body.terrainIndex
+      waypoint.terrainFactor = req.body.terrainFactor
       waypoint.segmentNotes = req.body.segmentNotes
       waypoint.save().then(post => {
         res.json('Update complete')

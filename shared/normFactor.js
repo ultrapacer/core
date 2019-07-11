@@ -60,19 +60,20 @@ function terrainFactor (locs, segments) {
   // returns a segment-based terrain factor
   // locs: array [start, end] [km]
   // segments: array of segments with terrainFactor
-  let s = segments.filter( x=> {
-    x.start.loc >= locs[0] && x.end.loc < locs[1]
-  })
+  if (!Array.isArray(locs)) locs = [locs, locs]
+  let s = segments.filter( x=> 
+    x.start.location <= locs[1] && x.end.location >= locs[0]
+  )
   if (s.length === 1) {
-    return s[0].start.terrainFactor
+    return s[0].terrainFactor / 100
   } else {
     let f = 0
     s.forEach( x => {
-      let l = Math.min(locs[1], x.end.loc) - Math.max(locs[0], x.start.loc)
+      let l = Math.min(locs[1], x.end.location) - Math.max(locs[0], x.start.location)
       f += l * x.terrainFactor
     })
     f = f / (locs[1] - locs[0])
-    return f
+    return f / 100
   }
 }
 
