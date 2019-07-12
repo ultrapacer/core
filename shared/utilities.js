@@ -78,6 +78,7 @@ function calcSegments (p, breaks, pacing) {
   var grade = 0
   var gF = 0 // grade factor
   var aF = 0 // altitude factor
+  var tF = 0 // terrain factor
   for (i = 1, il = p.length; i < il; i++) {
     j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
     if (j > j0) {
@@ -100,7 +101,7 @@ function calcSegments (p, breaks, pacing) {
     if (j0 >= 0) {
       (delta0 < 0) ? s[j0].loss += delta0 : s[j0].gain += delta0
     }
-    if (pacing) {
+    if (pacing && typeof (pacing.np) !== 'undefined') {
       grade = (p[i - 1].grade + p[i].grade) / 2
       gF = nF.gradeFactor(grade)
       if (j > j0) {
@@ -108,16 +109,19 @@ function calcSegments (p, breaks, pacing) {
           len = s[j].start - p[i - 1].loc
           dF = nF.driftFactor([p[i - 1].loc, s[j].start], pacing.drift, cLen)
           aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
-          s[j0].time += pacing.np * gF * dF * aF * len
+          tF = nF.tF([p[i - 1].loc, s[j].start], pacing.tFs)
+          s[j0].time += pacing.np * gF * dF * aF * tF * len
         }
         len = p[i].loc - s[j].start
         dF = nF.driftFactor([p[i].loc, s[j].start], pacing.drift, cLen)
         aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
-        s[j].time += pacing.np * gF * dF * aF * len
+        tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
+        s[j].time += pacing.np * gF * dF * aF * tF * len
       } else if (j >= 0) {
         dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
         aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
-        s[j].time += pacing.np * gF * dF * aF * p[i].dloc
+        tF = nF.tF([p[i - 1].loc, p[i].loc], pacing.tFs)
+        s[j].time += pacing.np * gF * dF * aF * tF * p[i].dloc
       }
     }
     j0 = j

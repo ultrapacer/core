@@ -36,7 +36,7 @@
 import api from '@/api'
 import {terrainFactor} from '../../shared/normFactor'
 export default {
-  props: ['segments', 'units'],
+  props: ['terrainFactors', 'units'],
   data () {
     return {
       model: {},
@@ -47,7 +47,10 @@ export default {
     terrainFactorPlaceholder: function () {
       var tFP = ''
       if (!this.model._id) return tFP
-      return (terrainFactor(this.model.location, this.segments) * 100).toFixed(0)
+      tFP = terrainFactor(this.model.location, this.terrainFactors)
+      console.log(tFP)
+      tFP = ((tFP - 1) * 100).toFixed(0)
+      return tFP
     }
   },
   methods: {

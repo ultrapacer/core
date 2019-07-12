@@ -111,7 +111,7 @@
     <segment-edit
       v-if="owner"
       ref="segmentEdit"
-      :segments="segments"
+      :terrainFactors="terrainFactors"
       :units="units"
       @refresh="refreshWaypoints"
     ></segment-edit>
@@ -197,8 +197,8 @@ export default {
       var tF = 0
       for (var j = 0, jl = splits.length; j < jl; j++) {
         if (
-          this.course.waypoints[j].terrainFactor !== null &&
-          typeof (this.course.waypoints[j].terrainFactor) !== 'undefined'
+          typeof (this.course.waypoints[j].terrainFactor) !== 'undefined' &&
+          this.course.waypoints[j].terrainFactor !== null
         ) {
           tF = this.course.waypoints[j].terrainFactor
         }
@@ -213,8 +213,17 @@ export default {
           terrainFactor: tF
         })
       }
-      console.log(arr)
       return arr
+    },
+    terrainFactors: function () {
+      let tFs = this.segments.map( x => {
+        return {
+          start: x.start.location,
+          end: x.end.location,
+          tF: x.terrainFactor
+        }
+      })
+      return tFs
     },
     units: function () {
       var u = {
@@ -332,7 +341,7 @@ export default {
     updatePacing () {
       if (!this.course._plan) { return }
       if (!this.course._plan.name) { return }
-
+      
       // calculate course normalizing factor:
       var tot = 0
       var p = this.course.points
@@ -340,12 +349,13 @@ export default {
         let grd = (p[j - 1].grade + p[j].grade) / 2
         let gF = nF.gradeFactor(grd)
         let aF = nF.altFactor([p[j - 1].alt, p[j].alt], this.course.altModel)
+        let tF = nF.terrainFactor([p[j - 1].loc, p[j].loc], this.terrainFactors)
         let dF = nF.driftFactor(
           [p[j - 1].loc, p[j].loc],
           this.course._plan.drift,
           this.course.len
         )
-        tot += gF * aF * dF * p[j].dloc
+        tot += gF * aF * tF * dF * p[j].dloc
       }
       this.course.norm = (tot / this.course.len)
 
@@ -370,7 +380,7 @@ export default {
         pace = np * this.course.norm
         time = pace * this.course.len + delay
       }
-
+      
       this.pacing = {
         time: time,
         delay: delay,
@@ -378,7 +388,8 @@ export default {
         pace: pace,
         np: np,
         drift: this.course._plan.drift,
-        altModel: this.course.altModel
+        altModel: this.course.altModel,
+        tFs: this.terrainFactors
       }
     },
     updateFocus: function (focus) {

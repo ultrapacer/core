@@ -56,25 +56,30 @@ function driftFactor (loc, drift, length) {
   }
 }
 
-function terrainFactor (locs, segments) {
+function terrainFactor (loc, tFs) {
   // returns a segment-based terrain factor
-  // locs: array [start, end] [km]
-  // segments: array of segments with terrainFactor
-  if (!Array.isArray(locs)) locs = [locs, locs]
-  let s = segments.filter( x=> 
-    x.start.location <= locs[1] && x.end.location >= locs[0]
-  )
-  if (s.length === 1) {
-    return s[0].terrainFactor / 100
-  } else {
-    let f = 0
-    s.forEach( x => {
-      let l = Math.min(locs[1], x.end.location) - Math.max(locs[0], x.start.location)
-      f += l * x.terrainFactor
-    })
-    f = f / (locs[1] - locs[0])
-    return f / 100
+  // loc: loc [km] or array [start, end] [km]
+  // tFs: array of terrainFactors [loc, tF] with terrainFactor
+  var tF = tFs[0].tF
+
+  if (!Array.isArray(loc)) {
+    loc = [loc, loc]
   }
+  tFs = tFs.filter(x =>
+    x.start <= loc[1] && x.end >= loc[0]
+  )
+  if (tFs.length === 1 || loc[0] === loc[1]) {
+    tF = tFs[0].tF
+  } else {
+    let wtF = 0
+    tFs.forEach(x => {
+      let l = Math.min(loc[1], x.end) -
+        Math.max(loc[0], x.start)
+      wtF += l * x.tF
+    })
+    tF = wtF / (loc[1] - loc[0])
+  }
+  return (tF / 100) + 1
 }
 
 module.exports = {

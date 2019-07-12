@@ -49,7 +49,9 @@ waypointRoutes.route('/:id/segment').put(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var waypoint = await Waypoint.findById(req.params.id).populate('_course', '_user').exec()
     if (waypoint._course._user.equals(user._id)) {
-      waypoint.terrainFactor = req.body.terrainFactor
+      let tF = req.body.terrainFactor
+      if (isNaN(tF)) tF = null
+      waypoint.terrainFactor = tF
       waypoint.segmentNotes = req.body.segmentNotes
       waypoint.save().then(post => {
         res.json('Update complete')
