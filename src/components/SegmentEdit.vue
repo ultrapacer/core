@@ -48,7 +48,6 @@ export default {
       var tFP = ''
       if (!this.model._id) return tFP
       tFP = terrainFactor(this.model.location, this.terrainFactors)
-      console.log(tFP)
       tFP = ((tFP - 1) * 100).toFixed(0)
       return tFP
     }
