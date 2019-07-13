@@ -10,16 +10,23 @@
       @ok="handleOk"
     >
       <form ref="segmentform" @submit.prevent="">
-        <b-form-group label="Terrain">
-          <b-form-input type="number" v-model="model.terrainIndex" min="0" step="0" required></b-form-input>
+        <b-form-group label="Terrain Factor [%] Increase">
+          <b-form-input
+              type="number"
+              v-model="model.terrainFactor"
+              :placeholder="terrainFactorPlaceholder"
+              min="0"
+              step="0">
+          </b-form-input>
         </b-form-group>
         <b-form-group label="Notes">
-          <b-form-textarea rows="4" v-model="model.segmentNotes"></b-form-textarea>
+          <b-form-textarea rows="4" v-model="model.segmentNotes">
+          </b-form-textarea>
         </b-form-group>
       </form>
       <template slot="modal-ok" slot-scope="{ ok }">
         <b-spinner v-show="saving" small></b-spinner>
-        Save Waypoint
+        Save Segment
       </template>
     </b-modal>
   </div>
@@ -27,25 +34,29 @@
 
 <script>
 import api from '@/api'
+import {terrainFactor} from '../../shared/normFactor'
 export default {
-  props: ['segment'],
+  props: ['terrainFactors', 'units'],
   data () {
     return {
       model: {},
       saving: false
     }
   },
-  watch: {
-    segment: function (val) {
-      if (val._id) {
-        this.model = Object.assign({}, val)
-      } else {
-        this.model = {}
-      }
-      this.$bvModal.show('segment-edit-modal')
+  computed: {
+    terrainFactorPlaceholder: function () {
+      var tFP = ''
+      if (!this.model._id) return tFP
+      tFP = terrainFactor(this.model.location, this.terrainFactors)
+      tFP = ((tFP - 1) * 100).toFixed(0)
+      return tFP
     }
   },
   methods: {
+    async show (waypoint) {
+      this.model = Object.assign({}, waypoint)
+      this.$bvModal.show('segment-edit-modal')
+    },
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
       if (this.$refs.segmentform.reportValidity()) {
