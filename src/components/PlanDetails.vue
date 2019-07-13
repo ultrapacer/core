@@ -49,46 +49,68 @@
       <b>{{ sec2string(pacing.delay, '[h]:m:ss') }}</b>
     </p>
   </b-list-group-item>
-  <b-list-group-item>
-    <h5 class="mb-1"><span v-if="!plan.drift">No </span>Pace Drift</h5>
-    <div v-if="plan.drift">
-      <p class="mb-1">
-        Pace Drift:
-        <b>{{ plan.drift }} %</b>
-      </p>
-      <p class="mb-1">
-        Starting Pace:
-        <b>{{ sec2string(fPace(startPace), 'mm:ss') }}</b> *
-      </p>
-      <p class="mb-1">
-        Average Pace:
-        <b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *
-      </p>
-      <p class="mb-1">
-        Ending Pace:
-        <b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *
-      </p>
-      <small>&nbsp; * Normalized for Grade & Altitude</small>
-    </div>
+  <b-list-group-item v-if="plan.drift">
+    <h5 class="mb-1">Pace Drift</h5>
+    <p class="mb-1">
+      Pace Drift:
+      <b>{{ plan.drift }} %</b>
+    </p>
+    <p class="mb-1">
+      Starting Pace:
+      <b>{{ sec2string(fPace(startPace), 'mm:ss') }}</b> *
+    </p>
+    <p class="mb-1">
+      Average Pace:
+      <b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *
+    </p>
+    <p class="mb-1">
+      Ending Pace:
+      <b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *
+    </p>
+    <small>&nbsp; * Normalized for Grade & Altitude</small>
   </b-list-group-item>
-  <b-list-group-item>
-    <h5 class="mb-1">
-      <span v-if="!maxAltFactor && !minAltFactor">No </span>Altitude Effects
-    </h5>
-    <div v-if="maxAltFactor || minAltFactor">
-      <p class="mb-1">
-        Highest Altitude Factor:
-        <b>+{{ maxAltFactor }} %</b>
-        at
-        <b>{{ maxAltitude | formatAlt(units.altScale) }} [{{ units.alt }}]</b>
-      </p>
-      <p class="mb-1">
-        Lowest Altitude Factor:
-        <b>+{{ minAltFactor }} %</b>
-        at
-        <b>{{ minAltitude | formatAlt(units.altScale) }} [{{ units.alt }}]</b>
-      </p>
-    </div>
+  <b-list-group-item v-if="maxAltFactor || minAltFactor">
+    <h5 class="mb-1">Altitude Effects</h5>
+    <p class="mb-1">
+      Highest Altitude Factor:
+      <b>+{{ maxAltFactor }} %</b>
+      at
+      <b>{{ maxAltitude | formatAlt(units.altScale) }} {{ units.alt }}</b>
+    </p>
+    <p class="mb-1">
+      Lowest Altitude Factor:
+      <b>+{{ minAltFactor }} %</b>
+      at
+      <b>{{ minAltitude | formatAlt(units.altScale) }} {{ units.alt }}</b>
+    </p>
+  </b-list-group-item>
+  <b-list-group-item v-if="maxTF || minTF">
+    <h5 class="mb-1">Terrain Effects</h5>
+    <p class="mb-1">
+      Course Terrain Factor:
+      <b>+{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }} %</b>
+    </p>
+    <p class="mb-1">
+      Hardest Terrain:
+      <b>+{{ maxTF }}%</b>
+      over
+      <b>{{ maxTFdist | formatDist(units.distScale) }} {{ units.dist }}</b>
+    </p>
+    <p class="mb-1">
+      Easiest Terrain:
+      <b>+{{ minTF }}%</b>
+      over
+      <b>{{ minTFdist | formatDist(units.distScale) }} {{ units.dist }}</b>
+    </p>
+  </b-list-group-item>
+  <b-list-group-item v-if="!plan.drift">
+    <p class="mb-1">No Pace Drift</p>
+  </b-list-group-item>
+  <b-list-group-item v-if="!maxAltFactor && !minAltFactor">
+    <p class="mb-1">No Altitude Effects</p>
+  </b-list-group-item>
+  <b-list-group-item v-if="!maxTF && !minTF">
+    <p class="mb-1">No Terrain Effects</p>
   </b-list-group-item>
 </b-list-group>
 </template>
@@ -159,11 +181,50 @@ export default {
         (nF.altFactor(this.minAltitude, this.pacing.altModel) - 1) * 100,
         2
       )
+    },
+    maxTF: function () {
+      var m = Math.max.apply(
+        Math,
+        this.pacing.tFs.map(x => { return x.tF })
+      )
+      return m
+    },
+    maxTFdist: function () {
+      let da = this.pacing.tFs.map(x => {
+        if (x.tF === this.maxTF) {
+          return x.end - x.start
+        } else {
+          return 0
+        }
+      })
+      let d = da.reduce((a, b) => a + b, 0)
+      return d
+    },
+    minTF: function () {
+      var m = Math.min.apply(
+        Math,
+        this.pacing.tFs.map(x => { return x.tF })
+      )
+      return m
+    },
+    minTFdist: function () {
+      let da = this.pacing.tFs.map(x => {
+        if (x.tF === this.minTF) {
+          return x.end - x.start
+        } else {
+          return 0
+        }
+      })
+      let d = da.reduce((a, b) => a + b, 0)
+      return d
     }
   },
   filters: {
     formatAlt (val, altScale) {
       return (val * altScale).toFixed(0)
+    },
+    formatDist (val, distScale) {
+      return (val * distScale).toFixed(2)
     }
   },
   methods: {

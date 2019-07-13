@@ -216,7 +216,7 @@ export default {
       return arr
     },
     terrainFactors: function () {
-      let tFs = this.segments.map( x => {
+      let tFs = this.segments.map(x => {
         return {
           start: x.start.location,
           end: x.end.location,
@@ -341,9 +341,10 @@ export default {
     updatePacing () {
       if (!this.course._plan) { return }
       if (!this.course._plan.name) { return }
-      
+
       // calculate course normalizing factor:
       var tot = 0
+      var factors = {gF: 0, aF: 0, tF: 0, dF: 0}
       var p = this.course.points
       for (let j = 1, jl = p.length; j < jl; j++) {
         let grd = (p[j - 1].grade + p[j].grade) / 2
@@ -355,8 +356,16 @@ export default {
           this.course._plan.drift,
           this.course.len
         )
+        factors.gF += gF * p[j].dloc
+        factors.aF += aF * p[j].dloc
+        factors.tF += tF * p[j].dloc
+        factors.dF += dF * p[j].dloc
         tot += gF * aF * tF * dF * p[j].dloc
       }
+      factors.gF = factors.gF / this.course.len
+      factors.aF = factors.aF / this.course.len
+      factors.tF = factors.tF / this.course.len
+      factors.dF = factors.dF / this.course.len
       this.course.norm = (tot / this.course.len)
 
       // calculate delay:
@@ -380,12 +389,14 @@ export default {
         pace = np * this.course.norm
         time = pace * this.course.len + delay
       }
-      
+
       this.pacing = {
         time: time,
         delay: delay,
+        factors: factors,
         moving: time - delay,
         pace: pace,
+        nF: this.course.norm,
         np: np,
         drift: this.course._plan.drift,
         altModel: this.course.altModel,

@@ -26,7 +26,7 @@
       </form>
       <template slot="modal-ok" slot-scope="{ ok }">
         <b-spinner v-show="saving" small></b-spinner>
-        Save Waypoint
+        Save Segment
       </template>
     </b-modal>
   </div>

@@ -22,7 +22,9 @@
       {{ course.loss | formatAlt(units.altScale) }}
     </template>
     <template slot="FOOT_grade">&nbsp;</template>
-    <template slot="FOOT_start.terrainIndex">&nbsp;</template>
+    <template slot="FOOT_terrainFactor">
+      +{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }}%
+    </template>
     <template slot="FOOT_time">
       {{ time | formatTime }}
     </template>
@@ -98,6 +100,15 @@ export default {
           label: 'Grade',
           formatter: (value, key, item) => {
             return (value).toFixed(2) + '%'
+          },
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
+        },
+        {
+          key: 'terrainFactor',
+          label: 'Terrain Factor',
+          formatter: (value, key, item) => {
+            return '+' + (value).toFixed(0) + '%'
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
