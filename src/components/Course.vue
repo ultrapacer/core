@@ -339,8 +339,8 @@ export default {
       this.updatePacing()
     },
     updatePacing () {
-      if (!this.course._plan) { return }
-      if (!this.course._plan.name) { return }
+      var plan = false
+      if (this.course._plan && this.course._plan.name) { plan = true }
 
       // calculate course normalizing factor:
       var tot = 0
@@ -353,7 +353,7 @@ export default {
         let tF = nF.terrainFactor([p[j - 1].loc, p[j].loc], this.terrainFactors)
         let dF = nF.driftFactor(
           [p[j - 1].loc, p[j].loc],
-          this.course._plan.drift,
+          plan ? this.course._plan.drift : 0,
           this.course.len
         )
         factors.gF += gF * p[j].dloc
@@ -368,26 +368,30 @@ export default {
       factors.dF = factors.dF / this.course.len
       this.course.norm = (tot / this.course.len)
 
-      // calculate delay:
-      var nwp = this.course.waypoints.filter(wp => wp.type === 'aid').length
-      var delay = nwp * this.course._plan.waypointDelay
+      let delay = 0
+      let time = 0
+      let pace = 0
+      let np = 0
 
-      // calculate time, pace, and normalized pace:
-      var time = 0
-      var pace = 0
-      var np = 0
-      if (this.course._plan.pacingMethod === 'time') {
-        time = this.course._plan.pacingTarget
-        pace = (time - delay) / this.course.len
-        np = pace / this.course.norm
-      } else if (this.course._plan.pacingMethod === 'pace') {
-        pace = this.course._plan.pacingTarget
-        time = pace * this.course.len + delay
-        np = pace / this.course.norm
-      } else if (this.course._plan.pacingMethod === 'np') {
-        np = this.course._plan.pacingTarget
-        pace = np * this.course.norm
-        time = pace * this.course.len + delay
+      if (plan) {
+        // calculate delay:
+        let nwp = this.course.waypoints.filter(wp => wp.type === 'aid').length
+        delay = nwp * this.course._plan.waypointDelay
+
+        // calculate time, pace, and normalized pace:
+        if (this.course._plan.pacingMethod === 'time') {
+          time = this.course._plan.pacingTarget
+          pace = (time - delay) / this.course.len
+          np = pace / this.course.norm
+        } else if (this.course._plan.pacingMethod === 'pace') {
+          pace = this.course._plan.pacingTarget
+          time = pace * this.course.len + delay
+          np = pace / this.course.norm
+        } else if (this.course._plan.pacingMethod === 'np') {
+          np = this.course._plan.pacingTarget
+          pace = np * this.course.norm
+          time = pace * this.course.len + delay
+        }
       }
 
       this.pacing = {
@@ -398,7 +402,7 @@ export default {
         pace: pace,
         nF: this.course.norm,
         np: np,
-        drift: this.course._plan.drift,
+        drift: plan ? this.course._plan.drift : 0,
         altModel: this.course.altModel,
         tFs: this.terrainFactors
       }
