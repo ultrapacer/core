@@ -37,6 +37,7 @@
         <b-tabs content-class="mt-3">
           <b-tab title="Splits" active>
             <split-table
+                ref="splitTable"
                 :course="course"
                 :plan="plan"
                 :splits="splits"
@@ -62,6 +63,7 @@
           </b-tab>
           <b-tab title="Segments">
             <segment-table
+                ref="segmentTable"
                 :course="course"
                 :segments="segments"
                 :units="units"
@@ -407,7 +409,9 @@ export default {
         tFs: this.terrainFactors
       }
     },
-    updateFocus: function (focus) {
+    updateFocus: function (type, focus) {
+      if (type === 'segment') this.$refs.splitTable.clear()
+      if (type === 'split') this.$refs.segmentTable.clear()
       this.mapFocus = focus
     }
   }

@@ -1,5 +1,6 @@
 <template>
   <b-table
+    ref="table"
     :items="segments"
     :fields="fields"
     primary-key="start._id"
@@ -43,6 +44,11 @@
 import timeUtil from '../../shared/timeUtilities'
 export default {
   props: ['course', 'segments', 'units', 'owner', 'editFn', 'pacing'],
+  data () {
+    return {
+      clearing: false
+    }
+  },
   filters: {
     formatDist (val, distScale) {
       return (val * distScale).toFixed(2)
@@ -155,11 +161,21 @@ export default {
     }
   },
   methods: {
+    clear: async function () {
+      this.clearing = true
+      await this.$refs.table.clearSelected()
+      this.clearing = false
+    },
     selectRow: function (s) {
+      if (this.clearing) return
       if (s.length) {
-        this.$emit('select', [s[0].start.location, s[0].end.location])
+        this.$emit(
+          'select',
+          'segment',
+          [s[0].start.location, s[0].end.location]
+        )
       } else {
-        this.$emit('select', [])
+        this.$emit('select', 'segment', [])
       }
     }
   }
