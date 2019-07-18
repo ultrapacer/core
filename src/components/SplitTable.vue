@@ -1,5 +1,6 @@
 <template>
   <b-table
+    ref="table"
     :items="splits"
     :fields="fields"
     primary-key="start._id"
@@ -28,6 +29,11 @@
 import timeUtil from '../../shared/timeUtilities'
 export default {
   props: ['course', 'splits', 'units', 'plan', 'pacing'],
+  data () {
+    return {
+      clearing: false
+    }
+  },
   filters: {
     formatAlt (val, altScale) {
       return (val * altScale).toFixed(0)
@@ -101,11 +107,17 @@ export default {
     }
   },
   methods: {
+    clear: async function () {
+      this.clearing = true
+      await this.$refs.table.clearSelected()
+      this.clearing = false
+    },
     selectRow: function (s) {
+      if (this.clearing) return
       if (s.length) {
-        this.$emit('select', [s[0].start, s[0].end])
+        this.$emit('select', 'split', [s[0].start, s[0].end])
       } else {
-        this.$emit('select', [])
+        this.$emit('select', 'split', [])
       }
     }
   }
