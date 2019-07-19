@@ -1,5 +1,5 @@
 <template>
-  <line-chart :chart-data="chartData" :options="chartOptions">
+  <line-chart :chart-data="chartData" :options="chartOptions" :width="350" :height="300">
   </line-chart>
 </template>
 
@@ -24,9 +24,13 @@ export default {
         purple: 'rgb(153, 102, 255)',
         grey: 'rgb(201, 203, 207)'
       },
+      chartFocus: [],
       chartProfile: [],
       chartGrade: [],
       chartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        height: '100px',
         scales: {
           xAxes: [{
             type: 'linear',
@@ -82,7 +86,13 @@ export default {
             pointHoverRadius: 0,
             showLine: true,
             yAxisID: 'y-axis-2'
-          }
+          },
+          { data: this.chartFocus,
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            backgroundColor: this.chartColors.red,
+            yAxisID: 'y-axis-1'
+          },
         ]
       }
     },
@@ -122,6 +132,15 @@ export default {
     this.updateChartProfile()
   },
   methods: {
+    focus: function (focus) {
+      var cF = []
+      this.chartProfile.forEach( xy => {
+        if (xy.x >= focus[0] && xy.x <= focus[1]) {
+          cF.push(xy)
+        }
+      })
+      this.chartFocus = cF
+    },
     updateChartProfile: function () {
       var pmax = 500 // number of points (+1)
       var xs = [] // x's array

@@ -1,7 +1,7 @@
 <template>
   <l-map
     ref="courseMap"
-    style="height: 600px; width: 100%"
+    style="height: 350px"
     :bounds="bounds"
     :max-zoom="16">
   <l-tile-layer :url="mapLayerURL"></l-tile-layer>
@@ -47,7 +47,7 @@ export default {
       focusCenter: [],
       focusLL: [],
       initializing: true,
-      mapLayerURL: 'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
+      mapLayerURL: 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
       markerColors: {
         start: 'black',
         finish: 'black',

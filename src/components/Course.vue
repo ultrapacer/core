@@ -76,14 +76,16 @@
         </b-tabs>
       </b-col>
       <b-col lg="5" order="1">
-        <b-tabs content-class="mt-3" v-if="!initializing" class="sticky-top mt-3" >
-          <b-tab title="Profile" >
-            <course-profile :course="course" :units="units"></course-profile>
+        <b-tabs content-class="mt-3" v-if="!initializing" class="sticky-top mt-3">
+          <b-tab title="Course">
+            <div v-if="showMap">
+              <course-profile ref="profile" :course="course" :units="units">
+              </course-profile>
+              <course-map v-if="showMap" :course="course" :focus="mapFocus">
+              </course-map>
+            </div>
           </b-tab>
-          <b-tab title="Map" active>
-            <course-map :course="course" :focus="mapFocus"></course-map>
-          </b-tab>
-          <b-tab v-if="course._plan && course._plan.name" title="Plan" active>
+          <b-tab v-if="course._plan && course._plan.name" title="Plan">
             <plan-details
                 :course="course"
                 :plan="course._plan"
@@ -162,7 +164,8 @@ export default {
       segment: {},
       waypoint: {},
       pacing: {},
-      mapFocus: []
+      mapFocus: [],
+      showMap: false
     }
   },
   computed: {
@@ -258,6 +261,9 @@ export default {
     this.course.len = this.course.points[this.course.points.length - 1].loc
     this.updatePacing()
     this.initializing = false
+    setTimeout(() => {
+      this.showMap = true
+    },500)
   },
   methods: {
     async newWaypoint () {
@@ -413,6 +419,7 @@ export default {
       if (type === 'segment') this.$refs.splitTable.clear()
       if (type === 'split') this.$refs.segmentTable.clear()
       this.mapFocus = focus
+      this.$refs.profile.focus(focus)
     }
   }
 }
