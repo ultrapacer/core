@@ -1,5 +1,5 @@
 <template>
-  <line-chart :chart-data="chartData" :options="chartOptions" :width="350" :height="200">
+  <line-chart :chart-data="chartData" :options="chartOptions" :width="350" :height="300">
   </line-chart>
 </template>
 
@@ -28,7 +28,8 @@ export default {
       chartProfile: [],
       chartGrade: [],
       chartOptions: {
-        maintainAspectRatio: true,
+        responsive: true,
+        maintainAspectRatio: false,
         height: '100px',
         scales: {
           xAxes: [{
