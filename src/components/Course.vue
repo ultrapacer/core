@@ -263,7 +263,7 @@ export default {
     this.initializing = false
     setTimeout(() => {
       this.showMap = true
-    },500)
+    }, 500)
   },
   methods: {
     async newWaypoint () {

@@ -92,7 +92,7 @@ export default {
             pointHoverRadius: 0,
             backgroundColor: this.chartColors.red,
             yAxisID: 'y-axis-1'
-          },
+          }
         ]
       }
     },
@@ -134,8 +134,11 @@ export default {
   methods: {
     focus: function (focus) {
       var cF = []
-      this.chartProfile.forEach( xy => {
-        if (xy.x >= focus[0] && xy.x <= focus[1]) {
+      this.chartProfile.forEach(xy => {
+        if (
+          xy.x >= focus[0] * this.units.distScale &&
+          xy.x <= focus[1] * this.units.distScale
+        ) {
           cF.push(xy)
         }
       })
