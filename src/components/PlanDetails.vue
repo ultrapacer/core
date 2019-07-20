@@ -72,25 +72,25 @@
   <b-list-group-item>
     <h5 class="mb-1">Grade Effects</h5>
     <p class="mb-1">
-      Average Grade Factor:
-      <b>{{ (pacing.factors.gF > 0 ? '+' : '') + ((pacing.factors.gF - 1) * 100).toFixed(1) }} %</b>
+      Overall Grade Factor:
+      <b>{{ pacing.factors.gF - 1 | percentWithPace(pacing.np, units) }}</b>
     </p>
   </b-list-group-item>
   <b-list-group-item v-if="maxAltFactor || minAltFactor">
     <h5 class="mb-1">Altitude Effects</h5>
     <p class="mb-1">
       Average Altitude Factor:
-      <b>+{{ ((pacing.factors.aF - 1) * 100).toFixed(1) }} %</b>
+      <b>{{ pacing.factors.aF - 1 | percentWithPace(pacing.np, units) }}</b>
     </p>
     <p class="mb-1">
       Highest Altitude Factor:
-      <b>+{{ maxAltFactor }} %</b>
+      <b>{{ maxAltFactor / 100 | percentWithPace(pacing.np, units) }}</b>
       at
       <b>{{ maxAltitude | formatAlt(units.altScale) }} {{ units.alt }}</b>
     </p>
     <p class="mb-1">
       Lowest Altitude Factor:
-      <b>+{{ minAltFactor }} %</b>
+      <b>{{ minAltFactor / 100 | percentWithPace(pacing.np, units) }}</b>
       at
       <b>{{ minAltitude | formatAlt(units.altScale) }} {{ units.alt }}</b>
     </p>
@@ -98,18 +98,18 @@
   <b-list-group-item v-if="maxTF || minTF">
     <h5 class="mb-1">Terrain Effects</h5>
     <p class="mb-1">
-      Course Terrain Factor:
-      <b>+{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }} %</b>
+      Overall Terrain Factor:
+      <b>{{ pacing.factors.tF - 1 | percentWithPace(pacing.np, units) }}</b>
     </p>
     <p class="mb-1">
       Hardest Terrain:
-      <b>+{{ maxTF }}%</b>
+      <b>{{ maxTF / 100 | percentWithPace(pacing.np, units) }}</b>
       over
       <b>{{ maxTFdist | formatDist(units.distScale) }} {{ units.dist }}</b>
     </p>
     <p class="mb-1">
       Easiest Terrain:
-      <b>+{{ minTF }}%</b>
+      <b>{{ minTF / 100 | percentWithPace(pacing.np, units) }}</b>
       over
       <b>{{ minTFdist | formatDist(units.distScale) }} {{ units.dist }}</b>
     </p>
@@ -233,6 +233,14 @@ export default {
     },
     formatDist (val, distScale) {
       return (val * distScale).toFixed(2)
+    },
+    percentWithPace (val, np, units) {
+      let dPace = val * np / units.distScale
+      let str = `${(val ? '+' : '')}${(val * 100).toFixed(1)}% `
+      if (val > 0) {
+        str = `${str} (${timeUtil.sec2string(dPace, '[h]:m:ss')} min/${units.dist})`
+      }
+      return str
     }
   },
   methods: {
