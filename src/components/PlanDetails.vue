@@ -69,8 +69,19 @@
     </p>
     <small>&nbsp; * Normalized for Grade & Altitude</small>
   </b-list-group-item>
+  <b-list-group-item>
+    <h5 class="mb-1">Grade Effects</h5>
+    <p class="mb-1">
+      Average Grade Factor:
+      <b>{{ (pacing.factors.gF > 0 ? '+' : '') + ((pacing.factors.gF - 1) * 100).toFixed(1) }} %</b>
+    </p>
+  </b-list-group-item>
   <b-list-group-item v-if="maxAltFactor || minAltFactor">
     <h5 class="mb-1">Altitude Effects</h5>
+    <p class="mb-1">
+      Average Altitude Factor:
+      <b>+{{ ((pacing.factors.aF - 1) * 100).toFixed(1) }} %</b>
+    </p>
     <p class="mb-1">
       Highest Altitude Factor:
       <b>+{{ maxAltFactor }} %</b>
