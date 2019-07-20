@@ -34,7 +34,7 @@
     <small>&nbsp; * While Moving</small><br/>
     <small>&nbsp; ** Normalized for Grade & Altitude</small>
   </b-list-group-item>
-  <b-list-group-item>
+  <b-list-group-item v-if="pacing.delay">
     <h5 class="mb-1">Delays</h5>
     <p class="mb-1">
       Typical Aid Station Delay:
@@ -103,14 +103,11 @@
       <b>{{ minTFdist | formatDist(units.distScale) }} {{ units.dist }}</b>
     </p>
   </b-list-group-item>
-  <b-list-group-item v-if="!plan.drift">
-    <p class="mb-1">No Pace Drift</p>
-  </b-list-group-item>
-  <b-list-group-item v-if="!maxAltFactor && !minAltFactor">
-    <p class="mb-1">No Altitude Effects</p>
-  </b-list-group-item>
-  <b-list-group-item v-if="!maxTF && !minTF">
-    <p class="mb-1">No Terrain Effects</p>
+  <b-list-group-item >
+    <p v-if="!pacing.delay" class="mb-1">No Delays</p>
+    <p v-if="!plan.drift" class="mb-1">No Pace Drift</p>
+    <p v-if="!maxAltFactor && !minAltFactor" class="mb-1">No Altitude Effects</p>
+    <p v-if="!maxTF && !minTF" class="mb-1">No Terrain Effects</p>
   </b-list-group-item>
 </b-list-group>
 </template>
