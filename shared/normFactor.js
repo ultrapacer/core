@@ -8,9 +8,9 @@ var defaults = {
   },
   gradeFactor: {
     // f = a*x^2 + b*x + c
-    a: 0.0013,
-    b: 0.0276,
-    c: 0.0306
+    a: 0.00155005,
+    b: 0.03171216,
+    c: 1.05768568
   }
 }
 
@@ -19,7 +19,7 @@ function gradeFactor (grade, model) {
     model = defaults.gradeFactor
   }
   let fact = model.a * (grade ** 2) + model.b * (grade) + model.c
-  return fact + 1
+  return fact
 }
 
 function altFactor (alt, model) {
