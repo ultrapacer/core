@@ -109,8 +109,10 @@ export default {
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
-        },
-        {
+        }
+      ]
+      if (this.pacing.factors.tF > 1) {
+        f.push({
           key: 'terrainFactor',
           label: 'Terrain Factor',
           formatter: (value, key, item) => {
@@ -118,8 +120,8 @@ export default {
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
-        }
-      ]
+        })
+      }
       if (this.segments[0].time) {
         f.push({
           key: 'time',
