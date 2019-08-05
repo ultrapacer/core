@@ -32,7 +32,7 @@
       <b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b>
     </p>
     <small>&nbsp; * While Moving</small><br/>
-    <small>&nbsp; ** Normalized for Grade & Altitude</small>
+    <small>&nbsp; ** Normalized for Grade, Altitude, & Terrain</small>
   </b-list-group-item>
   <b-list-group-item v-if="pacing.delay">
     <h5 class="mb-1">Delays</h5>
@@ -67,7 +67,7 @@
       Ending Pace:
       <b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *
     </p>
-    <small>&nbsp; * Normalized for Grade & Altitude</small>
+    <small>&nbsp; * Normalized for Grade, Altitude, & Terrain</small>
   </b-list-group-item>
   <b-list-group-item>
     <h5 class="mb-1">Grade Effects</h5>
@@ -75,6 +75,17 @@
       Overall Grade Factor:
       <b>{{ pacing.factors.gF - 1 | percentWithPace(pacing.np, units) }}</b>
     </p>
+    <p class="mb-1">
+      Steepest Climb:
+      <b>{{ maxGrade.toFixed(1) }}%</b> grade*
+      [<b>{{ maxGF / 100 | percentWithPace(pacing.np, units) }}</b>]
+    </p>
+    <p class="mb-1">
+      Steepest Descent:
+      <b>{{ minGrade.toFixed(1) }}%</b> grade*
+      [<b>{{ minGF / 100 | percentWithPace(pacing.np, units) }}</b>]
+    </p>
+    <small>&nbsp; * Over any {{ minDistForGradeMaxMin }}m distance</small>
   </b-list-group-item>
   <b-list-group-item v-if="maxAltFactor || minAltFactor">
     <h5 class="mb-1">Altitude Effects</h5>
@@ -135,7 +146,8 @@ export default {
         time: 'Finish Time',
         pace: 'Average Pace',
         np: 'Normalized Pace'
-      }
+      },
+      minDistForGradeMaxMin: 400 // meters
     }
   },
   computed: {
@@ -190,6 +202,54 @@ export default {
         2
       )
     },
+    maxGrade: function () {
+      let minDist = this.minDistForGradeMaxMin / 1000 // km, minimum climb len
+      var j = 0
+      let max = 0
+      for (let i = 0, il = this.course.points.length; i < il; i++) {
+        if (this.course.points[i].loc > minDist) {
+          let d = this.course.points[i].loc - this.course.points[j].loc
+          while (j < i - 1 && d > minDist) {
+            j++
+            d = this.course.points[i].loc - this.course.points[j].loc
+          }
+          let a = this.course.points[i].alt - this.course.points[j].alt
+          let grade = a / d / 10
+          max = Math.max(max, grade)
+        }
+      }
+      return max
+    },
+    maxGF: function () {
+      return round(
+        (nF.gradeFactor(this.maxGrade) - 1) * 100,
+        2
+      )
+    },
+    minGrade: function () {
+      let minDist = this.minDistForGradeMaxMin / 1000 // km, minimum climb len
+      var j = 0
+      let min = 0
+      for (let i = 0, il = this.course.points.length; i < il; i++) {
+        if (this.course.points[i].loc > minDist) {
+          let d = this.course.points[i].loc - this.course.points[j].loc
+          while (j < i - 1 && d > minDist) {
+            j++
+            d = this.course.points[i].loc - this.course.points[j].loc
+          }
+          let a = this.course.points[i].alt - this.course.points[j].alt
+          let grade = a / d / 10
+          min = Math.min(min, grade)
+        }
+      }
+      return min
+    },
+    minGF: function () {
+      return round(
+        (nF.gradeFactor(this.minGrade) - 1) * 100,
+        2
+      )
+    },
     maxTF: function () {
       var m = Math.max.apply(
         Math,
@@ -235,9 +295,11 @@ export default {
       return (val * distScale).toFixed(2)
     },
     percentWithPace (val, np, units) {
-      let dPace = val * np / units.distScale
-      let str = `${(val ? '+' : '')}${(val * 100).toFixed(1)}% `
-      if (val > 0) {
+      let str = `${(val > 0 ? '+' : '')}${(val * 100).toFixed(1)}% `
+      if (val !== 0) {
+        let fact = val > 0 ? 1 : -1
+        val = fact * val
+        let dPace = val * np / units.distScale
         str = `${str} (${timeUtil.sec2string(dPace, '[h]:m:ss')} min/${units.dist})`
       }
       return str
