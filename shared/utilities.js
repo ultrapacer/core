@@ -172,7 +172,7 @@ function addLoc (p) {
   }
 
   var locs = p.map(x => x.loc)
-  var adj = pointWLSQ(p, locs, 0.05)
+  var adj = pointWLSQ(p, locs, 0.1)
   p.forEach((x, i) => {
     x.grade = adj[i].grade
     x.alt0 = x.alt
