@@ -203,21 +203,10 @@ export default {
       )
     },
     maxGrade: function () {
-      let minDist = this.minDistForGradeMaxMin / 1000 // km, minimum climb len
-      var j = 0
-      let max = 0
-      for (let i = 0, il = this.course.points.length; i < il; i++) {
-        if (this.course.points[i].loc > minDist) {
-          let d = this.course.points[i].loc - this.course.points[j].loc
-          while (j < i - 1 && d > minDist) {
-            j++
-            d = this.course.points[i].loc - this.course.points[j].loc
-          }
-          let a = this.course.points[i].alt - this.course.points[j].alt
-          let grade = a / d / 10
-          max = Math.max(max, grade)
-        }
-      }
+      var max = Math.max.apply(
+        Math,
+        this.course.points.map(x => { return x.grade })
+      )
       return max
     },
     maxGF: function () {
@@ -227,21 +216,10 @@ export default {
       )
     },
     minGrade: function () {
-      let minDist = this.minDistForGradeMaxMin / 1000 // km, minimum climb len
-      var j = 0
-      let min = 0
-      for (let i = 0, il = this.course.points.length; i < il; i++) {
-        if (this.course.points[i].loc > minDist) {
-          let d = this.course.points[i].loc - this.course.points[j].loc
-          while (j < i - 1 && d > minDist) {
-            j++
-            d = this.course.points[i].loc - this.course.points[j].loc
-          }
-          let a = this.course.points[i].alt - this.course.points[j].alt
-          let grade = a / d / 10
-          min = Math.min(min, grade)
-        }
-      }
+      var min = Math.min.apply(
+        Math,
+        this.course.points.map(x => { return x.grade })
+      )
       return min
     },
     minGF: function () {
