@@ -77,15 +77,14 @@
     </p>
     <p class="mb-1">
       Steepest Climb:
-      <b>{{ maxGrade.toFixed(1) }}%</b> grade*
+      <b>{{ maxGrade.toFixed(1) }}%</b> grade
       [<b>{{ maxGF / 100 | percentWithPace(pacing.np, units) }}</b>]
     </p>
     <p class="mb-1">
       Steepest Descent:
-      <b>{{ minGrade.toFixed(1) }}%</b> grade*
+      <b>{{ minGrade.toFixed(1) }}%</b> grade
       [<b>{{ minGF / 100 | percentWithPace(pacing.np, units) }}</b>]
     </p>
-    <small>&nbsp; * Over any {{ minDistForGradeMaxMin }}m distance</small>
   </b-list-group-item>
   <b-list-group-item v-if="maxAltFactor || minAltFactor">
     <h5 class="mb-1">Altitude Effects</h5>
@@ -146,8 +145,7 @@ export default {
         time: 'Finish Time',
         pace: 'Average Pace',
         np: 'Normalized Pace'
-      },
-      minDistForGradeMaxMin: 400 // meters
+      }
     }
   },
   computed: {
