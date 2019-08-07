@@ -162,6 +162,7 @@ export default {
       course: {},
       plan: {},
       segment: {},
+      segmentDisplayTier: 1,
       waypoint: {},
       pacing: {},
       mapFocus: [],
@@ -218,16 +219,25 @@ export default {
           terrainFactor: tF
         })
       }
-      return arr
+      if (this.segmentDisplayTier === 2) {
+        return arr
+      }
+      let arr2 = arr
+      return arr2
     },
     terrainFactors: function () {
-      let tFs = this.segments.map(x => {
-        return {
-          start: x.start.location,
-          end: x.end.location,
-          tF: x.terrainFactor
+      if (!this.course.waypoints) { return [] }
+      if (!this.course.waypoints.length) { return [] }
+      let tFs = this.course.waypoints.map((x, i) => {
+        if (i < this.course.waypoints.length - 1) {
+          return {
+            start: x.location,
+            end: this.course.waypoints[i + 1].location,
+            tF: x.terrainFactor
+          }
         }
       })
+      tFs.pop()
       return tFs
     },
     units: function () {
