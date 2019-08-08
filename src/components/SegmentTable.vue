@@ -11,8 +11,8 @@
     foot-clone
     small
   >
-    <template slot="FOOT_startWaypoint.name">&nbsp;</template>
-    <template slot="FOOT_endWaypoint.name">&nbsp;</template>
+    <template slot="FOOT_waypoint1.name">&nbsp;</template>
+    <template slot="FOOT_waypoint2.name">&nbsp;</template>
     <template slot="FOOT_len">
       {{ course.distance | formatDist(units.distScale) }}
     </template>
