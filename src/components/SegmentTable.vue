@@ -3,7 +3,7 @@
     ref="table"
     :items="segments"
     :fields="fields"
-    primary-key="start._id"
+    primary-key="startWaypoint._id"
     selectable
     select-mode="single"
     @row-selected="selectRow"
@@ -11,8 +11,8 @@
     foot-clone
     small
   >
-    <template slot="FOOT_start.name">&nbsp;</template>
-    <template slot="FOOT_end.name">&nbsp;</template>
+    <template slot="FOOT_startWaypoint.name">&nbsp;</template>
+    <template slot="FOOT_endWaypoint.name">&nbsp;</template>
     <template slot="FOOT_len">
       {{ course.distance | formatDist(units.distScale) }}
     </template>
@@ -33,7 +33,7 @@
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
     <template slot="actions" slot-scope="row">
-      <b-button size="sm" @click="editFn(row.item.start)" class="mr-1">
+      <b-button size="sm" @click="editFn(row.item.startWaypoint)" class="mr-1">
         <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
       </b-button>
     </template>
@@ -68,66 +68,33 @@ export default {
       if (!this.course.points) { return [] }
       if (!this.course.points.length) { return [] }
       if (!this.course.waypoints.length) { return [] }
-      var arr = []
       var breaks = []
-      for (let i = 0, il = this.course.waypoints.length; i < il; i++) {
-        breaks.push(this.course.waypoints[i].location)
-      }
-      var splits = util.calcSegments(this.course.points, breaks, this.pacing)
-      var tF = 0
-      for (let j = 0, jl = splits.length; j < jl; j++) {
+      let wps = []
+      this.course.waypoints.forEach( (x, i) => {
         if (
-          typeof (this.course.waypoints[j].terrainFactor) !== 'undefined' &&
-          this.course.waypoints[j].terrainFactor !== null
+          i === 0 ||
+          i === il - 1 ||
+          x.tier <= this.displayTier
         ) {
-          tF = this.course.waypoints[j].terrainFactor
+          breaks.push(x.location)
+          wps.push(x)
         }
-        arr.push({
-          start: this.course.waypoints[j],
-          end: this.course.waypoints[j + 1],
-          len: splits[j].len,
-          gain: splits[j].gain,
-          loss: splits[j].loss,
-          grade: splits[j].grade,
-          time: splits[j].time,
-          terrainFactor: tF
-        })
-      }
-      if (this.displayTier === 2) {
-        return arr
-      }
-      console.log('ok')
-      let arr2 = []
-      let j = 0
-      for (let i = 0, il = arr.length; i < il; i++) {
-        if (i === 0 || arr[i].start.tier != 2) {
-          console.log(i)
-          arr2.push(arr[i])
-          arr2[arr2.length - 1].tF = arr[i].tF * arr[i].len
-        } else {
-          arr2[arr2.length - 1].end = arr[i].end
-          arr2[arr2.length - 1].len += arr[i].len
-          arr2[arr2.length - 1].gain += arr[i].gain
-          arr2[arr2.length - 1].loss += arr[i].loss
-          arr2[arr2.length - 1].grade += arr[i].grade * arr[i].len
-          arr2[arr2.length - 1].time += arr[i].time
-          arr2[arr2.length - 1].tF += arr[i].tF * arr[i].len
-        }
-        if (i === arr.length - 1 || arr[i + 1].start.tier != 2) {
-          arr2[arr2.length - 1].tF = arr2[arr2.length - 1].tF / arr2[arr2.length - 1].len
-          arr2[arr2.length - 1].grade = arr2[arr2.length - 1].grade / arr2[arr2.length - 1].len
-        }
-      }
-      return arr2
+      })
+      let arr = util.calcSegments(this.course.points, breaks, this.pacing)
+      splits.forEach( (x, i) => {
+        splits[i].startWaypoint = wps[i]
+        splits[i].endWaypoint = wps[i + 1]
+      })
+      return arr
     },
     fields: function () {
       var f = [
         {
-          key: 'start.name',
+          key: 'startWaypoint.name',
           label: 'Start'
         },
         {
-          key: 'end.name',
+          key: 'endWaypoint.name',
           label: 'End',
           thClass: 'd-none d-md-table-cell',
           tdClass: 'd-none d-md-table-cell'
@@ -232,7 +199,7 @@ export default {
         this.$emit(
           'select',
           'segment',
-          [s[0].start.location, s[0].end.location]
+          [s[0].start, s[0].end]
         )
       } else {
         this.$emit('select', 'segment', [])
