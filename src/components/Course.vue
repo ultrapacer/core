@@ -40,7 +40,6 @@
                 ref="splitTable"
                 :course="course"
                 :plan="plan"
-                :splits="splits"
                 :units="units"
                 :pacing="pacing"
                 @select="updateFocus"
@@ -185,9 +184,6 @@ export default {
       } else {
         return false
       }
-    },
-    splits: function () {
-      return util.calcSplits(this.course.points, this.units.dist, this.pacing)
     },
     terrainFactors: function () {
       if (!this.course.waypoints) { return [] }
