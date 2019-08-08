@@ -26,9 +26,10 @@
 </template>
 
 <script>
+import { calcSplits } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'splits', 'units', 'plan', 'pacing'],
+  props: ['course', 'units', 'plan', 'pacing'],
   data () {
     return {
       clearing: false
@@ -44,6 +45,9 @@ export default {
     }
   },
   computed: {
+    splits: function () {
+      return calcSplits(this.course.points, this.units.dist, this.pacing)
+    },
     fields: function () {
       var f = [
         {
