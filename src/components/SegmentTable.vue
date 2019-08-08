@@ -41,12 +41,14 @@
 </template>
 
 <script>
+import util from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'segments', 'units', 'owner', 'editFn', 'pacing'],
+  props: ['course', 'units', 'owner', 'editFn', 'pacing'],
   data () {
     return {
-      clearing: false
+      clearing: false,
+      displayTier: 1
     }
   },
   filters: {
@@ -62,6 +64,62 @@ export default {
     }
   },
   computed: {
+    segments: function () {
+      if (!this.course.points) { return [] }
+      if (!this.course.points.length) { return [] }
+      if (!this.course.waypoints.length) { return [] }
+      var arr = []
+      var breaks = []
+      for (let i = 0, il = this.course.waypoints.length; i < il; i++) {
+        breaks.push(this.course.waypoints[i].location)
+      }
+      var splits = util.calcSegments(this.course.points, breaks, this.pacing)
+      var tF = 0
+      for (let j = 0, jl = splits.length; j < jl; j++) {
+        if (
+          typeof (this.course.waypoints[j].terrainFactor) !== 'undefined' &&
+          this.course.waypoints[j].terrainFactor !== null
+        ) {
+          tF = this.course.waypoints[j].terrainFactor
+        }
+        arr.push({
+          start: this.course.waypoints[j],
+          end: this.course.waypoints[j + 1],
+          len: splits[j].len,
+          gain: splits[j].gain,
+          loss: splits[j].loss,
+          grade: splits[j].grade,
+          time: splits[j].time,
+          terrainFactor: tF
+        })
+      }
+      if (this.displayTier === 2) {
+        return arr
+      }
+      console.log('ok')
+      let arr2 = []
+      let j = 0
+      for (let i = 0, il = arr.length; i < il; i++) {
+        if (i === 0 || arr[i].start.tier != 2) {
+          console.log(i)
+          arr2.push(arr[i])
+          arr2[arr2.length - 1].tF = arr[i].tF * arr[i].len
+        } else {
+          arr2[arr2.length - 1].end = arr[i].end
+          arr2[arr2.length - 1].len += arr[i].len
+          arr2[arr2.length - 1].gain += arr[i].gain
+          arr2[arr2.length - 1].loss += arr[i].loss
+          arr2[arr2.length - 1].grade += arr[i].grade * arr[i].len
+          arr2[arr2.length - 1].time += arr[i].time
+          arr2[arr2.length - 1].tF += arr[i].tF * arr[i].len
+        }
+        if (i === arr.length - 1 || arr[i + 1].start.tier != 2) {
+          arr2[arr2.length - 1].tF = arr2[arr2.length - 1].tF / arr2[arr2.length - 1].len
+          arr2[arr2.length - 1].grade = arr2[arr2.length - 1].grade / arr2[arr2.length - 1].len
+        }
+      }
+      return arr2
+    },
     fields: function () {
       var f = [
         {
