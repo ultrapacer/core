@@ -24,28 +24,6 @@ function calcStats (points) {
   }
 }
 
-function calcSplits (points, units, pacing) {
-  var distScale = 1
-  if (units === 'mi') { distScale = 0.621371 }
-  var tot = points[points.length - 1].loc * distScale
-
-  // generate array of breaks in km
-  var breaks = [0]
-  var i = 1
-  while (i < tot) {
-    breaks.push(i / distScale)
-    i++
-  }
-  if (tot / distScale > breaks[breaks.length - 1]) {
-    breaks.push(tot / distScale)
-  }
-  if (pacing) {
-    return calcSegments(points, breaks, pacing)
-  } else {
-    return calcSegments(points, breaks)
-  }
-}
-
 function calcSegments (p, breaks, pacing) {
   // p: points array of {loc, lat, lon, alt}
   // breaks: array of [loc,loc,...] to break on
@@ -414,7 +392,6 @@ function interp (x0, x1, y0, y1, x) {
 module.exports = {
   addLoc: addLoc,
   calcStats: calcStats,
-  calcSplits: calcSplits,
   cleanPoints: cleanPoints,
   calcSegments: calcSegments,
   getElevation: getElevation,
