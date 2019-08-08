@@ -3,7 +3,7 @@
     ref="table"
     :items="segments"
     :fields="fields"
-    primary-key="startWaypoint._id"
+    primary-key="waypoint1._id"
     selectable
     select-mode="single"
     @row-selected="selectRow"
@@ -23,7 +23,7 @@
       {{ course.loss | formatAlt(units.altScale) }}
     </template>
     <template slot="FOOT_grade">&nbsp;</template>
-    <template slot="FOOT_terrainFactor">
+    <template slot="FOOT_factors.tF">
       +{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }}%
     </template>
     <template slot="FOOT_time">
@@ -33,7 +33,7 @@
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
     <template slot="actions" slot-scope="row">
-      <b-button size="sm" @click="editFn(row.item.startWaypoint)" class="mr-1">
+      <b-button size="sm" @click="editFn(row.item.waypoint1)" class="mr-1">
         <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
       </b-button>
     </template>
@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import util from '../../shared/utilities'
+import { calcSegments } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
   props: ['course', 'units', 'owner', 'editFn', 'pacing'],
@@ -65,36 +65,34 @@ export default {
   },
   computed: {
     segments: function () {
-      if (!this.course.points) { return [] }
-      if (!this.course.points.length) { return [] }
-      if (!this.course.waypoints.length) { return [] }
       var breaks = []
       let wps = []
-      this.course.waypoints.forEach( (x, i) => {
+      this.course.waypoints.forEach((x, i) => {
         if (
           i === 0 ||
-          i === il - 1 ||
+          i === this.course.waypoints.length - 1 ||
           x.tier <= this.displayTier
         ) {
           breaks.push(x.location)
           wps.push(x)
         }
       })
-      let arr = util.calcSegments(this.course.points, breaks, this.pacing)
-      splits.forEach( (x, i) => {
-        splits[i].startWaypoint = wps[i]
-        splits[i].endWaypoint = wps[i + 1]
+      let arr = calcSegments(this.course.points, breaks, this.pacing)
+      arr.forEach((x, i) => {
+        arr[i].waypoint1 = wps[i]
+        arr[i].waypoint2 = wps[i + 1]
       })
+      console.log(arr)
       return arr
     },
     fields: function () {
       var f = [
         {
-          key: 'startWaypoint.name',
+          key: 'waypoint1.name',
           label: 'Start'
         },
         {
-          key: 'endWaypoint.name',
+          key: 'waypoint2.name',
           label: 'End',
           thClass: 'd-none d-md-table-cell',
           tdClass: 'd-none d-md-table-cell'
@@ -138,10 +136,10 @@ export default {
       ]
       if (this.pacing.factors.tF > 1) {
         f.push({
-          key: 'terrainFactor',
+          key: 'factors.tF',
           label: 'Terrain Factor',
           formatter: (value, key, item) => {
-            return '+' + (value).toFixed(0) + '%'
+            return '+' + ((value - 1) * 100).toFixed(1) + '%'
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'

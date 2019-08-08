@@ -192,12 +192,14 @@ export default {
     terrainFactors: function () {
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
+      let tF = this.course.waypoints[0].terrainFactor
       let tFs = this.course.waypoints.map((x, i) => {
         if (i < this.course.waypoints.length - 1) {
+          if (x.terrainFactor !== null) { tF = x.terrainFactor }
           return {
             start: x.location,
             end: this.course.waypoints[i + 1].location,
-            tF: x.terrainFactor
+            tF: tF
           }
         }
       })
@@ -338,11 +340,12 @@ export default {
           plan ? this.course._plan.drift : 0,
           this.course.len
         )
-        factors.gF += gF * p[j].dloc
-        factors.aF += aF * p[j].dloc
-        factors.tF += tF * p[j].dloc
-        factors.dF += dF * p[j].dloc
-        tot += gF * aF * tF * dF * p[j].dloc
+        let len = p[j].loc - p[j - 1].loc
+        factors.gF += gF * len
+        factors.aF += aF * len
+        factors.tF += tF * len
+        factors.dF += dF * len
+        tot += gF * aF * tF * dF * len
       }
       factors.gF = factors.gF / this.course.len
       factors.aF = factors.aF / this.course.len
