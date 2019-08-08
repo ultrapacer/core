@@ -41,7 +41,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
         course.points = req.body.points
         course.source = req.body.source
         var old = course.distance
-        course.distance = course.points[course.points.length - 1].loc
+        course.distance = req.body.distance
         course.gain = req.body.gain
         course.loss = req.body.loss
         var waypoints = await Waypoint.find({ _course: course })
