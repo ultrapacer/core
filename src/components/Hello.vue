@@ -2,8 +2,9 @@
   <div class="hero">
     <div>
       <img style="width:20%;height:20%" src="../assets/logo.png">
-      <h1 class="display-3">coming soon</h1>
+      <h1 class="display-3">ultraPacer Beta</h1>
       <p class="lead">pace your race</p>
+      <p class="lead">send feedback to <a href="mailto:danny@ultrapacer.com">danny@ultrapacer.com</a></p>
     </div>
   </div>
 </template>

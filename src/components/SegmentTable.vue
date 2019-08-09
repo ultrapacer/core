@@ -29,6 +29,9 @@
     <template slot="FOOT_time">
       {{ time | formatTime }}
     </template>
+    <template slot="FOOT_elapsed">
+      {{ segments[segments.length - 1].elapsed | formatTime }}
+    </template>
     <template slot="FOOT_pace">
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
@@ -38,10 +41,20 @@
       </b-button>
     </template>
     <template slot="collapse" slot-scope="row">
-      <b-button v-if="row.item.collapsed" size="sm" @click="expandRow(row.item)" class="mr-1">
+      <b-button
+        v-if="row.item.collapsed"
+        size="sm"
+        @click="expandRow(row.item)"
+        class="mr-1"
+      >
         &#9660;
       </b-button>
-      <b-button v-if="!row.item.collapsed && row.item.collapseable" size="sm" @click="collapseRow(row.item)" class="mr-1">
+      <b-button
+        v-if="!row.item.collapsed && row.item.collapseable"
+        size="sm"
+        @click="collapseRow(row.item)"
+        class="mr-1"
+      >
         &#9650;
       </b-button>
     </template>
@@ -86,6 +99,7 @@ export default {
       var breaks = []
       let wps = []
       let is = []
+      let delays = []
       this.course.waypoints.forEach((x, i) => {
         if (
           x.type === 'start' ||
@@ -95,10 +109,17 @@ export default {
           breaks.push(x.location)
           wps.push(x)
           is.push(i)
+          delays.push(x.delay ? x.delay : 0)
+        } else {
+          delays[delays.length - 1] += (x.delay ? x.delay : 0)
         }
       })
       let arr = calcSegments(this.course.points, breaks, this.pacing)
       arr.forEach((x, i) => {
+        arr[i].elapsed =
+          arr[i].time +
+          (i > 0 ? arr[i - 1].elapsed : 0) +
+          delays[i]
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
         arr[i].collapsed = false
@@ -119,17 +140,17 @@ export default {
       var f = [
         {
           key: 'waypoint1.name',
-          label: 'Start'
-        },
-        {
-          key: 'waypoint2.name',
-          label: 'End',
+          label: 'Start',
           thClass: 'd-none d-md-table-cell',
           tdClass: 'd-none d-md-table-cell'
         },
         {
+          key: 'waypoint2.name',
+          label: 'End'
+        },
+        {
           key: 'len',
-          label: 'Length [' + this.units.dist + ']',
+          label: 'Len [' + this.units.dist + ']',
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
@@ -158,7 +179,7 @@ export default {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
-            return (value).toFixed(2) + '%'
+            return (value).toFixed(1) + '%'
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -167,7 +188,7 @@ export default {
       if (this.pacing.factors.tF > 1) {
         f.push({
           key: 'factors.tF',
-          label: 'Terrain Factor',
+          label: 'Terrain',
           formatter: (value, key, item) => {
             return '+' + ((value - 1) * 100).toFixed(1) + '%'
           },
@@ -182,15 +203,24 @@ export default {
           formatter: (value, key, item) => {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
+        })
+        f.push({
+          key: 'pace',
+          label: `Pace [\/${this.units.dist}]`,
+          formatter: (value, key, item) => {
+            let l = item.len * this.units.distScale
+            return timeUtil.sec2string(item.time / l, '[h]:m:ss')
+          },
           thClass: 'text-right',
           tdClass: 'text-right'
         })
         f.push({
-          key: 'pace',
-          label: `Pace [min/${this.units.dist}]`,
+          key: 'elapsed',
+          label: 'Elapsed',
           formatter: (value, key, item) => {
-            let l = item.len * this.units.distScale
-            return timeUtil.sec2string(item.time / l, '[h]:m:ss')
+            return timeUtil.sec2string(value, '[h]:m:ss')
           },
           thClass: 'text-right',
           tdClass: 'text-right'

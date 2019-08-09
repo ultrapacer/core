@@ -388,8 +388,11 @@ export default {
 
       if (plan) {
         // calculate delay:
-        let nwp = this.course.waypoints.filter(wp => wp.type === 'aid').length
-        delay = nwp * this.course._plan.waypointDelay
+        let nwp = this.course.waypoints.filter(wp => wp.type === 'aid')
+        nwp.forEach((x, i) => {
+          nwp[i].delay = this.course._plan.waypointDelay
+        })
+        delay = nwp.length * this.course._plan.waypointDelay
 
         // calculate time, pace, and normalized pace:
         if (this.course._plan.pacingMethod === 'time') {
