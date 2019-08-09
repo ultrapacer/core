@@ -29,6 +29,9 @@
     <template slot="FOOT_time">
       {{ time | formatTime }}
     </template>
+    <template slot="FOOT_elapsed">
+      {{ segments[segments.length - 1].elapsed | formatTime }}
+    </template>
     <template slot="FOOT_pace">
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
@@ -99,6 +102,7 @@ export default {
       })
       let arr = calcSegments(this.course.points, breaks, this.pacing)
       arr.forEach((x, i) => {
+        arr[i].elapsed = arr[i].time + (i > 0 ? arr[i - 1].elapsed : 0)
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
         arr[i].collapsed = false
@@ -191,6 +195,15 @@ export default {
           formatter: (value, key, item) => {
             let l = item.len * this.units.distScale
             return timeUtil.sec2string(item.time / l, '[h]:m:ss')
+          },
+          thClass: 'text-right',
+          tdClass: 'text-right'
+        })
+        f.push({
+          key: 'elapsed',
+          label: 'Elapsed Time*',
+          formatter: (value, key, item) => {
+            return timeUtil.sec2string(value, '[h]:m:ss')
           },
           thClass: 'text-right',
           tdClass: 'text-right'
