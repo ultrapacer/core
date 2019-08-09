@@ -41,10 +41,20 @@
       </b-button>
     </template>
     <template slot="collapse" slot-scope="row">
-      <b-button v-if="row.item.collapsed" size="sm" @click="expandRow(row.item)" class="mr-1">
+      <b-button
+        v-if="row.item.collapsed"
+        size="sm"
+        @click="expandRow(row.item)"
+        class="mr-1"
+      >
         &#9660;
       </b-button>
-      <b-button v-if="!row.item.collapsed && row.item.collapseable" size="sm" @click="collapseRow(row.item)" class="mr-1">
+      <b-button
+        v-if="!row.item.collapsed && row.item.collapseable"
+        size="sm"
+        @click="collapseRow(row.item)"
+        class="mr-1"
+      >
         &#9650;
       </b-button>
     </template>
@@ -89,7 +99,7 @@ export default {
       var breaks = []
       let wps = []
       let is = []
-      let delays = 0
+      let delays = []
       this.course.waypoints.forEach((x, i) => {
         if (
           x.type === 'start' ||
@@ -99,14 +109,17 @@ export default {
           breaks.push(x.location)
           wps.push(x)
           is.push(i)
-          delays.push(x.delay)
+          delays.push(x.delay ? x.delay : 0)
         } else {
           delays[delays.length - 1] += (x.delay ? x.delay : 0)
         }
       })
       let arr = calcSegments(this.course.points, breaks, this.pacing)
       arr.forEach((x, i) => {
-        arr[i].elapsed = arr[i].time + (i > 0 ? arr[i - 1].elapsed : 0) + delays[i]
+        arr[i].elapsed =
+          arr[i].time +
+          (i > 0 ? arr[i - 1].elapsed : 0) +
+          delays[i]
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
         arr[i].collapsed = false
@@ -205,7 +218,7 @@ export default {
         })
         f.push({
           key: 'elapsed',
-          label: 'Elapsed Time*',
+          label: 'Elapsed',
           formatter: (value, key, item) => {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
