@@ -89,6 +89,7 @@ export default {
       var breaks = []
       let wps = []
       let is = []
+      let delays = 0
       this.course.waypoints.forEach((x, i) => {
         if (
           x.type === 'start' ||
@@ -98,11 +99,14 @@ export default {
           breaks.push(x.location)
           wps.push(x)
           is.push(i)
+          delays.push(x.delay)
+        } else {
+          delays[delays.length - 1] += (x.delay ? x.delay : 0)
         }
       })
       let arr = calcSegments(this.course.points, breaks, this.pacing)
       arr.forEach((x, i) => {
-        arr[i].elapsed = arr[i].time + (i > 0 ? arr[i - 1].elapsed : 0)
+        arr[i].elapsed = arr[i].time + (i > 0 ? arr[i - 1].elapsed : 0) + delays[i]
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
         arr[i].collapsed = false
