@@ -33,8 +33,16 @@
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
     <template slot="actions" slot-scope="row">
-      <b-button size="sm" @click="editFn(row.item.waypoint1)" class="mr-1">
+      <b-button v-if="!row.item.collapsed" size="sm" @click="editFn(row.item.waypoint1)" class="mr-1">
         <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
+      </b-button>
+    </template>
+    <template slot="collapse" slot-scope="row">
+      <b-button v-if="row.item.collapsed" size="sm" @click="expandRow(row.item)" class="mr-1">
+        &#9660;
+      </b-button>
+      <b-button v-if="!row.item.collapsed && row.item.collapseable" size="sm" @click="collapseRow(row.item)" class="mr-1">
+        &#9650;
       </b-button>
     </template>
   </b-table>
@@ -48,7 +56,8 @@ export default {
   data () {
     return {
       clearing: false,
-      displayTier: 1
+      displayTier: 1,
+      display: []
     }
   },
   filters: {
@@ -63,24 +72,43 @@ export default {
       return timeUtil.sec2string(val, '[h]:m:ss')
     }
   },
+  async created () {
+    this.display = this.course.waypoints.filter(
+      x =>
+        x.type === 'start' ||
+        x.tier !== 2
+    ).map( x => {
+      return x._id
+    })
+  },
   computed: {
     segments: function () {
       var breaks = []
       let wps = []
+      let is = []
       this.course.waypoints.forEach((x, i) => {
         if (
-          i === 0 ||
-          i === this.course.waypoints.length - 1 ||
-          x.tier <= this.displayTier
+          x.type === 'start' ||
+          x.type === 'finish' ||
+          this.display.findIndex( y => x._id ===  y ) >= 0
         ) {
           breaks.push(x.location)
           wps.push(x)
+          is.push(i)
         }
       })
       let arr = calcSegments(this.course.points, breaks, this.pacing)
       arr.forEach((x, i) => {
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
+        arr[i].collapsed = false
+        arr[i].collapseable = false
+        if (arr[i].waypoint1.tier != 2 && this.course.waypoints[is[i + 1]].tier === 2) {
+          arr[i].collapseable = true
+        }
+        if (is[i + 1] - is[i] > 1) {
+          arr[i].collapsed = true
+        }
       })
       return arr
     },
@@ -172,6 +200,13 @@ export default {
           tdClass: 'actionButtonColumn'
         })
       }
+      if (this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
+        f.push({
+          key: 'collapse',
+          label: '',
+          tdClass: 'actionButtonColumn'
+        })
+      }
       return f
     },
     time: function () {
@@ -189,6 +224,27 @@ export default {
       this.clearing = true
       await this.$refs.table.clearSelected()
       this.clearing = false
+    },
+    expandRow: function (s){
+      let wps = this.course.waypoints
+      let i = wps.findIndex(x => s.waypoint1._id === x._id)
+      i++
+      while (wps[i].tier === 2) {
+        this.display.push(wps[i]._id)
+        i++
+      }
+      s.collapsed = false
+    },
+    collapseRow: function (s){
+      let wps = this.course.waypoints
+      let i = wps.findIndex(x => s.waypoint1._id === x._id)
+      i++
+      while (wps[i].tier === 2) {
+        let j = this.display.findIndex(x => x === wps[i]._id)
+        this.display.splice(j,1)
+        i++
+      }
+      s.collapsed = true
     },
     selectRow: function (s) {
       if (this.clearing) return

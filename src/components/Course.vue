@@ -288,9 +288,10 @@ export default {
       let max = (util.round(this.course.len * this.units.distScale, 2) - 0.01)
       max = max / this.units.distScale
       wps.filter(
-        x => x.type !== 'start' &&
-        x.type !== 'finish' &&
-        x.location > max
+        x =>
+          x.type !== 'start' &&
+          x.type !== 'finish' &&
+          x.location > max
       ).forEach((x, i) => {
         console.log('Fixing waypoint: ' + x.name)
         wps[i].location = max
