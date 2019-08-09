@@ -30,7 +30,16 @@
           <b-form-select
             type="text"
             v-model="model.type"
-            :options="waypointTypes">
+            :options="waypointTypes"
+            required>
+          </b-form-select>
+        </b-form-group>
+        <b-form-group label="Priority">
+          <b-form-select
+            type="text"
+            v-model="model.tier"
+            :options="waypointTiers"
+            required>
           </b-form-select>
         </b-form-group>
         <b-form-group label="Description">
@@ -70,7 +79,8 @@ export default {
       model: {},
       saving: false,
       defaults: {
-        type: 'aid'
+        type: 'aid',
+        tier: 1
       }
     }
   },
@@ -88,6 +98,18 @@ export default {
         return [
           { value: 'aid', text: 'Aid Station' },
           { value: 'landmark', text: 'Landmark' }
+        ]
+      }
+    },
+    waypointTiers: function () {
+      if (this.model.type === 'start') {
+        return [{ value: 1, text: 'Major' }]
+      } else if (this.model.type === 'finish') {
+        return [{ value: 1, text: 'Major' }]
+      } else {
+        return [
+          { value: 1, text: 'Major' },
+          { value: 2, text: 'Minor' }
         ]
       }
     }

@@ -26,9 +26,10 @@
 </template>
 
 <script>
+import { calcSegments } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'splits', 'units', 'plan', 'pacing'],
+  props: ['course', 'units', 'plan', 'pacing'],
   data () {
     return {
       clearing: false
@@ -44,6 +45,21 @@ export default {
     }
   },
   computed: {
+    splits: function () {
+      // generate array of breaks in km
+      let p = this.course.points
+      var tot = p[p.length - 1].loc * this.units.distScale
+      let breaks = [0]
+      var i = 1
+      while (i < tot) {
+        breaks.push(i / this.units.distScale)
+        i++
+      }
+      if (tot / this.units.distScale > breaks[breaks.length - 1]) {
+        breaks.push(tot / this.units.distScale)
+      }
+      return calcSegments(p, breaks, this.pacing)
+    },
     fields: function () {
       var f = [
         {

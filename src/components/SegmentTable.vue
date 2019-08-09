@@ -3,7 +3,7 @@
     ref="table"
     :items="segments"
     :fields="fields"
-    primary-key="start._id"
+    primary-key="waypoint1._id"
     selectable
     select-mode="single"
     @row-selected="selectRow"
@@ -11,8 +11,8 @@
     foot-clone
     small
   >
-    <template slot="FOOT_start.name">&nbsp;</template>
-    <template slot="FOOT_end.name">&nbsp;</template>
+    <template slot="FOOT_waypoint1.name">&nbsp;</template>
+    <template slot="FOOT_waypoint2.name">&nbsp;</template>
     <template slot="FOOT_len">
       {{ course.distance | formatDist(units.distScale) }}
     </template>
@@ -23,7 +23,7 @@
       {{ course.loss | formatAlt(units.altScale) }}
     </template>
     <template slot="FOOT_grade">&nbsp;</template>
-    <template slot="FOOT_terrainFactor">
+    <template slot="FOOT_factors.tF">
       +{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }}%
     </template>
     <template slot="FOOT_time">
@@ -33,20 +33,31 @@
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
     <template slot="actions" slot-scope="row">
-      <b-button size="sm" @click="editFn(row.item.start)" class="mr-1">
+      <b-button v-if="!row.item.collapsed" size="sm" @click="editFn(row.item.waypoint1)" class="mr-1">
         <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
+      </b-button>
+    </template>
+    <template slot="collapse" slot-scope="row">
+      <b-button v-if="row.item.collapsed" size="sm" @click="expandRow(row.item)" class="mr-1">
+        &#9660;
+      </b-button>
+      <b-button v-if="!row.item.collapsed && row.item.collapseable" size="sm" @click="collapseRow(row.item)" class="mr-1">
+        &#9650;
       </b-button>
     </template>
   </b-table>
 </template>
 
 <script>
+import { calcSegments } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'segments', 'units', 'owner', 'editFn', 'pacing'],
+  props: ['course', 'units', 'owner', 'editFn', 'pacing'],
   data () {
     return {
-      clearing: false
+      clearing: false,
+      displayTier: 1,
+      display: []
     }
   },
   filters: {
@@ -61,15 +72,57 @@ export default {
       return timeUtil.sec2string(val, '[h]:m:ss')
     }
   },
+  async created () {
+    this.display = this.course.waypoints.filter(
+      x =>
+        x.type === 'start' ||
+        x.tier !== 2
+    ).map(x => {
+      return x._id
+    })
+  },
   computed: {
+    segments: function () {
+      var breaks = []
+      let wps = []
+      let is = []
+      this.course.waypoints.forEach((x, i) => {
+        if (
+          x.type === 'start' ||
+          x.type === 'finish' ||
+          this.display.findIndex(y => x._id === y) >= 0
+        ) {
+          breaks.push(x.location)
+          wps.push(x)
+          is.push(i)
+        }
+      })
+      let arr = calcSegments(this.course.points, breaks, this.pacing)
+      arr.forEach((x, i) => {
+        arr[i].waypoint1 = wps[i]
+        arr[i].waypoint2 = wps[i + 1]
+        arr[i].collapsed = false
+        arr[i].collapseable = false
+        if (
+          arr[i].waypoint1.tier !== 2 &&
+          this.course.waypoints[is[i + 1]].tier === 2
+        ) {
+          arr[i].collapseable = true
+        }
+        if (is[i + 1] - is[i] > 1) {
+          arr[i].collapsed = true
+        }
+      })
+      return arr
+    },
     fields: function () {
       var f = [
         {
-          key: 'start.name',
+          key: 'waypoint1.name',
           label: 'Start'
         },
         {
-          key: 'end.name',
+          key: 'waypoint2.name',
           label: 'End',
           thClass: 'd-none d-md-table-cell',
           tdClass: 'd-none d-md-table-cell'
@@ -113,10 +166,10 @@ export default {
       ]
       if (this.pacing.factors.tF > 1) {
         f.push({
-          key: 'terrainFactor',
+          key: 'factors.tF',
           label: 'Terrain Factor',
           formatter: (value, key, item) => {
-            return '+' + (value).toFixed(0) + '%'
+            return '+' + ((value - 1) * 100).toFixed(1) + '%'
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -150,6 +203,13 @@ export default {
           tdClass: 'actionButtonColumn'
         })
       }
+      if (this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
+        f.push({
+          key: 'collapse',
+          label: '',
+          tdClass: 'actionButtonColumn'
+        })
+      }
       return f
     },
     time: function () {
@@ -168,13 +228,34 @@ export default {
       await this.$refs.table.clearSelected()
       this.clearing = false
     },
+    expandRow: function (s) {
+      let wps = this.course.waypoints
+      let i = wps.findIndex(x => s.waypoint1._id === x._id)
+      i++
+      while (wps[i].tier === 2) {
+        this.display.push(wps[i]._id)
+        i++
+      }
+      s.collapsed = false
+    },
+    collapseRow: function (s) {
+      let wps = this.course.waypoints
+      let i = wps.findIndex(x => s.waypoint1._id === x._id)
+      i++
+      while (wps[i].tier === 2) {
+        let j = this.display.findIndex(x => x === wps[i]._id)
+        this.display.splice(j, 1)
+        i++
+      }
+      s.collapsed = true
+    },
     selectRow: function (s) {
       if (this.clearing) return
       if (s.length) {
         this.$emit(
           'select',
           'segment',
-          [s[0].start.location, s[0].end.location]
+          [s[0].start, s[0].end]
         )
       } else {
         this.$emit('select', 'segment', [])

@@ -26,6 +26,7 @@ waypointRoutes.route('/:id').put(async function (req, res) {
       waypoint.name = req.body.name
       waypoint.location = req.body.location
       waypoint.type = req.body.type
+      waypoint.tier = req.body.tier
       waypoint.description = req.body.description
       waypoint.elevation = req.body.elevation
       waypoint.lat = req.body.lat

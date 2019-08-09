@@ -24,28 +24,6 @@ function calcStats (points) {
   }
 }
 
-function calcSplits (points, units, pacing) {
-  var distScale = 1
-  if (units === 'mi') { distScale = 0.621371 }
-  var tot = points[points.length - 1].loc * distScale
-
-  // generate array of breaks in km
-  var breaks = [0]
-  var i = 1
-  while (i < tot) {
-    breaks.push(i / distScale)
-    i++
-  }
-  if (tot / distScale > breaks[breaks.length - 1]) {
-    breaks.push(tot / distScale)
-  }
-  if (pacing) {
-    return calcSegments(points, breaks, pacing)
-  } else {
-    return calcSegments(points, breaks)
-  }
-}
-
 function calcSegments (p, breaks, pacing) {
   // p: points array of {loc, lat, lon, alt}
   // breaks: array of [loc,loc,...] to break on
@@ -61,13 +39,19 @@ function calcSegments (p, breaks, pacing) {
     s.push({
       start: breaks[i - 1],
       end: breaks[i],
-      len: len,
+      len: 0,
       gain: 0,
       loss: 0,
       alt1: alts[i - 1], // starting altitude
       alt2: alts[i], // ending altitude
       grade: (alts[i] - alts[i - 1]) / len / 10,
-      time: 0
+      time: 0,
+      factors: {
+        aF: 0,
+        gF: 0,
+        tF: 0,
+        dF: 0
+      }
     })
   }
   var delta = 0
@@ -110,22 +94,43 @@ function calcSegments (p, breaks, pacing) {
           dF = nF.driftFactor([p[i - 1].loc, s[j].start], pacing.drift, cLen)
           aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
           tF = nF.tF([p[i - 1].loc, s[j].start], pacing.tFs)
+          s[j0].factors.aF += aF * len
+          s[j0].factors.dF += dF * len
+          s[j0].factors.gF += gF * len
+          s[j0].factors.tF += tF * len
           s[j0].time += pacing.np * gF * dF * aF * tF * len
+          s[j0].len += len
         }
         len = p[i].loc - s[j].start
         dF = nF.driftFactor([p[i].loc, s[j].start], pacing.drift, cLen)
         aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
         tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
+        s[j].factors.aF += aF * len
+        s[j].factors.dF += dF * len
+        s[j].factors.gF += gF * len
+        s[j].factors.tF += tF * len
         s[j].time += pacing.np * gF * dF * aF * tF * len
+        s[j].len += len
       } else if (j >= 0) {
         dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
         aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
         tF = nF.tF([p[i - 1].loc, p[i].loc], pacing.tFs)
+        s[j].factors.aF += aF * p[i].dloc
+        s[j].factors.dF += dF * p[i].dloc
+        s[j].factors.gF += gF * p[i].dloc
+        s[j].factors.tF += tF * p[i].dloc
         s[j].time += pacing.np * gF * dF * aF * tF * p[i].dloc
+        s[j].len += p[i].dloc
       }
     }
     j0 = j
   }
+  s.forEach((x, i) => {
+    s[i].factors.aF = x.factors.aF / x.len
+    s[i].factors.dF = x.factors.dF / x.len
+    s[i].factors.gF = x.factors.gF / x.len
+    s[i].factors.tF = x.factors.tF / x.len
+  })
   return s
 }
 
@@ -175,7 +180,6 @@ function addLoc (p) {
   var adj = pointWLSQ(p, locs, 0.05)
   p.forEach((x, i) => {
     x.grade = adj[i].grade
-    x.alt0 = x.alt
     x.alt = adj[i].alt
   })
   return p
@@ -388,7 +392,6 @@ function interp (x0, x1, y0, y1, x) {
 module.exports = {
   addLoc: addLoc,
   calcStats: calcStats,
-  calcSplits: calcSplits,
   cleanPoints: cleanPoints,
   calcSegments: calcSegments,
   getElevation: getElevation,

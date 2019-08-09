@@ -39,6 +39,10 @@ var WaypointSchema = new Schema({
   pointsIndex: {
     type: Number,
     default: 0
+  },
+  tier: {
+    type: Number,
+    default: 1
   }
 }, {
   collection: 'waypoints'
