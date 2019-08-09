@@ -77,7 +77,7 @@ export default {
       x =>
         x.type === 'start' ||
         x.tier !== 2
-    ).map( x => {
+    ).map(x => {
       return x._id
     })
   },
@@ -90,7 +90,7 @@ export default {
         if (
           x.type === 'start' ||
           x.type === 'finish' ||
-          this.display.findIndex( y => x._id ===  y ) >= 0
+          this.display.findIndex(y => x._id === y) >= 0
         ) {
           breaks.push(x.location)
           wps.push(x)
@@ -103,7 +103,10 @@ export default {
         arr[i].waypoint2 = wps[i + 1]
         arr[i].collapsed = false
         arr[i].collapseable = false
-        if (arr[i].waypoint1.tier != 2 && this.course.waypoints[is[i + 1]].tier === 2) {
+        if (
+          arr[i].waypoint1.tier !== 2 &&
+          this.course.waypoints[is[i + 1]].tier === 2
+        ) {
           arr[i].collapseable = true
         }
         if (is[i + 1] - is[i] > 1) {
@@ -225,7 +228,7 @@ export default {
       await this.$refs.table.clearSelected()
       this.clearing = false
     },
-    expandRow: function (s){
+    expandRow: function (s) {
       let wps = this.course.waypoints
       let i = wps.findIndex(x => s.waypoint1._id === x._id)
       i++
@@ -235,13 +238,13 @@ export default {
       }
       s.collapsed = false
     },
-    collapseRow: function (s){
+    collapseRow: function (s) {
       let wps = this.course.waypoints
       let i = wps.findIndex(x => s.waypoint1._id === x._id)
       i++
       while (wps[i].tier === 2) {
         let j = this.display.findIndex(x => x === wps[i]._id)
-        this.display.splice(j,1)
+        this.display.splice(j, 1)
         i++
       }
       s.collapsed = true
