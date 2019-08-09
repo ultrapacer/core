@@ -82,7 +82,6 @@ export default {
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
       })
-      console.log(arr)
       return arr
     },
     fields: function () {

@@ -188,13 +188,14 @@ export default {
     terrainFactors: function () {
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
-      let tF = this.course.waypoints[0].terrainFactor
-      let tFs = this.course.waypoints.map((x, i) => {
-        if (i < this.course.waypoints.length - 1) {
+      let wps = this.course.waypoints
+      let tF = wps[0].terrainFactor
+      let tFs = wps.map((x, i) => {
+        if (i < wps.length - 1) {
           if (x.terrainFactor !== null) { tF = x.terrainFactor }
           return {
             start: x.location,
-            end: this.course.waypoints[i + 1].location,
+            end: wps[i + 1].location,
             tF: tF
           }
         }
@@ -231,6 +232,7 @@ export default {
     this.$title = this.course.name
     util.addLoc(this.course.points)
     this.course.len = this.course.points[this.course.points.length - 1].loc
+    this.checkWaypoints()
     this.updatePacing()
     this.initializing = false
     setTimeout(() => {
@@ -269,8 +271,37 @@ export default {
     },
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
+      this.checkWaypoints()
       this.updatePacing()
       if (typeof callback === 'function') callback()
+    },
+    checkWaypoints () {
+      // function ensures start at 0, finish at length,
+      // and all waypoints are within course
+      let wps = this.course.waypoints
+      let start = wps[wps.findIndex(x => x.type === 'start')]
+      if (start.location !== 0) {
+        console.log('Fixing waypoint: ' + start.name)
+        start.location = 0
+        api.updateWaypoint(start._id, start)
+      }
+      let max = (util.round(this.course.len * this.units.distScale, 2) - 0.01)
+      max = max / this.units.distScale
+      wps.filter(
+        x => x.type !== 'start' &&
+        x.type !== 'finish' &&
+        x.location > max
+      ).forEach((x, i) => {
+        console.log('Fixing waypoint: ' + x.name)
+        wps[i].location = max
+        api.updateWaypoint(wps[i]._id, wps[i])
+      })
+      let finish = wps[wps.findIndex(x => x.type === 'finish')]
+      if (util.round(finish.location, 6) !== util.round(this.course.len, 6)) {
+        console.log('Fixing waypoint: ' + finish.name)
+        finish.location = this.course.len
+        api.updateWaypoint(finish._id, finish)
+      }
     },
     async editSegment (waypoint) {
       this.$refs.segmentEdit.show(waypoint)

@@ -47,7 +47,7 @@ export default {
   computed: {
     splits: function () {
       // generate array of breaks in km
-      let p = this.course.points     
+      let p = this.course.points
       var tot = p[p.length - 1].loc * this.units.distScale
       let breaks = [0]
       var i = 1
@@ -55,7 +55,7 @@ export default {
         breaks.push(i / this.units.distScale)
         i++
       }
-      if (tot / distScale > breaks[breaks.length - 1]) {
+      if (tot / this.units.distScale > breaks[breaks.length - 1]) {
         breaks.push(tot / this.units.distScale)
       }
       return calcSegments(p, breaks, this.pacing)
