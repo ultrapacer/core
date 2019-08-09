@@ -140,17 +140,17 @@ export default {
       var f = [
         {
           key: 'waypoint1.name',
-          label: 'Start'
-        },
-        {
-          key: 'waypoint2.name',
-          label: 'End',
+          label: 'Start',
           thClass: 'd-none d-md-table-cell',
           tdClass: 'd-none d-md-table-cell'
         },
         {
+          key: 'waypoint2.name',
+          label: 'End'
+        },
+        {
           key: 'len',
-          label: 'Length [' + this.units.dist + ']',
+          label: 'Len [' + this.units.dist + ']',
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
@@ -179,7 +179,7 @@ export default {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
-            return (value).toFixed(2) + '%'
+            return (value).toFixed(1) + '%'
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -188,7 +188,7 @@ export default {
       if (this.pacing.factors.tF > 1) {
         f.push({
           key: 'factors.tF',
-          label: 'Terrain Factor',
+          label: 'Terrain',
           formatter: (value, key, item) => {
             return '+' + ((value - 1) * 100).toFixed(1) + '%'
           },
@@ -203,12 +203,12 @@ export default {
           formatter: (value, key, item) => {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         })
         f.push({
           key: 'pace',
-          label: `Pace [min/${this.units.dist}]`,
+          label: `Pace [\/${this.units.dist}]`,
           formatter: (value, key, item) => {
             let l = item.len * this.units.distScale
             return timeUtil.sec2string(item.time / l, '[h]:m:ss')
