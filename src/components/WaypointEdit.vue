@@ -42,7 +42,16 @@
             required>
           </b-form-select>
         </b-form-group>
-        <b-form-group label="Description">
+        <b-form-group label="Terrain Factor [%] Increase">
+          <b-form-input
+            type="number"
+            v-model="model.terrainFactor"
+            :placeholder="terrainFactorPlaceholder"
+            min="0"
+            step="0">
+          </b-form-input>
+        </b-form-group>
+        <b-form-group label="Notes">
           <b-form-textarea rows="4" v-model="model.description">
           </b-form-textarea>
         </b-form-group>
@@ -112,6 +121,13 @@ export default {
           { value: 2, text: 'Minor' }
         ]
       }
+    },
+    terrainFactorPlaceholder: function () {
+      var tFP = ''
+      if (!this.model._id) return tFP
+      tFP = terrainFactor(this.model.location, this.terrainFactors)
+      tFP = ((tFP - 1) * 100).toFixed(0)
+      return tFP
     }
   },
   methods: {
