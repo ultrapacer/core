@@ -60,7 +60,7 @@
 import { calcSegments } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'units', 'owner', 'editFn', 'pacing'],
+  props: ['course', 'units', 'owner', 'pacing'],
   data () {
     return {
       clearing: false,
