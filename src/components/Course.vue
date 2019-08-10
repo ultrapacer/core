@@ -35,7 +35,18 @@
     <b-row v-if="!initializing">
       <b-col order="2">
         <b-tabs content-class="mt-3">
-          <b-tab title="Splits" active>
+          <b-tab title="Segments" active>
+            <segment-table
+                ref="segmentTable"
+                :course="course"
+                :units="units"
+                :owner="owner"
+                :editFn="editSegment"
+                :pacing="pacing"
+                @select="updateFocus"
+              ></segment-table>
+          </b-tab>
+          <b-tab title="Splits">
             <split-table
                 ref="splitTable"
                 :course="course"
@@ -59,17 +70,6 @@
                 <v-icon name="plus"></v-icon><span>New Waypoint</span>
               </b-btn>
             </div>
-          </b-tab>
-          <b-tab title="Segments">
-            <segment-table
-                ref="segmentTable"
-                :course="course"
-                :units="units"
-                :owner="owner"
-                :editFn="editSegment"
-                :pacing="pacing"
-                @select="updateFocus"
-              ></segment-table>
           </b-tab>
         </b-tabs>
       </b-col>
