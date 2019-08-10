@@ -80,6 +80,7 @@
 <script>
 import api from '@/api'
 import wputil from '../../shared/waypointUtilities'
+import {tF} from '../../shared/normFactor'
 export default {
   props: ['course', 'units'],
   data () {
@@ -106,7 +107,10 @@ export default {
       } else {
         return [
           { value: 'aid', text: 'Aid Station' },
-          { value: 'landmark', text: 'Landmark' }
+          { value: 'water', text: 'Water Source' },
+          { value: 'landmark', text: 'Landmark' },
+          { value: 'junction', text: 'Junction' },
+          { value: 'other', text: 'Other' }
         ]
       }
     },
@@ -118,14 +122,15 @@ export default {
       } else {
         return [
           { value: 1, text: 'Major' },
-          { value: 2, text: 'Minor' }
+          { value: 2, text: 'Minor' },
+          { value: 3, text: 'Hidden' }
         ]
       }
     },
     terrainFactorPlaceholder: function () {
       var tFP = ''
       if (!this.model._id) return tFP
-      tFP = terrainFactor(this.model.location, this.terrainFactors)
+      tFP = tF(this.model.location, this.terrainFactors)
       tFP = ((tFP - 1) * 100).toFixed(0)
       return tFP
     }
