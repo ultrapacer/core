@@ -32,9 +32,9 @@ function altFactor (alt, model) {
   } else {
     a = alt
   }
-  let r = model.rate / 100
-  let fact = r * Math.max(0, a - model.th) / model.span
-  return fact + 1
+  let r = model.rate / model.span / 100
+  let fact = (1 + r) ** Math.max(0, a - model.th)
+  return fact
 }
 
 function driftFactor (loc, drift, length) {
