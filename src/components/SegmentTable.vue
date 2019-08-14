@@ -203,7 +203,7 @@ export default {
         })
         f.push({
           key: 'pace',
-          label: `Pace [\/${this.units.dist}]`,
+          label: `Pace [/${this.units.dist}]`,
           formatter: (value, key, item) => {
             let l = item.len * this.units.distScale
             return timeUtil.sec2string(item.time / l, '[h]:m:ss')

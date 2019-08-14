@@ -41,7 +41,6 @@
                 :course="course"
                 :units="units"
                 :owner="owner"
-                :editFn="editSegment"
                 :pacing="pacing"
                 @select="updateFocus"
               ></segment-table>
@@ -107,16 +106,10 @@
       ref="wpEdit"
       :course="course"
       :units="units"
+      :terrainFactors="terrainFactors"
       @refresh="refreshWaypoints"
       @delete="deleteWaypoint"
     ></waypoint-edit>
-    <segment-edit
-      v-if="owner"
-      ref="segmentEdit"
-      :terrainFactors="terrainFactors"
-      :units="units"
-      @refresh="refreshWaypoints"
-    ></segment-edit>
     <delete-modal
       ref="delModal"
     ></delete-modal>
@@ -136,7 +129,6 @@ import WaypointTable from './WaypointTable'
 import PlanDetails from './PlanDetails'
 import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
-import SegmentEdit from './SegmentEdit'
 
 export default {
   title: 'Loading',
@@ -150,8 +142,7 @@ export default {
     WaypointTable,
     PlanDetails,
     PlanEdit,
-    WaypointEdit,
-    SegmentEdit
+    WaypointEdit
   },
   data () {
     return {
@@ -303,9 +294,6 @@ export default {
         finish.location = this.course.len
         api.updateWaypoint(finish._id, finish)
       }
-    },
-    async editSegment (waypoint) {
-      this.$refs.segmentEdit.show(waypoint)
     },
     async newPlan () {
       this.$refs.planEdit.show()

@@ -82,7 +82,7 @@ import api from '@/api'
 import wputil from '../../shared/waypointUtilities'
 import {tF} from '../../shared/normFactor'
 export default {
-  props: ['course', 'units'],
+  props: ['course', 'units', 'terrainFactors'],
   data () {
     return {
       deleting: false,
