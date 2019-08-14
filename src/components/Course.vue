@@ -382,11 +382,15 @@ export default {
 
       if (plan) {
         // calculate delay:
-        let nwp = this.course.waypoints.filter(wp => wp.type === 'aid' || wp.type === 'water')
-        nwp.forEach((x, i) => {
-          nwp[i].delay = this.course._plan.waypointDelay
+        let wps = this.course.waypoints
+        wps.forEach((x, i) => {
+          if (x.type === 'aid' || x.type === 'water') {
+            wps[i].delay = this.course._plan.waypointDelay
+            delay += this.course._plan.waypointDelay
+          } else {
+            wps[i].delay = 0
+          }
         })
-        delay = nwp.length * this.course._plan.waypointDelay
 
         // calculate time, pace, and normalized pace:
         if (this.course._plan.pacingMethod === 'time') {
