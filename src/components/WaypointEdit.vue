@@ -122,8 +122,7 @@ export default {
       } else {
         return [
           { value: 1, text: 'Major' },
-          { value: 2, text: 'Minor' },
-          { value: 3, text: 'Hidden' }
+          { value: 2, text: 'Minor' }
         ]
       }
     },
