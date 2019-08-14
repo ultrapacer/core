@@ -35,6 +35,17 @@
 </style>
 <script>
 import api from '@/api'
+
+const waypointTypes = {
+  start: 'Start',
+  finish: 'Finish',
+  aid: 'Aid Station',
+  water: 'Water Source',
+  landmark: 'Landmark',
+  junction: 'Junction',
+  other: 'Other'
+}
+
 export default {
   name: 'app',
   data () {
