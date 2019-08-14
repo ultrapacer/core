@@ -21,8 +21,11 @@ export default {
         green: 'rgb(75, 192, 192)',
         darkgreen: 'rgb(50, 150, 150)',
         blue: 'rgb(54, 162, 235)',
+        darkblue: 'rgb(45, 45, 200)',
         purple: 'rgb(153, 102, 255)',
-        grey: 'rgb(201, 203, 207)'
+        black: 'rgb(0, 0, 0)',
+        grey: 'rgb(201, 203, 207)',
+        white: 'rgb(255, 255, 255)'
       },
       chartFocus: [],
       chartProfile: [],
@@ -129,17 +132,40 @@ export default {
           y: this.course.waypoints[i].elevation * this.units.altScale,
           label: this.course.waypoints[i].name,
           title: waypointTypes[this.course.waypoints[i].type]
-        })
-        if (this.course.waypoints[i].type === 'landmark') {
-          d.pointRadius.push(6)
-          d.pointStyle.push('triangle')
-          d.backgroundColor.push(this.chartColors.darkgreen)
-          d.borderColor.push(this.chartColors.darkgreen)
-        } else {
+        }) 
+        if (this.course.waypoints[i].type === 'aid') {
           d.pointRadius.push(6)
           d.pointStyle.push('circle')
           d.backgroundColor.push(this.chartColors.red)
           d.borderColor.push(this.chartColors.red)
+        } else if (this.course.waypoints[i].type === 'landmark') {
+          d.pointRadius.push(6)
+          d.pointStyle.push('triangle')
+          d.backgroundColor.push(this.chartColors.darkgreen)
+          d.borderColor.push(this.chartColors.darkgreen)
+        } else if (this.course.waypoints[i].type === 'water') {
+          d.pointRadius.push(6)
+          d.pointStyle.push('rectRot')
+          d.backgroundColor.push(this.chartColors.darkblue)
+          d.borderColor.push(this.chartColors.darkblue)
+        } else if (this.course.waypoints[i].type === 'junction') {
+          d.pointRadius.push(6)
+          d.pointStyle.push('crossRot')
+          d.backgroundColor.push(this.chartColors.black)
+          d.borderColor.push(this.chartColors.black)
+        } else if (
+          this.course.waypoints[i].type === 'start' ||
+          this.course.waypoints[i].type === 'finish' ||
+        ) {
+          d.pointRadius.push(6)
+          d.pointStyle.push('circle')
+          d.backgroundColor.push(this.chartColors.white)
+          d.borderColor.push(this.chartColors.black)
+        } else {
+          d.pointRadius.push(3)
+          d.pointStyle.push('circle')
+          d.backgroundColor.push(this.chartColors.grey)
+          d.borderColor.push(this.chartColors.black)
         }
       }
       return d
