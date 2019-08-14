@@ -382,7 +382,7 @@ export default {
 
       if (plan) {
         // calculate delay:
-        let nwp = this.course.waypoints.filter(wp => wp.type === 'aid')
+        let nwp = this.course.waypoints.filter(wp => wp.type === 'aid' || wp.type === 'water')
         nwp.forEach((x, i) => {
           nwp[i].delay = this.course._plan.waypointDelay
         })
