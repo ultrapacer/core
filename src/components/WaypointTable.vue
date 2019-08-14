@@ -72,13 +72,7 @@ export default {
         {
           key: 'type',
           formatter: (value, key, item) => {
-            var types = {
-              start: 'Start',
-              finish: 'Finish',
-              aid: 'Aid Station',
-              landmark: 'Landmark'
-            }
-            return types[value]
+            return waypointTypes[value]
           },
           thClass: 'd-none d-md-table-cell',
           tdClass: 'd-none d-md-table-cell'
