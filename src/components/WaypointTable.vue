@@ -1,10 +1,13 @@
 <template>
   <b-table
+    ref="table"
     :items="waypoints"
     :fields="fields"
     primary-key="_id"
     @row-clicked="toggleRowDetails"
     hover
+    selectable
+    select-mode="single"
     small
   >
     <template slot="actions" slot-scope="row">
@@ -138,6 +141,9 @@ export default {
       this.updatingWaypointTimeout = setTimeout(() => {
         api.updateWaypoint(waypoint._id, waypoint)
       }, 2000)
+    },
+    selectWaypoint: function (index) {
+      this.$refs.table.selectRow(index)
     }
   }
 }
