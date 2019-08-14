@@ -68,9 +68,6 @@ export default {
   updateWaypoint (id, data) {
     return this.executeAuth('put', `/api/waypoint/${id}`, data)
   },
-  updateSegment (id, data) {
-    return this.executeAuth('put', `/api/waypoint/${id}/segment`, data)
-  },
   deleteWaypoint (id) {
     return this.executeAuth('delete', `/api/waypoint/${id}`)
   },
