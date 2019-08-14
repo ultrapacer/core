@@ -101,18 +101,19 @@ export default {
     },
     waypointTypes: function () {
       if (this.model.type === 'start') {
-        return [{ value: 'start', text: 'Start' }]
+        var arr = ['start']
       } else if (this.model.type === 'finish') {
-        return [{ value: 'finish', text: 'Finish' }]
+        var arr = ['finish']
       } else {
-        return [
-          { value: 'aid', text: 'Aid Station' },
-          { value: 'water', text: 'Water Source' },
-          { value: 'landmark', text: 'Landmark' },
-          { value: 'junction', text: 'Junction' },
-          { value: 'other', text: 'Other' }
-        ]
+        var arr = ['aid', 'water', 'landmark', 'junction', 'other']
       }
+      let arr2 = []
+      arr.forEach((x, i) => {
+        arr2.push({
+          value: x,
+          text: waypointTypes[x]
+      })
+      return arr2
     },
     waypointTiers: function () {
       if (this.model.type === 'start') {
