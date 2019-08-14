@@ -82,16 +82,7 @@ export default {
         },
         onClick: this.click
       },
-      mapFocus: [],
-      waypointTypes: {
-        start: 'Start',
-        finish: 'Finish',
-        aid: 'Aid Station',
-        water: 'Water Source',
-        landmark: 'Landmark',
-        junction: 'Junction',
-        other: 'Other'
-      }
+      mapFocus: []
     }
   },
   computed: {
@@ -137,7 +128,7 @@ export default {
           x: this.course.waypoints[i].location * this.units.distScale,
           y: this.course.waypoints[i].elevation * this.units.altScale,
           label: this.course.waypoints[i].name,
-          title: this.waypointTypes[this.course.waypoints[i].type]
+          title: waypointTypes[this.course.waypoints[i].type]
         })
         if (this.course.waypoints[i].type === 'landmark') {
           d.pointRadius.push(6)
