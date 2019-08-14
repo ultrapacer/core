@@ -42,7 +42,16 @@
             required>
           </b-form-select>
         </b-form-group>
-        <b-form-group label="Description">
+        <b-form-group label="Terrain Factor [%] Increase">
+          <b-form-input
+            type="number"
+            v-model="model.terrainFactor"
+            :placeholder="terrainFactorPlaceholder"
+            min="0"
+            step="0">
+          </b-form-input>
+        </b-form-group>
+        <b-form-group label="Notes">
           <b-form-textarea rows="4" v-model="model.description">
           </b-form-textarea>
         </b-form-group>
@@ -71,8 +80,9 @@
 <script>
 import api from '@/api'
 import wputil from '../../shared/waypointUtilities'
+import {tF} from '../../shared/normFactor'
 export default {
-  props: ['course', 'units'],
+  props: ['course', 'units', 'terrainFactors'],
   data () {
     return {
       deleting: false,
@@ -97,7 +107,10 @@ export default {
       } else {
         return [
           { value: 'aid', text: 'Aid Station' },
-          { value: 'landmark', text: 'Landmark' }
+          { value: 'water', text: 'Water Source' },
+          { value: 'landmark', text: 'Landmark' },
+          { value: 'junction', text: 'Junction' },
+          { value: 'other', text: 'Other' }
         ]
       }
     },
@@ -112,6 +125,13 @@ export default {
           { value: 2, text: 'Minor' }
         ]
       }
+    },
+    terrainFactorPlaceholder: function () {
+      var tFP = ''
+      if (!this.model._id) return tFP
+      tFP = tF(this.model.location, this.terrainFactors)
+      tFP = ((tFP - 1) * 100).toFixed(0)
+      return tFP
     }
   },
   methods: {
@@ -136,7 +156,9 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
-      this.model.location = this.model.locUserUnit / this.units.distScale
+      if (this.model.type !== 'start' && this.model.type !== 'finish') {
+        this.model.location = this.model.locUserUnit / this.units.distScale
+      }
       wputil.updateLLA(this.model, this.course.points)
       if (this.model._id) {
         await api.updateWaypoint(this.model._id, this.model)

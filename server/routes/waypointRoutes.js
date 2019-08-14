@@ -8,6 +8,9 @@ var User = require('../models/User')
 waypointRoutes.route('/').post(async function (req, res) {
   try {
     var waypoint = new Waypoint(req.body)
+    if (isNaN(waypoint.terrainFactor)) {
+      waypoint.terrainFactor = null
+    }
     waypoint._user = await User.findOne({ auth0ID: req.user.sub }).exec()
     await waypoint.save()
     res.json('Update complete')
@@ -32,6 +35,8 @@ waypointRoutes.route('/:id').put(async function (req, res) {
       waypoint.lat = req.body.lat
       waypoint.lon = req.body.lon
       waypoint.pointsIndex = req.body.pointsIndex
+      let tF = req.body.terrainFactor
+      waypoint.terrainFactor = isNaN(tF) ? null : tF
       waypoint.save().then(post => {
         res.json('Update complete')
       })
@@ -40,27 +45,6 @@ waypointRoutes.route('/:id').put(async function (req, res) {
     }
   } catch (err) {
     console.log(err)
-    res.status(400).send(err)
-  }
-})
-
-//  UPDATE SEGMENT
-waypointRoutes.route('/:id/segment').put(async function (req, res) {
-  try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var waypoint = await Waypoint.findById(req.params.id).populate('_course', '_user').exec()
-    if (waypoint._course._user.equals(user._id)) {
-      let tF = req.body.terrainFactor
-      if (isNaN(tF)) tF = null
-      waypoint.terrainFactor = tF
-      waypoint.segmentNotes = req.body.segmentNotes
-      waypoint.save().then(post => {
-        res.json('Update complete')
-      })
-    } else {
-      res.status(403).send('No permission')
-    }
-  } catch (err) {
     res.status(400).send(err)
   }
 })

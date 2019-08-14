@@ -35,7 +35,17 @@
     <b-row v-if="!initializing">
       <b-col order="2">
         <b-tabs content-class="mt-3">
-          <b-tab title="Splits" active>
+          <b-tab title="Segments" active>
+            <segment-table
+                ref="segmentTable"
+                :course="course"
+                :units="units"
+                :owner="owner"
+                :pacing="pacing"
+                @select="updateFocus"
+              ></segment-table>
+          </b-tab>
+          <b-tab title="Splits">
             <split-table
                 ref="splitTable"
                 :course="course"
@@ -59,17 +69,6 @@
                 <v-icon name="plus"></v-icon><span>New Waypoint</span>
               </b-btn>
             </div>
-          </b-tab>
-          <b-tab title="Segments">
-            <segment-table
-                ref="segmentTable"
-                :course="course"
-                :units="units"
-                :owner="owner"
-                :editFn="editSegment"
-                :pacing="pacing"
-                @select="updateFocus"
-              ></segment-table>
           </b-tab>
         </b-tabs>
       </b-col>
@@ -107,16 +106,10 @@
       ref="wpEdit"
       :course="course"
       :units="units"
+      :terrainFactors="terrainFactors"
       @refresh="refreshWaypoints"
       @delete="deleteWaypoint"
     ></waypoint-edit>
-    <segment-edit
-      v-if="owner"
-      ref="segmentEdit"
-      :terrainFactors="terrainFactors"
-      :units="units"
-      @refresh="refreshWaypoints"
-    ></segment-edit>
     <delete-modal
       ref="delModal"
     ></delete-modal>
@@ -136,7 +129,6 @@ import WaypointTable from './WaypointTable'
 import PlanDetails from './PlanDetails'
 import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
-import SegmentEdit from './SegmentEdit'
 
 export default {
   title: 'Loading',
@@ -150,8 +142,7 @@ export default {
     WaypointTable,
     PlanDetails,
     PlanEdit,
-    WaypointEdit,
-    SegmentEdit
+    WaypointEdit
   },
   data () {
     return {
@@ -303,9 +294,6 @@ export default {
         finish.location = this.course.len
         api.updateWaypoint(finish._id, finish)
       }
-    },
-    async editSegment (waypoint) {
-      this.$refs.segmentEdit.show(waypoint)
     },
     async newPlan () {
       this.$refs.planEdit.show()

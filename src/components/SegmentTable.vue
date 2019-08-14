@@ -35,11 +35,6 @@
     <template slot="FOOT_pace">
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
-    <template slot="actions" slot-scope="row">
-      <b-button v-if="!row.item.collapsed" size="sm" @click="editFn(row.item.waypoint1)" class="mr-1">
-        <v-icon name="edit"></v-icon><span class="d-none d-md-inline">Edit</span>
-      </b-button>
-    </template>
     <template slot="collapse" slot-scope="row">
       <b-button
         v-if="row.item.collapsed"
@@ -65,7 +60,7 @@
 import { calcSegments } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'units', 'owner', 'editFn', 'pacing'],
+  props: ['course', 'units', 'owner', 'pacing'],
   data () {
     return {
       clearing: false,
@@ -208,7 +203,7 @@ export default {
         })
         f.push({
           key: 'pace',
-          label: `Pace [\/${this.units.dist}]`,
+          label: `Pace [/${this.units.dist}]`,
           formatter: (value, key, item) => {
             let l = item.len * this.units.distScale
             return timeUtil.sec2string(item.time / l, '[h]:m:ss')
@@ -224,13 +219,6 @@ export default {
           },
           thClass: 'text-right',
           tdClass: 'text-right'
-        })
-      }
-      if (this.owner) {
-        f.push({
-          key: 'actions',
-          label: '',
-          tdClass: 'actionButtonColumn'
         })
       }
       if (this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
