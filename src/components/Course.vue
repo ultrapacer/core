@@ -34,7 +34,7 @@
     </div>
     <b-row v-if="!initializing">
       <b-col order="2">
-        <b-tabs content-class="mt-3">
+        <b-tabs v-model="tableTabIndex" content-class="mt-3">
           <b-tab title="Segments" active>
             <segment-table
                 ref="segmentTable"
@@ -57,6 +57,7 @@
           </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table
+                ref="waypointTable"
                 :course="course"
                 :waypoints="course.waypoints"
                 :units="units"
@@ -76,8 +77,12 @@
         <b-tabs content-class="mt-3" v-if="!initializing" class="sticky-top mt-3">
           <b-tab title="Course">
             <div v-if="showMap">
-              <course-profile ref="profile" :course="course" :units="units">
-              </course-profile>
+              <course-profile
+                  ref="profile"
+                  :course="course"
+                  :units="units"
+                  @waypointClick="waypointClick"
+                ></course-profile>
               <course-map v-if="showMap" :course="course" :focus="mapFocus">
               </course-map>
             </div>
@@ -155,7 +160,8 @@ export default {
       waypoint: {},
       pacing: {},
       mapFocus: [],
-      showMap: false
+      showMap: false,
+      tableTabIndex: 0,
     }
   },
   computed: {
@@ -416,6 +422,10 @@ export default {
       if (type === 'split') this.$refs.segmentTable.clear()
       this.mapFocus = focus
       this.$refs.profile.focus(focus)
+    },
+    waypointClick: function (index) {
+      this.tableTabIndex = 2
+      this.$refs.waypointTable.selectWaypoint(index)
     }
   }
 }

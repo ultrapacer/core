@@ -79,7 +79,8 @@ export default {
         },
         legend: {
           display: false
-        }
+        },
+        onClick: this.click
       },
       mapFocus: [],
       waypointTypes: {
@@ -157,6 +158,11 @@ export default {
     this.updateChartProfile()
   },
   methods: {
+    click: function (point, event) {
+      if (!event.length) { return }
+      const item = event[0]
+    	this.$emit('waypointClick', item._index)
+    },
     focus: function (focus) {
       var cF = []
       this.chartProfile.forEach(xy => {
