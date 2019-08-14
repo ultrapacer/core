@@ -157,7 +157,9 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
-      this.model.location = this.model.locUserUnit / this.units.distScale
+      if (this.model.type !== 'start' && this.model.type !== 'finish') {
+        this.model.location = this.model.locUserUnit / this.units.distScale
+      }
       wputil.updateLLA(this.model, this.course.points)
       if (this.model._id) {
         await api.updateWaypoint(this.model._id, this.model)
