@@ -1,6 +1,7 @@
 function sec2string (val, format) {
   var d = new Date(null)
-  d.setSeconds(Math.round(val))
+  val = Math.round(val)
+  d.setSeconds(val)
   if (format === 'm:ss') {
     if (val < 600) { return d.toISOString().substr(15, 4) } else {
       return d.toISOString().substr(14, 5)
