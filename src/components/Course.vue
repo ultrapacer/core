@@ -300,6 +300,9 @@ export default {
         finish.location = this.course.len
         api.updateWaypoint(finish._id, finish)
       }
+      wps.forEach((x, i) => { 
+        wps[i].show = x.type === 'start' || x.tier === 1 ) {
+      }
     },
     async newPlan () {
       this.$refs.planEdit.show()
