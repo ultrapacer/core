@@ -96,11 +96,7 @@ export default {
       let is = []
       let delays = []
       this.course.waypoints.forEach((x, i) => {
-        if (
-          x.type === 'start' ||
-          x.type === 'finish' ||
-          this.display.findIndex(y => x._id === y) >= 0
-        ) {
+        if (x.show) {
           breaks.push(x.location)
           wps.push(x)
           is.push(i)
@@ -252,22 +248,25 @@ export default {
       let wps = this.course.waypoints
       let i = wps.findIndex(x => s.waypoint1._id === x._id)
       i++
-      while (wps[i].tier === 2) {
-        this.display.push(wps[i]._id)
+      let arr = []
+      while (wps[i].tier < 1) {
+        arr.push(wps[i]._id)
         i++
       }
-      s.collapsed = false
+      //s.collapsed = false
+      this.$emit('show', arr)
     },
     collapseRow: function (s) {
       let wps = this.course.waypoints
       let i = wps.findIndex(x => s.waypoint1._id === x._id)
       i++
-      while (wps[i].tier === 2) {
-        let j = this.display.findIndex(x => x === wps[i]._id)
-        this.display.splice(j, 1)
+      let arr = []
+      while (wps[i].tier < 1) {
+        arr.push(wps[i]._id)
         i++
       }
-      s.collapsed = true
+      //s.collapsed = true
+      this.$emit('hide', arr)
     },
     selectRow: function (s) {
       if (this.clearing) return
