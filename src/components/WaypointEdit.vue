@@ -30,7 +30,7 @@
           <b-form-select
             type="text"
             v-model="model.type"
-            :options="waypointTypes"
+            :options="waypointTypeOptions"
             required>
           </b-form-select>
         </b-form-group>
@@ -99,19 +99,19 @@ export default {
       return Number((this.course.distance * this.units.distScale).toFixed(2)) -
         0.01
     },
-    waypointTypes: function () {
+    waypointTypeOptions: function () {
       if (this.model.type === 'start' || this.model.type === 'finish') {
         return [{
           value: this.model.type,
-          text: waypointTypes[this.model.type]
+          text: this.$waypointTypes[this.model.type]
         }]
       } else {
         let arr = []
-        Object.keys(waypointTypes).forEach(key => {
+        Object.keys(this.$waypointTypes).forEach(key => {
           if (key !== 'start' && key !== 'finish') {
             arr.push({
               value: key,
-              text: waypointTypes[key]
+              text: this.$waypointTypes[key]
             })
           }
         })

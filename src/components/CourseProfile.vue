@@ -131,8 +131,8 @@ export default {
           x: this.course.waypoints[i].location * this.units.distScale,
           y: this.course.waypoints[i].elevation * this.units.altScale,
           label: this.course.waypoints[i].name,
-          title: waypointTypes[this.course.waypoints[i].type]
-        }) 
+          title: this.$waypointTypes[this.course.waypoints[i].type]
+        })
         if (this.course.waypoints[i].type === 'aid') {
           d.pointRadius.push(6)
           d.pointStyle.push('circle')
@@ -155,7 +155,7 @@ export default {
           d.borderColor.push(this.chartColors.black)
         } else if (
           this.course.waypoints[i].type === 'start' ||
-          this.course.waypoints[i].type === 'finish' ||
+          this.course.waypoints[i].type === 'finish'
         ) {
           d.pointRadius.push(6)
           d.pointStyle.push('circle')
@@ -178,7 +178,7 @@ export default {
     click: function (point, event) {
       if (!event.length) { return }
       const item = event[0]
-    	this.$emit('waypointClick', item._index)
+      this.$emit('waypointClick', item._index)
     },
     focus: function (focus) {
       var cF = []

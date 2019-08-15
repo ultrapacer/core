@@ -72,7 +72,7 @@ export default {
         {
           key: 'type',
           formatter: (value, key, item) => {
-            return waypointTypes[value]
+            return this.$waypointTypes[value]
           },
           thClass: 'd-none d-md-table-cell',
           tdClass: 'd-none d-md-table-cell'

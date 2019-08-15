@@ -161,7 +161,7 @@ export default {
       pacing: {},
       mapFocus: [],
       showMap: false,
-      tableTabIndex: 0,
+      tableTabIndex: 0
     }
   },
   computed: {
