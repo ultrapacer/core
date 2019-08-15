@@ -30,7 +30,7 @@
           <b-form-select
             type="text"
             v-model="model.type"
-            :options="waypointTypes"
+            :options="waypointTypeOptions"
             required>
           </b-form-select>
         </b-form-group>
@@ -99,19 +99,23 @@ export default {
       return Number((this.course.distance * this.units.distScale).toFixed(2)) -
         0.01
     },
-    waypointTypes: function () {
-      if (this.model.type === 'start') {
-        return [{ value: 'start', text: 'Start' }]
-      } else if (this.model.type === 'finish') {
-        return [{ value: 'finish', text: 'Finish' }]
+    waypointTypeOptions: function () {
+      if (this.model.type === 'start' || this.model.type === 'finish') {
+        return [{
+          value: this.model.type,
+          text: this.$waypointTypes[this.model.type]
+        }]
       } else {
-        return [
-          { value: 'aid', text: 'Aid Station' },
-          { value: 'water', text: 'Water Source' },
-          { value: 'landmark', text: 'Landmark' },
-          { value: 'junction', text: 'Junction' },
-          { value: 'other', text: 'Other' }
-        ]
+        let arr = []
+        Object.keys(this.$waypointTypes).forEach(key => {
+          if (key !== 'start' && key !== 'finish') {
+            arr.push({
+              value: key,
+              text: this.$waypointTypes[key]
+            })
+          }
+        })
+        return arr
       }
     },
     waypointTiers: function () {

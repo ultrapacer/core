@@ -31,8 +31,16 @@ Vue.use(VuePageTitle, {
   // prefix: 'My App - ',
   suffix: '- ultraPacer'
 })
-
 Vue.use(VueTheMask)
+Vue.prototype.$waypointTypes = {
+  start: 'Start',
+  finish: 'Finish',
+  aid: 'Aid Station',
+  water: 'Water Source',
+  landmark: 'Landmark',
+  junction: 'Junction',
+  other: 'Other'
+}
 
 Vue.config.productionTip = false
 

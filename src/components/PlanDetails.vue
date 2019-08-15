@@ -150,7 +150,9 @@ export default {
   },
   computed: {
     aidStationCount: function () {
-      return this.course.waypoints.filter(wp => wp.type === 'aid').length
+      return this.course.waypoints.filter(
+        wp => wp.type === 'aid' || wp.type === 'water'
+      ).length
     },
     pacingTargetF: function () {
       if (this.plan.pacingTarget) {
