@@ -35,7 +35,6 @@
 </style>
 <script>
 import api from '@/api'
-
 export default {
   name: 'app',
   data () {
