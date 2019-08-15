@@ -43,6 +43,7 @@
                 :owner="owner"
                 :pacing="pacing"
                 @select="updateFocus"
+                @show="waypointShow"
               ></segment-table>
           </b-tab>
           <b-tab title="Splits">
@@ -300,9 +301,9 @@ export default {
         finish.location = this.course.len
         api.updateWaypoint(finish._id, finish)
       }
-      wps.forEach((x, i) => { 
-        wps[i].show = x.type === 'start' || x.tier === 1 ) {
-      }
+      wps.forEach((x, i) => {
+        wps[i].show = x.type === 'start' || x.tier === 1
+      })
     },
     async newPlan () {
       this.$refs.planEdit.show()
@@ -433,6 +434,18 @@ export default {
     waypointClick: function (index) {
       this.tableTabIndex = 2
       this.$refs.waypointTable.selectWaypoint(index)
+    },
+    waypointShow: function (arr) {
+      let wps = this.course.waypoints.filter(x => arr.includes(x._id))
+      wps.forEach((x, i) => {
+        wps[i].show = true
+      })
+    },
+    waypointHide: function (arr) {
+      let wps = this.course.waypoints.filter(x => arr.includes(x._id))
+      wps.forEach((x, i) => {
+        wps[i].show = false
+      })
     }
   }
 }

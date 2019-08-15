@@ -127,7 +127,7 @@ export default {
         showLine: false
       }
       for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
-        if (this.course.waypoints[i].hidden) { continue }
+        if (!this.course.waypoints[i].show) { continue }
         d.data.push({
           x: this.course.waypoints[i].location * this.units.distScale,
           y: this.course.waypoints[i].elevation * this.units.altScale,

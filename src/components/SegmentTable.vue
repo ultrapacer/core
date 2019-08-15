@@ -65,7 +65,7 @@ export default {
     return {
       clearing: false,
       displayTier: 1,
-      display: []
+      localcourse: this.course
     }
   },
   filters: {
@@ -80,31 +80,20 @@ export default {
       return timeUtil.sec2string(val, '[h]:m:ss')
     }
   },
-  async created () {
-    this.display = this.course.waypoints.filter(
-      x =>
-        x.type === 'start' ||
-        x.tier !== 2
-    ).map(x => {
-      return x._id
-    })
-  },
   computed: {
     segments: function () {
       var breaks = []
       let wps = []
       let is = []
       let delays = []
-      this.course.waypoints.forEach((x, i) => {
-        if (x.show) {
+      this.localcourse.waypoints.forEach((x, i) => {
+        if (this.localcourse.waypoints[i].show) {
           breaks.push(x.location)
           wps.push(x)
           is.push(i)
           delays.push(x.delay ? x.delay : 0)
-          this.course.waypoints[i].hidden = false
         } else {
           delays[delays.length - 1] += (x.delay ? x.delay : 0)
-          this.course.waypoints[i].hidden = true
         }
       })
       let arr = calcSegments(this.course.points, breaks, this.pacing)
@@ -249,11 +238,11 @@ export default {
       let i = wps.findIndex(x => s.waypoint1._id === x._id)
       i++
       let arr = []
-      while (wps[i].tier < 1) {
+      while (wps[i].tier > 1) {
         arr.push(wps[i]._id)
         i++
       }
-      //s.collapsed = false
+      // s.collapsed = false
       this.$emit('show', arr)
     },
     collapseRow: function (s) {
@@ -261,11 +250,11 @@ export default {
       let i = wps.findIndex(x => s.waypoint1._id === x._id)
       i++
       let arr = []
-      while (wps[i].tier < 1) {
+      while (wps[i].tier > 1) {
         arr.push(wps[i]._id)
         i++
       }
-      //s.collapsed = true
+      // s.collapsed = true
       this.$emit('hide', arr)
     },
     selectRow: function (s) {
