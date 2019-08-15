@@ -105,8 +105,10 @@ export default {
           wps.push(x)
           is.push(i)
           delays.push(x.delay ? x.delay : 0)
+          this.course.waypoints[i].hidden = false
         } else {
           delays[delays.length - 1] += (x.delay ? x.delay : 0)
+          this.course.waypoints[i].hidden = true
         }
       })
       let arr = calcSegments(this.course.points, breaks, this.pacing)
