@@ -52,6 +52,7 @@
       >
         &#9650;
       </b-button>
+      <span v-if="row.item.waypoint1.tier===2">&#8944;</span>
     </template>
   </b-table>
 </template>
@@ -225,7 +226,7 @@ export default {
         f.push({
           key: 'collapse',
           label: '',
-          tdClass: 'actionButtonColumn'
+          tdClass: 'actionButtonColumn text-center'
         })
       }
       return f
