@@ -54,7 +54,6 @@
       </b-button>
     </template>
   </b-table>
-
 </template>
 
 <script>
@@ -130,13 +129,6 @@ export default {
           arr[i].collapsed = true
         }
       })
-      function nextWaypoint (i) {
-        i++
-        while (wps[i].tier !== 1 || i === wps.length - 1) {
-          i++
-        }
-        return 
-      }
       return arr
     },
     fields: function () {
