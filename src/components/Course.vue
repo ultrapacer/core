@@ -91,6 +91,7 @@
                   v-if="showMap"
                   :course="course"
                   :focus="mapFocus"
+                  :units="units"
                   :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
                 ></course-map>
             </div>

@@ -15,11 +15,11 @@ export default {
   data () {
     return {
       chartColors: {
-        red: 'rgb(255, 99, 132)',
+        red: 'rgb(255, 0, 0)',
         orange: 'rgb(255, 159, 64)',
         yellow: 'rgb(255, 205, 86)',
         green: 'rgb(75, 192, 192)',
-        darkgreen: 'rgb(50, 150, 150)',
+        darkgreen: 'rgb(0, 140, 140)',
         blue: 'rgb(54, 162, 235)',
         darkblue: 'rgb(45, 45, 200)',
         purple: 'rgb(153, 102, 255)',
@@ -89,6 +89,22 @@ export default {
         onClick: this.click
       },
       mapFocus: [],
+      markerStyles: {
+        pointRadius: {
+        },
+        pointStyle: {
+          landmark: 'triangle',
+          water: 'rectRot',
+          junction: 'crossRot'
+        },
+        color: {
+          aid: 'red',
+          landmark: 'darkgreen',
+          water: 'darkblue',
+          start: 'black',
+          finish: 'black'
+        }
+      },
       updateTrigger: 0
     }
   },
@@ -126,54 +142,36 @@ export default {
         data: [],
         backgroundColor: [],
         borderColor: [],
+        borderWidth: [],
         fill: false,
         pointRadius: [],
         pointStyle: [],
         pointHoverRadius: 10,
         showLine: false
       }
-      for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
-        if (this.mode !== 'all' && !this.course.waypoints[i].show) { continue }
+      let wps = this.course.waypoints
+      for (var i = 0, il = wps.length; i < il; i++) {
+        if (this.mode !== 'all' && !wps[i].show) { continue }
         d.data.push({
-          x: this.course.waypoints[i].location * this.units.distScale,
-          y: this.course.waypoints[i].elevation * this.units.altScale,
-          label: this.course.waypoints[i].name,
-          title: this.$waypointTypes[this.course.waypoints[i].type]
+          x: wps[i].location * this.units.distScale,
+          y: wps[i].elevation * this.units.altScale,
+          label:
+            wps[i].name + ' [' +
+            (wps[i].location * this.units.distScale).toFixed(1) +
+            this.units.dist + ']',
+          title: this.$waypointTypes[wps[i].type]
         })
-        if (this.course.waypoints[i].type === 'aid') {
-          d.pointRadius.push(6)
-          d.pointStyle.push('circle')
-          d.backgroundColor.push(this.chartColors.red)
-          d.borderColor.push(this.chartColors.red)
-        } else if (this.course.waypoints[i].type === 'landmark') {
-          d.pointRadius.push(6)
-          d.pointStyle.push('triangle')
-          d.backgroundColor.push(this.chartColors.darkgreen)
-          d.borderColor.push(this.chartColors.darkgreen)
-        } else if (this.course.waypoints[i].type === 'water') {
-          d.pointRadius.push(6)
-          d.pointStyle.push('rectRot')
-          d.backgroundColor.push(this.chartColors.darkblue)
-          d.borderColor.push(this.chartColors.darkblue)
-        } else if (this.course.waypoints[i].type === 'junction') {
-          d.pointRadius.push(6)
-          d.pointStyle.push('crossRot')
-          d.backgroundColor.push(this.chartColors.black)
-          d.borderColor.push(this.chartColors.black)
-        } else if (
-          this.course.waypoints[i].type === 'start' ||
-          this.course.waypoints[i].type === 'finish'
-        ) {
-          d.pointRadius.push(6)
-          d.pointStyle.push('circle')
-          d.backgroundColor.push(this.chartColors.white)
-          d.borderColor.push(this.chartColors.black)
-        } else {
-          d.pointRadius.push(3)
-          d.pointStyle.push('circle')
-          d.backgroundColor.push(this.chartColors.grey)
-          d.borderColor.push(this.chartColors.black)
-        }
+        d.pointStyle.push('circle')
+        d.borderWidth.push(2)
+        d.pointRadius.push(this.markerStyles.pointRadius[wps[i].type] || 6)
+        d.borderColor.push(
+          this.chartColors[this.markerStyles.color[wps[i].type] || 'black']
+        )
+        d.backgroundColor.push(
+          this.transparentize(
+            this.chartColors[this.markerStyles.color[wps[i].type] || 'white']
+          )
+        )
       }
       return d
     }
