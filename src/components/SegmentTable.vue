@@ -108,16 +108,35 @@ export default {
         arr[i].waypoint2 = wps[i + 1]
         arr[i].collapsed = false
         arr[i].collapseable = false
+        let ind = this.course.waypoints.findIndex(
+          x => x._id === arr[i].waypoint1._id
+        )
         if (
-          arr[i].waypoint1.tier !== 2 &&
-          this.course.waypoints[is[i + 1]].tier === 2
+          arr[i].waypoint1.tier === 1 &&
+          this.course.waypoints.filter((x, j) =>
+            j > ind &&
+            j < this.course.waypoints.findIndex((x, j) =>
+              j > ind && x.tier === 1
+            ) &&
+            x.tier === 2
+          ).length
         ) {
           arr[i].collapseable = true
         }
-        if (is[i + 1] - is[i] > 1) {
+        if (
+          arr[i].collapseable &&
+          arr[i].waypoint2.tier === 1
+        ) {
           arr[i].collapsed = true
         }
       })
+      function nextWaypoint (i) {
+        i++
+        while (wps[i].tier !== 1 || i === wps.length - 1) {
+          i++
+        }
+        return 
+      }
       return arr
     },
     fields: function () {
@@ -241,7 +260,9 @@ export default {
       i++
       let arr = []
       while (wps[i].tier > 1) {
-        arr.push(wps[i]._id)
+        if (wps[i].tier !== 3) {
+          arr.push(wps[i]._id)
+        }
         i++
       }
       this.$emit('show', arr)

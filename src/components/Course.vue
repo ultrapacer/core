@@ -101,7 +101,6 @@
                 :plan="course._plan"
                 :pacing="pacing"
                 :units="units"
-                :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
               ></plan-details>
           </b-tab>
         </b-tabs>
