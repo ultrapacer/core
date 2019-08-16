@@ -44,6 +44,7 @@
                 :pacing="pacing"
                 @select="updateFocus"
                 @show="waypointShow"
+                @hide="waypointHide"
               ></segment-table>
           </b-tab>
           <b-tab title="Splits">
@@ -440,12 +441,14 @@ export default {
       wps.forEach((x, i) => {
         wps[i].show = true
       })
+      this.$refs.segmentTable.forceSegmentUpdate()
     },
     waypointHide: function (arr) {
       let wps = this.course.waypoints.filter(x => arr.includes(x._id))
       wps.forEach((x, i) => {
         wps[i].show = false
       })
+      this.$refs.segmentTable.forceSegmentUpdate()
     }
   }
 }

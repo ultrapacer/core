@@ -54,6 +54,7 @@
       </b-button>
     </template>
   </b-table>
+
 </template>
 
 <script>
@@ -64,8 +65,7 @@ export default {
   data () {
     return {
       clearing: false,
-      displayTier: 1,
-      localcourse: this.course
+      segmentUpdateTrigger: 0
     }
   },
   filters: {
@@ -82,12 +82,14 @@ export default {
   },
   computed: {
     segments: function () {
+      // eslint-disable-next-line
+      this.segmentUpdateTrigger // hack for force recompute
       var breaks = []
       let wps = []
       let is = []
       let delays = []
-      this.localcourse.waypoints.forEach((x, i) => {
-        if (this.localcourse.waypoints[i].show) {
+      this.course.waypoints.forEach((x, i) => {
+        if (this.course.waypoints[i].show) {
           breaks.push(x.location)
           wps.push(x)
           is.push(i)
@@ -242,7 +244,6 @@ export default {
         arr.push(wps[i]._id)
         i++
       }
-      // s.collapsed = false
       this.$emit('show', arr)
     },
     collapseRow: function (s) {
@@ -254,7 +255,6 @@ export default {
         arr.push(wps[i]._id)
         i++
       }
-      // s.collapsed = true
       this.$emit('hide', arr)
     },
     selectRow: function (s) {
@@ -268,6 +268,11 @@ export default {
       } else {
         this.$emit('select', 'segment', [])
       }
+    },
+    forceSegmentUpdate: function () {
+      // this is a hack because the segments computed property won't update
+      // when this.course.waypoints[i] change
+      this.segmentUpdateTrigger++
     }
   }
 }
