@@ -19,25 +19,32 @@
       v-for="waypoint in course.waypoints"
       :key="waypoint._id"
       :lat-lng="[waypoint.lat, waypoint.lon]"
-      :radius="8"
+      :radius="6"
       :fill=true
-      :color="markerColors[waypoint.type]"
+      :color="markerColors[waypoint.type] || 'black'"
       :visible="waypoint.show || mode === 'all'"
-      :fillColor="markerColors[waypoint.type]"
+      :fillColor="markerColors[waypoint.type] || 'white'"
       :fillOpacity="0.5"
-    />
+    >
+    <l-popup>
+      <b>{{ $waypointTypes[waypoint.type] }}</b><br />
+      {{ waypoint.name }}
+      [{{(waypoint.location*units.distScale).toFixed(1)}} {{units.dist}}]
+    </l-popup>
+    </l-circle-marker>
   </l-map>
 </template>
 
 <script>
-import {LMap, LTileLayer, LPolyline, LCircleMarker} from 'vue2-leaflet'
+import {LMap, LTileLayer, LPolyline, LCircleMarker, LPopup} from 'vue2-leaflet'
 export default {
-  props: ['course', 'focus', 'mode'],
+  props: ['course', 'focus', 'mode', 'units'],
   components: {
     LMap,
     LTileLayer,
     LPolyline,
-    LCircleMarker
+    LCircleMarker,
+    LPopup
   },
   data () {
     return {

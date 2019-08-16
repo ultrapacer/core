@@ -15,11 +15,11 @@ export default {
   data () {
     return {
       chartColors: {
-        red: 'rgb(255, 99, 132)',
+        red: 'rgb(255, 0, 0)',
         orange: 'rgb(255, 159, 64)',
         yellow: 'rgb(255, 205, 86)',
         green: 'rgb(75, 192, 192)',
-        darkgreen: 'rgb(50, 150, 150)',
+        darkgreen: 'rgb(0, 140, 140)',
         blue: 'rgb(54, 162, 235)',
         darkblue: 'rgb(45, 45, 200)',
         purple: 'rgb(153, 102, 255)',
@@ -100,7 +100,9 @@ export default {
         color: {
           aid: 'red',
           landmark: 'darkgreen',
-          water: 'darkblue'
+          water: 'darkblue',
+          start: 'black',
+          finish: 'black'
         }
       },
       updateTrigger: 0
@@ -140,6 +142,7 @@ export default {
         data: [],
         backgroundColor: [],
         borderColor: [],
+        borderWidth: [],
         fill: false,
         pointRadius: [],
         pointStyle: [],
@@ -147,21 +150,27 @@ export default {
         showLine: false
       }
       let wps = this.course.waypoints
-      for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
-        if (this.mode !== 'all' && !this.course.waypoints[i].show) { continue }
+      for (var i = 0, il = wps.length; i < il; i++) {
+        if (this.mode !== 'all' && !wps[i].show) { continue }
         d.data.push({
-          x: this.course.waypoints[i].location * this.units.distScale,
-          y: this.course.waypoints[i].elevation * this.units.altScale,
-          label: this.course.waypoints[i].name,
-          title: this.$waypointTypes[this.course.waypoints[i].type]
+          x: wps[i].location * this.units.distScale,
+          y: wps[i].elevation * this.units.altScale,
+          label:
+            wps[i].name + ' [' +
+            (wps[i].location * this.units.distScale).toFixed(1) +
+            this.units.dist + ']',
+          title: this.$waypointTypes[wps[i].type]
         })
+        d.pointStyle.push('circle')
+        d.borderWidth.push(2)
         d.pointRadius.push(this.markerStyles.pointRadius[wps[i].type] || 6)
-        d.pointStyle.push(this.markerStyles.pointStyle[wps[i].type] || 'circle')
         d.borderColor.push(
           this.chartColors[this.markerStyles.color[wps[i].type] || 'black']
         )
         d.backgroundColor.push(
-          this.chartColors[this.markerStyles.color[wps[i].type] || 'white']
+          this.transparentize(
+            this.chartColors[this.markerStyles.color[wps[i].type] || 'white']
+          )
         )
       }
       return d
