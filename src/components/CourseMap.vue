@@ -22,6 +22,7 @@
       :radius="8"
       :fill=true
       :color="markerColors[waypoint.type]"
+      :visible="waypoint.show || mode === 'all'"
       :fillColor="markerColors[waypoint.type]"
       :fillOpacity="0.5"
     />
@@ -31,7 +32,7 @@
 <script>
 import {LMap, LTileLayer, LPolyline, LCircleMarker} from 'vue2-leaflet'
 export default {
-  props: ['course', 'focus'],
+  props: ['course', 'focus', 'mode'],
   components: {
     LMap,
     LTileLayer,
@@ -98,6 +99,9 @@ export default {
           { lat: xmax, lng: ymax }
         ]
       }
+    },
+    forceUpdate: function () {
+      this.$forceUpdate()
     }
   },
   watch: {

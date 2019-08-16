@@ -8,7 +8,7 @@ import util from '../../shared/utilities'
 import LineChart from './LineChart.js'
 
 export default {
-  props: ['course', 'units'],
+  props: ['course', 'units', 'mode'],
   components: {
     LineChart
   },
@@ -31,6 +31,9 @@ export default {
       chartProfile: [],
       chartGrade: [],
       chartOptions: {
+        animation: {
+          duration: 0
+        },
         responsive: true,
         maintainAspectRatio: false,
         height: '100px',
@@ -85,7 +88,8 @@ export default {
         },
         onClick: this.click
       },
-      mapFocus: []
+      mapFocus: [],
+      updateTrigger: 0
     }
   },
   computed: {
@@ -115,6 +119,8 @@ export default {
       }
     },
     chartPoints: function () {
+      // eslint-disable-next-line
+      this.updateTrigger // hack for force recompute
       if (!this.course.waypoints.length) { return [] }
       var d = {
         data: [],
@@ -127,6 +133,7 @@ export default {
         showLine: false
       }
       for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
+        if (this.mode !== 'all' && !this.course.waypoints[i].show) { continue }
         d.data.push({
           x: this.course.waypoints[i].location * this.units.distScale,
           y: this.course.waypoints[i].elevation * this.units.altScale,
@@ -230,6 +237,11 @@ export default {
     transparentize: function (color, opacity) {
       var alpha = opacity === undefined ? 0.5 : 1 - opacity
       return window.Color(color).alpha(alpha).rgbString()
+    },
+    forceWaypointsUpdate: function () {
+      // this is a hack because the computed property won't update
+      // when this.course.waypoints[i] change
+      this.updateTrigger++
     }
   }
 }

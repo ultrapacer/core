@@ -64,8 +64,7 @@ export default {
   data () {
     return {
       clearing: false,
-      displayTier: 1,
-      display: []
+      updateTrigger: 0
     }
   },
   filters: {
@@ -80,27 +79,16 @@ export default {
       return timeUtil.sec2string(val, '[h]:m:ss')
     }
   },
-  async created () {
-    this.display = this.course.waypoints.filter(
-      x =>
-        x.type === 'start' ||
-        x.tier !== 2
-    ).map(x => {
-      return x._id
-    })
-  },
   computed: {
     segments: function () {
+      // eslint-disable-next-line
+      this.updateTrigger // hack for force recompute
       var breaks = []
       let wps = []
       let is = []
       let delays = []
       this.course.waypoints.forEach((x, i) => {
-        if (
-          x.type === 'start' ||
-          x.type === 'finish' ||
-          this.display.findIndex(y => x._id === y) >= 0
-        ) {
+        if (this.course.waypoints[i].show) {
           breaks.push(x.location)
           wps.push(x)
           is.push(i)
@@ -119,13 +107,25 @@ export default {
         arr[i].waypoint2 = wps[i + 1]
         arr[i].collapsed = false
         arr[i].collapseable = false
+        let ind = this.course.waypoints.findIndex(
+          x => x._id === arr[i].waypoint1._id
+        )
         if (
-          arr[i].waypoint1.tier !== 2 &&
-          this.course.waypoints[is[i + 1]].tier === 2
+          arr[i].waypoint1.tier === 1 &&
+          this.course.waypoints.filter((x, j) =>
+            j > ind &&
+            j < this.course.waypoints.findIndex((x, j) =>
+              j > ind && x.tier === 1
+            ) &&
+            x.tier === 2
+          ).length
         ) {
           arr[i].collapseable = true
         }
-        if (is[i + 1] - is[i] > 1) {
+        if (
+          arr[i].collapseable &&
+          arr[i].waypoint2.tier === 1
+        ) {
           arr[i].collapsed = true
         }
       })
@@ -250,22 +250,25 @@ export default {
       let wps = this.course.waypoints
       let i = wps.findIndex(x => s.waypoint1._id === x._id)
       i++
-      while (wps[i].tier === 2) {
-        this.display.push(wps[i]._id)
+      let arr = []
+      while (wps[i].tier > 1) {
+        if (wps[i].tier !== 3) {
+          arr.push(wps[i]._id)
+        }
         i++
       }
-      s.collapsed = false
+      this.$emit('show', arr)
     },
     collapseRow: function (s) {
       let wps = this.course.waypoints
       let i = wps.findIndex(x => s.waypoint1._id === x._id)
       i++
-      while (wps[i].tier === 2) {
-        let j = this.display.findIndex(x => x === wps[i]._id)
-        this.display.splice(j, 1)
+      let arr = []
+      while (wps[i].tier > 1) {
+        arr.push(wps[i]._id)
         i++
       }
-      s.collapsed = true
+      this.$emit('hide', arr)
     },
     selectRow: function (s) {
       if (this.clearing) return
@@ -278,6 +281,11 @@ export default {
       } else {
         this.$emit('select', 'segment', [])
       }
+    },
+    forceSegmentUpdate: function () {
+      // this is a hack because the computed property won't update
+      // when this.course.waypoints[i] change
+      this.updateTrigger++
     }
   }
 }

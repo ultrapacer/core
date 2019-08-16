@@ -43,6 +43,8 @@
                 :owner="owner"
                 :pacing="pacing"
                 @select="updateFocus"
+                @show="waypointShow"
+                @hide="waypointHide"
               ></segment-table>
           </b-tab>
           <b-tab title="Splits">
@@ -81,10 +83,16 @@
                   ref="profile"
                   :course="course"
                   :units="units"
+                  :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
                   @waypointClick="waypointClick"
                 ></course-profile>
-              <course-map v-if="showMap" :course="course" :focus="mapFocus">
-              </course-map>
+              <course-map
+                  ref="map"
+                  v-if="showMap"
+                  :course="course"
+                  :focus="mapFocus"
+                  :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
+                ></course-map>
             </div>
           </b-tab>
           <b-tab v-if="course._plan && course._plan.name" title="Plan">
@@ -300,6 +308,9 @@ export default {
         finish.location = this.course.len
         api.updateWaypoint(finish._id, finish)
       }
+      wps.forEach((x, i) => {
+        wps[i].show = x.type === 'start' || x.tier === 1
+      })
     },
     async newPlan () {
       this.$refs.planEdit.show()
@@ -430,6 +441,24 @@ export default {
     waypointClick: function (index) {
       this.tableTabIndex = 2
       this.$refs.waypointTable.selectWaypoint(index)
+    },
+    waypointShow: function (arr) {
+      let wps = this.course.waypoints.filter(x => arr.includes(x._id))
+      wps.forEach((x, i) => {
+        wps[i].show = true
+      })
+      this.$refs.segmentTable.forceSegmentUpdate()
+      this.$refs.profile.forceWaypointsUpdate()
+      this.$refs.map.forceUpdate()
+    },
+    waypointHide: function (arr) {
+      let wps = this.course.waypoints.filter(x => arr.includes(x._id))
+      wps.forEach((x, i) => {
+        wps[i].show = false
+      })
+      this.$refs.segmentTable.forceSegmentUpdate()
+      this.$refs.profile.forceWaypointsUpdate()
+      this.$refs.map.forceUpdate()
     }
   }
 }
