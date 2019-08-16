@@ -65,7 +65,7 @@ export default {
   data () {
     return {
       clearing: false,
-      segmentUpdateTrigger: 0
+      updateTrigger: 0
     }
   },
   filters: {
@@ -83,7 +83,7 @@ export default {
   computed: {
     segments: function () {
       // eslint-disable-next-line
-      this.segmentUpdateTrigger // hack for force recompute
+      this.updateTrigger // hack for force recompute
       var breaks = []
       let wps = []
       let is = []
@@ -270,9 +270,9 @@ export default {
       }
     },
     forceSegmentUpdate: function () {
-      // this is a hack because the segments computed property won't update
+      // this is a hack because the computed property won't update
       // when this.course.waypoints[i] change
-      this.segmentUpdateTrigger++
+      this.updateTrigger++
     }
   }
 }

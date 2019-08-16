@@ -83,10 +83,16 @@
                   ref="profile"
                   :course="course"
                   :units="units"
+                  :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
                   @waypointClick="waypointClick"
                 ></course-profile>
-              <course-map v-if="showMap" :course="course" :focus="mapFocus">
-              </course-map>
+              <course-map
+                  ref="map"
+                  v-if="showMap"
+                  :course="course"
+                  :focus="mapFocus"
+                  :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
+                ></course-map>
             </div>
           </b-tab>
           <b-tab v-if="course._plan && course._plan.name" title="Plan">
@@ -95,6 +101,7 @@
                 :plan="course._plan"
                 :pacing="pacing"
                 :units="units"
+                :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
               ></plan-details>
           </b-tab>
         </b-tabs>
@@ -442,6 +449,8 @@ export default {
         wps[i].show = true
       })
       this.$refs.segmentTable.forceSegmentUpdate()
+      this.$refs.profile.forceWaypointsUpdate()
+      this.$refs.map.forceUpdate()
     },
     waypointHide: function (arr) {
       let wps = this.course.waypoints.filter(x => arr.includes(x._id))
@@ -449,6 +458,8 @@ export default {
         wps[i].show = false
       })
       this.$refs.segmentTable.forceSegmentUpdate()
+      this.$refs.profile.forceWaypointsUpdate()
+      this.$refs.map.forceUpdate()
     }
   }
 }

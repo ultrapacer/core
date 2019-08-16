@@ -16,12 +16,13 @@
       color="red">
   </l-polyline>
   <l-circle-marker
-      v-for="waypoint in course.waypoints"
+      v-for="waypoint in this.course.waypoints"
       :key="waypoint._id"
       :lat-lng="[waypoint.lat, waypoint.lon]"
       :radius="8"
       :fill=true
       :color="markerColors[waypoint.type]"
+      :visible="waypoint.show || mode === 'all'"
       :fillColor="markerColors[waypoint.type]"
       :fillOpacity="0.5"
     />
@@ -31,7 +32,7 @@
 <script>
 import {LMap, LTileLayer, LPolyline, LCircleMarker} from 'vue2-leaflet'
 export default {
-  props: ['course', 'focus'],
+  props: ['course', 'waypoints', 'focus', 'mode'],
   components: {
     LMap,
     LTileLayer,
@@ -53,7 +54,8 @@ export default {
         finish: 'black',
         aid: 'red',
         landmark: 'green'
-      }
+      },
+      wps: this.course.waypoints
     }
   },
   async created () {
@@ -98,6 +100,9 @@ export default {
           { lat: xmax, lng: ymax }
         ]
       }
+    },
+    forceUpdate: function () {
+      this.$forceUpdate()
     }
   },
   watch: {
