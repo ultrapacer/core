@@ -89,6 +89,20 @@ export default {
         onClick: this.click
       },
       mapFocus: [],
+      markerStyles: {
+        pointRadius: {
+        },
+        pointStyle: {
+          landmark: 'triangle',
+          water: 'rectRot',
+          junction: 'crossRot'
+        },
+        color: {
+          aid: 'red',
+          landmark: 'darkgreen',
+          water: 'darkblue'
+        }
+      },
       updateTrigger: 0
     }
   },
@@ -132,6 +146,7 @@ export default {
         pointHoverRadius: 10,
         showLine: false
       }
+      let wps = this.course.waypoints
       for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
         if (this.mode !== 'all' && !this.course.waypoints[i].show) { continue }
         d.data.push({
@@ -140,40 +155,14 @@ export default {
           label: this.course.waypoints[i].name,
           title: this.$waypointTypes[this.course.waypoints[i].type]
         })
-        if (this.course.waypoints[i].type === 'aid') {
-          d.pointRadius.push(6)
-          d.pointStyle.push('circle')
-          d.backgroundColor.push(this.chartColors.red)
-          d.borderColor.push(this.chartColors.red)
-        } else if (this.course.waypoints[i].type === 'landmark') {
-          d.pointRadius.push(6)
-          d.pointStyle.push('triangle')
-          d.backgroundColor.push(this.chartColors.darkgreen)
-          d.borderColor.push(this.chartColors.darkgreen)
-        } else if (this.course.waypoints[i].type === 'water') {
-          d.pointRadius.push(6)
-          d.pointStyle.push('rectRot')
-          d.backgroundColor.push(this.chartColors.darkblue)
-          d.borderColor.push(this.chartColors.darkblue)
-        } else if (this.course.waypoints[i].type === 'junction') {
-          d.pointRadius.push(6)
-          d.pointStyle.push('crossRot')
-          d.backgroundColor.push(this.chartColors.black)
-          d.borderColor.push(this.chartColors.black)
-        } else if (
-          this.course.waypoints[i].type === 'start' ||
-          this.course.waypoints[i].type === 'finish'
-        ) {
-          d.pointRadius.push(6)
-          d.pointStyle.push('circle')
-          d.backgroundColor.push(this.chartColors.white)
-          d.borderColor.push(this.chartColors.black)
-        } else {
-          d.pointRadius.push(3)
-          d.pointStyle.push('circle')
-          d.backgroundColor.push(this.chartColors.grey)
-          d.borderColor.push(this.chartColors.black)
-        }
+        d.pointRadius.push(this.markerStyles.pointRadius[wps[i].type] || 6)
+        d.pointStyle.push(this.markerStyles.pointStyle[wps[i].type] || 'circle')
+        d.borderColor.push(
+          this.chartColors[this.markerStyles.color[wps[i].type] || 'black']
+        )
+        d.backgroundColor.push(
+          this.chartColors[this.markerStyles.color[wps[i].type] || 'white']
+        )
       }
       return d
     }
