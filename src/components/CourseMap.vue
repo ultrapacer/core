@@ -60,7 +60,8 @@ export default {
         start: 'black',
         finish: 'black',
         aid: 'red',
-        landmark: 'green'
+        landmark: 'green',
+        water: 'blue'
       }
     }
   },
