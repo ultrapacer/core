@@ -38,7 +38,7 @@
 <script>
 import {LMap, LTileLayer, LPolyline, LCircleMarker, LPopup} from 'vue2-leaflet'
 export default {
-  props: ['course', 'focus', 'mode', 'units'],
+  props: ['course', 'focus', 'waypointShowMode', 'units'],
   components: {
     LMap,
     LTileLayer,
@@ -112,9 +112,9 @@ export default {
     },
     isVisible: function (wp) {
       return (
-        (this.mode === 3) ||
-        (this.mode === 2 && wp.tier <= 2) ||
-        (this.mode === null && wp.show)
+        (this.waypointShowMode === 3) ||
+        (this.waypointShowMode === 2 && wp.tier <= 2) ||
+        (this.waypointShowMode === null && wp.show)
       )
     }
   },

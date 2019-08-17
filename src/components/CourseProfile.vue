@@ -152,9 +152,9 @@ export default {
       let wps = this.course.waypoints
       for (var i = 0, il = wps.length; i < il; i++) {
         if (!(
-          (this.mode === 3) ||
-          (this.mode === 2 && wps[i].tier <= 2) ||
-          (this.mode === null && wps[i].show)
+          (this.waypointShowMode === 3) ||
+          (this.waypointShowMode === 2 && wps[i].tier <= 2) ||
+          (this.waypointShowMode === null && wps[i].show)
         )) { continue }
         d.data.push({
           x: wps[i].location * this.units.distScale,
