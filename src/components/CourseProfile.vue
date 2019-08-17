@@ -8,7 +8,7 @@ import util from '../../shared/utilities'
 import LineChart from './LineChart.js'
 
 export default {
-  props: ['course', 'units', 'mode'],
+  props: ['course', 'units', 'waypointShowMode'],
   components: {
     LineChart
   },
@@ -151,7 +151,11 @@ export default {
       }
       let wps = this.course.waypoints
       for (var i = 0, il = wps.length; i < il; i++) {
-        if (this.mode !== 'all' && !wps[i].show) { continue }
+        if (!(
+          (this.mode === 3) ||
+          (this.mode === 2 && wps[i].tier <= 2) ||
+          (this.mode === null && wps[i].show)
+        )) { continue }
         d.data.push({
           x: wps[i].location * this.units.distScale,
           y: wps[i].elevation * this.units.altScale,
