@@ -61,14 +61,12 @@
             <waypoint-table
                 ref="waypointTable"
                 :course="course"
-                :waypoints="course.waypoints"
                 :units="units"
                 :editing="editing"
-                :owner="owner"
                 :editFn="editWaypoint"
                 :delFn="deleteWaypoint"
               ></waypoint-table>
-            <div v-if="owner">
+            <div v-if="editing">
               <b-btn variant="success" @click.prevent="newWaypoint()">
                 <v-icon name="plus"></v-icon><span>New Waypoint</span>
               </b-btn>
