@@ -68,7 +68,6 @@
                 :course="course"
                 :units="units"
                 :editing="editing"
-                :waypointShowMode="waypointShowMode"
                 :editFn="editWaypoint"
                 :delFn="deleteWaypoint"
               ></waypoint-table>

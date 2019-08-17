@@ -48,7 +48,7 @@
 import wputil from '../../shared/waypointUtilities'
 import api from '@/api'
 export default {
-  props: ['course', 'units', 'editing', 'mode', 'editFn', 'delFn', 'updFn'],
+  props: ['course', 'units', 'editing', 'editFn', 'delFn', 'updFn'],
   data () {
     return {
       updatingWaypointTimeout: null,
