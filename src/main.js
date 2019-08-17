@@ -16,6 +16,7 @@ import 'leaflet/dist/leaflet.css'
 import 'vue-awesome/icons/trash'
 import 'vue-awesome/icons/edit'
 import 'vue-awesome/icons/plus'
+import 'vue-awesome/icons/lock'
 import VIcon from 'vue-awesome/components/Icon'
 delete Icon.Default.prototype._getIconUrl
 Icon.Default.mergeOptions({

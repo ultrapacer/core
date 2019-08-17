@@ -159,7 +159,8 @@ export default {
             wps[i].name + ' [' +
             (wps[i].location * this.units.distScale).toFixed(1) +
             this.units.dist + ']',
-          title: this.$waypointTypes[wps[i].type]
+          title: this.$waypointTypes[wps[i].type],
+          _id: wps[i]._id
         })
         d.pointStyle.push('circle')
         d.borderWidth.push(2)
@@ -183,7 +184,8 @@ export default {
     click: function (point, event) {
       if (!event.length) { return }
       const item = event[0]
-      this.$emit('waypointClick', item._index)
+      let id = this.chartPoints.data[item._index]._id
+      this.$emit('waypointClick', id)
     },
     focus: function (focus) {
       var cF = []

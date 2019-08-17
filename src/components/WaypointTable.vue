@@ -1,7 +1,7 @@
 <template>
   <b-table
     ref="table"
-    :items="course.waypoints"
+    :items="waypoints"
     :fields="fields"
     primary-key="_id"
     @row-clicked="toggleRowDetails"
@@ -48,7 +48,7 @@
 import wputil from '../../shared/waypointUtilities'
 import api from '@/api'
 export default {
-  props: ['course', 'units', 'editing', 'editFn', 'delFn', 'updFn'],
+  props: ['course', 'units', 'editing', 'mode', 'editFn', 'delFn', 'updFn'],
   data () {
     return {
       updatingWaypointTimeout: null,
@@ -64,6 +64,13 @@ export default {
     }
   },
   computed: {
+    waypoints: function () {
+      if (this.editing) {
+        return this.course.waypoints
+      } else {
+        return this.course.waypoints.filter(x => x.tier < 3)
+      }
+    },
     fields: function () {
       var f = [
         {
@@ -136,8 +143,9 @@ export default {
         api.updateWaypoint(waypoint._id, waypoint)
       }, 2000)
     },
-    selectWaypoint: function (index) {
-      this.$refs.table.selectRow(index)
+    selectWaypoint: function (id) {
+      let i = this.waypoints.findIndex(x => x._id === id)
+      this.$refs.table.selectRow(i)
     }
   }
 }
