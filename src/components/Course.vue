@@ -40,7 +40,6 @@
                 ref="segmentTable"
                 :course="course"
                 :units="units"
-                :owner="owner"
                 :pacing="pacing"
                 @select="updateFocus"
                 @show="waypointShow"
