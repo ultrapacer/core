@@ -103,7 +103,7 @@
                   ref="profile"
                   :course="course"
                   :units="units"
-                  :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
+                  :waypointShowMode="waypointShowMode"
                   @waypointClick="waypointClick"
                 ></course-profile>
               <course-map
@@ -112,7 +112,7 @@
                   :course="course"
                   :focus="mapFocus"
                   :units="units"
-                  :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
+                  :waypointShowMode="waypointShowMode"
                 ></course-map>
             </div>
           </b-tab>
