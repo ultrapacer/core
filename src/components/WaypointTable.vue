@@ -1,7 +1,7 @@
 <template>
   <b-table
     ref="table"
-    :items="waypoints"
+    :items="course.waypoints"
     :fields="fields"
     primary-key="_id"
     @row-clicked="toggleRowDetails"
@@ -48,7 +48,7 @@
 import wputil from '../../shared/waypointUtilities'
 import api from '@/api'
 export default {
-  props: ['course', 'waypoints', 'units', 'owner', 'editFn', 'delFn', 'updFn'],
+  props: ['course', 'units', 'editing', 'editFn', 'delFn', 'updFn'],
   data () {
     return {
       updatingWaypointTimeout: null,
@@ -96,7 +96,7 @@ export default {
           tdClass: 'd-none d-sm-table-cell text-right'
         }
       ]
-      if (this.owner) {
+      if (this.editing) {
         f.push({
           key: 'actions',
           label: '',
@@ -108,10 +108,10 @@ export default {
   },
   methods: {
     toggleRowDetails: function (waypoint) {
-      if (!this.owner) return
-      for (var i = 0, il = this.waypoints.length; i < il; i++) {
-        if (waypoint !== this.waypoints[i] && this.waypoints[i]._showDetails) {
-          this.waypoints[i]._showDetails = false
+      if (!this.editing) return
+      for (var i = 0, il = this.course.waypoints.length; i < il; i++) {
+        if (waypoint !== this.course.waypoints[i] && this.course.waypoints[i]._showDetails) {
+          this.course.waypoints[i]._showDetails = false
         }
       }
       if (waypoint.type !== 'start' && waypoint.type !== 'finish') {
@@ -127,7 +127,7 @@ export default {
       }
       waypoint.location = loc
       wputil.updateLLA(waypoint, this.course.points)
-      wputil.sortWaypointsByDistance(this.waypoints)
+      wputil.sortWaypointsByDistance(this.course.waypoints)
       if (String(waypoint._id) === this.updatingWaypointTimeoutID) {
         clearTimeout(this.updatingWaypointTimeout)
       }
