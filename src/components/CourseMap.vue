@@ -22,7 +22,7 @@
       :radius="6"
       :fill=true
       :color="markerColors[waypoint.type] || 'black'"
-      :visible="waypoint.show || mode === 'all'"
+      :visible="isVisible(waypoint)"
       :fillColor="markerColors[waypoint.type] || 'white'"
       :fillOpacity="0.5"
     >
@@ -109,6 +109,13 @@ export default {
     },
     forceUpdate: function () {
       this.$forceUpdate()
+    },
+    isVisible: function (wp) {
+      return (
+        (this.mode === 3) ||
+        (this.mode === 2 && wp.tier <= 2) ||
+        (this.mode === null && wp.show)
+      )
     }
   },
   watch: {
