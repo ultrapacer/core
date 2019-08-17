@@ -8,7 +8,7 @@ import util from '../../shared/utilities'
 import LineChart from './LineChart.js'
 
 export default {
-  props: ['course', 'units', 'mode'],
+  props: ['course', 'units', 'waypointShowMode'],
   components: {
     LineChart
   },
@@ -151,7 +151,11 @@ export default {
       }
       let wps = this.course.waypoints
       for (var i = 0, il = wps.length; i < il; i++) {
-        if (this.mode !== 'all' && !wps[i].show) { continue }
+        if (!(
+          (this.waypointShowMode === 3) ||
+          (this.waypointShowMode === 2 && wps[i].tier <= 2) ||
+          (this.waypointShowMode === null && wps[i].show)
+        )) { continue }
         d.data.push({
           x: wps[i].location * this.units.distScale,
           y: wps[i].elevation * this.units.altScale,
@@ -159,7 +163,8 @@ export default {
             wps[i].name + ' [' +
             (wps[i].location * this.units.distScale).toFixed(1) +
             this.units.dist + ']',
-          title: this.$waypointTypes[wps[i].type]
+          title: this.$waypointTypes[wps[i].type],
+          _id: wps[i]._id
         })
         d.pointStyle.push('circle')
         d.borderWidth.push(2)
@@ -183,7 +188,8 @@ export default {
     click: function (point, event) {
       if (!event.length) { return }
       const item = event[0]
-      this.$emit('waypointClick', item._index)
+      let id = this.chartPoints.data[item._index]._id
+      this.$emit('waypointClick', id)
     },
     focus: function (focus) {
       var cF = []

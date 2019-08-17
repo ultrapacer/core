@@ -22,7 +22,7 @@
       :radius="6"
       :fill=true
       :color="markerColors[waypoint.type] || 'black'"
-      :visible="waypoint.show || mode === 'all'"
+      :visible="isVisible(waypoint)"
       :fillColor="markerColors[waypoint.type] || 'white'"
       :fillOpacity="0.5"
     >
@@ -38,7 +38,7 @@
 <script>
 import {LMap, LTileLayer, LPolyline, LCircleMarker, LPopup} from 'vue2-leaflet'
 export default {
-  props: ['course', 'focus', 'mode', 'units'],
+  props: ['course', 'focus', 'waypointShowMode', 'units'],
   components: {
     LMap,
     LTileLayer,
@@ -109,6 +109,13 @@ export default {
     },
     forceUpdate: function () {
       this.$forceUpdate()
+    },
+    isVisible: function (wp) {
+      return (
+        (this.waypointShowMode === 3) ||
+        (this.waypointShowMode === 2 && wp.tier <= 2) ||
+        (this.waypointShowMode === null && wp.show)
+      )
     }
   },
   watch: {

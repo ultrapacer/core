@@ -8,7 +8,13 @@
         <b-row>
           <b-col v-if="plansSelect.length" >
             <b-form-group label-size="sm" label="Plan" label-cols="4"  label-cols-lg="2">
-              <b-form-select type="number" v-model="course._plan" :options="plansSelect" @change="calcPlan" size="sm"></b-form-select>
+              <b-form-select
+                  type="number"
+                  v-model="course._plan"
+                  :options="plansSelect"
+                  @change="calcPlan"
+                  size="sm"
+                ></b-form-select>
             </b-form-group>
           </b-col>
           <b-col cols="4" md="4" lg="3" xl="3" style="text-align:left" v-if="owner && plansSelect.length">
@@ -40,7 +46,6 @@
                 ref="segmentTable"
                 :course="course"
                 :units="units"
-                :owner="owner"
                 :pacing="pacing"
                 @select="updateFocus"
                 @show="waypointShow"
@@ -61,15 +66,29 @@
             <waypoint-table
                 ref="waypointTable"
                 :course="course"
-                :waypoints="course.waypoints"
                 :units="units"
-                :owner="owner"
+                :editing="editing"
                 :editFn="editWaypoint"
                 :delFn="deleteWaypoint"
               ></waypoint-table>
-            <div v-if="owner">
+            <div v-if="editing">
               <b-btn variant="success" @click.prevent="newWaypoint()">
                 <v-icon name="plus"></v-icon><span>New Waypoint</span>
+              </b-btn>
+              <b-btn
+                  variant="outline-primary"
+                  @click.prevent="editing=false"
+                  style="float:right"
+                >
+                <v-icon name="edit"></v-icon><span>editing: on</span>
+              </b-btn>
+            </div>
+            <div v-if="owner && !editing">
+              <b-btn
+                  @click.prevent="editing=true"
+                  style="float:right"
+                >
+                <v-icon name="lock"></v-icon><span>editing: off</span>
               </b-btn>
             </div>
           </b-tab>
@@ -83,7 +102,7 @@
                   ref="profile"
                   :course="course"
                   :units="units"
-                  :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
+                  :waypointShowMode="waypointShowMode"
                   @waypointClick="waypointClick"
                 ></course-profile>
               <course-map
@@ -92,7 +111,7 @@
                   :course="course"
                   :focus="mapFocus"
                   :units="units"
-                  :mode="tableTabIndex === 2 ? 'all' : 'filtered'"
+                  :waypointShowMode="waypointShowMode"
                 ></course-map>
             </div>
           </b-tab>
@@ -116,7 +135,7 @@
       @delete="deletePlan"
     ></plan-edit>
     <waypoint-edit
-      v-if="owner"
+      v-if="editing"
       ref="wpEdit"
       :course="course"
       :units="units"
@@ -161,6 +180,7 @@ export default {
   data () {
     return {
       initializing: true,
+      editing: false,
       saving: false,
       course: {},
       plan: {},
@@ -185,7 +205,10 @@ export default {
       return p
     },
     owner: function () {
-      if (this.isAuthenticated && String(this.user._id) === String(this.course._user)) {
+      if (
+        this.isAuthenticated &&
+        String(this.user._id) === String(this.course._user)
+      ) {
         return true
       } else {
         return false
@@ -217,6 +240,15 @@ export default {
       u.distScale = (u.dist === 'mi') ? 0.621371 : 1
       u.altScale = (u.alt === 'ft') ? 3.28084 : 1
       return u
+    },
+    waypointShowMode: function () {
+      if (this.editing && this.tableTabIndex === 2) {
+        return 3
+      } else if (this.tableTabIndex === 2) {
+        return 2
+      } else {
+        return null
+      }
     }
   },
   filters: {
@@ -262,7 +294,9 @@ export default {
             this.waypoint = {}
           }
           await api.deleteWaypoint(waypoint._id)
-          var index = this.course.waypoints.findIndex(x => x._id === waypoint._id)
+          var index = this.course.waypoints.findIndex(
+            x => x._id === waypoint._id
+          )
           if (index > -1) {
             this.course.waypoints.splice(index, 1)
           }
@@ -439,9 +473,9 @@ export default {
       this.mapFocus = focus
       this.$refs.profile.focus(focus)
     },
-    waypointClick: function (index) {
+    waypointClick: function (id) {
       this.tableTabIndex = 2
-      this.$refs.waypointTable.selectWaypoint(index)
+      this.$refs.waypointTable.selectWaypoint(id)
     },
     waypointShow: function (arr) {
       let wps = this.course.waypoints.filter(x => arr.includes(x._id))
