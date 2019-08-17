@@ -63,6 +63,7 @@
                 :course="course"
                 :waypoints="course.waypoints"
                 :units="units"
+                :editing="editing"
                 :owner="owner"
                 :editFn="editWaypoint"
                 :delFn="deleteWaypoint"
@@ -116,7 +117,7 @@
       @delete="deletePlan"
     ></plan-edit>
     <waypoint-edit
-      v-if="owner"
+      v-if="editing"
       ref="wpEdit"
       :course="course"
       :units="units"
@@ -161,6 +162,7 @@ export default {
   data () {
     return {
       initializing: true,
+      editing: false,
       saving: false,
       course: {},
       plan: {},
