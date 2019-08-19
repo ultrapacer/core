@@ -59,6 +59,11 @@ let router = new Router({
       component: Course
     },
     {
+      path: '/course/:course/plan/:plan',
+      name: 'course',
+      component: Course
+    },
+    {
       path: '*',
       redirect: '/'
     }
