@@ -60,7 +60,7 @@ let router = new Router({
     },
     {
       path: '/course/:course/plan/:plan',
-      name: 'course',
+      name: 'courseplan',
       component: Course
     },
     {

@@ -38,13 +38,21 @@ export default {
   getCourses () {
     return this.executeAuth('get', '/api/courses')
   },
-  async getCourse (id) {
+  async getCourse (id, plan) {
     try {
       await Vue.prototype.$auth.getAccessToken()
-      return this.executeAuth('get', `/api/course/${id}`)
+      if (typeof (plan) !== 'undefined') {
+        return this.executeAuth('get', `/api/course/${id}/plan/${plan}`)
+      } else {
+        return this.executeAuth('get', `/api/course/${id}`)
+      }
     } catch (err) {
       console.log('Not authenticated. Attempting public access.')
-      return this.executePublic('get', `/api-public/course/${id}`)
+      if (typeof (plan) !== 'undefined') {
+        return this.executePublic('get', `/api-public/course/${id}/plan/${plan}`)
+      } else {
+        return this.executePublic('get', `/api-public/course/${id}`)
+      }
     }
   },
   createCourse (data) {

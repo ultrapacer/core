@@ -114,12 +114,23 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 })
 
 // GET COURSE
-courseRoutes.route('/:course').get(async function (req, res) {
+let getMatch = ['/:_id', '/:_id/plan/:plan_id']
+courseRoutes.route(getMatch).get(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findOne({ _id: req.params.course }).populate(['track', '_plan']).exec()
+    let user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    let q = { _id: req.params._id }
+    let course = await Course.findOne(q).populate(['track', '_plan']).exec()
     if (course._user.equals(user._id) || course.public) {
       await validateWaypoints(course, course.waypoints)
+      if (typeof (req.params.plan_id) !== 'undefined' && course.plans.length) {
+        if (!course._plan.equals(req.params.plan_id)) {
+          try {
+            course._plan = await Plan.findById(req.params.plan_id).exec()
+          } catch (err) {
+            console.log(err)
+          }
+        }
+      }
       res.json(course)
     } else {
       res.status(403).send('No permission')

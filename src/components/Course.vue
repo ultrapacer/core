@@ -261,11 +261,22 @@ export default {
   },
   async created () {
     try {
-      this.course = await api.getCourse(this.$route.params.course)
+      this.course = await api.getCourse(
+        this.$route.params.course,
+        this.$route.params.plan
+      )
     } catch (err) {
       console.log(err)
       this.$router.push({path: '/'})
       return
+    }
+    if (this.course._plan) {
+      this.$router.push({
+        name: 'courseplan',
+        params: {
+          'plan': this.course._plan._id
+        }
+      })
     }
     this.$title = this.course.name
     util.addLoc(this.course.points)
@@ -385,6 +396,12 @@ export default {
     },
     calcPlan () {
       if (!this.course._plan) { return }
+      this.$router.push({
+        name: 'courseplan',
+        params: {
+          'plan': this.course._plan._id
+        }
+      })
       if (this.owner) {
         api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
       }
