@@ -56,9 +56,4 @@ CourseSchema.pre('remove', function () {
   Waypoint.remove({_course: this._id}).exec()
 })
 
-CourseSchema.post('findOne', async function (course, next) {
-  course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
-  next()
-})
-
 module.exports = mongoose.model('Course', CourseSchema)
