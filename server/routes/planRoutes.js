@@ -3,7 +3,6 @@ var express = require('express')
 var planRoutes = express.Router()
 var User = require('../models/User')
 var Plan = require('../models/Plan')
-var Course = require('../models/Course')
 
 // SAVE NEW
 planRoutes.route('/').post(async function (req, res) {
@@ -11,6 +10,7 @@ planRoutes.route('/').post(async function (req, res) {
     var plan = new Plan(req.body)
     plan._user = await User.findOne({ auth0ID: req.user.sub }).exec()
     await plan.save()
+    console.log(plan)
     res.json(plan)
   } catch (err) {
     console.log(err)
@@ -22,8 +22,8 @@ planRoutes.route('/').post(async function (req, res) {
 planRoutes.route('/:id').put(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var plan = await Plan.findById(req.params.id).populate('_user').exec()
-    if (plan._user.equals(user._id)) {
+    var plan = await Plan.findById(req.params.id).exec()
+    if (user.equals(plan._user)) {
       plan.name = req.body.name
       plan.description = req.body.description
       plan.pacingMethod = req.body.pacingMethod
@@ -44,8 +44,8 @@ planRoutes.route('/:id').put(async function (req, res) {
 planRoutes.route('/:id').delete(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var plan = await Plan.findById(req.params.id).populate('_user').exec()
-    if (plan._user.equals(user)) {
+    var plan = await Plan.findById(req.params.id).select('_user').exec()
+    if (user.equals(plan._user)) {
       await plan.remove()
       res.json('Successfully removed')
     } else {

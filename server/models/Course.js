@@ -29,6 +29,10 @@ var CourseSchema = new Schema({
     type: Boolean,
     default: false
   },
+  _plan: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Plan'
+  },
   plans: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Plan'

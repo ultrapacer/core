@@ -85,7 +85,7 @@ courseRoutes.route('/:id').delete(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.id).exec()
-    if (course._user.equals(user._id)) {
+    if (user.equals(course._user)) {
       await course.remove()
       res.json('Course removed')
     } else {
@@ -101,7 +101,7 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.courseid).exec()
-    if (course._user.equals(user._id)) {
+    if (user.equals(course._user)) {
       course._plan = await Plan.findById(req.body.plan).exec()
       await course.save()
       res.json('Update complete')
@@ -119,12 +119,10 @@ courseRoutes.route('/:_id').get(async function (req, res) {
     let user = await User.findOne({ auth0ID: req.user.sub }).exec()
     let q = { _id: req.params._id }
     let course = await Course.findOne(q).exec()
-    if (course._user.equals(user._id) || course.public) {
-      if (course._user.equals(user._id)) {
-        q = { _course: course, _user: user }
-        course.plans = await Plan.find(q).sort('name').exec()
-        course.altModel = user.altModel
-      }
+    if (user.equals(course._user) || course.public) {
+      q = { _course: course, _user: user }
+      course.plans = await Plan.find(q).sort('name').exec()
+      course.altModel = user.altModel
       await validateWaypoints(course, course.waypoints)
       res.json(course)
     } else {
@@ -141,11 +139,12 @@ courseRoutes.route('/plan/:_id').get(async function (req, res) {
   try {
     let user = await User.findOne({ auth0ID: req.user.sub }).exec()
     let q = { _id: req.params._id }
-    let plan = await Plan.findById(req.params._id).populate(['_course']).exec()
-    let course = plan._course
+    let plan = await Plan.findById(req.params._id).exec()
+    let course = await Course.findOne({ _id: plan._course }).exec()
     if (course._user.equals(user._id) || course.public) {
       q = { _course: course, _user: plan._user }
       course.plans = await Plan.find(q).sort('name').exec()
+      course._plan = req.params._id
       let planUser = await User.findOne({ _id: plan._user }).exec()
       course.altModel = planUser.altModel
       res.json(course)
@@ -160,9 +159,10 @@ courseRoutes.route('/plan/:_id').get(async function (req, res) {
 
 // GET WAYPOINT LIST
 courseRoutes.route('/:course/waypoints').get(async function (req, res) {
+  console.log('getwaypointlist')
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.course).select('_user').exec()
+    var course = await Course.findById(req.params.course).select(['_user', 'public']).exec()
     if (course._user.equals(user._id) || course.public) {
       var waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
       await validateWaypoints(course, waypoints)
@@ -180,8 +180,8 @@ courseRoutes.route('/:course/waypoints').get(async function (req, res) {
 courseRoutes.route('/:course/plans/:user_id').get(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.course).select('_user').exec()
-    if (course._user.equals(user._id) || course.public) {
+    var course = await Course.findById(req.params.course).select(['_user', 'public']).exec()
+    if (user.equals(course._user) || course.public) {
       var plans = await Plan.find(
         { _course: course, _user: req.params.user_id }
       ).sort('name').exec()

@@ -5,7 +5,7 @@
         <h1 class="h1">{{ course.name }}</h1>
       </b-col>
       <b-col v-if="!initializing" style="text-align:right">
-        <b-row>
+        <b-row v-if="plansSelect.length">
           <b-col v-if="plansSelect.length" >
             <b-form-group label-size="sm" label="Plan" label-cols="4"  label-cols-lg="2">
               <b-form-select
@@ -17,8 +17,8 @@
                 ></b-form-select>
             </b-form-group>
           </b-col>
-          <b-col cols="4" md="4" lg="3" xl="3" style="text-align:left" v-if="owner && plansSelect.length">
-            <b-btn @click="editPlan()" class="mr-1" size="sm">
+          <b-col cols="4" md="4" lg="3" xl="3" style="text-align:left">
+            <b-btn @click="editPlan()" class="mr-1" size="sm"  v-if="planOwner">
               <v-icon name="edit"></v-icon>
             </b-btn>
             <b-btn variant="success" @click.prevent="newPlan()" size="sm">
@@ -26,7 +26,9 @@
               <span v-if="!plansSelect.length" >New Plan</span>
             </b-btn>
           </b-col>
-          <b-col v-if="!plansSelect.length">
+        </b-row>
+        <b-row v-if="!plansSelect.length">
+          <b-col>
             <b-btn variant="success" @click.prevent="newPlan()" size="sm">
               <v-icon name="plus"></v-icon>
               New Pacing Plan
@@ -214,6 +216,16 @@ export default {
         return false
       }
     },
+    planOwner: function () {
+      if (
+        this.isAuthenticated &&
+        String(this.user._id) === String(this.course._plan._user)
+      ) {
+        return true
+      } else {
+        return false
+      }
+    },
     terrainFactors: function () {
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
@@ -263,8 +275,12 @@ export default {
     try {
       if (this.$route.params.plan) {
         this.course = await api.getCourse(this.$route.params.plan, 'plan')
+        this.course._plan = this.course.plans.find(
+          x => x._id === this.course._plan
+        )
       } else {
         this.course = await api.getCourse(this.$route.params.course)
+        console.log(this.course._plan)
       }
     } catch (err) {
       console.log(err)
@@ -367,22 +383,21 @@ export default {
         plan,
         async () => {
           await api.deletePlan(plan._id)
-          if (this.course._plan._id === plan._id) {
-            this.course._plan = {}
-            this.pacing = {}
-          }
           this.course.plans = await api.getPlans(this.course._id, this.user._id)
-          if (this.course.plans.length) {
-            this.course._plan = this.course.plans[0]
-            this.calcPlan()
-          } else {
-            delete this.course._plan
-            this.$router.push({
-              name: 'Course',
-              params: {
-                'course': this.course._id
-              }
-            })
+          if (this.course._plan._id === plan._id) {
+            if (this.course.plans.length) {
+              this.course._plan = this.course.plans[0]
+              this.calcPlan()
+            } else {
+              this.course._plan = {}
+              this.pacing = {}
+              this.$router.push({
+                name: 'Course',
+                params: {
+                  'course': this.course._id
+                }
+              })
+            }
           }
         },
         (err) => {
