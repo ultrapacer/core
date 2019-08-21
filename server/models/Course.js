@@ -2,7 +2,6 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 const Waypoint = require('./Waypoint')
 const Plan = require('./Plan')
-const User = require('./User')
 
 // Define collection and schema for Posts
 var CourseSchema = new Schema({
