@@ -4,6 +4,7 @@ var publicRoutes = express.Router()
 var Course = require('../models/Course')
 var Plan = require('../models/Plan')
 var User = require('../models/User')
+var Waypoint = require('../models/Waypoint')
 
 // GET COURSE
 publicRoutes.route('/course/:_id').get(async function (req, res) {
@@ -11,6 +12,7 @@ publicRoutes.route('/course/:_id').get(async function (req, res) {
     let q = { _id: req.params._id }
     var course = await Course.findOne(q).populate(['_plan']).exec()
     if (course.public) {
+      course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
       course.plans = []
       course._plan = null
       course.altModel = null
