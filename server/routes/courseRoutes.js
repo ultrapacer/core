@@ -120,6 +120,7 @@ courseRoutes.route('/:_id').get(async function (req, res) {
     let q = { _id: req.params._id }
     let course = await Course.findOne(q).exec()
     if (user.equals(course._user) || course.public) {
+      course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
       q = { _course: course, _user: user }
       course.plans = await Plan.find(q).sort('name').exec()
       course.altModel = user.altModel
@@ -142,6 +143,7 @@ courseRoutes.route('/plan/:_id').get(async function (req, res) {
     let plan = await Plan.findById(req.params._id).exec()
     let course = await Course.findOne({ _id: plan._course }).exec()
     if (course._user.equals(user._id) || course.public) {
+      course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
       q = { _course: course, _user: plan._user }
       course.plans = await Plan.find(q).sort('name').exec()
       course._plan = req.params._id
