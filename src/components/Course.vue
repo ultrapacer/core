@@ -26,10 +26,10 @@
               <span v-if="!plansSelect.length" >New Plan</span>
             </b-btn>
           </b-col>
-          <b-col v-if="owner && !plansSelect.length">
+          <b-col v-if="!plansSelect.length">
             <b-btn variant="success" @click.prevent="newPlan()" size="sm">
               <v-icon name="plus"></v-icon>
-              New Plan
+              New Pacing Plan
             </b-btn>
           </b-col>
         </b-row>
@@ -127,11 +127,11 @@
       </b-col>
     </b-row>
     <plan-edit
-      v-if="owner"
+      v-if="isAuthenticated"
       ref="planEdit"
       :course="course"
       :units="units"
-      @refresh="refreshPlan"
+      @refresh="refreshPlans"
       @delete="deletePlan"
     ></plan-edit>
     <waypoint-edit
@@ -261,22 +261,15 @@ export default {
   },
   async created () {
     try {
-      this.course = await api.getCourse(
-        this.$route.params.course,
-        this.$route.params.plan
-      )
+      if (this.$route.params.plan) {
+        this.course = await api.getCourse(this.$route.params.plan, 'plan')
+      } else {
+        this.course = await api.getCourse(this.$route.params.course)
+      }
     } catch (err) {
       console.log(err)
       this.$router.push({path: '/'})
       return
-    }
-    if (this.course._plan) {
-      this.$router.push({
-        name: 'courseplan',
-        params: {
-          'plan': this.course._plan._id
-        }
-      })
     }
     this.$title = this.course.name
     util.addLoc(this.course.points)
@@ -359,7 +352,11 @@ export default {
       })
     },
     async newPlan () {
-      this.$refs.planEdit.show()
+      if (this.isAuthenticated) {
+        this.$refs.planEdit.show()
+      } else {
+        this.$router.push({name: 'CourseNewPlan'})
+      }
     },
     async editPlan () {
       this.$refs.planEdit.show(this.course._plan)
@@ -374,7 +371,19 @@ export default {
             this.course._plan = {}
             this.pacing = {}
           }
-          this.course.plans = await api.getPlans(this.course._id)
+          this.course.plans = await api.getPlans(this.course._id, this.user._id)
+          if (this.course.plans.length) {
+            this.course._plan = this.course.plans[0]
+            this.calcPlan()
+          } else {
+            delete this.course._plan
+            this.$router.push({
+              name: 'Course',
+              params: {
+                'course': this.course._id
+              }
+            })
+          }
         },
         (err) => {
           if (typeof (cb) === 'function') {
@@ -384,8 +393,8 @@ export default {
         }
       )
     },
-    async refreshPlan (plan, callback) {
-      this.course.plans = await api.getPlans(this.course._id)
+    async refreshPlans (plan, callback) {
+      this.course.plans = await api.getPlans(this.course._id, this.user._id)
       for (var i = 0, il = this.course.plans.length; i < il; i++) {
         if (this.course.plans[i]._id === plan._id) {
           this.course._plan = this.course.plans[i]
@@ -397,7 +406,7 @@ export default {
     calcPlan () {
       if (!this.course._plan) { return }
       this.$router.push({
-        name: 'courseplan',
+        name: 'Plan',
         params: {
           'plan': this.course._plan._id
         }

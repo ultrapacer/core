@@ -114,23 +114,40 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 })
 
 // GET COURSE
-let getMatch = ['/:_id', '/:_id/plan/:plan_id']
-courseRoutes.route(getMatch).get(async function (req, res) {
+courseRoutes.route('/:_id').get(async function (req, res) {
   try {
     let user = await User.findOne({ auth0ID: req.user.sub }).exec()
     let q = { _id: req.params._id }
-    let course = await Course.findOne(q).populate(['track', '_plan']).exec()
+    let course = await Course.findOne(q).exec()
     if (course._user.equals(user._id) || course.public) {
-      await validateWaypoints(course, course.waypoints)
-      if (typeof (req.params.plan_id) !== 'undefined' && course.plans.length) {
-        if (!course._plan.equals(req.params.plan_id)) {
-          try {
-            course._plan = await Plan.findById(req.params.plan_id).exec()
-          } catch (err) {
-            console.log(err)
-          }
-        }
+      if (course._user.equals(user._id)) {
+        q = { _course: course, _user: user }
+        course.plans = await Plan.find(q).sort('name').exec()
+        course.altModel = user.altModel
       }
+      await validateWaypoints(course, course.waypoints)
+      res.json(course)
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
+// GET COURSE BY PLAN
+courseRoutes.route('/plan/:_id').get(async function (req, res) {
+  try {
+    let user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    let q = { _id: req.params._id }
+    let plan = await Plan.findById(req.params._id).populate(['_course']).exec()
+    let course = plan._course
+    if (course._user.equals(user._id) || course.public) {
+      q = { _course: course, _user: plan._user }
+      course.plans = await Plan.find(q).sort('name').exec()
+      let planUser = await User.findOne({ _id: plan._user }).exec()
+      course.altModel = planUser.altModel
       res.json(course)
     } else {
       res.status(403).send('No permission')
@@ -160,12 +177,14 @@ courseRoutes.route('/:course/waypoints').get(async function (req, res) {
 })
 
 // GET PLAN LIST
-courseRoutes.route('/:course/plans').get(async function (req, res) {
+courseRoutes.route('/:course/plans/:user_id').get(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.course).select('_user').exec()
     if (course._user.equals(user._id) || course.public) {
-      var plans = await Plan.find({ _course: course }).sort('name').exec()
+      var plans = await Plan.find(
+        { _course: course, _user: req.params.user_id }
+      ).sort('name').exec()
       res.json(plans)
     } else {
       res.status(403).send('No permission')
@@ -177,7 +196,10 @@ courseRoutes.route('/:course/plans').get(async function (req, res) {
 })
 
 async function validateWaypoints (course, waypoints) {
-  if (!waypoints.find(waypoint => waypoint.type === 'start') || !waypoints.find(waypoint => waypoint.type === 'finish')) {
+  if (
+    !waypoints.find(waypoint => waypoint.type === 'start') ||
+    !waypoints.find(waypoint => waypoint.type === 'finish')
+  ) {
     if (!waypoints.find(waypoint => waypoint.type === 'start')) {
       var ws = new Waypoint({
         name: 'Start',

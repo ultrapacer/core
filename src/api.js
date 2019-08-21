@@ -38,18 +38,18 @@ export default {
   getCourses () {
     return this.executeAuth('get', '/api/courses')
   },
-  async getCourse (id, plan) {
+  async getCourse (id, key = 'course') {
     try {
       await Vue.prototype.$auth.getAccessToken()
-      if (typeof (plan) !== 'undefined') {
-        return this.executeAuth('get', `/api/course/${id}/plan/${plan}`)
+      if (key === 'plan') {
+        return this.executeAuth('get', `/api/course/plan/${id}`)
       } else {
         return this.executeAuth('get', `/api/course/${id}`)
       }
     } catch (err) {
       console.log('Not authenticated. Attempting public access.')
-      if (typeof (plan) !== 'undefined') {
-        return this.executePublic('get', `/api-public/course/${id}/plan/${plan}`)
+      if (key === 'plan') {
+        return this.executePublic('get', `/api-public/course/plan/${id}`)
       } else {
         return this.executePublic('get', `/api-public/course/${id}`)
       }
@@ -79,8 +79,8 @@ export default {
   deleteWaypoint (id) {
     return this.executeAuth('delete', `/api/waypoint/${id}`)
   },
-  getPlans (courseID) {
-    return this.executeAuth('get', `/api/course/${courseID}/plans`)
+  getPlans (courseID, userID) {
+    return this.executeAuth('get', `/api/course/${courseID}/plans/${userID}`)
   },
   createPlan (data) {
     return this.executeAuth('post', `/api/plan`, data)

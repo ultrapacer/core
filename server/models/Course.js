@@ -29,10 +29,6 @@ var CourseSchema = new Schema({
     type: Boolean,
     default: false
   },
-  _plan: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Plan'
-  },
   plans: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Plan'
@@ -57,9 +53,6 @@ CourseSchema.pre('remove', function () {
 })
 
 CourseSchema.post('findOne', async function (course, next) {
-  let user = await User.findOne({ _id: course._user }).exec()
-  course.altModel = user.altModel
-  course.plans = await Plan.find({ _course: course }).sort('name').exec()
   course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
   next()
 })

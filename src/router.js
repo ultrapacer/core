@@ -55,12 +55,20 @@ let router = new Router({
     },
     {
       path: '/course/:course',
-      name: 'course',
+      name: 'Course',
       component: Course
     },
     {
-      path: '/course/:course/plan/:plan',
-      name: 'courseplan',
+      path: '/course/:course/newplan',
+      name: 'CourseNewPlan',
+      component: Course,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/course/plan/:plan',
+      name: 'Plan',
       component: Course
     },
     {
