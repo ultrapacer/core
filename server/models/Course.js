@@ -50,6 +50,23 @@ var CourseSchema = new Schema({
   collection: 'courses'
 })
 
+CourseSchema.methods.addData = async function (user = null, plan = null) {
+  this.waypoints = await Waypoint.find({ _course: this }).sort('location').exec()
+  if (user) {
+    let q = { _course: this, _user: user }
+    this.plans = await Plan.find(q).sort('name').exec()
+    this.altModel = user.altModel
+  } else {
+    this.plans = []
+    this.altModel = null
+  }
+  if (plan) {
+    this._plan = plan
+  } else {
+    this._plan = null
+  }
+}
+
 CourseSchema.pre('remove', function () {
   Plan.remove({_course: this._id}).exec()
   Waypoint.remove({_course: this._id}).exec()
