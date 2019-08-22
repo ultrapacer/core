@@ -371,7 +371,12 @@ export default {
       if (this.isAuthenticated) {
         this.$refs.planEdit.show()
       } else {
-        this.$auth.login()
+        this.$auth.login({
+          target: window.location.href.split('?')[0],
+          query: {
+            method: 'newPlan'
+          }
+        })
       }
     },
     async editPlan () {
