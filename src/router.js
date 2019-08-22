@@ -59,14 +59,6 @@ let router = new Router({
       component: Course
     },
     {
-      path: '/course/:course/newplan',
-      name: 'CourseNewPlan',
-      component: Course,
-      meta: {
-        requiresAuth: true
-      }
-    },
-    {
       path: '/course/plan/:plan',
       name: 'Plan',
       component: Course

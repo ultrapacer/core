@@ -188,6 +188,7 @@ courseRoutes.route('/:course/plans/:user_id').get(async function (req, res) {
 })
 
 async function validateWaypoints (course, waypoints) {
+  if (!waypoints.length) { return }
   if (
     !waypoints.find(waypoint => waypoint.type === 'start') ||
     !waypoints.find(waypoint => waypoint.type === 'finish')
@@ -219,7 +220,6 @@ async function validateWaypoints (course, waypoints) {
       waypoints.push(wf)
     }
   }
-  return waypoints
 }
 
 module.exports = courseRoutes

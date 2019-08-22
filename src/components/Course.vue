@@ -371,7 +371,7 @@ export default {
       if (this.isAuthenticated) {
         this.$refs.planEdit.show()
       } else {
-        this.$router.push({name: 'CourseNewPlan'})
+        this.$auth.login()
       }
     },
     async editPlan () {
