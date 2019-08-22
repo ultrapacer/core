@@ -219,6 +219,7 @@ export default {
     planOwner: function () {
       if (
         this.isAuthenticated &&
+        this.course._plan &&
         String(this.user._id) === String(this.course._plan._user)
       ) {
         return true
@@ -280,7 +281,6 @@ export default {
         )
       } else {
         this.course = await api.getCourse(this.$route.params.course)
-        console.log(this.course._plan)
       }
     } catch (err) {
       console.log(err)

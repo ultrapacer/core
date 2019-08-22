@@ -33,6 +33,7 @@ publicRoutes.route('/course/plan/:_id').get(async function (req, res) {
     let plan = await Plan.findById(req.params._id).exec()
     let course = await Course.findOne({ _id: plan._course }).exec()
     if (course.public) {
+      course.waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
       q = { _course: course, _user: plan._user }
       course.plans = await Plan.find(q).sort('name').exec()
       course._plan = req.params._id
