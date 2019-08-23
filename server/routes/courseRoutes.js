@@ -24,7 +24,19 @@ courseRoutes.route('/').post(async function (req, res) {
 // GET COURSES
 courseRoutes.route('/').get(async function (req, res) {
   var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-  var courses = await Course.find({ _user: user }).select('-points').sort('name').exec()
+  let q = {
+    $or: [
+      {
+        _user: user
+      },
+      {
+        _id: {
+          $in: user._courses
+        }
+      }
+    ]
+  }
+  var courses = await Course.find(q).select('-points').sort('name').exec()
   res.json(courses)
 })
 
@@ -177,6 +189,27 @@ courseRoutes.route('/:course/plans/:user_id').get(async function (req, res) {
         { _course: course, _user: req.params.user_id }
       ).sort('name').exec()
       res.json(plans)
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
+// ADD COURSE TO USER:
+courseRoutes.route('/:course/use').put(async function (req, res) {
+  console.log(1)
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var course = await Course.findById(req.params.course).select(['_user', 'public']).exec()
+    if (user.equals(course._user) || course.public) {
+      if (!user._courses.find(x => course.equals(x))) {
+        user._courses.push(course)
+        await user.save()
+      }
+      res.json('Update complete')
     } else {
       res.status(403).send('No permission')
     }

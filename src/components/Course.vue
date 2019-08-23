@@ -372,6 +372,15 @@ export default {
     },
     async newPlan () {
       if (this.isAuthenticated) {
+          console.log('adding course11')
+        if (!this.owner) {
+          console.log('adding course0')
+          if (!this.user._courses.find(x => x === this.course._id)) {
+            console.log('adding course')
+            api.useCourse(this.course._id)
+            this.user._courses.push(this.course._id)
+          }
+        }
         this.$refs.planEdit.show()
       } else {
         this.$auth.login({

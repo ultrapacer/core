@@ -67,6 +67,9 @@ export default {
   deleteCourse (id) {
     return this.executeAuth('delete', `/api/courses/${id}`)
   },
+  useCourse (id) {
+    return this.executeAuth('put', `/api/courses/${id}/use`)
+  },
   getWaypoints (courseID) {
     return this.executeAuth('get', `/api/course/${courseID}/waypoints`)
   },
