@@ -3,8 +3,6 @@ var express = require('express')
 var publicRoutes = express.Router()
 var Course = require('../models/Course')
 var Plan = require('../models/Plan')
-var User = require('../models/User')
-var Waypoint = require('../models/Waypoint')
 
 // GET COURSE
 publicRoutes.route('/course/:_id').get(async function (req, res) {

@@ -151,7 +151,6 @@ courseRoutes.route('/plan/:_id').get(async function (req, res) {
 
 // GET WAYPOINT LIST
 courseRoutes.route('/:course/waypoints').get(async function (req, res) {
-  console.log('getwaypointlist')
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.course).select(['_user', 'public']).exec()

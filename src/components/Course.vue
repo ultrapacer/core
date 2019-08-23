@@ -375,9 +375,14 @@ export default {
         this.$refs.planEdit.show()
       } else {
         this.$auth.login({
-          target: window.location.href.split('?')[0],
-          query: {
-            method: 'newPlan'
+          route: {
+            name: 'Course',
+            params: {
+              'course': this.course._id
+            },
+            query: {
+              method: 'newPlan'
+            }
           }
         })
       }
