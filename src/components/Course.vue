@@ -297,7 +297,7 @@ export default {
       this.showMap = true
       if (this.$route.query.method) {
         this[this.$route.query.method]()
-        this.$router.push({query:{}})
+        this.$router.push({query: {}})
       }
     }, 500)
   },
