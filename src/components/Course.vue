@@ -295,6 +295,9 @@ export default {
     this.initializing = false
     setTimeout(() => {
       this.showMap = true
+      if (this.$route.query.method) {
+        this[this.$route.query.method]()
+      }
     }, 500)
   },
   methods: {
