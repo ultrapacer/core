@@ -92,16 +92,26 @@ courseRoutes.route('/:id').put(async function (req, res) {
   }
 })
 
-// REMOVE
+// DELETE
 courseRoutes.route('/:id').delete(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.id).exec()
     if (user.equals(course._user)) {
+      // if owner, delete course
       await course.remove()
       res.json('Course removed')
     } else {
-      res.status(403).send('No permission')
+      // if not owner, remove course from course list
+      let i = user._courses.findIndex(x => course.equals(x))
+      if (i >= 0) {
+        user._courses.splice(i, 1)
+        await user.save()
+        await Plan.remove({_course: this._id, _user: user}).exec()
+        res.json('Course removed')
+      } else {
+        res.status(403).send('No permission')
+      }
     }
   } catch (err) {
     res.status(400).send(err)

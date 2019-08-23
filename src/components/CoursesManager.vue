@@ -32,7 +32,10 @@
             </b-button>
             <b-button size="sm" @click="deleteCourse(row.item)" class="mr-1">
               <v-icon name="trash"></v-icon>
-              <span class="d-none d-md-inline">Delete</span>
+              <span class="d-none d-md-inline" v-if="user._id==row.item._user">
+                Delete
+              </span>
+              <span class="d-none d-md-inline" v-else>Remove</span>
             </b-button>
           </template>
         </b-table>
