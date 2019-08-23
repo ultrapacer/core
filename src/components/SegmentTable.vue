@@ -226,7 +226,7 @@ export default {
         f.push({
           key: 'collapse',
           label: '',
-          tdClass: 'actionButtonColumn text-center'
+          tdClass: 'actionButtonColumn text-center zeropadding'
         })
       }
       return f

@@ -32,6 +32,9 @@
   white-space: nowrap;
   text-align: right
 }
+.zeropadding {
+  padding: 0 !important;
+}
 </style>
 <script>
 import api from '@/api'
