@@ -10,7 +10,9 @@
 export default {
   methods: {
     handleLoginEvent (data) {
-      if (data.state.query) {
+      if (data.state.route) {
+        this.$router.push(data.state.route)
+      } else if (data.state.query) {
         this.$router.push({path: data.state.target, query: data.state.query})
       } else {
         this.$router.push(data.state.target || '/')

@@ -16,7 +16,11 @@ var UserSchema = new Schema({
   altModel: {
     type: Object,
     default: null
-  }
+  },
+  _courses: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course'
+  }]
 }, {
   collection: 'users'
 })

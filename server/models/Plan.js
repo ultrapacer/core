@@ -2,6 +2,10 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 
 var PlanSchema = new Schema({
+  _user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   _course: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course'

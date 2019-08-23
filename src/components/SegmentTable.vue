@@ -23,7 +23,7 @@
       {{ course.loss | formatAlt(units.altScale) }}
     </template>
     <template slot="FOOT_grade">&nbsp;</template>
-    <template slot="FOOT_factors.tF">
+    <template slot="FOOT_factors.tF" v-if="pacing.factors">
       +{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }}%
     </template>
     <template slot="FOOT_time">
@@ -181,7 +181,7 @@ export default {
           tdClass: 'd-none d-md-table-cell text-right'
         }
       ]
-      if (this.pacing.factors.tF > 1) {
+      if (this.pacing.factors && this.pacing.factors.tF > 1) {
         f.push({
           key: 'factors.tF',
           label: 'Terrain',
