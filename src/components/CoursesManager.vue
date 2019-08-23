@@ -21,7 +21,12 @@
           </template>
           <template slot="HEAD_actions">&nbsp;</template>
           <template slot="actions" slot-scope="row">
-            <b-button size="sm" @click="editCourse(row.item)" class="mr-1">
+            <b-button
+                v-if="user._id==row.item._user"
+                size="sm"
+                @click="editCourse(row.item)"
+                class="mr-1"
+              >
               <v-icon name="edit"></v-icon>
               <span class="d-none d-md-inline">Edit</span>
             </b-button>
