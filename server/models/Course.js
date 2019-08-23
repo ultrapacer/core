@@ -51,6 +51,7 @@ var CourseSchema = new Schema({
 })
 
 CourseSchema.methods.addData = async function (user = null, plan = null) {
+  // adds waypoints, plans, altitude model, and selected plan to course object
   this.waypoints = await Waypoint.find({ _course: this }).sort('location').exec()
   if (user) {
     let q = { _course: this, _user: user }

@@ -1,6 +1,7 @@
 // waypointRoutes.js
 var express = require('express')
 var waypointRoutes = express.Router()
+var Course = require('../models/Course')
 var Waypoint = require('../models/Waypoint')
 var User = require('../models/User')
 
@@ -24,8 +25,9 @@ waypointRoutes.route('/').post(async function (req, res) {
 waypointRoutes.route('/:id').put(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var waypoint = await Waypoint.findById(req.params.id).populate('_course._user').exec()
-    if (user.equals(waypoint._course._user)) {
+    var waypoint = await Waypoint.findById(req.params.id).exec()
+    var course = await Course.findById(waypoint._course).select('_user').exec()
+    if (user.equals(course._user)) {
       waypoint.name = req.body.name
       waypoint.location = req.body.location
       waypoint.type = req.body.type

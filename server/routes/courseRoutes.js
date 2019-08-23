@@ -92,7 +92,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
   }
 })
 
-// DELETE
+// DELETE COURSE OR REMOVE COURSE FROM USER
 courseRoutes.route('/:id').delete(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
@@ -230,7 +230,6 @@ courseRoutes.route('/:course/use').put(async function (req, res) {
 })
 
 async function validateWaypoints (course, waypoints) {
-  if (!waypoints.length) { return }
   if (
     !waypoints.find(waypoint => waypoint.type === 'start') ||
     !waypoints.find(waypoint => waypoint.type === 'finish')
