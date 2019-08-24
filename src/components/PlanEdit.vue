@@ -32,6 +32,18 @@
             @change="checkTargetFormat"
           ></b-form-input>
         </b-form-group>
+        <b-form-group label="Start Time [hh:mm (24-hour)]">
+          <b-form-input
+            ref="starttimeinput"
+            type="text"
+            v-model="model.startTimeF"
+            min="0"
+            v-mask="'##:##'"
+            placeholder="hh:mm"
+            required
+            @change="checkStartFormat"
+          ></b-form-input>
+        </b-form-group>
         <b-form-group label="Pace drift [%]">
           <b-form-input type="text" v-model="model.drift" required>
           </b-form-input>
