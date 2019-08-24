@@ -27,6 +27,10 @@ var PlanSchema = new Schema({
     type: Number,
     default: 0
   },
+  start time: {
+    type: Number,
+    default: null
+  },
   waypointDelay: {
     type: Number,
     default: 60
