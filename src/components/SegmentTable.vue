@@ -138,14 +138,12 @@ export default {
         {
           key: 'waypoint1.name',
           label: 'Start',
-          thClass: 'd-none d-md-table-cell smaller',
-          tdClass: 'd-none d-md-table-cell smaller'
+          thClass: 'd-none d-md-table-cell',
+          tdClass: 'd-none d-md-table-cell'
         },
         {
           key: 'waypoint2.name',
-          label: 'End',
-          thClass: 'smaller',
-          tdClass: 'smaller'
+          label: 'End'
         },
         {
           key: 'len',
@@ -153,8 +151,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
-          thClass: 'text-right smaller',
-          tdClass: 'text-right smaller'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         },
         {
           key: 'gain',
@@ -162,8 +160,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-md-table-cell text-right smaller',
-          tdClass: 'd-none d-md-table-cell text-right smaller'
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         },
         {
           key: 'loss',
@@ -171,8 +169,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-md-table-cell text-right smaller',
-          tdClass: 'd-none d-md-table-cell text-right smaller'
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         },
         {
           key: 'grade',
@@ -180,8 +178,8 @@ export default {
           formatter: (value, key, item) => {
             return (value).toFixed(1) + '%'
           },
-          thClass: 'd-none d-md-table-cell text-right smaller',
-          tdClass: 'd-none d-md-table-cell text-right smaller'
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         }
       ]
       if (this.pacing.factors && this.pacing.factors.tF > 1) {
@@ -191,8 +189,8 @@ export default {
           formatter: (value, key, item) => {
             return '+' + ((value - 1) * 100).toFixed(1) + '%'
           },
-          thClass: 'd-none d-md-table-cell text-right smaller',
-          tdClass: 'd-none d-md-table-cell text-right smaller'
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         })
       }
       if (this.segments[0].time) {
@@ -202,8 +200,8 @@ export default {
           formatter: (value, key, item) => {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
-          thClass: 'd-none d-md-table-cell text-right smaller',
-          tdClass: 'd-none d-md-table-cell text-right smaller'
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
         })
         f.push({
           key: 'pace',
@@ -212,8 +210,8 @@ export default {
             let l = item.len * this.units.distScale
             return timeUtil.sec2string(item.time / l, '[h]:m:ss')
           },
-          thClass: 'text-right smaller',
-          tdClass: 'text-right smaller'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         })
         f.push({
           key: 'elapsed',
@@ -221,8 +219,8 @@ export default {
           formatter: (value, key, item) => {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
-          thClass: 'text-right smaller',
-          tdClass: 'text-right smaller'
+          thClass: 'text-right',
+          tdClass: 'text-right'
         })
         if (this.course._plan.startTime) {
           f.push({
@@ -232,8 +230,8 @@ export default {
               let c = item.elapsed + this.course._plan.startTime
               return timeUtil.sec2string(c, 'hh:mm')
             },
-            thClass: 'text-right smaller',
-            tdClass: 'text-right smaller'
+            thClass: 'text-right',
+            tdClass: 'text-right'
           })
         }
       }
@@ -244,6 +242,17 @@ export default {
           tdClass: 'actionButtonColumn text-center zeropadding'
         })
       }
+      f.forEach((x, i) => {
+        let t = ['th', 'td']
+        t.forEach(y => {
+          if (f.hasOwnProperty(y + 'Class')) {
+            f[i][y + 'Class'] += ''
+          } else {
+            f[i][y + 'Class'] = 'smaller'
+          }
+        })
+      })
+      console.log(f)
       return f
     },
     movingTimeTot: function () {
