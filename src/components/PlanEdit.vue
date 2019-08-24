@@ -40,7 +40,6 @@
             min="0"
             v-mask="'##:##'"
             placeholder="hh:mm"
-            required
             @change="checkStartFormat"
           ></b-form-input>
         </b-form-group>
@@ -167,7 +166,7 @@ export default {
         this.model.waypointDelay,
         'mm:ss'
       )
-      this.model.starTimeF = ''
+      this.model.startTimeF = ''
       if (this.model.startTime !== null) {
         this.model.startTimeF = timeUtil.sec2string(
           this.model.startTime,
@@ -235,18 +234,20 @@ export default {
     },
     validateTime (el, val, max1 = null) {
       var pass = true
-      if (val.length === el._props.placeholder.length) {
-        var arr = val.split(':')
-        for (var i = arr.length - 1; i > 0; i--) {
-          if (Number(arr[i]) >= 60) {
+      if (el.required || val.length) {
+        if (val.length === el._props.placeholder.length) {
+          var arr = val.split(':')
+          for (var i = arr.length - 1; i > 0; i--) {
+            if (Number(arr[i]) >= 60) {
+              pass = false
+            }
+          }
+          if (max1 && Number(arr[0]) > max1) {
             pass = false
           }
-        }
-        if (max1 && Number(arr[0]) > max1) {
+        } else {
           pass = false
         }
-      } else {
-        pass = false
       }
       if (pass) {
         el.setCustomValidity('')

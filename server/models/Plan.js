@@ -27,7 +27,7 @@ var PlanSchema = new Schema({
     type: Number,
     default: 0
   },
-  start time: {
+  startTime: {
     type: Number,
     default: null
   },
