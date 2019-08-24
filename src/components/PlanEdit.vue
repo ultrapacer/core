@@ -217,6 +217,9 @@ export default {
     checkTargetFormat (val) {
       this.validateTime(this.$refs.planformtimeinput, val)
     },
+    checkStartFormat (val, ref) {
+      this.validateTime(this.$refs.starttimeinput, val, 24)
+    },
     checkDelayFormat (val, ref) {
       this.validateTime(this.$refs.planformdelayinput, val)
     },
@@ -230,7 +233,7 @@ export default {
         this.deleting = false
       })
     },
-    validateTime (el, val) {
+    validateTime (el, val, max1 = null) {
       var pass = true
       if (val.length === el._props.placeholder.length) {
         var arr = val.split(':')
@@ -238,6 +241,9 @@ export default {
           if (Number(arr[i]) >= 60) {
             pass = false
           }
+        }
+        if (max1 && Number(arr[0]) > max1) {
+          pass = false
         }
       } else {
         pass = false
