@@ -93,7 +93,8 @@ export default {
       defaults: {
         pacingMethod: 'time',
         waypointDelay: 60,
-        drift: 0
+        drift: 0,
+        startTime: null
       },
       model: {},
       pacingMethods: [
@@ -190,6 +191,11 @@ export default {
         this.model.pacingMethod === 'np'
       ) {
         this.model.pacingTarget = this.model.pacingTarget * this.units.distScale
+      }
+      if (this.model.startTimeF.length) {
+        this.model.startTime = timeUtil.string2sec(`${this.model.startTimeF}:00`)
+      } else {
+        this.model.startTime = null
       }
       this.model.waypointDelay = timeUtil.string2sec(this.model.waypointDelayF)
       var p = {}
