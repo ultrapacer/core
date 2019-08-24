@@ -154,6 +154,13 @@ export default {
         this.model.waypointDelay,
         'mm:ss'
       )
+      this.model.starTimeF = ''
+      if (this.model.startTime !== null) {
+        this.model.startTimeF = timeUtil.sec2string(
+          this.model.startTime,
+          'hh:mm'
+        )
+      }
       this.$bvModal.show('plan-edit-modal')
     },
     handleOk (bvModalEvt) {
