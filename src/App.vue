@@ -35,6 +35,12 @@
 .zeropadding {
   padding: 0 !important;
 }
+@media only screen and (min-width: 768px) {
+ .smaller {
+  font-size: 0.9rem;
+  line-height: 1.25;
+  }
+}
 </style>
 <script>
 import api from '@/api'

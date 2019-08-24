@@ -27,11 +27,12 @@
       +{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }}%
     </template>
     <template slot="FOOT_time">
-      {{ time | formatTime }}
+      {{ movingTimeTot | formatTime }}
     </template>
     <template slot="FOOT_elapsed">
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
+    <template slot="FOOT_clock">&nbsp;</template>
     <template slot="FOOT_pace">
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
@@ -137,12 +138,14 @@ export default {
         {
           key: 'waypoint1.name',
           label: 'Start',
-          thClass: 'd-none d-md-table-cell',
-          tdClass: 'd-none d-md-table-cell'
+          thClass: 'd-none d-md-table-cell smaller',
+          tdClass: 'd-none d-md-table-cell smaller'
         },
         {
           key: 'waypoint2.name',
-          label: 'End'
+          label: 'End',
+          thClass: 'smaller',
+          tdClass: 'smaller'
         },
         {
           key: 'len',
@@ -150,8 +153,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          thClass: 'text-right smaller',
+          tdClass: 'text-right smaller'
         },
         {
           key: 'gain',
@@ -159,8 +162,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          thClass: 'd-none d-md-table-cell text-right smaller',
+          tdClass: 'd-none d-md-table-cell text-right smaller'
         },
         {
           key: 'loss',
@@ -168,8 +171,8 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.altScale).toFixed(0)
           },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          thClass: 'd-none d-md-table-cell text-right smaller',
+          tdClass: 'd-none d-md-table-cell text-right smaller'
         },
         {
           key: 'grade',
@@ -177,8 +180,8 @@ export default {
           formatter: (value, key, item) => {
             return (value).toFixed(1) + '%'
           },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          thClass: 'd-none d-md-table-cell text-right smaller',
+          tdClass: 'd-none d-md-table-cell text-right smaller'
         }
       ]
       if (this.pacing.factors && this.pacing.factors.tF > 1) {
@@ -188,8 +191,8 @@ export default {
           formatter: (value, key, item) => {
             return '+' + ((value - 1) * 100).toFixed(1) + '%'
           },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          thClass: 'd-none d-md-table-cell text-right smaller',
+          tdClass: 'd-none d-md-table-cell text-right smaller'
         })
       }
       if (this.segments[0].time) {
@@ -199,8 +202,8 @@ export default {
           formatter: (value, key, item) => {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          thClass: 'd-none d-md-table-cell text-right smaller',
+          tdClass: 'd-none d-md-table-cell text-right smaller'
         })
         f.push({
           key: 'pace',
@@ -209,8 +212,8 @@ export default {
             let l = item.len * this.units.distScale
             return timeUtil.sec2string(item.time / l, '[h]:m:ss')
           },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          thClass: 'text-right smaller',
+          tdClass: 'text-right smaller'
         })
         f.push({
           key: 'elapsed',
@@ -218,9 +221,21 @@ export default {
           formatter: (value, key, item) => {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          thClass: 'text-right smaller',
+          tdClass: 'text-right smaller'
         })
+        if (this.course._plan.startTime) {
+          f.push({
+            key: 'clock',
+            label: 'Clock',
+            formatter: (value, key, item) => {
+              let c = item.elapsed + this.course._plan.startTime
+              return timeUtil.sec2string(c, 'hh:mm')
+            },
+            thClass: 'text-right smaller',
+            tdClass: 'text-right smaller'
+          })
+        }
       }
       if (this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
         f.push({
@@ -231,7 +246,7 @@ export default {
       }
       return f
     },
-    time: function () {
+    movingTimeTot: function () {
       if (this.segments[0].time) {
         var t = 0
         this.segments.forEach(s => { t += s.time })
