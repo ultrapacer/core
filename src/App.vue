@@ -47,8 +47,8 @@
 }
 .tinyButton {
   padding: 0.18rem !important;
-  line-height: 1.2;
-  font-size: 0.7rem;
+  line-height: 1.2 !important;
+  font-size: 0.7rem !important;
 }
 </style>
 <script>
