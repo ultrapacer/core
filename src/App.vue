@@ -33,6 +33,7 @@
   text-align: right !important;
   padding-top: 0.1rem !important;
   padding-bottom: 0.1rem !important;
+  vertical-align: middle !important;
 }
 .table-sm td {
   font-size: 0.9rem;
