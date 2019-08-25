@@ -32,7 +32,9 @@
     <template slot="FOOT_elapsed">
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
-    <template slot="FOOT_clock">&nbsp;</template>
+    <template slot="FOOT_clock" v-if="course._plan">
+      {{ (course._plan.startTime + pacing.time) / 60 | formatTime }}
+    </template>
     <template slot="FOOT_pace">
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
@@ -220,8 +222,14 @@ export default {
           formatter: (value, key, item) => {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          thClass:
+            this.course._plan.startTime
+              ? 'd-none d-md-table-cell text-right'
+              : 'text-right',
+          tdClass:
+            this.course._plan.startTime
+              ? 'd-none d-md-table-cell text-right'
+              : 'text-right'
         })
         if (this.course._plan.startTime) {
           f.push({

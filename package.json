@@ -92,7 +92,7 @@
     "webpack-merge": "^4.1.0"
   },
   "engines": {
-    "nodejs10": ">= 10.0.0",
+    "nodejs": ">= 10.0.0",
     "npm": ">= 3.0.0"
   },
   "browserslist": [
