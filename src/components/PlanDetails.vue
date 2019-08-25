@@ -16,6 +16,14 @@
       Moving Time:
       <b>{{ sec2string(pacing.time - pacing.delay, '[h]:m:ss') }}</b>
     </p>
+    <p class="mb-1" v-if="plan.startTime">
+      Start Time:
+      <b>{{ sec2string(plan.startTime, 'hh:mm') }}</b> o'clock
+    </p>
+    <p class="mb-1" v-if="plan.startTime">
+      Finish Time:
+      <b>{{ sec2string(plan.startTime + pacing.time, 'hh:mm') }}</b> o'clock
+    </p>
   </b-list-group-item>
   <b-list-group-item>
     <h5 class="mb-1">Paces</h5>

@@ -32,6 +32,17 @@
             @change="checkTargetFormat"
           ></b-form-input>
         </b-form-group>
+        <b-form-group label="Start Time [hh:mm (24-hour)]">
+          <b-form-input
+            ref="starttimeinput"
+            type="text"
+            v-model="model.startTimeF"
+            min="0"
+            v-mask="'##:##'"
+            placeholder="hh:mm"
+            @change="checkStartFormat"
+          ></b-form-input>
+        </b-form-group>
         <b-form-group label="Pace drift [%]">
           <b-form-input type="text" v-model="model.drift" required>
           </b-form-input>
@@ -81,7 +92,8 @@ export default {
       defaults: {
         pacingMethod: 'time',
         waypointDelay: 60,
-        drift: 0
+        drift: 0,
+        startTime: null
       },
       model: {},
       pacingMethods: [
@@ -154,6 +166,13 @@ export default {
         this.model.waypointDelay,
         'mm:ss'
       )
+      this.model.startTimeF = ''
+      if (this.model.startTime !== null) {
+        this.model.startTimeF = timeUtil.sec2string(
+          this.model.startTime,
+          'hh:mm'
+        )
+      }
       this.$bvModal.show('plan-edit-modal')
     },
     handleOk (bvModalEvt) {
@@ -171,6 +190,11 @@ export default {
         this.model.pacingMethod === 'np'
       ) {
         this.model.pacingTarget = this.model.pacingTarget * this.units.distScale
+      }
+      if (this.model.startTimeF.length) {
+        this.model.startTime = timeUtil.string2sec(`${this.model.startTimeF}:00`)
+      } else {
+        this.model.startTime = null
       }
       this.model.waypointDelay = timeUtil.string2sec(this.model.waypointDelayF)
       var p = {}
@@ -192,6 +216,9 @@ export default {
     checkTargetFormat (val) {
       this.validateTime(this.$refs.planformtimeinput, val)
     },
+    checkStartFormat (val, ref) {
+      this.validateTime(this.$refs.starttimeinput, val, 24)
+    },
     checkDelayFormat (val, ref) {
       this.validateTime(this.$refs.planformdelayinput, val)
     },
@@ -205,17 +232,22 @@ export default {
         this.deleting = false
       })
     },
-    validateTime (el, val) {
+    validateTime (el, val, max1 = null) {
       var pass = true
-      if (val.length === el._props.placeholder.length) {
-        var arr = val.split(':')
-        for (var i = arr.length - 1; i > 0; i--) {
-          if (Number(arr[i]) >= 60) {
+      if (el.required || val.length) {
+        if (val.length === el._props.placeholder.length) {
+          var arr = val.split(':')
+          for (var i = arr.length - 1; i > 0; i--) {
+            if (Number(arr[i]) >= 60) {
+              pass = false
+            }
+          }
+          if (max1 && Number(arr[0]) > max1) {
             pass = false
           }
+        } else {
+          pass = false
         }
-      } else {
-        pass = false
       }
       if (pass) {
         el.setCustomValidity('')

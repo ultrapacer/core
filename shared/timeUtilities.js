@@ -8,6 +8,8 @@ function sec2string (val, format) {
     }
   } else if (format === 'mm:ss') {
     return d.toISOString().substr(14, 5)
+  } else if (format === 'hh:mm') {
+    return d.toISOString().substr(11, 5)
   } else if (format === 'h:mm:ss') {
     if (val < 36000) {
       return d.toISOString().substr(12, 7)

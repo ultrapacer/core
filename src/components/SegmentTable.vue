@@ -27,11 +27,12 @@
       +{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }}%
     </template>
     <template slot="FOOT_time">
-      {{ time | formatTime }}
+      {{ movingTimeTot | formatTime }}
     </template>
     <template slot="FOOT_elapsed">
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
+    <template slot="FOOT_clock">&nbsp;</template>
     <template slot="FOOT_pace">
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
@@ -40,7 +41,7 @@
         v-if="row.item.collapsed"
         size="sm"
         @click="expandRow(row.item)"
-        class="mr-1"
+        class="mr-1 tinyButton"
       >
         &#9660;
       </b-button>
@@ -48,17 +49,17 @@
         v-if="!row.item.collapsed && row.item.collapseable"
         size="sm"
         @click="collapseRow(row.item)"
-        class="mr-1"
+        class="mr-1 tinyButton"
       >
         &#9650;
       </b-button>
-      <span v-if="row.item.waypoint1.tier===2">&#8944;</span>
+      <div v-if="row.item.waypoint1.tier===2" style="text-align:center">&#8944;</div>
     </template>
   </b-table>
 </template>
 
 <script>
-import { calcSegments } from '../../shared/utilities'
+import { calcSegments, round } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
   props: ['course', 'units', 'pacing'],
@@ -133,6 +134,7 @@ export default {
       return arr
     },
     fields: function () {
+      // if (typeof(showTerrain)==='undefined'){return}
       var f = [
         {
           key: 'waypoint1.name',
@@ -181,7 +183,7 @@ export default {
           tdClass: 'd-none d-md-table-cell text-right'
         }
       ]
-      if (this.pacing.factors && this.pacing.factors.tF > 1) {
+      if (this.showTerrain) {
         f.push({
           key: 'factors.tF',
           label: 'Terrain',
@@ -221,17 +223,29 @@ export default {
           thClass: 'text-right',
           tdClass: 'text-right'
         })
+        if (this.course._plan.startTime) {
+          f.push({
+            key: 'clock',
+            label: 'Clock',
+            formatter: (value, key, item) => {
+              let c = item.elapsed + this.course._plan.startTime
+              return timeUtil.sec2string(c, 'hh:mm')
+            },
+            thClass: 'text-right',
+            tdClass: 'text-right'
+          })
+        }
       }
       if (this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
         f.push({
           key: 'collapse',
           label: '',
-          tdClass: 'actionButtonColumn text-center zeropadding'
+          tdClass: 'actionButtonColumn text-center'
         })
       }
       return f
     },
-    time: function () {
+    movingTimeTot: function () {
       if (this.segments[0].time) {
         var t = 0
         this.segments.forEach(s => { t += s.time })
@@ -239,6 +253,16 @@ export default {
       } else {
         return 0
       }
+    },
+    showTerrain: function () {
+      for (let i = 0; i < this.segments.length; i++) {
+        if (
+          round(this.segments[i].factors.tF, 4) !==
+          round(this.segments[0].factors.tF, 4)) {
+          return true
+        }
+      }
+      return false
     }
   },
   methods: {
