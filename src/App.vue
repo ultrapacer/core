@@ -30,16 +30,25 @@
 }
 .actionButtonColumn {
   white-space: nowrap;
-  text-align: right
+  text-align: right !important;
+  padding-top: 0.1rem !important;
+  padding-bottom: 0.1rem !important;
 }
-.zeropadding {
-  padding: 0 !important;
-}
-@media only screen and (min-width: 768px) {
- .smaller {
+.table-sm td {
   font-size: 0.9rem;
+  padding-left: 0.15rem;
+  padding-right: 0.15rem;
   line-height: 1.25;
-  }
+}
+.table-sm th {
+  font-size: 0.9rem;
+  padding-left: 0.15rem;
+  padding-right: 0.15rem;
+}
+.tinyButton {
+  padding: 0.18rem !important;
+  line-height: 1.2;
+  font-size: 0.7rem;
 }
 </style>
 <script>

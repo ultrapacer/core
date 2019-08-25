@@ -41,7 +41,7 @@
         v-if="row.item.collapsed"
         size="sm"
         @click="expandRow(row.item)"
-        class="mr-1"
+        class="mr-1 tinyButton"
       >
         &#9660;
       </b-button>
@@ -49,17 +49,17 @@
         v-if="!row.item.collapsed && row.item.collapseable"
         size="sm"
         @click="collapseRow(row.item)"
-        class="mr-1"
+        class="mr-1 tinyButton"
       >
         &#9650;
       </b-button>
-      <span v-if="row.item.waypoint1.tier===2">&#8944;</span>
+      <div v-if="row.item.waypoint1.tier===2" style="text-align:center">&#8944;</div>
     </template>
   </b-table>
 </template>
 
 <script>
-import { calcSegments } from '../../shared/utilities'
+import { calcSegments, round } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
   props: ['course', 'units', 'pacing'],
@@ -134,6 +134,7 @@ export default {
       return arr
     },
     fields: function () {
+      // if (typeof(showTerrain)==='undefined'){return}
       var f = [
         {
           key: 'waypoint1.name',
@@ -182,7 +183,7 @@ export default {
           tdClass: 'd-none d-md-table-cell text-right'
         }
       ]
-      if (this.pacing.factors && this.pacing.factors.tF > 1) {
+      if (this.showTerrain) {
         f.push({
           key: 'factors.tF',
           label: 'Terrain',
@@ -239,20 +240,9 @@ export default {
         f.push({
           key: 'collapse',
           label: '',
-          tdClass: 'actionButtonColumn text-center zeropadding'
+          tdClass: 'actionButtonColumn text-center'
         })
       }
-      f.forEach((x, i) => {
-        let t = ['th', 'td']
-        t.forEach(y => {
-          if (f.hasOwnProperty(y + 'Class')) {
-            f[i][y + 'Class'] += ''
-          } else {
-            f[i][y + 'Class'] = 'smaller'
-          }
-        })
-      })
-      console.log(f)
       return f
     },
     movingTimeTot: function () {
@@ -263,6 +253,16 @@ export default {
       } else {
         return 0
       }
+    },
+    showTerrain: function () {
+      for (let i = 0; i < this.segments.length; i++) {
+        if (
+          round(this.segments[i].factors.tF, 4) !==
+          round(this.segments[0].factors.tF, 4)) {
+          return true
+        }
+      }
+      return false
     }
   },
   methods: {
