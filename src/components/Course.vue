@@ -273,6 +273,7 @@ export default {
     }
   },
   async created () {
+    let t = this.$logger('Downloading Course')
     try {
       if (this.$route.params.plan) {
         this.course = await api.getCourse(this.$route.params.plan, 'plan')
@@ -287,11 +288,16 @@ export default {
       this.$router.push({path: '/'})
       return
     }
+    this.$logger('Complete', t)
     this.$title = this.course.name
+    t = this.$logger('Adding locations')
     util.addLoc(this.course.points)
+    this.$logger('Complete', t)
     this.course.len = this.course.points[this.course.points.length - 1].loc
     this.checkWaypoints()
+    t = this.$logger('Updating Pacing')
     this.updatePacing()
+    this.$logger('Complete', t)
     this.initializing = false
     setTimeout(() => {
       this.showMap = true
@@ -300,6 +306,7 @@ export default {
         this.$router.push({query: {}})
       }
     }, 500)
+    this.$logger('Finish')
   },
   methods: {
     async newWaypoint () {

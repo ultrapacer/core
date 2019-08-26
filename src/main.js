@@ -7,6 +7,7 @@ import BootstrapVue from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import AuthPlugin from './plugins/auth'
+import LoggerPlugin from './plugins/logger'
 import VuePageTitle from 'vue-page-title'
 import VueTheMask from 'vue-the-mask'
 
@@ -42,6 +43,7 @@ Vue.prototype.$waypointTypes = {
   junction: 'Junction',
   other: 'Other'
 }
+Vue.use(LoggerPlugin)
 
 Vue.config.productionTip = false
 
