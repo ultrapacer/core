@@ -9,49 +9,58 @@
       @ok="handleOk"
     >
       <form ref="planform" @submit.prevent="">
-        <b-form-group label="Name">
-          <b-form-input type="text" v-model="model.name" required></b-form-input>
+        <b-form-group label="Name" label-size="sm">
+          <b-form-input type="text" v-model="model.name" size="sm" required>
+          </b-form-input>
         </b-form-group>
-        <b-form-group label="Pacing Method">
+        <b-form-group label="Pacing Method" label-size="sm">
           <b-form-select
               type="number"
               v-model="model.pacingMethod"
               :options="pacingMethods"
+               size="sm"
               required>
           </b-form-select>
         </b-form-group>
-        <b-form-group v-bind:label="targetLabel">
+        <b-form-group v-bind:label="targetLabel" label-size="sm">
           <b-form-input
-            ref="planformtimeinput"
-            type="text"
-            v-model="model.pacingTargetF"
-            min="0"
-            v-mask="targetMask"
-            v-bind:placeholder="targetPlaceholder"
-            required
-            @change="checkTargetFormat"
+              ref="planformtimeinput"
+              type="text"
+              v-model="model.pacingTargetF"
+              min="0"
+              v-mask="targetMask"
+              v-bind:placeholder="targetPlaceholder"
+              size="sm"
+              required
+              @change="checkTargetFormat"
+            ></b-form-input>
+        </b-form-group>
+        <b-form-group label="Start Time [hh:mm (24-hour)]" label-size="sm">
+          <b-form-input
+              ref="starttimeinput"
+              type="text"
+              v-model="model.startTimeF"
+              min="0"
+              v-mask="'##:##'"
+              placeholder="hh:mm"
+              size="sm"
+              @change="checkStartFormat"
           ></b-form-input>
         </b-form-group>
-        <b-form-group label="Start Time [hh:mm (24-hour)]">
+        <b-form-group label="Pace drift [%]" label-size="sm">
+          <b-form-input type="text" v-model="model.drift" size="sm" required>
+          </b-form-input>
+        </b-form-group>
+        <b-form-group label="Temperature Model" label-size="sm">
           <b-form-input
-            ref="starttimeinput"
-            type="text"
-            v-model="model.startTimeF"
-            min="0"
-            v-mask="'##:##'"
-            placeholder="hh:mm"
-            @change="checkStartFormat"
-          ></b-form-input>
+              ref="tempModelInput"
+              type="text"
+              v-model="model.tempModelF"
+              size="sm"
+              @change="checkTempFormat"
+            ></b-form-input>
         </b-form-group>
-        <b-form-group label="Pace drift [%]">
-          <b-form-input type="text" v-model="model.drift" required>
-          </b-form-input>
-        </b-form-group>
-        <b-form-group label="Temperature Model">
-          <b-form-input type="text" v-model="model.tempModelF">
-          </b-form-input>
-        </b-form-group>
-        <b-form-group label="Typical Aid Station Delay [mm:ss]">
+        <b-form-group label="Typical Aid Station Delay [mm:ss]" label-size="sm">
           <b-form-input
             ref="planformdelayinput"
             type="text"
@@ -59,12 +68,14 @@
             min="0"
             v-mask="'##:##'"
             placeholder="mm:ss"
+           size="sm"
             required
             @change="checkDelayFormat"
           ></b-form-input>
         </b-form-group>
-        <b-form-group label="Description">
-          <b-form-textarea rows="4" v-model="model.description"></b-form-textarea>
+        <b-form-group label="Description" label-size="sm">
+          <b-form-textarea rows="4" v-model="model.description" size="sm">
+          </b-form-textarea>
         </b-form-group>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
@@ -205,6 +216,11 @@ export default {
       } else {
         this.model.startTime = null
       }
+      if (this.model.tempModelF.length) {
+        this.model.tempModel = JSON.parse(this.model.tempModelF)
+      } else {
+        this.model.tempModel = null
+      }
       this.model.waypointDelay = timeUtil.string2sec(this.model.waypointDelayF)
       var p = {}
       if (this.model._id) {
@@ -225,11 +241,23 @@ export default {
     checkTargetFormat (val) {
       this.validateTime(this.$refs.planformtimeinput, val)
     },
-    checkStartFormat (val, ref) {
+    checkStartFormat (val) {
       this.validateTime(this.$refs.starttimeinput, val, 24)
     },
-    checkDelayFormat (val, ref) {
+    checkDelayFormat (val) {
       this.validateTime(this.$refs.planformdelayinput, val)
+    },
+    checkTempFormat (val) {
+      if (!this.model.tempModelF.length) {
+        this.$refs.tempModelInput.setCustomValidity('')
+        return
+      }
+      try {
+        JSON.parse(this.model.tempModelF)
+        this.$refs.tempModelInput.setCustomValidity('')
+      } catch (err) {
+        this.$refs.tempModelInput.setCustomValidity(err)
+      }
     },
     async remove () {
       this.deleting = true

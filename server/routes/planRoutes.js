@@ -23,13 +23,11 @@ planRoutes.route('/:id').put(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var plan = await Plan.findById(req.params.id).exec()
     if (user.equals(plan._user)) {
-      plan.name = req.body.name
-      plan.description = req.body.description
-      plan.pacingMethod = req.body.pacingMethod
-      plan.pacingTarget = req.body.pacingTarget
-      plan.drift = req.body.drift
-      plan.startTime = req.body.startTime
-      plan.waypointDelay = req.body.waypointDelay
+      let fields = ['name', 'description', 'pacingMethod', 'pacingTarget',
+        'drift', 'startTime', 'tempModel', 'waypointDelay']
+      fields.forEach(f => {
+        plan[f] = req.body[f]
+      })
       await plan.save()
       res.json(plan)
     } else {
