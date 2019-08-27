@@ -47,6 +47,10 @@
           <b-form-input type="text" v-model="model.drift" required>
           </b-form-input>
         </b-form-group>
+        <b-form-group label="Temperature Model">
+          <b-form-input type="text" v-model="model.tempModelF">
+          </b-form-input>
+        </b-form-group>
         <b-form-group label="Typical Aid Station Delay [mm:ss]">
           <b-form-input
             ref="planformdelayinput"
@@ -93,7 +97,8 @@ export default {
         pacingMethod: 'time',
         waypointDelay: 60,
         drift: 0,
-        startTime: null
+        startTime: null,
+        tempModel: null
       },
       model: {},
       pacingMethods: [
@@ -172,6 +177,10 @@ export default {
           this.model.startTime,
           'hh:mm'
         )
+      }
+      this.model.tempModelF = ''
+      if (this.model.tempModel !== null) {
+        this.model.tempModelF = JSON.stringify(this.model.tempModel)
       }
       this.$bvModal.show('plan-edit-modal')
     },
