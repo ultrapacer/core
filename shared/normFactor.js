@@ -56,6 +56,31 @@ function driftFactor (loc, drift, length) {
   }
 }
 
+function heatFactor (time, model = null) {
+  // returns heat factor
+  // time is time of day in milliseconds
+  // model format:
+  //    start:  tod, milliseconds
+  //    stop:   tod, milliseconds
+  //    max:    peak % increase in percent
+  //       
+  if (model === null) {
+    return 1
+  }
+  let t = 0
+  if (Array.isArray(time)) {
+    t = (time[0] + time[1]) / 2
+  } else {
+    t = time
+  }
+  if (t <= model.start || t >= model.stop) {
+    return 1
+  }
+  let theta = (time - model.start) / (model.stop - model.start) * Math.PI
+  let hF = 1 + (model.max * sin(theta) / 100)
+  return hF
+}
+
 function terrainFactor (loc, tFs) {
   // returns a segment-based terrain factor
   // loc: loc [km] or array [start, end] [km]
@@ -91,5 +116,7 @@ module.exports = {
   dF: driftFactor,
   terrainFactor: terrainFactor,
   tF: terrainFactor,
+  heatFactor: heatFactor,
+  hF: heatFactor,
   defaults: defaults
 }
