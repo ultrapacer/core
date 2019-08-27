@@ -31,6 +31,7 @@ var PlanSchema = new Schema({
     type: Number,
     default: null
   },
+  tempModel: {},
   waypointDelay: {
     type: Number,
     default: 60
