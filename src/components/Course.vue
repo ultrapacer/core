@@ -459,6 +459,9 @@ export default {
       this.updatePacing()
     },
     updatePacing () {
+      this.iteratePaceCalc()
+    },
+    iteratePaceCalc () {
       var plan = false
       if (this.course._plan && this.course._plan.name) { plan = true }
 
@@ -468,10 +471,11 @@ export default {
       var p = this.course.points
       for (let j = 1, jl = p.length; j < jl; j++) {
         let grd = (p[j - 1].grade + p[j].grade) / 2
-        let gF = nF.gradeFactor(grd)
-        let aF = nF.altFactor([p[j - 1].alt, p[j].alt], this.course.altModel)
-        let tF = nF.terrainFactor([p[j - 1].loc, p[j].loc], this.terrainFactors)
-        let dF = nF.driftFactor(
+        let gF = nF.gF(grd)
+        let aF = nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel)
+        let tF = nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors)
+        let hF = nF.hF([p[j - 1].time, p[j].time], this.course._plan._heatModel)
+        let dF = nF.dF(
           [p[j - 1].loc, p[j].loc],
           plan ? this.course._plan.drift : 0,
           this.course.len
@@ -480,12 +484,14 @@ export default {
         factors.gF += gF * len
         factors.aF += aF * len
         factors.tF += tF * len
+        factors.hF += hF * len
         factors.dF += dF * len
-        tot += gF * aF * tF * dF * len
+        tot += gF * aF * tF * hF * dF * len
       }
       factors.gF = factors.gF / this.course.len
       factors.aF = factors.aF / this.course.len
       factors.tF = factors.tF / this.course.len
+      factors.hF = factors.hF / this.course.len
       factors.dF = factors.dF / this.course.len
       this.course.norm = (tot / this.course.len)
 
@@ -534,6 +540,7 @@ export default {
         altModel: this.course.altModel,
         tFs: this.terrainFactors
       }
+      // Add time to points
     },
     updateFocus: function (type, focus) {
       if (type === 'segment') this.$refs.splitTable.clear()
