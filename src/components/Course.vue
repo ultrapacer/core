@@ -497,7 +497,7 @@ export default {
           gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
           aF: nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel),
           tF: nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors),
-          hF: plan ? nF.hF([p[j - 1].time, p[j].time], this.course._plan._heatModel, this.delays) : 1,
+          hF: plan ? nF.hF([p[j - 1].tod, p[j].tod], this.course._plan.heatModel) : 1,
           dF: nF.dF(
             [p[j - 1].loc, p[j].loc],
             plan ? this.course._plan.drift : 0,
@@ -557,7 +557,19 @@ export default {
         tFs: this.terrainFactors,
         delays: this.delays
       }
+      
       // Add time to points
+      if (plan) {
+        let breaks = this.course.points.map(x => x.loc)
+        let arr = calcSegments(this.course.points, breaks, this.pacing)
+        arr.forEach((x, i) => {
+          this.course.points[i + 1].time = x.elapsed
+           if (this.course._plan.startTime !== null) {
+            // tod: time of day in milliseconds from local midnight
+            this.course.points[i + 1].tod = x.elapsed + this.course._plan.startTime
+          }
+        })
+      }
       this.$logger('Complete', t)
     },
     updateFocus: function (type, focus) {
