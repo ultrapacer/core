@@ -61,7 +61,6 @@ function calcSegments (p, breaks, pacing) {
   var j = 0
   var j0 = 0
   var delta0 = 0
-  var dF = 0
   var grade = 0
   let delay = 0
   let delays = (pacing) ? [..pacing.delays] } : []
@@ -77,10 +76,14 @@ function calcSegments (p, breaks, pacing) {
     }
     return 0
   }
-  var gF = 0 // grade factor
-  var aF = 0 // altitude factor
-  var tF = 0 // terrain factor
-  let hF = 0 // heat factor
+  let factors = {
+    aF: 0, // altitude factor
+    gF: 0, // grade factor
+    tF: 0, // terrain factor
+    hF: 1, // heat factor
+    dF: 0
+  }
+  let fk = Object.keys(factors)
   for (i = 1, il = p.length; i < il; i++) {
     j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
     if (j > j0) {
@@ -105,41 +108,44 @@ function calcSegments (p, breaks, pacing) {
     }
     if (pacing && typeof (pacing.np) !== 'undefined') {
       grade = (p[i - 1].grade + p[i].grade) / 2
-      gF = nF.gradeFactor(grade)
+      factors.gF = nF.gradeFactor(grade)
       if (j > j0) {
         if (j0 >= 0) {
           len = s[j].start - p[i - 1].loc
-          dF = nF.driftFactor([p[i - 1].loc, s[j].start], pacing.drift, cLen)
-          aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
-          tF = nF.tF([p[i - 1].loc, s[j].start], pacing.tFs)
-          s[j0].factors.aF += aF * len
-          s[j0].factors.dF += dF * len
-          s[j0].factors.gF += gF * len
-          s[j0].factors.tF += tF * len
-          s[j0].time += pacing.np * gF * dF * aF * tF * len
+          factors.dF = nF.driftFactor([p[i - 1].loc, s[j].start], pacing.drift, cLen)
+          factors.aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
+          factors.tF = nF.tF([p[i - 1].loc, s[j].start], pacing.tFs)
+          let f = 1
+          fk.forEach(k => {
+            s[j0].factors[k] += factors[k] * len
+            f = f * factors[k]
+          )}
+          s[j0].time += pacing.np * f * len
           s[j0].len += len
           s[j0].delay += getDelay(p[i - 1].loc, s[j].start)
         }
         len = p[i].loc - s[j].start
-        dF = nF.driftFactor([p[i].loc, s[j].start], pacing.drift, cLen)
-        aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
-        tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
-        s[j].factors.aF += aF * len
-        s[j].factors.dF += dF * len
-        s[j].factors.gF += gF * len
-        s[j].factors.tF += tF * len
-        s[j].time += pacing.np * gF * dF * aF * tF * len
+        factors.dF = nF.driftFactor([p[i].loc, s[j].start], pacing.drift, cLen)
+        factors.aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
+        factors.tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
+        let f = 1
+        fk.forEach(k => {
+          s[j].factors[k] += factors[k] * len
+          f = f * factors[k]
+        )}
+        s[j].time += pacing.np * f * len
         s[j].len += len
         s[j].delay += getDelay(p[i].loc, s[j].start)
       } else if (j >= 0) {
-        dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
-        aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
-        tF = nF.tF([p[i - 1].loc, p[i].loc], pacing.tFs)
-        s[j].factors.aF += aF * p[i].dloc
-        s[j].factors.dF += dF * p[i].dloc
-        s[j].factors.gF += gF * p[i].dloc
-        s[j].factors.tF += tF * p[i].dloc
-        s[j].time += pacing.np * gF * dF * aF * tF * p[i].dloc
+        factors.dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
+        factors.aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
+        factors.tF = nF.tF([p[i - 1].loc, p[i].loc], pacing.tFs)
+        let f = 1
+        fk.forEach(k => {
+          s[j].factors[k] += factors[k] * len
+          f = f * factors[k]
+        )}
+        s[j].time += pacing.np * f * p[i].dloc
         s[j].len += p[i].dloc
         s[j].delay += getDelay(p[i - 1].loc, p[i].loc)
       }
