@@ -228,6 +228,7 @@ export default {
       }
     },
     terrainFactors: function () {
+      this.$logger('terrainFactors')
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
       let wps = this.course.waypoints
@@ -244,6 +245,22 @@ export default {
       })
       tFs.pop()
       return tFs
+    },
+    delays: function () {
+      this.$logger('delays')
+      if (!this.course.waypoints) { return [] }
+      if (!this.course.waypoints.length) { return [] }
+      if (!this.course._plan) { return [] }
+      let d = []
+      this.course.waypoints.forEach((x, i) => {
+        if (x.delay) {
+          d.push({
+            loc: x.location,
+            delay: x.delay
+          })
+        }
+      })
+      return d
     },
     units: function () {
       var u = {
@@ -295,9 +312,7 @@ export default {
     this.$logger('Complete', t)
     this.course.len = this.course.points[this.course.points.length - 1].loc
     this.checkWaypoints()
-    t = this.$logger('Updating Pacing')
     this.updatePacing()
-    this.$logger('Complete', t)
     this.initializing = false
     setTimeout(() => {
       this.showMap = true
@@ -374,8 +389,14 @@ export default {
         finish.location = this.course.len
         api.updateWaypoint(finish._id, finish)
       }
+      let wpdelay = (this.course._plan) ? this.course._plan.waypointDelay : 0
       wps.forEach((x, i) => {
         wps[i].show = x.type === 'start' || x.tier === 1
+        if (x.type === 'aid' || x.type === 'water') {
+          wps[i].delay = wpdelay
+        } else {
+          wps[i].delay = 0
+        }
       })
     },
     async newPlan () {
@@ -458,10 +479,11 @@ export default {
       }
       this.updatePacing()
     },
+    //updatePacing () {
+    //  this.iteratePaceCalc()
+    //},
     updatePacing () {
-      this.iteratePaceCalc()
-    },
-    iteratePaceCalc () {
+      let t = this.$logger('Updating Pacing')
       var plan = false
       if (this.course._plan && this.course._plan.name) { plan = true }
 
@@ -474,7 +496,7 @@ export default {
         let gF = nF.gF(grd)
         let aF = nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel)
         let tF = nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors)
-        let hF = nF.hF([p[j - 1].time, p[j].time], this.course._plan._heatModel)
+        let hF = plan ? nF.hF([p[j - 1].time, p[j].time], this.course._plan._heatModel, this.delays) : 1
         let dF = nF.dF(
           [p[j - 1].loc, p[j].loc],
           plan ? this.course._plan.drift : 0,
@@ -502,14 +524,8 @@ export default {
 
       if (plan) {
         // calculate delay:
-        let wps = this.course.waypoints
-        wps.forEach((x, i) => {
-          if (x.type === 'aid' || x.type === 'water') {
-            wps[i].delay = this.course._plan.waypointDelay
-            delay += this.course._plan.waypointDelay
-          } else {
-            wps[i].delay = 0
-          }
+        this.course.waypoints.forEach((x, i) => {
+            delay += x.delay
         })
 
         // calculate time, pace, and normalized pace:
@@ -538,9 +554,11 @@ export default {
         np: np,
         drift: plan ? this.course._plan.drift : 0,
         altModel: this.course.altModel,
-        tFs: this.terrainFactors
+        tFs: this.terrainFactors,
+        delays: this.delays
       }
       // Add time to points
+      this.$logger('Complete', t)
     },
     updateFocus: function (type, focus) {
       if (type === 'segment') this.$refs.splitTable.clear()

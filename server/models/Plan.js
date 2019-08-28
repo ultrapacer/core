@@ -31,7 +31,7 @@ var PlanSchema = new Schema({
     type: Number,
     default: null
   },
-  tempModel: {
+  heatModel: {
     type: {},
     default: null
   },

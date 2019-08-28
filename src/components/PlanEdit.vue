@@ -51,13 +51,13 @@
           <b-form-input type="text" v-model="model.drift" size="sm" required>
           </b-form-input>
         </b-form-group>
-        <b-form-group label="Temperature Model" label-size="sm">
+        <b-form-group label="Heat Model" label-size="sm">
           <b-form-input
-              ref="tempModelInput"
+              ref="heatModelInput"
               type="text"
-              v-model="model.tempModelF"
+              v-model="model.heatModelF"
               size="sm"
-              @change="checkTempFormat"
+              @change="checkHeatFormat"
             ></b-form-input>
         </b-form-group>
         <b-form-group label="Typical Aid Station Delay [mm:ss]" label-size="sm">
@@ -109,7 +109,7 @@ export default {
         waypointDelay: 60,
         drift: 0,
         startTime: null,
-        tempModel: null
+        heatModel: null
       },
       model: {},
       pacingMethods: [
@@ -189,9 +189,9 @@ export default {
           'hh:mm'
         )
       }
-      this.model.tempModelF = ''
-      if (this.model.tempModel !== null) {
-        this.model.tempModelF = JSON.stringify(this.model.tempModel)
+      this.model.heatModelF = ''
+      if (this.model.heatModel !== null) {
+        this.model.heatModelF = JSON.stringify(this.model.heatModel)
       }
       this.$bvModal.show('plan-edit-modal')
     },
@@ -216,10 +216,10 @@ export default {
       } else {
         this.model.startTime = null
       }
-      if (this.model.tempModelF.length) {
-        this.model.tempModel = JSON.parse(this.model.tempModelF)
+      if (this.model.heatModelF.length) {
+        this.model.heatModel = JSON.parse(this.model.heatModelF)
       } else {
-        this.model.tempModel = null
+        this.model.heatModel = null
       }
       this.model.waypointDelay = timeUtil.string2sec(this.model.waypointDelayF)
       var p = {}
@@ -247,16 +247,16 @@ export default {
     checkDelayFormat (val) {
       this.validateTime(this.$refs.planformdelayinput, val)
     },
-    checkTempFormat (val) {
-      if (!this.model.tempModelF.length) {
-        this.$refs.tempModelInput.setCustomValidity('')
+    checkHeatFormat (val) {
+      if (!this.model.heatModelF.length) {
+        this.$refs.heatModelInput.setCustomValidity('')
         return
       }
       try {
-        JSON.parse(this.model.tempModelF)
-        this.$refs.tempModelInput.setCustomValidity('')
+        JSON.parse(this.model.heatModelF)
+        this.$refs.heatModelInput.setCustomValidity('')
       } catch (err) {
-        this.$refs.tempModelInput.setCustomValidity(err)
+        this.$refs.heatModelInput.setCustomValidity(err)
       }
     },
     async remove () {
