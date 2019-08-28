@@ -46,10 +46,13 @@ function calcSegments (p, breaks, pacing) {
       alt2: alts[i], // ending altitude
       grade: (alts[i] - alts[i - 1]) / len / 10,
       time: 0,
+      delay: 0,
+      elapsed: 0,
       factors: {
         aF: 0,
         gF: 0,
         tF: 0,
+        hF: 0,
         dF: 0
       }
     })
@@ -60,9 +63,24 @@ function calcSegments (p, breaks, pacing) {
   var delta0 = 0
   var dF = 0
   var grade = 0
+  let delay = 0
+  let delays = (pacing) ? [..pacing.delays] } : []
+  function getDelay(a, b) {
+    if (!delays.length) { return 0 }
+    while (delays.length && delays[0] < b) {
+      if (delays[0].loc < a) {
+        delays.shift()
+      }
+      else {
+        return delays[0].delay
+      }
+    }
+    return 0
+  }
   var gF = 0 // grade factor
   var aF = 0 // altitude factor
   var tF = 0 // terrain factor
+  let hF = 0 // heat factor
   for (i = 1, il = p.length; i < il; i++) {
     j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
     if (j > j0) {
@@ -100,6 +118,7 @@ function calcSegments (p, breaks, pacing) {
           s[j0].factors.tF += tF * len
           s[j0].time += pacing.np * gF * dF * aF * tF * len
           s[j0].len += len
+          s[j0].delay += getDelay(p[i - 1].loc, s[j].start)
         }
         len = p[i].loc - s[j].start
         dF = nF.driftFactor([p[i].loc, s[j].start], pacing.drift, cLen)
@@ -111,6 +130,7 @@ function calcSegments (p, breaks, pacing) {
         s[j].factors.tF += tF * len
         s[j].time += pacing.np * gF * dF * aF * tF * len
         s[j].len += len
+        s[j].delay += getDelay(p[i].loc, s[j].start)
       } else if (j >= 0) {
         dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
         aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
@@ -121,15 +141,19 @@ function calcSegments (p, breaks, pacing) {
         s[j].factors.tF += tF * p[i].dloc
         s[j].time += pacing.np * gF * dF * aF * tF * p[i].dloc
         s[j].len += p[i].dloc
+        s[j].delay += getDelay(p[i - 1].loc, p[i].loc)
       }
     }
     j0 = j
   }
+  // normalize each factor by length and sum elapsed time
+  let elapsed = 0
   s.forEach((x, i) => {
-    s[i].factors.aF = x.factors.aF / x.len
-    s[i].factors.dF = x.factors.dF / x.len
-    s[i].factors.gF = x.factors.gF / x.len
-    s[i].factors.tF = x.factors.tF / x.len
+    Object.keys(s[i].factors).forEach(key => {
+      s[i].factors[key] = x.factors[key] / x.len
+    })
+    elapsed += x.time + x.delay
+    s[i].elapsed = elapsed
   })
   return s
 }
