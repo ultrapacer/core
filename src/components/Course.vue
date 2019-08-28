@@ -489,32 +489,32 @@ export default {
 
       // calculate course normalizing factor:
       var tot = 0
-      var factors = {gF: 0, aF: 0, tF: 0, dF: 0}
+      var factors = {gF: 0, aF: 0, tF: 0, hF: 0, dF: 0}
       var p = this.course.points
       for (let j = 1, jl = p.length; j < jl; j++) {
-        let grd = (p[j - 1].grade + p[j].grade) / 2
-        let gF = nF.gF(grd)
-        let aF = nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel)
-        let tF = nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors)
-        let hF = plan ? nF.hF([p[j - 1].time, p[j].time], this.course._plan._heatModel, this.delays) : 1
-        let dF = nF.dF(
-          [p[j - 1].loc, p[j].loc],
-          plan ? this.course._plan.drift : 0,
-          this.course.len
-        )
+        // determine pacing factor for point
+        let fs = {
+          gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
+          aF: nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel),
+          tF: nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors),
+          hF: plan ? nF.hF([p[j - 1].time, p[j].time], this.course._plan._heatModel, this.delays) : 1,
+          dF: nF.dF(
+            [p[j - 1].loc, p[j].loc],
+            plan ? this.course._plan.drift : 0,
+            this.course.len
+          )
+        }
         let len = p[j].loc - p[j - 1].loc
-        factors.gF += gF * len
-        factors.aF += aF * len
-        factors.tF += tF * len
-        factors.hF += hF * len
-        factors.dF += dF * len
-        tot += gF * aF * tF * hF * dF * len
+        let f = 1 // combined segment factor
+        Object.keys(fs).forEach(k => {
+          factors[k] += fs[k] * len
+          f = f * fs[k]
+        })
+        tot += f * len
       }
-      factors.gF = factors.gF / this.course.len
-      factors.aF = factors.aF / this.course.len
-      factors.tF = factors.tF / this.course.len
-      factors.hF = factors.hF / this.course.len
-      factors.dF = factors.dF / this.course.len
+      Object.keys(factors).forEach(k => {
+        factors[k] += factors[k] / this.course.len
+      })
       this.course.norm = (tot / this.course.len)
 
       let delay = 0
