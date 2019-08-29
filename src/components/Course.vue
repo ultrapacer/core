@@ -513,7 +513,7 @@ export default {
         tot += f * len
       }
       Object.keys(factors).forEach(k => {
-        factors[k] += factors[k] / this.course.len
+        factors[k] = factors[k] / this.course.len
       })
       this.course.norm = (tot / this.course.len)
 
