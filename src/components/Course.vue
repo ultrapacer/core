@@ -524,7 +524,7 @@ export default {
 
       if (plan) {
         // calculate delay:
-        this.course.waypoints.forEach((x, i) => {
+        this.delays.forEach((x, i) => {
             delay += x.delay
         })
 
@@ -561,7 +561,7 @@ export default {
       // Add time to points
       if (plan) {
         let breaks = this.course.points.map(x => x.loc)
-        let arr = calcSegments(this.course.points, breaks, this.pacing)
+        let arr = util.calcSegments(this.course.points, breaks, this.pacing)
         arr.forEach((x, i) => {
           this.course.points[i + 1].time = x.elapsed
            if (this.course._plan.startTime !== null) {

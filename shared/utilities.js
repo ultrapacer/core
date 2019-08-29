@@ -63,7 +63,7 @@ function calcSegments (p, breaks, pacing) {
   var delta0 = 0
   var grade = 0
   let delay = 0
-  let delays = (pacing) ? [..pacing.delays] } : []
+  let delays = (pacing) ? [...pacing.delays] : []
   function getDelay(a, b) {
     if (!delays.length) { return 0 }
     while (delays.length && delays[0] < b) {
@@ -119,7 +119,7 @@ function calcSegments (p, breaks, pacing) {
           fk.forEach(k => {
             s[j0].factors[k] += factors[k] * len
             f = f * factors[k]
-          )}
+          })
           s[j0].time += pacing.np * f * len
           s[j0].len += len
           s[j0].delay += getDelay(p[i - 1].loc, s[j].start)
@@ -132,7 +132,7 @@ function calcSegments (p, breaks, pacing) {
         fk.forEach(k => {
           s[j].factors[k] += factors[k] * len
           f = f * factors[k]
-        )}
+        })
         s[j].time += pacing.np * f * len
         s[j].len += len
         s[j].delay += getDelay(p[i].loc, s[j].start)
@@ -140,11 +140,12 @@ function calcSegments (p, breaks, pacing) {
         factors.dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
         factors.aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
         factors.tF = nF.tF([p[i - 1].loc, p[i].loc], pacing.tFs)
+        
         let f = 1
         fk.forEach(k => {
-          s[j].factors[k] += factors[k] * len
+          s[j].factors[k] += factors[k] * p[i].dloc
           f = f * factors[k]
-        )}
+        })
         s[j].time += pacing.np * f * p[i].dloc
         s[j].len += p[i].dloc
         s[j].delay += getDelay(p[i - 1].loc, p[i].loc)

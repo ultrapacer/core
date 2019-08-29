@@ -136,7 +136,6 @@ export default {
       return arr
     },
     fields: function () {
-      // if (typeof(showTerrain)==='undefined'){return}
       var f = [
         {
           key: 'waypoint1.name',
