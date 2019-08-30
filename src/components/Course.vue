@@ -559,7 +559,7 @@ export default {
         np: np,
         drift: plan ? this.course._plan.drift : 0,
         altModel: this.course.altModel,
-        heatModel: this.course._plan.heatModel,
+        heatModel: plan ? this.course._plan.heatModel : null,
         tFs: this.terrainFactors,
         delays: this.delays
       }
