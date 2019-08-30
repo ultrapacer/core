@@ -14,14 +14,16 @@ function timeStr (t) {
 }
 export default {
   install (Vue) {
-    Vue.prototype.$logger = function (message, prev = null) {
+    Vue.prototype.$logger = function (message = null, prev = null) {
       if (process.env.NODE_ENV === 'development') {
         let t = new Date()
-        if (prev) {
-          let delt = (t - prev) / 1000
-          console.log(`[${timeStr(t)}] ${message} (${delt} sec)`)
-        } else {
-          console.log(`[${timeStr(t)}] ${message}`)
+        if (message) {
+          if (prev) {
+            let delt = (t - prev) / 1000
+            console.log(`[${timeStr(t)}] ${message} (${delt} sec)`)
+          } else {
+            console.log(`[${timeStr(t)}] ${message}`)
+          }
         }
         return t
       }

@@ -479,11 +479,16 @@ export default {
       }
       this.updatePacing()
     },
-    //updatePacing () {
-    //  this.iteratePaceCalc()
-    //},
     updatePacing () {
-      let t = this.$logger('Updating Pacing')
+      this.iteratePaceCalc()
+      if (this.course._plan && this.course._plan.heatModel && this.course._plan.startTime) {
+        this.iteratePaceCalc()
+        this.iteratePaceCalc()
+        this.iteratePaceCalc()
+      }
+    },
+    iteratePaceCalc () {
+      let t = this.$logger()
       var plan = false
       if (this.course._plan && this.course._plan.name) { plan = true }
 
@@ -497,7 +502,7 @@ export default {
           gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
           aF: nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel),
           tF: nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors),
-          hF: plan ? nF.hF([p[j - 1].tod, p[j].tod], this.course._plan.heatModel) : 1,
+          hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], this.course._plan.heatModel) : 1,
           dF: nF.dF(
             [p[j - 1].loc, p[j].loc],
             plan ? this.course._plan.drift : 0,
@@ -525,7 +530,7 @@ export default {
       if (plan) {
         // calculate delay:
         this.delays.forEach((x, i) => {
-            delay += x.delay
+          delay += x.delay
         })
 
         // calculate time, pace, and normalized pace:
@@ -554,23 +559,26 @@ export default {
         np: np,
         drift: plan ? this.course._plan.drift : 0,
         altModel: this.course.altModel,
+        heatModel: this.course._plan.heatModel,
         tFs: this.terrainFactors,
         delays: this.delays
       }
-      
+
       // Add time to points
       if (plan) {
         let breaks = this.course.points.map(x => x.loc)
-        let arr = util.calcSegments(this.course.points, breaks, this.pacing)
+        p[0].time = 0
+        p[0].tod = this.course._plan.startTime
+        let arr = util.calcSegments(p, breaks, this.pacing)
         arr.forEach((x, i) => {
-          this.course.points[i + 1].time = x.elapsed
-           if (this.course._plan.startTime !== null) {
-            // tod: time of day in milliseconds from local midnight
-            this.course.points[i + 1].tod = x.elapsed + this.course._plan.startTime
+          p[i + 1].time = x.elapsed
+          if (this.course._plan.startTime !== null) {
+            // tod: time of day in seconds from local midnight
+            p[i + 1].tod = x.elapsed + this.course._plan.startTime
           }
         })
       }
-      this.$logger('Complete', t)
+      this.$logger('iteratePaceCalc', t)
     },
     updateFocus: function (type, focus) {
       if (type === 'segment') this.$refs.splitTable.clear()

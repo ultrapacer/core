@@ -85,6 +85,7 @@ export default {
   },
   computed: {
     segments: function () {
+      let t = this.$logger()
       // eslint-disable-next-line
       this.updateTrigger // hack for force recompute
       var breaks = []
@@ -133,6 +134,7 @@ export default {
           arr[i].collapsed = true
         }
       })
+      this.$logger('compute-segments', t)
       return arr
     },
     fields: function () {

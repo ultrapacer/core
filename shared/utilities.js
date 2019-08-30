@@ -64,13 +64,12 @@ function calcSegments (p, breaks, pacing) {
   var grade = 0
   let delay = 0
   let delays = (pacing) ? [...pacing.delays] : []
-  function getDelay(a, b) {
+  function getDelay (a, b) {
     if (!delays.length) { return 0 }
     while (delays.length && delays[0] < b) {
       if (delays[0].loc < a) {
         delays.shift()
-      }
-      else {
+      } else {
         return delays[0].delay
       }
     }
@@ -80,8 +79,8 @@ function calcSegments (p, breaks, pacing) {
     aF: 0, // altitude factor
     gF: 0, // grade factor
     tF: 0, // terrain factor
-    hF: 1, // heat factor
-    dF: 0
+    hF: 0, // heat factor
+    dF: 0 // drift factor
   }
   let fk = Object.keys(factors)
   for (i = 1, il = p.length; i < il; i++) {
@@ -115,6 +114,8 @@ function calcSegments (p, breaks, pacing) {
           factors.dF = nF.driftFactor([p[i - 1].loc, s[j].start], pacing.drift, cLen)
           factors.aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
           factors.tF = nF.tF([p[i - 1].loc, s[j].start], pacing.tFs)
+          // !!!! need to interpolate tod for segment start location
+          factors.hF = nF.hF([p[i - 1].tod, p[i].tod], pacing.heatModel)
           let f = 1
           fk.forEach(k => {
             s[j0].factors[k] += factors[k] * len
@@ -128,6 +129,8 @@ function calcSegments (p, breaks, pacing) {
         factors.dF = nF.driftFactor([p[i].loc, s[j].start], pacing.drift, cLen)
         factors.aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
         factors.tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
+        // !!!! need to interpolate tod for segment start location
+        factors.hF = nF.hF([p[i].tod, p[i].tod], pacing.heatModel)
         let f = 1
         fk.forEach(k => {
           s[j].factors[k] += factors[k] * len
@@ -140,7 +143,8 @@ function calcSegments (p, breaks, pacing) {
         factors.dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
         factors.aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
         factors.tF = nF.tF([p[i - 1].loc, p[i].loc], pacing.tFs)
-        
+        factors.hF = nF.hF([p[i - 1].tod, p[i].tod], pacing.heatModel)
+
         let f = 1
         fk.forEach(k => {
           s[j].factors[k] += factors[k] * p[i].dloc
