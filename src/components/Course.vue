@@ -228,7 +228,7 @@ export default {
       }
     },
     terrainFactors: function () {
-      this.$logger('terrainFactors')
+      let l = this.$logger()
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
       let wps = this.course.waypoints
@@ -244,22 +244,29 @@ export default {
         }
       })
       tFs.pop()
+      this.$logger('terrainFactors', l)
       return tFs
     },
     delays: function () {
-      this.$logger('delays')
+      let t = this.$logger()
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
       if (!this.course._plan) { return [] }
+      let wps = this.course.waypoints
+      let wpdelay = (this.course._plan) ? this.course._plan.waypointDelay : 0
       let d = []
-      this.course.waypoints.forEach((x, i) => {
-        if (x.delay) {
+      wps.forEach((x, i) => {
+        if (x.type === 'aid' || x.type === 'water') {
+          wps[i].delay = wpdelay
           d.push({
             loc: x.location,
             delay: x.delay
           })
+        } else {
+          wps[i].delay = 0
         }
       })
+      this.$logger('compute-delays', t)
       return d
     },
     units: function () {
@@ -362,6 +369,7 @@ export default {
       if (typeof callback === 'function') callback()
     },
     checkWaypoints () {
+      let t = this.$logger()
       // function ensures start at 0, finish at length,
       // and all waypoints are within course
       let wps = this.course.waypoints
@@ -389,15 +397,10 @@ export default {
         finish.location = this.course.len
         api.updateWaypoint(finish._id, finish)
       }
-      let wpdelay = (this.course._plan) ? this.course._plan.waypointDelay : 0
       wps.forEach((x, i) => {
         wps[i].show = x.type === 'start' || x.tier === 1
-        if (x.type === 'aid' || x.type === 'water') {
-          wps[i].delay = wpdelay
-        } else {
-          wps[i].delay = 0
-        }
       })
+      this.$logger('checkWaypoints', t)
     },
     async newPlan () {
       if (this.isAuthenticated) {
@@ -482,9 +485,14 @@ export default {
     updatePacing () {
       this.iteratePaceCalc()
       if (this.course._plan && this.course._plan.heatModel && this.course._plan.startTime) {
-        this.iteratePaceCalc()
-        this.iteratePaceCalc()
-        this.iteratePaceCalc()
+        let t = this.$logger()
+        let lnF = this.pacing.nF
+        for (var i = 0; i < 10; i++) {
+          this.iteratePaceCalc()
+          if (Math.abs(lnF - this.pacing.nF) < 0.0001) { break }
+          lnF = this.pacing.nF
+        }
+        this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
       }
     },
     iteratePaceCalc () {
@@ -495,6 +503,10 @@ export default {
       // calculate course normalizing factor:
       var tot = 0
       var factors = {gF: 0, aF: 0, tF: 0, hF: 0, dF: 0}
+      let fstats = {
+        max: {gF: 0, aF: 0, tF: 0, hF: 0, dF: 0},
+        min: {gF: 100, aF: 100, tF: 100, hF: 100, dF: 100}
+      }
       var p = this.course.points
       for (let j = 1, jl = p.length; j < jl; j++) {
         // determine pacing factor for point
@@ -514,6 +526,8 @@ export default {
         Object.keys(fs).forEach(k => {
           factors[k] += fs[k] * len
           f = f * fs[k]
+          fstats.max[k] = Math.max(fstats.max[k], fs[k])
+          fstats.min[k] = Math.min(fstats.min[k], fs[k])
         })
         tot += f * len
       }
@@ -553,6 +567,7 @@ export default {
         time: time,
         delay: delay,
         factors: factors,
+        fstats: fstats,
         moving: time - delay,
         pace: pace,
         nF: this.course.norm,

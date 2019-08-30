@@ -62,7 +62,6 @@ function calcSegments (p, breaks, pacing) {
   var j0 = 0
   var delta0 = 0
   var grade = 0
-  let delay = 0
   let delays = (pacing) ? [...pacing.delays] : []
   function getDelay (a, b) {
     if (!delays.length) { return 0 }
@@ -140,15 +139,15 @@ function calcSegments (p, breaks, pacing) {
         factors.aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
         factors.tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
         if (p[i].hasOwnProperty('tod')) {
-          let startTod = (i < p.length - 1) ?
-          interp(
-            p[i].loc,
-            p[i + 1].loc,
-            p[i].tod,
-            p[i + 1].tod,
-            s[j].start
-          ) :
-          p[i].tod
+          let startTod = (i < p.length - 1)
+            ? interp(
+              p[i].loc,
+              p[i + 1].loc,
+              p[i].tod,
+              p[i + 1].tod,
+              s[j].start
+            )
+            : p[i].tod
           factors.hF = nF.hF([p[i].tod, startTod], pacing.heatModel)
         } else {
           factors.hF = 1
