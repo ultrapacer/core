@@ -417,8 +417,8 @@ export default {
         if (this.course._plan) {
           let p = this.course._plan
           this.$refs.planEdit.show({
-            heatModel: {...p.heatModel},
-            startTime: p.startTime
+            heatModel: p.heatModel ? {...p.heatModel} : null,
+            startTime: p.startTime || null,
             pacingMethod: p.pacingMethod,
             waypointDelay: p.waypointDelay,
             drift: p.drift
