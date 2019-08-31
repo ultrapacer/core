@@ -9,11 +9,11 @@
       @ok="handleOk"
     >
       <form ref="planform" @submit.prevent="">
-        <b-form-group label="Name" label-size="sm">
+        <b-input-group prepend="Name" class="mb-2" size="sm">
           <b-form-input type="text" v-model="model.name" size="sm" required>
           </b-form-input>
-        </b-form-group>
-        <b-form-group label="Pacing Method" label-size="sm">
+        </b-input-group>
+        <b-input-group prepend="Pacing method" class="mb-2" size="sm">
           <b-form-select
               type="number"
               v-model="model.pacingMethod"
@@ -21,8 +21,8 @@
                size="sm"
               required>
           </b-form-select>
-        </b-form-group>
-        <b-form-group v-bind:label="targetLabel" label-size="sm">
+        </b-input-group>
+        <b-input-group v-bind:prepend="targetLabel" v-bind:append="targetAppend" class="mb-2" size="sm">
           <b-form-input
               ref="planformtimeinput"
               type="text"
@@ -34,24 +34,36 @@
               required
               @change="checkTargetFormat"
             ></b-form-input>
-        </b-form-group>
-        <b-form-group label="Start Time [hh:mm (24-hour)]" label-size="sm">
+        </b-input-group>
+        <b-input-group prepend="Start Time" append="(24-hour)" class="mb-2" size="sm">
           <b-form-input
-              ref="starttimeinput"
               type="text"
               v-model="model.startTimeF"
               min="0"
               v-mask="'##:##'"
               placeholder="hh:mm"
               size="sm"
-              :formatter="format_hhmm" lazy-formatter
-              @change="checkStartFormat"
+              :formatter="format_hhmm"
+              lazy-formatter
+            ></b-form-input>
+        </b-input-group>
+        <b-input-group prepend="AS/Water delay" class="mb-2" size="sm">
+          <b-form-input
+            type="text"
+            v-model="model.waypointDelayF"
+            min="0"
+            v-mask="'##:##'"
+            placeholder="mm:ss"
+            :formatter="format_hhmm"
+            lazy-formatter
+            size="sm"
+            required
           ></b-form-input>
-        </b-form-group>
-        <b-form-group label="Pace drift [%]" label-size="sm">
+        </b-input-group>
+        <b-input-group prepend="Pace drift" append=" %" class="mb-2" size="sm">
           <b-form-input type="text" v-model="model.drift" size="sm" required>
           </b-form-input>
-        </b-form-group>
+        </b-input-group>
         <b-form-checkbox
           v-model="hF.enabled"
           :value="true"
@@ -92,23 +104,10 @@
             </b-form-input>
           </b-input-group>
         </b-form-group>
-        <b-form-group label="Typical Aid Station Delay [mm:ss]" label-size="sm">
-          <b-form-input
-            ref="planformdelayinput"
-            type="text"
-            v-model="model.waypointDelayF"
-            min="0"
-            v-mask="'##:##'"
-            placeholder="mm:ss"
-           size="sm"
-            required
-            @change="checkDelayFormat"
-          ></b-form-input>
-        </b-form-group>
-        <b-form-group label="Description" label-size="sm">
+        <b-input-group prepend="Notes" class="mb-2" size="sm">
           <b-form-textarea rows="4" v-model="model.description" size="sm">
           </b-form-textarea>
-        </b-form-group>
+        </b-input-group>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
         <div v-if="model._id" style="text-align: left; flex: auto">
@@ -162,18 +161,21 @@ export default {
   },
   computed: {
     targetLabel: function () {
-      var str = ' [hh:mm:ss]'
+      for (var i = 0; i < this.pacingMethods.length; i++) {
+        if (this.pacingMethods[i].value === this.model.pacingMethod) {
+          return this.pacingMethods[i].text
+        }
+      }
+    },
+    targetAppend: function () {
+      var str = 'elapsed'
       if (
         this.model.pacingMethod === 'pace' ||
         this.model.pacingMethod === 'np'
       ) {
-        str = ` [(mm:ss)/${this.units.dist}]`
+        str = `/${this.units.dist}`
       }
-      for (var i = 0; i < this.pacingMethods.length; i++) {
-        if (this.pacingMethods[i].value === this.model.pacingMethod) {
-          return this.pacingMethods[i].text + str
-        }
-      }
+      return str
     },
     targetPlaceholder: function () {
       if (
@@ -287,12 +289,6 @@ export default {
     },
     checkTargetFormat (val) {
       this.validateTime(this.$refs.planformtimeinput, val)
-    },
-    checkStartFormat (val) {
-      this.validateTime(this.$refs.starttimeinput, val, 24)
-    },
-    checkDelayFormat (val) {
-      this.validateTime(this.$refs.planformdelayinput, val)
     },
     async remove () {
       this.deleting = true
