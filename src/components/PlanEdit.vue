@@ -44,6 +44,7 @@
               v-mask="'##:##'"
               placeholder="hh:mm"
               size="sm"
+              :formatter="format_hhmm" lazy-formatter
               @change="checkStartFormat"
           ></b-form-input>
         </b-form-group>
@@ -51,22 +52,45 @@
           <b-form-input type="text" v-model="model.drift" size="sm" required>
           </b-form-input>
         </b-form-group>
-        <b-form-group label="Heat Model" label-size="sm">
-         <b-form-checkbox
-            v-model="heatFactorEnable"
-            :value="true"
-              size="sm"
-            :unchecked-value="false">
-            Enabled
-          </b-form-checkbox>
-          <b-form-input
-              v-if="heatFactorEnable"
-              ref="heatModelInput"
-              type="text"
-              v-model="model.heatModelF"
-              size="sm"
-              @change="checkHeatFormat"
-            ></b-form-input>
+        <b-form-checkbox
+          v-model="hF.enabled"
+          :value="true"
+            size="sm"
+            class="mb-2"
+          :unchecked-value="false">
+          Heat Factor
+        </b-form-checkbox>
+        <b-form-group v-if="hF.enabled" style="padding-left: 1em">
+          <b-input-group prepend="Sun Rise" class="mb-2" size="sm">
+            <b-form-input
+                v-model="hF.rise"
+                v-mask="'##:##'"
+                placeholder="hh:mm"
+                :formatter="format_hhmm"
+                lazy-formatter
+                class="mr-n1 mb-n2">
+            </b-form-input>
+            <b-input-group-append>
+              <b-input-group prepend="Set" size="sm">
+                <b-form-input
+                    v-model="hF.set"
+                    v-mask="'##:##'"
+                    class="mb-n2"
+                    placeholder="hh:mm"
+                    :formatter="format_hhmm"
+                    lazy-formatter>
+                </b-form-input>
+              </b-input-group>
+            </b-input-group-append>
+          </b-input-group>
+          <b-input-group prepend="Baseline" append=" %" class="mb-2" size="sm">
+            <b-form-input v-model="hF.baseline" class="mb-n2">
+            </b-form-input>
+          </b-input-group>
+          <b-input-group prepend="Maximum"  append="%" class="mb-2" size="sm">
+            <b-form-input v-model="hF.max" class="mb-n2">
+            </b-form-input>
+          </b-input-group>
         </b-form-group>
         <b-form-group label="Typical Aid Station Delay [mm:ss]" label-size="sm">
           <b-form-input
@@ -127,7 +151,13 @@ export default {
       ],
       saving: false,
       deleting: false,
-      heatFactorEnable: false
+      hF: {
+        enabled: false,
+        rise: '',
+        set: '',
+        baseline: '',
+        max: ''
+      }
     }
   },
   computed: {
@@ -198,9 +228,12 @@ export default {
           'hh:mm'
         )
       }
-      this.model.heatModelF = ''
       if (this.model.heatModel !== null) {
-        this.model.heatModelF = JSON.stringify(this.model.heatModel)
+        this.hF.rise = timeUtil.sec2string(this.model.heatModel.start, 'hh:mm')
+        this.hF.set = timeUtil.sec2string(this.model.heatModel.stop, 'hh:mm')
+        this.hF.max = this.model.heatModel.max
+        this.hF.baseline = this.model.heatModel.baseline || 0
+        this.hF.enabled = true
       }
       this.$bvModal.show('plan-edit-modal')
     },
@@ -225,8 +258,13 @@ export default {
       } else {
         this.model.startTime = null
       }
-      if (this.model.heatModelF.length) {
-        this.model.heatModel = JSON.parse(this.model.heatModelF)
+      if (this.hF.enabled) {
+        this.model.heatModel = {
+          start: timeUtil.string2sec(`${this.hF.rise}:00`) + 1800, // rise + 30m
+          stop: timeUtil.string2sec(`${this.hF.set}:00`) + 7200, // set + 1 hrs
+          max: this.hF.max,
+          baseline: this.hF.baseline
+        }
       } else {
         this.model.heatModel = null
       }
@@ -256,18 +294,6 @@ export default {
     checkDelayFormat (val) {
       this.validateTime(this.$refs.planformdelayinput, val)
     },
-    checkHeatFormat (val) {
-      if (!this.model.heatModelF.length) {
-        this.$refs.heatModelInput.setCustomValidity('')
-        return
-      }
-      try {
-        JSON.parse(this.model.heatModelF)
-        this.$refs.heatModelInput.setCustomValidity('')
-      } catch (err) {
-        this.$refs.heatModelInput.setCustomValidity(err)
-      }
-    },
     async remove () {
       this.deleting = true
       this.$emit('delete', this.model, async (err) => {
@@ -281,7 +307,13 @@ export default {
     validateTime (el, val, max1 = null) {
       var pass = true
       if (el.required || val.length) {
-        if (val.length === el._props.placeholder.length) {
+        var ph = ''
+        if (el.hasOwnProperty('_props')) {
+          ph = el._props.placeholder
+        } else {
+          ph = el.placeholder
+        }
+        if (val.length === ph.length) {
           var arr = val.split(':')
           for (var i = arr.length - 1; i > 0; i--) {
             if (Number(arr[i]) >= 60) {
@@ -298,8 +330,25 @@ export default {
       if (pass) {
         el.setCustomValidity('')
       } else {
-        el.setCustomValidity(`Enter time as "${el._props.placeholder}"`)
+        el.setCustomValidity(`Enter time as "${ph}"`)
       }
+    },
+    format_hhmm (value, event) {
+      let v = value
+      if (value.length && value.indexOf(':') === -1) {
+        if (value.length === 1) {
+          v = `0${value}:00`
+        } else if (value.length === 2) {
+          v = `${value}:00`
+        } else if (value.length === 3) {
+          let s = `0${value}`
+          v = s.slice(0, 2) + ':' + s.slice(2)
+        } else if (value.length === 4) {
+          v = value.slice(0, 2) + ':' + value.slice(2)
+        }
+      }
+      this.validateTime(event.target, v, 24)
+      return v
     }
   }
 }

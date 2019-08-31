@@ -319,7 +319,7 @@ export default {
     this.$logger('Complete', t)
     this.course.len = this.course.points[this.course.points.length - 1].loc
     this.checkWaypoints()
-    this.updatePacing()
+    await this.updatePacing()
     this.initializing = false
     setTimeout(() => {
       this.showMap = true
@@ -365,7 +365,7 @@ export default {
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
       this.checkWaypoints()
-      this.updatePacing()
+      await this.updatePacing()
       if (typeof callback === 'function') callback()
     },
     checkWaypoints () {
@@ -438,7 +438,7 @@ export default {
           if (this.course._plan._id === plan._id) {
             if (this.course.plans.length) {
               this.course._plan = this.course.plans[0]
-              this.calcPlan()
+              await this.calcPlan()
             } else {
               this.course._plan = {}
               this.pacing = {}
@@ -466,10 +466,10 @@ export default {
           this.course._plan = this.course.plans[i]
         }
       }
-      this.calcPlan()
+      await this.calcPlan()
       if (typeof callback === 'function') callback()
     },
-    calcPlan () {
+    async calcPlan () {
       if (!this.course._plan) { return }
       this.$router.push({
         name: 'Plan',
@@ -480,22 +480,22 @@ export default {
       if (this.owner) {
         api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
       }
-      this.updatePacing()
+      await this.updatePacing()
     },
-    updatePacing () {
-      this.iteratePaceCalc()
+    async updatePacing () {
+      await this.iteratePaceCalc()
       if (this.course._plan && this.course._plan.heatModel && this.course._plan.startTime) {
         let t = this.$logger()
         let lnF = this.pacing.nF
         for (var i = 0; i < 10; i++) {
-          this.iteratePaceCalc()
+          await this.iteratePaceCalc()
           if (Math.abs(lnF - this.pacing.nF) < 0.0001) { break }
           lnF = this.pacing.nF
         }
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
       }
     },
-    iteratePaceCalc () {
+    async iteratePaceCalc () {
       let t = this.$logger()
       var plan = false
       if (this.course._plan && this.course._plan.name) { plan = true }

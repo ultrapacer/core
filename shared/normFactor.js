@@ -76,7 +76,7 @@ function heatFactor (time, model = null) {
   let hF = 1
   if (t > model.start && t < model.stop) {
     let theta = (t - model.start) / (model.stop - model.start) * Math.PI
-    hF = 1 + (model.max * Math.sin(theta) / 100)
+    hF = 1 + (model.max * Math.sin(theta) / 100) + (model.baseline || 0)
   }
   return hF
 }
