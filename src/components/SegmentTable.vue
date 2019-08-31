@@ -1,6 +1,7 @@
 <template>
   <b-table
     ref="table"
+    :busy="busy"
     :items="segments"
     :fields="fields"
     primary-key="waypoint1._id"
@@ -64,7 +65,7 @@
 import { calcSegments, round } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'units', 'pacing'],
+  props: ['course', 'units', 'pacing', 'busy'],
   data () {
     return {
       clearing: false,

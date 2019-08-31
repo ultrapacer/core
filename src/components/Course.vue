@@ -49,6 +49,7 @@
                 :course="course"
                 :units="units"
                 :pacing="pacing"
+                :busy="busy"
                 @select="updateFocus"
                 @show="waypointShow"
                 @hide="waypointHide"
@@ -61,6 +62,7 @@
                 :plan="plan"
                 :units="units"
                 :pacing="pacing"
+                :busy="busy"
                 @select="updateFocus"
               ></split-table>
           </b-tab>
@@ -182,6 +184,7 @@ export default {
   data () {
     return {
       initializing: true,
+      busy: true,
       editing: false,
       saving: false,
       course: {},
@@ -480,9 +483,11 @@ export default {
       if (this.owner) {
         api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
       }
-      await this.updatePacing()
+      this.busy = true
+      setTimeout(() => { this.updatePacing() }, 10)
     },
     async updatePacing () {
+      this.busy = true
       await this.iteratePaceCalc()
       if (this.course._plan && this.course._plan.heatModel && this.course._plan.startTime) {
         let t = this.$logger()
@@ -494,6 +499,7 @@ export default {
         }
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
       }
+      this.busy = false
     },
     async iteratePaceCalc () {
       let t = this.$logger()

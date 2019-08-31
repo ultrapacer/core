@@ -1,6 +1,7 @@
 <template>
   <b-table
     ref="table"
+    :busy="busy"
     :items="splits"
     :fields="fields"
     primary-key="start._id"
@@ -29,7 +30,7 @@
 import { calcSegments } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'units', 'plan', 'pacing'],
+  props: ['course', 'units', 'plan', 'pacing', 'busy'],
   data () {
     return {
       clearing: false
