@@ -414,7 +414,18 @@ export default {
             this.user._courses.push(this.course._id)
           }
         }
-        this.$refs.planEdit.show()
+        if (this.course._plan) {
+          let p = this.course._plan
+          this.$refs.planEdit.show({
+            heatModel: {...p.heatModel},
+            startTime: p.startTime
+            pacingMethod: p.pacingMethod,
+            waypointDelay: p.waypointDelay,
+            drift: p.drift
+          })
+        } else {
+          this.$refs.planEdit.show()
+        }
       } else {
         this.$auth.login({
           route: {
