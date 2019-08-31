@@ -52,7 +52,15 @@
           </b-form-input>
         </b-form-group>
         <b-form-group label="Heat Model" label-size="sm">
+         <b-form-checkbox
+            v-model="heatFactorEnable"
+            :value="true"
+              size="sm"
+            :unchecked-value="false">
+            Enabled
+          </b-form-checkbox>
           <b-form-input
+              v-if="heatFactorEnable"
               ref="heatModelInput"
               type="text"
               v-model="model.heatModelF"
@@ -118,7 +126,8 @@ export default {
         { value: 'np', text: 'Normalized Pace' }
       ],
       saving: false,
-      deleting: false
+      deleting: false,
+      heatFactorEnable: false
     }
   },
   computed: {
