@@ -1,4 +1,9 @@
 <template>
+<div>
+<div v-if="busy" class="d-flex justify-content-center mb-3">
+  <b-spinner label="Loading..." ></b-spinner>
+</div>
+<div v-else>
 <b-list-group v-if="plan && plan.name && pacing && pacing.time">
   <b-list-group-item>
     <h5 class="mb-1">Pacing Calculation Basis</h5>
@@ -155,13 +160,15 @@
     <p v-if="pacing.factors.hF <= 1" class="mb-1">No Heat Effects</p>
   </b-list-group-item>
 </b-list-group>
+</div>
+</div>
 </template>
 
 <script>
 import timeUtil from '../../shared/timeUtilities'
 import {round} from '../../shared/utilities'
 export default {
-  props: ['plan', 'pacing', 'units', 'course'],
+  props: ['plan', 'pacing', 'units', 'course', 'busy'],
   data () {
     return {
       methods: {

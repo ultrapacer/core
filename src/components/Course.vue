@@ -125,6 +125,7 @@
                 :plan="course._plan"
                 :pacing="pacing"
                 :units="units"
+                :busy="busy"
               ></plan-details>
           </b-tab>
         </b-tabs>
