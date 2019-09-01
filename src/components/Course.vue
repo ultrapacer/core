@@ -601,15 +601,25 @@ export default {
       if (plan) {
         let breaks = this.course.points.map(x => x.loc)
         p[0].time = 0
-        p[0].tod = this.course._plan.startTime
         let arr = util.calcSegments(p, breaks, this.pacing)
         arr.forEach((x, i) => {
           p[i + 1].time = x.elapsed
-          if (this.course._plan.startTime !== null) {
-            // tod: time of day in seconds from local midnight
-            p[i + 1].tod = x.elapsed + this.course._plan.startTime
-          }
         })
+        if (this.course._plan.startTime !== null) {
+          p.forEach((x, i) => {
+            // tod: time of day in seconds from local midnight
+            p[i].tod = (x.time + this.course._plan.startTime) % 86400
+          }
+        } else {
+          p.forEach((x, i) => {
+            delete p[i].tod
+          }
+        }
+      } else {
+        p.forEach((x, i) => {
+          delete p[i].time
+          delete p[i].tod
+        }
       }
       this.$logger('iteratePaceCalc', t)
     },
