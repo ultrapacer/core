@@ -1,6 +1,7 @@
 <template>
   <b-table
     ref="table"
+    :busy="busy"
     :items="segments"
     :fields="fields"
     primary-key="waypoint1._id"
@@ -64,7 +65,7 @@
 import { calcSegments, round } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'units', 'pacing'],
+  props: ['course', 'units', 'pacing', 'busy'],
   data () {
     return {
       clearing: false,
@@ -85,28 +86,19 @@ export default {
   },
   computed: {
     segments: function () {
+      let t = this.$logger()
       // eslint-disable-next-line
       this.updateTrigger // hack for force recompute
       var breaks = []
       let wps = []
-      let is = []
-      let delays = []
       this.course.waypoints.forEach((x, i) => {
         if (this.course.waypoints[i].show) {
           breaks.push(x.location)
           wps.push(x)
-          is.push(i)
-          delays.push(x.delay ? x.delay : 0)
-        } else {
-          delays[delays.length - 1] += (x.delay ? x.delay : 0)
         }
       })
       let arr = calcSegments(this.course.points, breaks, this.pacing)
       arr.forEach((x, i) => {
-        arr[i].elapsed =
-          arr[i].time +
-          (i > 0 ? arr[i - 1].elapsed : 0) +
-          delays[i]
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
         arr[i].collapsed = false
@@ -133,10 +125,10 @@ export default {
           arr[i].collapsed = true
         }
       })
+      this.$logger('compute-segments', t)
       return arr
     },
     fields: function () {
-      // if (typeof(showTerrain)==='undefined'){return}
       var f = [
         {
           key: 'waypoint1.name',

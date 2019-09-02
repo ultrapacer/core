@@ -31,6 +31,10 @@ var PlanSchema = new Schema({
     type: Number,
     default: null
   },
+  heatModel: {
+    type: {},
+    default: null
+  },
   waypointDelay: {
     type: Number,
     default: 60

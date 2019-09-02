@@ -49,6 +49,7 @@
                 :course="course"
                 :units="units"
                 :pacing="pacing"
+                :busy="busy"
                 @select="updateFocus"
                 @show="waypointShow"
                 @hide="waypointHide"
@@ -61,6 +62,7 @@
                 :plan="plan"
                 :units="units"
                 :pacing="pacing"
+                :busy="busy"
                 @select="updateFocus"
               ></split-table>
           </b-tab>
@@ -123,6 +125,7 @@
                 :plan="course._plan"
                 :pacing="pacing"
                 :units="units"
+                :busy="busy"
               ></plan-details>
           </b-tab>
         </b-tabs>
@@ -182,6 +185,7 @@ export default {
   data () {
     return {
       initializing: true,
+      busy: true,
       editing: false,
       saving: false,
       course: {},
@@ -228,6 +232,7 @@ export default {
       }
     },
     terrainFactors: function () {
+      let l = this.$logger()
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
       let wps = this.course.waypoints
@@ -243,7 +248,30 @@ export default {
         }
       })
       tFs.pop()
+      this.$logger('terrainFactors', l)
       return tFs
+    },
+    delays: function () {
+      let t = this.$logger()
+      if (!this.course.waypoints) { return [] }
+      if (!this.course.waypoints.length) { return [] }
+      if (!this.course._plan) { return [] }
+      let wps = this.course.waypoints
+      let wpdelay = (this.course._plan) ? this.course._plan.waypointDelay : 0
+      let d = []
+      wps.forEach((x, i) => {
+        if (x.type === 'aid' || x.type === 'water') {
+          wps[i].delay = wpdelay
+          d.push({
+            loc: x.location,
+            delay: x.delay
+          })
+        } else {
+          wps[i].delay = 0
+        }
+      })
+      this.$logger('compute-delays', t)
+      return d
     },
     units: function () {
       var u = {
@@ -273,6 +301,7 @@ export default {
     }
   },
   async created () {
+    let t = this.$logger('Downloading Course')
     try {
       if (this.$route.params.plan) {
         this.course = await api.getCourse(this.$route.params.plan, 'plan')
@@ -287,11 +316,14 @@ export default {
       this.$router.push({path: '/'})
       return
     }
+    this.$logger('Complete', t)
     this.$title = this.course.name
+    t = this.$logger('Adding locations')
     util.addLoc(this.course.points)
+    this.$logger('Complete', t)
     this.course.len = this.course.points[this.course.points.length - 1].loc
     this.checkWaypoints()
-    this.updatePacing()
+    await this.updatePacing()
     this.initializing = false
     setTimeout(() => {
       this.showMap = true
@@ -300,6 +332,7 @@ export default {
         this.$router.push({query: {}})
       }
     }, 500)
+    this.$logger('Finish')
   },
   methods: {
     async newWaypoint () {
@@ -336,10 +369,11 @@ export default {
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
       this.checkWaypoints()
-      this.updatePacing()
+      await this.updatePacing()
       if (typeof callback === 'function') callback()
     },
     checkWaypoints () {
+      let t = this.$logger()
       // function ensures start at 0, finish at length,
       // and all waypoints are within course
       let wps = this.course.waypoints
@@ -370,6 +404,7 @@ export default {
       wps.forEach((x, i) => {
         wps[i].show = x.type === 'start' || x.tier === 1
       })
+      this.$logger('checkWaypoints', t)
     },
     async newPlan () {
       if (this.isAuthenticated) {
@@ -379,7 +414,18 @@ export default {
             this.user._courses.push(this.course._id)
           }
         }
-        this.$refs.planEdit.show()
+        if (this.course._plan) {
+          let p = this.course._plan
+          this.$refs.planEdit.show({
+            heatModel: p.heatModel ? {...p.heatModel} : null,
+            startTime: p.startTime || null,
+            pacingMethod: p.pacingMethod,
+            waypointDelay: p.waypointDelay,
+            drift: p.drift
+          })
+        } else {
+          this.$refs.planEdit.show()
+        }
       } else {
         this.$auth.login({
           route: {
@@ -407,7 +453,7 @@ export default {
           if (this.course._plan._id === plan._id) {
             if (this.course.plans.length) {
               this.course._plan = this.course.plans[0]
-              this.calcPlan()
+              await this.calcPlan()
             } else {
               this.course._plan = {}
               this.pacing = {}
@@ -435,10 +481,10 @@ export default {
           this.course._plan = this.course.plans[i]
         }
       }
-      this.calcPlan()
+      await this.calcPlan()
       if (typeof callback === 'function') callback()
     },
-    calcPlan () {
+    async calcPlan () {
       if (!this.course._plan) { return }
       this.$router.push({
         name: 'Plan',
@@ -449,37 +495,63 @@ export default {
       if (this.owner) {
         api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
       }
-      this.updatePacing()
+      this.busy = true
+      setTimeout(() => { this.updatePacing() }, 10)
     },
-    updatePacing () {
+    async updatePacing () {
+      this.busy = true
+      await this.iteratePaceCalc()
+      if (this.course._plan && this.course._plan.heatModel && this.course._plan.startTime) {
+        let t = this.$logger()
+        let lnF = this.pacing.nF
+        for (var i = 0; i < 10; i++) {
+          await this.iteratePaceCalc()
+          if (Math.abs(lnF - this.pacing.nF) < 0.0001) { break }
+          lnF = this.pacing.nF
+        }
+        this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
+      }
+      this.busy = false
+    },
+    async iteratePaceCalc () {
+      let t = this.$logger()
       var plan = false
       if (this.course._plan && this.course._plan.name) { plan = true }
 
       // calculate course normalizing factor:
       var tot = 0
-      var factors = {gF: 0, aF: 0, tF: 0, dF: 0}
+      var factors = {gF: 0, aF: 0, tF: 0, hF: 0, dF: 0}
+      let fstats = {
+        max: {gF: 0, aF: 0, tF: 0, hF: 0, dF: 0},
+        min: {gF: 100, aF: 100, tF: 100, hF: 100, dF: 100}
+      }
       var p = this.course.points
       for (let j = 1, jl = p.length; j < jl; j++) {
-        let grd = (p[j - 1].grade + p[j].grade) / 2
-        let gF = nF.gradeFactor(grd)
-        let aF = nF.altFactor([p[j - 1].alt, p[j].alt], this.course.altModel)
-        let tF = nF.terrainFactor([p[j - 1].loc, p[j].loc], this.terrainFactors)
-        let dF = nF.driftFactor(
-          [p[j - 1].loc, p[j].loc],
-          plan ? this.course._plan.drift : 0,
-          this.course.len
-        )
+        // determine pacing factor for point
+        let fs = {
+          gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
+          aF: nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel),
+          tF: nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors),
+          hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], this.course._plan.heatModel) : 1,
+          dF: nF.dF(
+            [p[j - 1].loc, p[j].loc],
+            plan ? this.course._plan.drift : 0,
+            this.course.len
+          )
+        }
         let len = p[j].loc - p[j - 1].loc
-        factors.gF += gF * len
-        factors.aF += aF * len
-        factors.tF += tF * len
-        factors.dF += dF * len
-        tot += gF * aF * tF * dF * len
+        let f = 1 // combined segment factor
+        Object.keys(fs).forEach(k => {
+          factors[k] += fs[k] * len
+          f = f * fs[k]
+          fstats.max[k] = Math.max(fstats.max[k], fs[k])
+          fstats.min[k] = Math.min(fstats.min[k], fs[k])
+        })
+        tot += f * len
       }
-      factors.gF = factors.gF / this.course.len
-      factors.aF = factors.aF / this.course.len
-      factors.tF = factors.tF / this.course.len
-      factors.dF = factors.dF / this.course.len
+      Object.keys(factors).forEach(k => {
+        factors[k] = factors[k] / this.course.len
+      })
       this.course.norm = (tot / this.course.len)
 
       let delay = 0
@@ -489,14 +561,8 @@ export default {
 
       if (plan) {
         // calculate delay:
-        let wps = this.course.waypoints
-        wps.forEach((x, i) => {
-          if (x.type === 'aid' || x.type === 'water') {
-            wps[i].delay = this.course._plan.waypointDelay
-            delay += this.course._plan.waypointDelay
-          } else {
-            wps[i].delay = 0
-          }
+        this.delays.forEach((x, i) => {
+          delay += x.delay
         })
 
         // calculate time, pace, and normalized pace:
@@ -519,14 +585,43 @@ export default {
         time: time,
         delay: delay,
         factors: factors,
+        fstats: fstats,
         moving: time - delay,
         pace: pace,
         nF: this.course.norm,
         np: np,
         drift: plan ? this.course._plan.drift : 0,
         altModel: this.course.altModel,
-        tFs: this.terrainFactors
+        heatModel: plan ? this.course._plan.heatModel : null,
+        tFs: this.terrainFactors,
+        delays: this.delays
       }
+
+      // Add time to points
+      if (plan) {
+        let breaks = this.course.points.map(x => x.loc)
+        p[0].time = 0
+        let arr = util.calcSegments(p, breaks, this.pacing)
+        arr.forEach((x, i) => {
+          p[i + 1].time = x.elapsed
+        })
+        if (this.course._plan.startTime !== null) {
+          p.forEach((x, i) => {
+            // tod: time of day in seconds from local midnight
+            p[i].tod = (x.time + this.course._plan.startTime) % 86400
+          })
+        } else {
+          p.forEach((x, i) => {
+            delete p[i].tod
+          })
+        }
+      } else {
+        p.forEach((x, i) => {
+          delete p[i].time
+          delete p[i].tod
+        })
+      }
+      this.$logger('iteratePaceCalc', t)
     },
     updateFocus: function (type, focus) {
       if (type === 'segment') this.$refs.splitTable.clear()

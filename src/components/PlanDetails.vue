@@ -1,4 +1,9 @@
 <template>
+<div>
+<div v-if="busy" class="d-flex justify-content-center mb-3">
+  <b-spinner label="Loading..." ></b-spinner>
+</div>
+<div v-else>
 <b-list-group v-if="plan && plan.name && pacing && pacing.time">
   <b-list-group-item>
     <h5 class="mb-1">Pacing Calculation Basis</h5>
@@ -86,15 +91,15 @@
     <p class="mb-1">
       Steepest Climb:
       <b>{{ maxGrade.toFixed(1) }}%</b> grade
-      [<b>{{ maxGF / 100 | percentWithPace(pacing.np, units) }}</b>]
+      [<b>{{ pacing.fstats.max.gF - 1 | percentWithPace(pacing.np, units) }}</b>]
     </p>
     <p class="mb-1">
       Steepest Descent:
       <b>{{ minGrade.toFixed(1) }}%</b> grade
-      [<b>{{ minGF / 100 | percentWithPace(pacing.np, units) }}</b>]
+      [<b>{{ pacing.fstats.min.gF - 1 | percentWithPace(pacing.np, units) }}</b>]
     </p>
   </b-list-group-item>
-  <b-list-group-item v-if="maxAltFactor || minAltFactor">
+  <b-list-group-item v-if="pacing.factors.aF > 1">
     <h5 class="mb-1">Altitude Effects</h5>
     <p class="mb-1">
       Average Altitude Factor:
@@ -102,18 +107,18 @@
     </p>
     <p class="mb-1">
       Highest Altitude Factor:
-      <b>{{ maxAltFactor / 100 | percentWithPace(pacing.np, units) }}</b>
+      <b>{{ pacing.fstats.max.aF - 1 | percentWithPace(pacing.np, units) }}</b>
       at
       <b>{{ maxAltitude | formatAlt(units.altScale) }} {{ units.alt }}</b>
     </p>
     <p class="mb-1">
       Lowest Altitude Factor:
-      <b>{{ minAltFactor / 100 | percentWithPace(pacing.np, units) }}</b>
+      <b>{{ pacing.fstats.min.aF - 1 | percentWithPace(pacing.np, units) }}</b>
       at
       <b>{{ minAltitude | formatAlt(units.altScale) }} {{ units.alt }}</b>
     </p>
   </b-list-group-item>
-  <b-list-group-item v-if="maxTF || minTF">
+  <b-list-group-item v-if="pacing.factors.tF > 1">
     <h5 class="mb-1">Terrain Effects</h5>
     <p class="mb-1">
       Overall Terrain Factor:
@@ -121,32 +126,49 @@
     </p>
     <p class="mb-1">
       Hardest Terrain:
-      <b>{{ maxTF / 100 | percentWithPace(pacing.np, units) }}</b>
+      <b>{{ pacing.fstats.max.tF - 1 | percentWithPace(pacing.np, units) }}</b>
       over
       <b>{{ maxTFdist | formatDist(units.distScale) }} {{ units.dist }}</b>
     </p>
     <p class="mb-1">
       Easiest Terrain:
-      <b>{{ minTF / 100 | percentWithPace(pacing.np, units) }}</b>
+      <b>{{ pacing.fstats.min.tF - 1 | percentWithPace(pacing.np, units) }}</b>
       over
       <b>{{ minTFdist | formatDist(units.distScale) }} {{ units.dist }}</b>
+    </p>
+  </b-list-group-item>
+  <b-list-group-item v-if="pacing.factors.hF > 1">
+    <h5 class="mb-1">Heat Effects</h5>
+    <p class="mb-1">
+      Average Heat Factor:
+      <b>{{ pacing.factors.hF - 1 | percentWithPace(pacing.np, units) }}</b>
+    </p>
+    <p class="mb-1">
+      Highest Heat Factor:
+      <b>{{ pacing.fstats.max.hF - 1 | percentWithPace(pacing.np, units) }}</b>
+    </p>
+    <p class="mb-1">
+      Lowest Heat Factor:
+      <b>{{ pacing.fstats.min.hF - 1 | percentWithPace(pacing.np, units) }}</b>
     </p>
   </b-list-group-item>
   <b-list-group-item >
     <p v-if="!pacing.delay" class="mb-1">No Delays</p>
     <p v-if="!plan.drift" class="mb-1">No Pace Drift</p>
-    <p v-if="!maxAltFactor && !minAltFactor" class="mb-1">No Altitude Effects</p>
-    <p v-if="!maxTF && !minTF" class="mb-1">No Terrain Effects</p>
+    <p v-if="pacing.factors.aF <= 1" class="mb-1">No Altitude Effects</p>
+    <p v-if="pacing.factors.tF <= 1" class="mb-1">No Terrain Effects</p>
+    <p v-if="pacing.factors.hF <= 1" class="mb-1">No Heat Effects</p>
   </b-list-group-item>
 </b-list-group>
+</div>
+</div>
 </template>
 
 <script>
 import timeUtil from '../../shared/timeUtilities'
-import nF from '../../shared/normFactor'
 import {round} from '../../shared/utilities'
 export default {
-  props: ['plan', 'pacing', 'units', 'course'],
+  props: ['plan', 'pacing', 'units', 'course', 'busy'],
   data () {
     return {
       methods: {
@@ -191,24 +213,12 @@ export default {
       )
       return m
     },
-    maxAltFactor: function () {
-      return round(
-        (nF.altFactor(this.maxAltitude, this.pacing.altModel) - 1) * 100,
-        2
-      )
-    },
     minAltitude: function () {
       var m = Math.min.apply(
         Math,
         this.course.points.map(x => { return x.alt })
       )
       return m
-    },
-    minAltFactor: function () {
-      return round(
-        (nF.altFactor(this.minAltitude, this.pacing.altModel) - 1) * 100,
-        2
-      )
     },
     maxGrade: function () {
       var max = Math.max.apply(
@@ -217,12 +227,6 @@ export default {
       )
       return max
     },
-    maxGF: function () {
-      return round(
-        (nF.gradeFactor(this.maxGrade) - 1) * 100,
-        2
-      )
-    },
     minGrade: function () {
       var min = Math.min.apply(
         Math,
@@ -230,22 +234,9 @@ export default {
       )
       return min
     },
-    minGF: function () {
-      return round(
-        (nF.gradeFactor(this.minGrade) - 1) * 100,
-        2
-      )
-    },
-    maxTF: function () {
-      var m = Math.max.apply(
-        Math,
-        this.pacing.tFs.map(x => { return x.tF })
-      )
-      return m
-    },
     maxTFdist: function () {
       let da = this.pacing.tFs.map(x => {
-        if (x.tF === this.maxTF) {
+        if (round(x.tF / 100, 2) === round(this.pacing.fstats.max.tF - 1, 2)) {
           return x.end - x.start
         } else {
           return 0
@@ -254,16 +245,9 @@ export default {
       let d = da.reduce((a, b) => a + b, 0)
       return d
     },
-    minTF: function () {
-      var m = Math.min.apply(
-        Math,
-        this.pacing.tFs.map(x => { return x.tF })
-      )
-      return m
-    },
     minTFdist: function () {
       let da = this.pacing.tFs.map(x => {
-        if (x.tF === this.minTF) {
+        if (round(x.tF / 100, 2) === round(this.pacing.fstats.min.tF - 1, 2)) {
           return x.end - x.start
         } else {
           return 0
