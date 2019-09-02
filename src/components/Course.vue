@@ -609,17 +609,17 @@ export default {
           p.forEach((x, i) => {
             // tod: time of day in seconds from local midnight
             p[i].tod = (x.time + this.course._plan.startTime) % 86400
-          }
+          })
         } else {
           p.forEach((x, i) => {
             delete p[i].tod
-          }
+          })
         }
       } else {
         p.forEach((x, i) => {
           delete p[i].time
           delete p[i].tod
-        }
+        })
       }
       this.$logger('iteratePaceCalc', t)
     },
