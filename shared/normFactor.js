@@ -60,10 +60,10 @@ function heatFactor (time, model = null) {
   // returns heat factor
   // time is time of day in milliseconds
   // model format:
-  //    start:  tod, seconds
-  //    stop:   tod, seconds
-  //    max:    peak % increase in percent
-  //
+  //    start:    tod, seconds
+  //    stop:     tod, seconds
+  //    max:      peak % increase in percent
+  //    baseline: background factor
   if (model === null) {
     return 1
   }
@@ -76,8 +76,9 @@ function heatFactor (time, model = null) {
   let hF = 1
   if (t > model.start && t < model.stop) {
     let theta = (t - model.start) / (model.stop - model.start) * Math.PI
-    hF = 1 + (model.max * Math.sin(theta) / 100) + (model.baseline || 0)
+    hF += (model.max * Math.sin(theta)) / 100
   }
+  hF += model.baseline / 100
   return hF
 }
 

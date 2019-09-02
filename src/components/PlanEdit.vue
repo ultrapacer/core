@@ -231,8 +231,8 @@ export default {
         )
       }
       if (this.model.heatModel !== null) {
-        this.hF.rise = timeUtil.sec2string(this.model.heatModel.start, 'hh:mm')
-        this.hF.set = timeUtil.sec2string(this.model.heatModel.stop, 'hh:mm')
+        this.hF.rise = timeUtil.sec2string(this.model.heatModel.start - 1800, 'hh:mm') 
+        this.hF.set = timeUtil.sec2string(this.model.heatModel.stop - 7200, 'hh:mm')
         this.hF.max = this.model.heatModel.max
         this.hF.baseline = this.model.heatModel.baseline || 0
         this.hF.enabled = true
