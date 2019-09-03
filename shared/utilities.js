@@ -65,12 +65,11 @@ function calcSegments (p, breaks, pacing) {
   let delays = (pacing) ? [...pacing.delays] : []
   function getDelay (a, b) {
     if (!delays.length) { return 0 }
-    while (delays.length && delays[0] < b) {
-      if (delays[0].loc < a) {
-        delays.shift()
-      } else {
-        return delays[0].delay
-      }
+    while (delays.length && delays[0].loc < a) {
+      delays.shift()
+    }
+    if (delays.length && delays[0].loc < b) {
+      return delays[0].delay
     }
     return 0
   }
@@ -159,7 +158,7 @@ function calcSegments (p, breaks, pacing) {
         })
         s[j].time += pacing.np * f * len
         s[j].len += len
-        s[j].delay += getDelay(p[i].loc, s[j].start)
+        s[j].delay += getDelay(s[j].start, p[i].loc)
       } else if (j >= 0) {
         factors.dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
         factors.aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
