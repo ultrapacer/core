@@ -322,11 +322,10 @@ export default {
     t = this.$logger()
     util.addLoc(this.course.points)
     t = this.$logger('Added locations')
-    let pmax = 10000
+    let pmax = 5000
     if (this.course.points.length > pmax) {
       let t = this.$logger()
       let stats = util.calcStats(this.course.points)
-      console.log(stats)
       let len = this.course.points[this.course.points.length - 1].loc
       let xs = Array(pmax).fill(0).map((e, i) => i++ * len / (pmax - 1))
       let adj = util.pointWLSQ(
@@ -346,8 +345,17 @@ export default {
           dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
         })
       })
+      let stats2 = util.calcStats(p2)
+      this.course.scales = {
+        gain: stats.gain / stats2.gain,
+        loss: stats.loss / stats2.loss,
+        grade: (stats.gain-stats.loss) / (stats2.gain-stats2.loss)
+      }
+      p2.forEach((x, i) => {
+        p2[i].grade = p2[i].grade * this.course.scales.grade
+      })
       this.course.points = p2
-      this.$logger('Redistributed', t)
+      this.$logger(`Scaled course to ${pmax} points`, t)
     }
     this.course.len = this.course.points[this.course.points.length - 1].loc
     this.checkWaypoints()

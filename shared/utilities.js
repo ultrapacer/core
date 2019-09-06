@@ -88,7 +88,7 @@ function calcSegments (p, breaks, pacing) {
         p[i - 1].alt,
         p[i].alt,
         s[j].start
-      ) - p[i].alt
+      ) - p[i - 1].alt
       delta = p[i].alt - p[i - 1].alt - delta0
     } else {
       delta = p[i].alt - p[i - 1].alt
@@ -234,8 +234,8 @@ function addLoc (p) {
   var locs = p.map(x => x.loc)
   var adj = pointWLSQ(p, locs, 0.05)
   p.forEach((x, i) => {
-    x.grade = adj[i].grade
-    x.alt = adj[i].alt
+    p[i].grade = adj[i].grade
+    p[i].alt = adj[i].alt
   })
   return p
 }
