@@ -318,7 +318,6 @@ export default {
     }
     this.$logger('Course: downloaded course', t)
 
-    
     this.$title = this.course.name
     t = this.$logger()
     util.addLoc(this.course.points)
@@ -344,7 +343,7 @@ export default {
           lon: llas[i].lon,
           loc: x,
           grade: adj[i].grade,
-          dloc: (i===0) ? 0 : xs[i] - xs[i-1]
+          dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
         })
       })
       this.course.points = p2
