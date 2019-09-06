@@ -4,12 +4,10 @@ const gpxParse = require('gpx-parse')
 const nF = require('./normFactor')
 
 function calcStats (points) {
-  var distance = 0
   var gain = 0
   var loss = 0
   var delta = 0
   for (var i = 0, il = points.length - 1; i < il; i++) {
-    distance += (gpxParse.utils.calculateDistance(points[i].lat, points[i].lon, points[i + 1].lat, points[i + 1].lon))
     delta = points[i + 1].alt - points[i].alt
     if (delta < 0) {
       loss += delta
@@ -18,7 +16,6 @@ function calcStats (points) {
     }
   }
   return {
-    distance: round(distance, 2),
     gain: Math.round(gain),
     loss: Math.round(loss)
   }
@@ -91,7 +88,7 @@ function calcSegments (p, breaks, pacing) {
         p[i - 1].alt,
         p[i].alt,
         s[j].start
-      ) - p[i].alt
+      ) - p[i - 1].alt
       delta = p[i].alt - p[i - 1].alt - delta0
     } else {
       delta = p[i].alt - p[i - 1].alt
@@ -237,8 +234,8 @@ function addLoc (p) {
   var locs = p.map(x => x.loc)
   var adj = pointWLSQ(p, locs, 0.05)
   p.forEach((x, i) => {
-    x.grade = adj[i].grade
-    x.alt = adj[i].alt
+    p[i].grade = adj[i].grade
+    p[i].alt = adj[i].alt
   })
   return p
 }

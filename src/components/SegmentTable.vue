@@ -18,10 +18,10 @@
       {{ course.distance | formatDist(units.distScale) }}
     </template>
     <template slot="FOOT_gain">
-      {{ course.gain | formatAlt(units.altScale) }}
+      {{ gain | formatAlt(units.altScale) }}
     </template>
     <template slot="FOOT_loss">
-      {{ course.loss | formatAlt(units.altScale) }}
+      {{ loss | formatAlt(units.altScale) }}
     </template>
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_factors.tF" v-if="pacing.factors">
@@ -128,6 +128,20 @@ export default {
       this.$logger('compute-segments', t)
       return arr
     },
+    gain: function () {
+      let v = this.segments.reduce((t, x) => { return t + x.gain }, 0)
+      if (this.course.scales) {
+        v = v * this.course.scales.gain
+      }
+      return v
+    },
+    loss: function () {
+      let v = this.segments.reduce((t, x) => { return t + x.loss }, 0)
+      if (this.course.scales) {
+        v = v * this.course.scales.loss
+      }
+      return v
+    },
     fields: function () {
       var f = [
         {
@@ -153,7 +167,11 @@ export default {
           key: 'gain',
           label: `Gain [${this.units.alt}]`,
           formatter: (value, key, item) => {
-            return (value * this.units.altScale).toFixed(0)
+            let scale = 1
+            if (this.course.scales) {
+              scale = this.course.scales.gain
+            }
+            return (value * scale * this.units.altScale).toFixed(0)
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -162,7 +180,11 @@ export default {
           key: 'loss',
           label: 'Loss [' + this.units.alt + ']',
           formatter: (value, key, item) => {
-            return (value * this.units.altScale).toFixed(0)
+            let scale = 1
+            if (this.course.scales) {
+              scale = this.course.scales.loss
+            }
+            return (value * scale * this.units.altScale).toFixed(0)
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'

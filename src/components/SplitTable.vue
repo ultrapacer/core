@@ -14,10 +14,10 @@
   >
     <template slot="FOOT_end">&nbsp;</template>
     <template slot="FOOT_gain">
-      {{ course.gain | formatAlt(units.altScale) }}
+      {{ gain | formatAlt(units.altScale) }}
     </template>
     <template slot="FOOT_loss">
-      {{ course.loss | formatAlt(units.altScale) }}
+      {{ loss | formatAlt(units.altScale) }}
     </template>
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_time">
@@ -61,6 +61,20 @@ export default {
       }
       return calcSegments(p, breaks, this.pacing)
     },
+    gain: function () {
+      let v = this.splits.reduce((t, x) => { return t + x.gain }, 0)
+      if (this.course.scales) {
+        v = v * this.course.scales.gain
+      }
+      return v
+    },
+    loss: function () {
+      let v = this.splits.reduce((t, x) => { return t + x.loss }, 0)
+      if (this.course.scales) {
+        v = v * this.course.scales.loss
+      }
+      return v
+    },
     fields: function () {
       var f = [
         {
@@ -76,7 +90,11 @@ export default {
           key: 'gain',
           label: 'Gain [' + this.units.alt + ']',
           formatter: (value, key, item) => {
-            return (value * this.units.altScale).toFixed(0)
+            let scale = 1
+            if (this.course.scales) {
+              scale = this.course.scales.gain
+            }
+            return (value * scale * this.units.altScale).toFixed(0)
           },
           thClass: 'text-right',
           tdClass: 'text-right'
@@ -85,7 +103,11 @@ export default {
           key: 'loss',
           label: 'Loss [' + this.units.alt + ']',
           formatter: (value, key, item) => {
-            return (value * this.units.altScale).toFixed(0)
+            let scale = 1
+            if (this.course.scales) {
+              scale = this.course.scales.loss
+            }
+            return (value * scale * this.units.altScale).toFixed(0)
           },
           thClass: 'text-right',
           tdClass: 'text-right'

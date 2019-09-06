@@ -301,7 +301,7 @@ export default {
     }
   },
   async created () {
-    let t = this.$logger('Downloading Course')
+    let t = this.$logger()
     try {
       if (this.$route.params.plan) {
         this.course = await api.getCourse(this.$route.params.plan, 'plan')
@@ -316,11 +316,47 @@ export default {
       this.$router.push({path: '/'})
       return
     }
-    this.$logger('Complete', t)
+    this.$logger('Course: downloaded course', t)
+
     this.$title = this.course.name
-    t = this.$logger('Adding locations')
+    t = this.$logger()
     util.addLoc(this.course.points)
-    this.$logger('Complete', t)
+    t = this.$logger('Added locations')
+    let pmax = 5000
+    if (this.course.points.length > pmax) {
+      let t = this.$logger()
+      let stats = util.calcStats(this.course.points)
+      let len = this.course.points[this.course.points.length - 1].loc
+      let xs = Array(pmax).fill(0).map((e, i) => i++ * len / (pmax - 1))
+      let adj = util.pointWLSQ(
+        this.course.points,
+        xs,
+        0.05
+      )
+      let p2 = []
+      let llas = util.getLatLonAltFromDistance(this.course.points, xs, 0)
+      xs.forEach((x, i) => {
+        p2.push({
+          alt: adj[i].alt,
+          lat: llas[i].lat,
+          lon: llas[i].lon,
+          loc: x,
+          grade: adj[i].grade,
+          dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
+        })
+      })
+      let stats2 = util.calcStats(p2)
+      this.course.scales = {
+        gain: stats.gain / stats2.gain,
+        loss: stats.loss / stats2.loss,
+        grade: (stats.gain - stats.loss) / (stats2.gain - stats2.loss)
+      }
+      p2.forEach((x, i) => {
+        p2[i].grade = p2[i].grade * this.course.scales.grade
+      })
+      this.course.points = p2
+      this.$logger(`Scaled course to ${pmax} points`, t)
+    }
     this.course.len = this.course.points[this.course.points.length - 1].loc
     this.checkWaypoints()
     await this.updatePacing()
