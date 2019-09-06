@@ -316,13 +316,13 @@ export default {
       this.$router.push({path: '/'})
       return
     }
-    this.$logger('Course: downloaded course', t)
+    this.$logger(`Course: downloaded course (${this.course.points.length} points)`, t)
 
     this.$title = this.course.name
     t = this.$logger()
     util.addLoc(this.course.points)
     t = this.$logger('Added locations')
-    let pmax = 5000
+    let pmax = util.round(Math.min(7500, this.course.points[this.course.points.length - 1].loc / 0.025), 0)
     if (this.course.points.length > pmax) {
       let t = this.$logger()
       let stats = util.calcStats(this.course.points)
