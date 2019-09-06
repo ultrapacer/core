@@ -135,10 +135,11 @@ export default {
       if (this.model.source.type === 'gpx' && this.gpxPoints.length) {
         this.model.source.name = this.gpxFile.name
         this.model.points = this.gpxPoints
-        var p2 = [...this.model.points]
+        let p2 = []
+        this.model.points.forEach((x) => {p2.push({...x})})
         util.addLoc(p2)
         var stats = util.calcStats(p2)
-        this.model.distance = stats.distance
+        this.model.distance = p2[p2.length -1].loc
         this.model.gain = stats.gain
         this.model.loss = stats.loss
       }

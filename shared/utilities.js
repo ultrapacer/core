@@ -4,12 +4,10 @@ const gpxParse = require('gpx-parse')
 const nF = require('./normFactor')
 
 function calcStats (points) {
-  var distance = 0
   var gain = 0
   var loss = 0
   var delta = 0
   for (var i = 0, il = points.length - 1; i < il; i++) {
-    distance += (gpxParse.utils.calculateDistance(points[i].lat, points[i].lon, points[i + 1].lat, points[i + 1].lon))
     delta = points[i + 1].alt - points[i].alt
     if (delta < 0) {
       loss += delta
@@ -18,7 +16,6 @@ function calcStats (points) {
     }
   }
   return {
-    distance: round(distance, 2),
     gain: Math.round(gain),
     loss: Math.round(loss)
   }

@@ -18,7 +18,7 @@
       {{ course.distance | formatDist(units.distScale) }}
     </template>
     <template slot="FOOT_gain">
-      {{ course.gain | formatAlt(units.altScale) }}
+      {{ segments.reduce((t, x) => {return t + x.gain}, 0) | formatAlt(units.altScale) }}<br>
     </template>
     <template slot="FOOT_loss">
       {{ course.loss | formatAlt(units.altScale) }}
