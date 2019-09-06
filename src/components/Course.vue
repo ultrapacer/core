@@ -349,7 +349,7 @@ export default {
       this.course.scales = {
         gain: stats.gain / stats2.gain,
         loss: stats.loss / stats2.loss,
-        grade: (stats.gain-stats.loss) / (stats2.gain-stats2.loss)
+        grade: (stats.gain - stats.loss) / (stats2.gain - stats2.loss)
       }
       p2.forEach((x, i) => {
         p2[i].grade = p2[i].grade * this.course.scales.grade

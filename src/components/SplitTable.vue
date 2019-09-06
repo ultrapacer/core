@@ -94,7 +94,7 @@ export default {
             if (this.course.scales) {
               scale = this.course.scales.gain
             }
-            return (value * scale* this.units.altScale).toFixed(0)
+            return (value * scale * this.units.altScale).toFixed(0)
           },
           thClass: 'text-right',
           tdClass: 'text-right'
