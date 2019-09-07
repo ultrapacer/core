@@ -22,7 +22,7 @@
               <v-icon name="edit"></v-icon>
             </b-btn>
             <b-btn variant="success" @click.prevent="newPlan()" size="sm"
-                v-b-popover.hover.bottomright.d250.v-info="
+                v-b-popover.hover.blur.bottomright.d250.v-info="
                 'Create a new pacing plan for this course.'
               "
             >

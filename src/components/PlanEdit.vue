@@ -74,7 +74,6 @@
               size="sm"
               :formatter="format_hhmm"
               lazy-formatter
-               v-b-popover.hover.right.d500="'Popover!'"
             ></b-form-input>
         </b-input-group>
         <b-input-group
