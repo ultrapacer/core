@@ -4,7 +4,7 @@
       <b-navbar-toggle target="nav_collapse"></b-navbar-toggle>
       <b-navbar-brand>
         <span class="d-none d-md-block">ultraPacer</span>
-        <span class="d-block d-md-none">{{ $title }} | uP</span>
+        <span v-if="!$calculating.isCalculating()" class="d-block d-md-none">{{ $title }} | uP</span>
       </b-navbar-brand>
       <b-collapse is-nav id="nav_collapse">
         <b-navbar-nav>
@@ -15,6 +15,7 @@
           <b-nav-item href="#" @click.prevent="logout" v-else>Logout</b-nav-item>
         </b-navbar-nav>
       </b-collapse>
+      <span v-if="$calculating.isCalculating()"><b-spinner variant="primary" label="Spinning"></b-spinner></span>
     </b-navbar>
     <!-- routes will be rendered here -->
     <router-view :isAuthenticated="isAuthenticated" :user="user" />

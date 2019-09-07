@@ -316,6 +316,7 @@ export default {
         'auto-hide-delay': 4000
       })
     }
+    this.$calculating.setCalculating(true)
     let t = this.$logger()
     try {
       if (this.$route.params.plan) {
@@ -547,10 +548,12 @@ export default {
         api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
       }
       this.busy = true
+      this.$calculating.setCalculating(true)
       setTimeout(() => { this.updatePacing() }, 10)
     },
     async updatePacing () {
       this.busy = true
+      this.$calculating.setCalculating(true)
       await this.iteratePaceCalc()
       if (this.course._plan && this.course._plan.heatModel && this.course._plan.startTime) {
         let t = this.$logger()
@@ -563,6 +566,7 @@ export default {
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
       }
       this.busy = false
+      this.$calculating.setCalculating(false)
     },
     async iteratePaceCalc () {
       let t = this.$logger()

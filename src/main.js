@@ -43,6 +43,17 @@ Vue.prototype.$waypointTypes = {
   junction: 'Junction',
   other: 'Other'
 }
+Vue.prototype.$calculating = {
+  _vm: new Vue({data: {
+    calculating: false
+  }}),
+  setCalculating (calculating) {
+    this._vm.$data.calculating = calculating
+  },
+  isCalculating () {
+    return this._vm.$data.calculating
+  }
+}
 Vue.use(LoggerPlugin)
 
 Vue.config.productionTip = false
