@@ -34,7 +34,7 @@
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
     <template slot="FOOT_clock" v-if="course._plan">
-      {{ (course._plan.startTime + pacing.time) / 60 | formatTime }}
+      {{ sec2string((course._plan.startTime + pacing.time) % 86400, 'am/pm') }}
     </template>
     <template slot="FOOT_pace">
       {{ pacing.pace / units.distScale | formatTime }}
@@ -251,7 +251,7 @@ export default {
             label: 'Clock',
             formatter: (value, key, item) => {
               let c = item.elapsed + this.course._plan.startTime
-              return timeUtil.sec2string(c, 'hh:mm')
+              return timeUtil.sec2string(c % 86400, 'am/pm')
             },
             thClass: 'text-right',
             tdClass: 'text-right'
@@ -333,6 +333,9 @@ export default {
       // this is a hack because the computed property won't update
       // when this.course.waypoints[i] change
       this.updateTrigger++
+    },
+    sec2string: function (s, f) {
+      return timeUtil.sec2string(s, f)
     }
   }
 }
