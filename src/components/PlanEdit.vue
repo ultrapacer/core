@@ -19,7 +19,9 @@
               v-model="model.pacingMethod"
               :options="pacingMethods"
                size="sm"
-              required>
+              required
+               v-b-popover.hover.bottomright.d500.v-info="'Popover!'"
+             >
           </b-form-select>
         </b-input-group>
         <b-input-group v-bind:prepend="targetLabel" v-bind:append="targetAppend" class="mb-2" size="sm">
@@ -45,6 +47,7 @@
               size="sm"
               :formatter="format_hhmm"
               lazy-formatter
+               v-b-popover.hover.right.d500="'Popover!'"
             ></b-form-input>
         </b-input-group>
         <b-input-group prepend="AS/Water delay" class="mb-2" size="sm">
@@ -60,14 +63,20 @@
             required
           ></b-form-input>
         </b-input-group>
-        <b-input-group prepend="Pace drift" append=" %" class="mb-2" size="sm">
+        <b-input-group
+            prepend="Pace drift"
+            append=" %"
+            class="mb-2"
+            size="sm"
+            v-b-popover.hover.bottomright.d250.v-info="              'Pace drift: linear decrease in speed throughout race. For example,              10% means you begin the race 10% faster than you finish.'"
+            >
           <b-form-input type="text" v-model="model.drift" size="sm" required id="pace-drift-group">
           </b-form-input>
         </b-input-group>
-        <b-popover target="pace-drift-group" triggers="hover" placement="bottom" delay="500">
+<!--         <b-popover target="pace-drift-group" triggers="hover" placement="bottom" delay="500" >
           <template v-slot:title>Pace drift</template>
           I am popover <b>component</b> content!
-        </b-popover>
+        </b-popover> -->
         <b-form-checkbox
           v-model="hF.enabled"
           :value="true"
