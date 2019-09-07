@@ -23,11 +23,11 @@
     </p>
     <p class="mb-1" v-if="plan.startTime">
       Start Time:
-      <b>{{ sec2string(plan.startTime, 'hh:mm') }}</b> o'clock
+      <b>{{ sec2string(plan.startTime, 'am/pm') }}</b>
     </p>
     <p class="mb-1" v-if="plan.startTime">
       Finish Time:
-      <b>{{ sec2string(plan.startTime + pacing.time, 'hh:mm') }}</b> o'clock
+      <b>{{ sec2string((plan.startTime + pacing.time) % 86400, 'am/pm') }}</b>
     </p>
   </b-list-group-item>
   <b-list-group-item>

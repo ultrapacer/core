@@ -1,33 +1,33 @@
 function sec2string (val, format) {
-  var d = new Date(null)
   val = Math.round(val)
-  d.setSeconds(val)
-  if (format === 'm:ss') {
-    if (val < 600) { return d.toISOString().substr(15, 4) } else {
-      return d.toISOString().substr(14, 5)
-    }
-  } else if (format === 'mm:ss') {
-    return d.toISOString().substr(14, 5)
-  } else if (format === 'hh:mm') {
-    return d.toISOString().substr(11, 5)
-  } else if (format === 'h:mm:ss') {
-    if (val < 36000) {
-      return d.toISOString().substr(12, 7)
-    } else {
-      return d.toISOString().substr(11, 8)
-    }
-  } else if (format === '[h]:m:ss') {
-    if (val >= 36000) {
-      return d.toISOString().substr(11, 8)
-    } else if (val >= 3600) {
-      return d.toISOString().substr(12, 7)
-    } else if (val >= 600) {
-      return d.toISOString().substr(14, 5)
-    } else {
-      return d.toISOString().substr(15, 4)
-    }
-  } else {
-    return d.toISOString().substr(11, 8)
+  let h = Math.floor(val / 3600)
+  let m = Math.floor((val % 3600) / 60)
+  let s = Math.floor(val % 60)
+  switch (format) {
+    case 'm:ss':
+      return `${m + 60 * h}:${leftZero(s)}`
+    case 'mm:ss':
+      return `${leftZero(m + 60 * h)}:${leftZero(s)}`
+    case 'hh:mm':
+      return `${leftZero(h)}:${leftZero(m)}`
+    case 'am/pm':
+      if (h === 24) {
+        return `12:${leftZero(m)}${String.fromCharCode(160)}AM`
+      } else if (h >= 12) {
+        return `${h - 12}:${leftZero(m)}${String.fromCharCode(160)}PM`
+      } else {
+        return `${h}:${leftZero(m)}${String.fromCharCode(160)}AM`
+      }
+    case 'h:mm:ss':
+      return `${h}:${leftZero(m)}:${leftZero(s)}`
+    case '[h]:m:ss':
+      if (h) {
+        return `${h}:${leftZero(m)}:${leftZero(s)}`
+      } else {
+        return `${m}:${leftZero(s)}`
+      }
+    default:
+      return `${leftZero(h)}:${leftZero(m)}:${leftZero(s)}`
   }
 }
 
@@ -38,6 +38,14 @@ function string2sec (val) {
     s += Number(arr[i]) * (60 ** (arr.length - 1 - i))
   }
   return s
+}
+
+function leftZero (val) {
+  if (val < 10) {
+    return `0${val}`
+  } else {
+    return val
+  }
 }
 
 module.exports = {
