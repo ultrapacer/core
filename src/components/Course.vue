@@ -21,7 +21,11 @@
             <b-btn @click="editPlan()" class="mr-1" size="sm"  v-if="planOwner">
               <v-icon name="edit"></v-icon>
             </b-btn>
-            <b-btn variant="success" @click.prevent="newPlan()" size="sm">
+            <b-btn variant="success" @click.prevent="newPlan()" size="sm"
+                v-b-popover.hover.blur.bottomright.d250.v-info="
+                'Create a new pacing plan for this course.'
+              "
+            >
               <v-icon name="plus"></v-icon>
               <span v-if="!plansSelect.length" >New Plan</span>
             </b-btn>
@@ -29,7 +33,11 @@
         </b-row>
         <b-row v-if="!plansSelect.length">
           <b-col>
-            <b-btn variant="success" @click.prevent="newPlan()" size="sm">
+            <b-btn variant="success" @click.prevent="newPlan()" size="sm"
+                v-b-popover.hover.bottomright.d250.v-info="
+                'Create a new pacing plan for this course.'
+              "
+            >
               <v-icon name="plus"></v-icon>
               New Pacing Plan
             </b-btn>
@@ -42,7 +50,7 @@
     </div>
     <b-row v-if="!initializing">
       <b-col order="2">
-        <b-tabs v-model="tableTabIndex" content-class="mt-3">
+        <b-tabs v-model="tableTabIndex" content-class="mt-3" small>
           <b-tab title="Segments" active>
             <segment-table
                 ref="segmentTable"
@@ -96,29 +104,6 @@
               </b-btn>
             </div>
           </b-tab>
-        </b-tabs>
-      </b-col>
-      <b-col lg="5" order="1">
-        <b-tabs content-class="mt-3" v-if="!initializing" class="sticky-top mt-3">
-          <b-tab title="Course">
-            <div v-if="showMap">
-              <course-profile
-                  ref="profile"
-                  :course="course"
-                  :units="units"
-                  :waypointShowMode="waypointShowMode"
-                  @waypointClick="waypointClick"
-                ></course-profile>
-              <course-map
-                  ref="map"
-                  v-if="showMap"
-                  :course="course"
-                  :focus="mapFocus"
-                  :units="units"
-                  :waypointShowMode="waypointShowMode"
-                ></course-map>
-            </div>
-          </b-tab>
           <b-tab v-if="course._plan && course._plan.name" title="Plan">
             <plan-details
                 :course="course"
@@ -129,6 +114,27 @@
               ></plan-details>
           </b-tab>
         </b-tabs>
+      </b-col>
+      <b-col lg="5" order="1">
+        <div v-if="!initializing" class="sticky-top mt-3">
+          <div v-if="showMap">
+            <course-profile
+                ref="profile"
+                :course="course"
+                :units="units"
+                :waypointShowMode="waypointShowMode"
+                @waypointClick="waypointClick"
+              ></course-profile>
+            <course-map
+                ref="map"
+                v-if="showMap"
+                :course="course"
+                :focus="mapFocus"
+                :units="units"
+                :waypointShowMode="waypointShowMode"
+              ></course-map>
+          </div>
+        </div>
       </b-col>
     </b-row>
     <plan-edit
@@ -301,6 +307,15 @@ export default {
     }
   },
   async created () {
+    if (screen.width < 992) {
+      this.$bvToast.toast('Page not optimized for small/mobile screens', {
+        title: 'Warning',
+        toaster: 'b-toaster-bottom-center',
+        solid: true,
+        variant: 'warning',
+        'auto-hide-delay': 4000
+      })
+    }
     let t = this.$logger()
     try {
       if (this.$route.params.plan) {

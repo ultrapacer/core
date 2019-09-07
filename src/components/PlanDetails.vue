@@ -45,7 +45,7 @@
       <b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b>
     </p>
     <small>&nbsp; * While Moving</small><br/>
-    <small>&nbsp; ** Normalized for Grade, Altitude, & Terrain</small>
+    <small>&nbsp; ** Normalized for Grade, Altitude, Heat, & Terrain</small>
   </b-list-group-item>
   <b-list-group-item v-if="pacing.delay">
     <h5 class="mb-1">Delays</h5>
@@ -80,7 +80,7 @@
       Ending Pace:
       <b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *
     </p>
-    <small>&nbsp; * Normalized for Grade, Altitude, & Terrain</small>
+    <small>&nbsp; * Normalized for Grade, Altitude, Heat, & Terrain</small>
   </b-list-group-item>
   <b-list-group-item>
     <h5 class="mb-1">Grade Effects</h5>
