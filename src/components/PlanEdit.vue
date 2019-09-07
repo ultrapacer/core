@@ -9,22 +9,43 @@
       @ok="handleOk"
     >
       <form ref="planform" @submit.prevent="">
-        <b-input-group prepend="Name" class="mb-2" size="sm">
+        <b-input-group
+          prepend="Name"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Name: title for this plan; for example \'A goal\' or \'Qualify\' or \'24-hour finish\'.'
+          "
+        >
           <b-form-input type="text" v-model="model.name" size="sm" required>
           </b-form-input>
         </b-input-group>
-        <b-input-group prepend="Pacing method" class="mb-2" size="sm">
+        <b-input-group
+          prepend="Pacing method"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Pacing methods:\n - Finish time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'
+          "
+        >
           <b-form-select
-              type="number"
-              v-model="model.pacingMethod"
-              :options="pacingMethods"
-               size="sm"
-              required
-               v-b-popover.hover.bottomright.d500.v-info="'Popover!'"
-             >
+            type="number"
+            v-model="model.pacingMethod"
+            :options="pacingMethods"
+             size="sm"
+            required
+           >
           </b-form-select>
         </b-input-group>
-        <b-input-group v-bind:prepend="targetLabel" v-bind:append="targetAppend" class="mb-2" size="sm">
+        <b-input-group
+          v-bind:prepend="targetLabel"
+          v-bind:append="targetAppend"
+          class="mb-2"
+          size="sm"
+          v-bind:v-b-popover.hover.bottomright.d250.v-info="
+            ': Pacing methods:\n - Finish time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'
+          "
+        >
           <b-form-input
               ref="planformtimeinput"
               type="text"
@@ -79,8 +100,10 @@
             append=" %"
             class="mb-2"
             size="sm"
-            v-b-popover.hover.bottomright.d250.v-info="'Pace drift: linear decrease in speed throughout race. For example, 10% means you begin the race 10% faster than you finish.'"
-            >
+            v-b-popover.hover.bottomright.d250.v-info="
+              'Pace drift: linear decrease in speed throughout race. For example, 10% means you begin the race 10% faster than you finish.'
+            "
+          >
           <b-form-input type="text" v-model="model.drift" size="sm" required id="pace-drift-group">
           </b-form-input>
         </b-input-group>
@@ -166,9 +189,9 @@ export default {
       },
       model: {},
       pacingMethods: [
-        { value: 'time', text: 'Finish Time' },
-        { value: 'pace', text: 'Average Pace' },
-        { value: 'np', text: 'Normalized Pace' }
+        { value: 'time', text: 'Finish time' },
+        { value: 'pace', text: 'Average pace' },
+        { value: 'np', text: 'Normalized pace' }
       ],
       saving: false,
       deleting: false,
