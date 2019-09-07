@@ -61,9 +61,13 @@
           ></b-form-input>
         </b-input-group>
         <b-input-group prepend="Pace drift" append=" %" class="mb-2" size="sm">
-          <b-form-input type="text" v-model="model.drift" size="sm" required>
+          <b-form-input type="text" v-model="model.drift" size="sm" required id="pace-drift-group">
           </b-form-input>
         </b-input-group>
+        <b-popover target="pace-drift-group" triggers="hover" placement="bottom" delay="500">
+          <template v-slot:title>Pace drift</template>
+          I am popover <b>component</b> content!
+        </b-popover>
         <b-form-checkbox
           v-model="hF.enabled"
           :value="true"
