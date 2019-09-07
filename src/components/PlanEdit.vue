@@ -42,9 +42,7 @@
           v-bind:append="targetAppend"
           class="mb-2"
           size="sm"
-          v-bind:v-b-popover.hover.bottomright.d250.v-info="
-            ': Pacing methods:\n - Finish time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'
-          "
+          v-b-popover.hover.bottomright.d250.v-info="targetPopover"
         >
           <b-form-input
               ref="planformtimeinput"
@@ -63,7 +61,9 @@
           append="(24-hour)"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="'Start time: event start time of day in 24-hour format.'"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Start time: event start time of day in 24-hour format.'
+          "
         >
           <b-form-input
               type="text"
@@ -81,7 +81,9 @@
           prepend="Aid station delay"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="'Aid station delay: time spent at each aid station.'"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Aid station delay: time spent at each aid station.'
+          "
         >
           <b-form-input
             type="text"
@@ -104,7 +106,7 @@
               'Pace drift: linear decrease in speed throughout race. For example, 10% means you begin the race 10% faster than you finish.'
             "
           >
-          <b-form-input type="text" v-model="model.drift" size="sm" required id="pace-drift-group">
+          <b-form-input type="text" v-model="model.drift" size="sm" required>
           </b-form-input>
         </b-input-group>
         <b-form-checkbox
@@ -113,12 +115,17 @@
             size="sm"
             class="mb-2"
           :unchecked-value="false"
-          v-b-popover.hover.bottomright.d250.v-info="'Heat factor: pace modifier for heat and sun exposure.'"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Heat factor: pace modifier for heat and sun exposure.'
+          "
         >
           Apply heat factor
         </b-form-checkbox>
         <b-form-group v-if="hF.enabled" style="padding-left: 1em">
-          <b-input-group prepend="Sun rise" class="mb-2" size="sm" v-b-popover.hover.bottomright.d250.v-info="'Sun rise/set: time of day in 24-hour format.'">
+          <b-input-group prepend="Sun rise" class="mb-2" size="sm"
+            v-b-popover.hover.bottomright.d250.v-info="'Sun rise/set: time of day in 24-hour format.'
+          "
+        >
             <b-form-input
                 v-model="hF.rise"
                 v-mask="'##:##'"
@@ -140,11 +147,19 @@
               </b-input-group>
             </b-input-group-append>
           </b-input-group>
-          <b-input-group prepend="Baseline" append=" %" class="mb-2" size="sm" v-b-popover.hover.bottomright.d250.v-info="'Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event.'">
+          <b-input-group prepend="Baseline" append=" %" class="mb-2" size="sm"
+            v-b-popover.hover.bottomright.d250.v-info="
+              'Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event.'
+            "
+          >
             <b-form-input v-model="hF.baseline" class="mb-n2">
             </b-form-input>
           </b-input-group>
-          <b-input-group prepend="Maximum" append="%" class="mb-2" size="sm" v-b-popover.hover.bottomright.d250.v-info="'Maximum heat factor: pace modifier for heat; maximum heat factor at the hottest part of the day, increasing from baseline 30 minutes after sunrise and returning to baseline 2 hours after sunset.'">
+          <b-input-group prepend="Maximum" append="%" class="mb-2" size="sm"
+            v-b-popover.hover.bottomright.d250.v-info="
+              'Maximum heat factor: pace modifier for heat; maximum heat factor at the hottest part of the day, increasing from baseline 30 minutes after sunrise and returning to baseline 2 hours after sunset.'
+            "
+          >
             <b-form-input v-model="hF.max" class="mb-n2">
             </b-form-input>
           </b-input-group>
@@ -241,6 +256,9 @@ export default {
       } else {
         return '##:##:##'
       }
+    },
+    targetPopover: function () {
+      return `${this.targetLabel}: enter target as ${this.targetPlaceholder}`
     }
   },
   methods: {
