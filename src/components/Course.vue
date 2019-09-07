@@ -307,6 +307,15 @@ export default {
     }
   },
   async created () {
+    if (screen.width < 992) {
+      this.$bvToast.toast('Page not optimized for small/mobile screens', {
+        title: 'Warning',
+        toaster: 'b-toaster-bottom-center',
+        solid: true,
+        variant: 'warning',
+        'auto-hide-delay': 4000
+      })
+    }
     let t = this.$logger()
     try {
       if (this.$route.params.plan) {
