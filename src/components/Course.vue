@@ -55,6 +55,7 @@
             <segment-table
                 ref="segmentTable"
                 :course="course"
+                :segments="segments"
                 :units="units"
                 :pacing="pacing"
                 :busy="busy"
@@ -65,15 +66,16 @@
               ></segment-table>
           </b-tab>
           <b-tab title="Splits">
-            <split-table
+            <segment-table
                 ref="splitTable"
                 :course="course"
-                :plan="plan"
+                :segments="splits"
                 :units="units"
                 :pacing="pacing"
                 :busy="busy"
+                :mode="'splits'"
                 @select="updateFocus"
-              ></split-table>
+              ></segment-table>
           </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table
@@ -168,7 +170,6 @@ import nF from '../../shared/normFactor'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
-import SplitTable from './SplitTable'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
 import PlanDetails from './PlanDetails'
@@ -182,7 +183,6 @@ export default {
     CourseMap,
     CourseProfile,
     DeleteModal,
-    SplitTable,
     SegmentTable,
     WaypointTable,
     PlanDetails,
@@ -297,6 +297,63 @@ export default {
       } else {
         return null
       }
+    },
+    segments: function () {
+      let t = this.$logger()
+      // eslint-disable-next-line
+      //this.updateTrigger // hack for force recompute
+      var breaks = []
+      let wps = []
+      this.course.waypoints.forEach((x, i) => {
+        if (this.course.waypoints[i].show) {
+          breaks.push(x.location)
+          wps.push(x)
+        }
+      })
+      let arr = util.calcSegments(this.course.points, breaks, this.pacing)
+      arr.forEach((x, i) => {
+        arr[i].waypoint1 = wps[i]
+        arr[i].waypoint2 = wps[i + 1]
+        arr[i].collapsed = false
+        arr[i].collapseable = false
+        let ind = this.course.waypoints.findIndex(
+          x => x._id === arr[i].waypoint1._id
+        )
+        if (
+          arr[i].waypoint1.tier === 1 &&
+          this.course.waypoints.filter((x, j) =>
+            j > ind &&
+            j < this.course.waypoints.findIndex((x, j) =>
+              j > ind && x.tier === 1
+            ) &&
+            x.tier === 2
+          ).length
+        ) {
+          arr[i].collapseable = true
+        }
+        if (
+          arr[i].collapseable &&
+          arr[i].waypoint2.tier === 1
+        ) {
+          arr[i].collapsed = true
+        }
+      })
+      this.$logger('compute-segments', t)
+      return arr
+    },
+    splits: function () {
+      let p = this.course.points
+      var tot = p[p.length - 1].loc * this.units.distScale
+      let breaks = [0]
+      var i = 1
+      while (i < tot) {
+        breaks.push(i / this.units.distScale)
+        i++
+      }
+      if (tot / this.units.distScale > breaks[breaks.length - 1]) {
+        breaks.push(tot / this.units.distScale)
+      }
+      return util.calcSegments(p, breaks, this.pacing)
     }
   },
   filters: {

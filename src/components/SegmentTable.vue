@@ -17,6 +17,7 @@
     <template slot="FOOT_len">
       {{ course.distance | formatDist(units.distScale) }}
     </template>
+    <template slot="FOOT_end">{{ segments[segments.length - 1].end | formatDist(units.distScale) }}</template>
     <template slot="FOOT_gain">{{ gain | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_loss">{{ loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
@@ -56,7 +57,7 @@
 </template>
 
 <script>
-import { calcSegments, round } from '../../shared/utilities'
+import { round } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
   props: ['course', 'segments', 'units', 'pacing', 'busy', 'mode'],
@@ -71,7 +72,7 @@ export default {
       return (val * distScale).toFixed(2)
     },
     formatAlt (val, altScale) {
-      return (val * altScale).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+      return (val * altScale).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     },
     formatTime (val) {
       if (!val) { return '' }
@@ -79,54 +80,11 @@ export default {
     }
   },
   computed: {
-    segments: function () {
-      let t = this.$logger()
-      // eslint-disable-next-line
-      this.updateTrigger // hack for force recompute
-      var breaks = []
-      let wps = []
-      this.course.waypoints.forEach((x, i) => {
-        if (this.course.waypoints[i].show) {
-          breaks.push(x.location)
-          wps.push(x)
-        }
-      })
-      let arr = calcSegments(this.course.points, breaks, this.pacing)
-      arr.forEach((x, i) => {
-        arr[i].waypoint1 = wps[i]
-        arr[i].waypoint2 = wps[i + 1]
-        arr[i].collapsed = false
-        arr[i].collapseable = false
-        let ind = this.course.waypoints.findIndex(
-          x => x._id === arr[i].waypoint1._id
-        )
-        if (
-          arr[i].waypoint1.tier === 1 &&
-          this.course.waypoints.filter((x, j) =>
-            j > ind &&
-            j < this.course.waypoints.findIndex((x, j) =>
-              j > ind && x.tier === 1
-            ) &&
-            x.tier === 2
-          ).length
-        ) {
-          arr[i].collapseable = true
-        }
-        if (
-          arr[i].collapseable &&
-          arr[i].waypoint2.tier === 1
-        ) {
-          arr[i].collapsed = true
-        }
-      })
-      this.$logger('compute-segments', t)
-      return arr
-    },
     fields: function () {
       var f = [
         {
-          key: 'len',
-          label: 'Len [' + this.units.dist + ']',
+          key: 'end',
+          label: 'Dist [' + this.units.dist + ']',
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
@@ -142,7 +100,7 @@ export default {
               scale = this.course.scales.gain
             }
             return (value * scale * this.units.altScale).toFixed(0)
-              .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -156,7 +114,7 @@ export default {
               scale = this.course.scales.loss
             }
             return (value * scale * this.units.altScale).toFixed(0)
-              .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -172,6 +130,15 @@ export default {
         }
       ]
       if (this.mode === 'segments') {
+        f.splice(1, 0, {
+          key: 'len',
+          label: 'Len [' + this.units.dist + ']',
+          formatter: (value, key, item) => {
+            return (value * this.units.distScale).toFixed(2)
+          },
+          thClass: 'text-right',
+          tdClass: 'text-right'
+        })
         f.unshift({
           key: 'waypoint2.name',
           label: 'End'
