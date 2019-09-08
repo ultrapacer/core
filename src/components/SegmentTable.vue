@@ -65,7 +65,7 @@
 import { calcSegments, round } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'units', 'pacing', 'busy'],
+  props: ['course', 'units', 'pacing', 'busy', 'mode'],
   data () {
     return {
       clearing: false,
@@ -145,16 +145,6 @@ export default {
     fields: function () {
       var f = [
         {
-          key: 'waypoint1.name',
-          label: 'Start',
-          thClass: 'd-none d-md-table-cell',
-          tdClass: 'd-none d-md-table-cell'
-        },
-        {
-          key: 'waypoint2.name',
-          label: 'End'
-        },
-        {
           key: 'len',
           label: 'Len [' + this.units.dist + ']',
           formatter: (value, key, item) => {
@@ -199,6 +189,18 @@ export default {
           tdClass: 'd-none d-md-table-cell text-right'
         }
       ]
+      if (this.mode === 'segments') {
+        f.unshift({
+          key: 'waypoint2.name',
+          label: 'End'
+        })
+        f.unshift({
+          key: 'waypoint1.name',
+          label: 'Start',
+          thClass: 'd-none d-md-table-cell',
+          tdClass: 'd-none d-md-table-cell'
+        })
+      }
       if (this.showTerrain) {
         f.push({
           key: 'factors.tF',
@@ -258,7 +260,7 @@ export default {
           })
         }
       }
-      if (this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
+      if (this.mode === 'segments' && this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
         f.push({
           key: 'collapse',
           label: '',
