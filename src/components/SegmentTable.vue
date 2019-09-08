@@ -17,19 +17,13 @@
     <template slot="FOOT_len">
       {{ course.distance | formatDist(units.distScale) }}
     </template>
-    <template slot="FOOT_gain">
-      {{ gain | formatAlt(units.altScale) }}
-    </template>
-    <template slot="FOOT_loss">
-      {{ loss | formatAlt(units.altScale) }}
-    </template>
+    <template slot="FOOT_gain">{{ gain | formatAlt(units.altScale) }}</template>
+    <template slot="FOOT_loss">{{ loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_factors.tF" v-if="pacing.factors">
       +{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }}%
     </template>
-    <template slot="FOOT_time">
-      {{ movingTimeTot | formatTime }}
-    </template>
+    <template slot="FOOT_time">{{ time }}</template>
     <template slot="FOOT_elapsed">
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
@@ -65,7 +59,7 @@
 import { calcSegments, round } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'units', 'pacing', 'busy', 'mode'],
+  props: ['course', 'segments', 'units', 'pacing', 'busy', 'mode'],
   data () {
     return {
       clearing: false,
@@ -77,7 +71,7 @@ export default {
       return (val * distScale).toFixed(2)
     },
     formatAlt (val, altScale) {
-      return (val * altScale).toFixed(0)
+      return (val * altScale).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
     },
     formatTime (val) {
       if (!val) { return '' }
@@ -128,20 +122,6 @@ export default {
       this.$logger('compute-segments', t)
       return arr
     },
-    gain: function () {
-      let v = this.segments.reduce((t, x) => { return t + x.gain }, 0)
-      if (this.course.scales) {
-        v = v * this.course.scales.gain
-      }
-      return v
-    },
-    loss: function () {
-      let v = this.segments.reduce((t, x) => { return t + x.loss }, 0)
-      if (this.course.scales) {
-        v = v * this.course.scales.loss
-      }
-      return v
-    },
     fields: function () {
       var f = [
         {
@@ -162,6 +142,7 @@ export default {
               scale = this.course.scales.gain
             }
             return (value * scale * this.units.altScale).toFixed(0)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -175,6 +156,7 @@ export default {
               scale = this.course.scales.loss
             }
             return (value * scale * this.units.altScale).toFixed(0)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -260,7 +242,9 @@ export default {
           })
         }
       }
-      if (this.mode === 'segments' && this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
+      if (
+        this.mode === 'segments' &&
+        this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
         f.push({
           key: 'collapse',
           label: '',
@@ -269,14 +253,23 @@ export default {
       }
       return f
     },
-    movingTimeTot: function () {
-      if (this.segments[0].time) {
-        var t = 0
-        this.segments.forEach(s => { t += s.time })
-        return t
-      } else {
-        return 0
+    gain: function () {
+      let v = this.segments.reduce((t, x) => { return t + x.gain }, 0)
+      if (this.course.scales) {
+        v = v * this.course.scales.gain
       }
+      return v
+    },
+    loss: function () {
+      let v = this.segments.reduce((t, x) => { return t + x.loss }, 0)
+      if (this.course.scales) {
+        v = v * this.course.scales.loss
+      }
+      return v
+    },
+    time: function () {
+      let t = this.segments.reduce((t, x) => { return t + x.time }, 0)
+      return timeUtil.sec2string(t, '[h]:m:ss')
     },
     showTerrain: function () {
       for (let i = 0; i < this.segments.length; i++) {
