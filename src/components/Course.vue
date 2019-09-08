@@ -58,6 +58,7 @@
                 :units="units"
                 :pacing="pacing"
                 :busy="busy"
+                :mode="'segments'"
                 @select="updateFocus"
                 @show="waypointShow"
                 @hide="waypointHide"
