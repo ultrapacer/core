@@ -10,13 +10,27 @@
       @ok="handleOk"
     >
       <form ref="waypointform" @submit.prevent="">
-        <b-form-group label="Name">
+        <b-input-group
+          prepend="Name"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Name: name for the waypoint, such as aid station name or landmark description'
+          "
+        >
           <b-form-input type="text" v-model="model.name" required>
           </b-form-input>
-        </b-form-group>
-        <b-form-group
-          v-bind:label="'Location [' + units.dist + ']'"
-          v-if="model.type != 'start' && model.type != 'finish'">
+        </b-input-group>
+        <b-input-group
+          v-if="model.type != 'start' && model.type != 'finish'"
+          prepend="Location"
+          v-bind:append="units.dist"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Location: distance along course for this waypoint'
+          "
+        >
           <b-form-input
             type="number"
             step="0.01"
@@ -25,24 +39,46 @@
             v-bind:max="locationMax"
             required>
           </b-form-input>
-        </b-form-group>
-        <b-form-group label="Type">
+        </b-input-group>
+        <b-input-group
+          prepend="Type"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Type: type of waypoint.\nNote that \'Aid Station\' and \'Water Source\' both include delay for plans.'
+          "
+        >
           <b-form-select
             type="text"
             v-model="model.type"
             :options="waypointTypeOptions"
             required>
           </b-form-select>
-        </b-form-group>
-        <b-form-group label="Priority">
+        </b-input-group>
+        <b-input-group
+          prepend="Priority"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Priority: how important the waypoint is, as follows:\n - Major: always appears on segment breakdown, map, and profile\n - Minor: only appears in tables, map, and profile when its major segment is expanded\n - Minor: never appears in tables, map, or profile (used for terrain factor only)'
+          "
+        >
           <b-form-select
             type="text"
             v-model="model.tier"
             :options="waypointTiers"
             required>
           </b-form-select>
-        </b-form-group>
-        <b-form-group label="Terrain Factor [%] Increase">
+        </b-input-group>
+        <b-input-group
+          prepend="Terrain factor"
+          append="% (increase)"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Terrain factor: terrain-based pace adjustment, basically anything that is too small to appear in elevation data.'
+          "
+        >
           <b-form-input
             type="number"
             v-model="model.terrainFactor"
@@ -50,7 +86,7 @@
             min="0"
             step="0">
           </b-form-input>
-        </b-form-group>
+        </b-input-group>
         <b-form-group label="Notes">
           <b-form-textarea rows="4" v-model="model.description">
           </b-form-textarea>
