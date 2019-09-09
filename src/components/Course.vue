@@ -199,6 +199,7 @@ export default {
       plan: {},
       segment: {},
       segmentDisplayTier: 1,
+      segmentUpdateTrigger: 0,
       waypoint: {},
       pacing: {},
       mapFocus: [],
@@ -301,7 +302,7 @@ export default {
     segments: function () {
       let t = this.$logger()
       // eslint-disable-next-line
-      //this.updateTrigger // hack for force recompute
+      this.segmentUpdateTrigger // hack for force recompute
       var breaks = []
       let wps = []
       this.course.waypoints.forEach((x, i) => {
@@ -745,13 +746,18 @@ export default {
     waypointClick: function (id) {
       this.tableTabIndex = 2
       this.$refs.waypointTable.selectWaypoint(id)
+    },    
+    forceSegmentUpdate: function () {
+      // this is a hack because the computed property won't update
+      // when this.course.waypoints[i] change
+      this.segmentUpdateTrigger++
     },
     waypointShow: function (arr) {
       let wps = this.course.waypoints.filter(x => arr.includes(x._id))
       wps.forEach((x, i) => {
         wps[i].show = true
       })
-      this.$refs.segmentTable.forceSegmentUpdate()
+      this.forceSegmentUpdate()
       this.$refs.profile.forceWaypointsUpdate()
       this.$refs.map.forceUpdate()
     },
@@ -760,7 +766,7 @@ export default {
       wps.forEach((x, i) => {
         wps[i].show = false
       })
-      this.$refs.segmentTable.forceSegmentUpdate()
+      this.forceSegmentUpdate()
       this.$refs.profile.forceWaypointsUpdate()
       this.$refs.map.forceUpdate()
     }
