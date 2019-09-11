@@ -76,7 +76,7 @@
           class="mb-2"
           size="sm"
           v-b-popover.hover.bottomright.d250.v-info="
-            'Terrain factor: terrain-based pace adjustment, basically anything that is too small to appear in elevation data.'
+            'Terrain factor: terrain-based pace adjustment, basically anything that is too small to appear in elevation data. Requires course knowledge. Guidelines:\n - Paved surface: 0%\n - Smooth fire road: 2-4%\n - Smooth singletrack: 5-10%\n - Rocky singletrack: 10-20%\n - Technical trail: 20%+'
           "
         >
           <b-form-input
@@ -87,10 +87,17 @@
             step="0">
           </b-form-input>
         </b-input-group>
-        <b-form-group label="Notes">
+        <b-input-group
+          prepend="Notes"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Notes: description of waypoint, crew access, supplies, etc.'
+          "
+        >
           <b-form-textarea rows="4" v-model="model.description">
           </b-form-textarea>
-        </b-form-group>
+        </b-input-group>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
         <div

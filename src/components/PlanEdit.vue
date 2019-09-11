@@ -115,7 +115,7 @@
             class="mb-2"
           :unchecked-value="false"
           v-b-popover.hover.bottomright.d250.v-info="
-            'Heat factor: pace modifier for heat and sun exposure.'
+            'Heat factor: pace modifier for heat and sun exposure.\nNOTE: Using a heat factor slows down the calculation time of this tool.'
           "
         >
           Apply heat factor
