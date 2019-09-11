@@ -17,19 +17,16 @@
     <template slot="FOOT_len">
       {{ course.distance | formatDist(units.distScale) }}
     </template>
-    <template slot="FOOT_gain">
-      {{ gain | formatAlt(units.altScale) }}
+    <template slot="FOOT_end">
+      {{ segments[segments.length - 1].end | formatDist(units.distScale) }}
     </template>
-    <template slot="FOOT_loss">
-      {{ loss | formatAlt(units.altScale) }}
-    </template>
+    <template slot="FOOT_gain">{{ gain | formatAlt(units.altScale) }}</template>
+    <template slot="FOOT_loss">{{ loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
     <template slot="FOOT_factors.tF" v-if="pacing.factors">
       +{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }}%
     </template>
-    <template slot="FOOT_time">
-      {{ movingTimeTot | formatTime }}
-    </template>
+    <template slot="FOOT_time">{{ time }}</template>
     <template slot="FOOT_elapsed">
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
@@ -56,20 +53,21 @@
       >
         &#9650;
       </b-button>
-      <div v-if="row.item.waypoint1.tier===2" style="text-align:center">&#8944;</div>
+      <div v-if="row.item.waypoint1.tier===2" style="text-align:center">
+        &#8944;
+      </div>
     </template>
   </b-table>
 </template>
 
 <script>
-import { calcSegments, round } from '../../shared/utilities'
+import { round } from '../../shared/utilities'
 import timeUtil from '../../shared/timeUtilities'
 export default {
-  props: ['course', 'units', 'pacing', 'busy'],
+  props: ['course', 'segments', 'units', 'pacing', 'busy', 'mode'],
   data () {
     return {
-      clearing: false,
-      updateTrigger: 0
+      clearing: false
     }
   },
   filters: {
@@ -77,7 +75,7 @@ export default {
       return (val * distScale).toFixed(2)
     },
     formatAlt (val, altScale) {
-      return (val * altScale).toFixed(0)
+      return (val * altScale).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     },
     formatTime (val) {
       if (!val) { return '' }
@@ -85,78 +83,11 @@ export default {
     }
   },
   computed: {
-    segments: function () {
-      let t = this.$logger()
-      // eslint-disable-next-line
-      this.updateTrigger // hack for force recompute
-      var breaks = []
-      let wps = []
-      this.course.waypoints.forEach((x, i) => {
-        if (this.course.waypoints[i].show) {
-          breaks.push(x.location)
-          wps.push(x)
-        }
-      })
-      let arr = calcSegments(this.course.points, breaks, this.pacing)
-      arr.forEach((x, i) => {
-        arr[i].waypoint1 = wps[i]
-        arr[i].waypoint2 = wps[i + 1]
-        arr[i].collapsed = false
-        arr[i].collapseable = false
-        let ind = this.course.waypoints.findIndex(
-          x => x._id === arr[i].waypoint1._id
-        )
-        if (
-          arr[i].waypoint1.tier === 1 &&
-          this.course.waypoints.filter((x, j) =>
-            j > ind &&
-            j < this.course.waypoints.findIndex((x, j) =>
-              j > ind && x.tier === 1
-            ) &&
-            x.tier === 2
-          ).length
-        ) {
-          arr[i].collapseable = true
-        }
-        if (
-          arr[i].collapseable &&
-          arr[i].waypoint2.tier === 1
-        ) {
-          arr[i].collapsed = true
-        }
-      })
-      this.$logger('compute-segments', t)
-      return arr
-    },
-    gain: function () {
-      let v = this.segments.reduce((t, x) => { return t + x.gain }, 0)
-      if (this.course.scales) {
-        v = v * this.course.scales.gain
-      }
-      return v
-    },
-    loss: function () {
-      let v = this.segments.reduce((t, x) => { return t + x.loss }, 0)
-      if (this.course.scales) {
-        v = v * this.course.scales.loss
-      }
-      return v
-    },
     fields: function () {
       var f = [
         {
-          key: 'waypoint1.name',
-          label: 'Start',
-          thClass: 'd-none d-md-table-cell',
-          tdClass: 'd-none d-md-table-cell'
-        },
-        {
-          key: 'waypoint2.name',
-          label: 'End'
-        },
-        {
-          key: 'len',
-          label: 'Len [' + this.units.dist + ']',
+          key: 'end',
+          label: 'Dist [' + this.units.dist + ']',
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
@@ -172,6 +103,7 @@ export default {
               scale = this.course.scales.gain
             }
             return (value * scale * this.units.altScale).toFixed(0)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -185,6 +117,7 @@ export default {
               scale = this.course.scales.loss
             }
             return (value * scale * this.units.altScale).toFixed(0)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -199,6 +132,27 @@ export default {
           tdClass: 'd-none d-md-table-cell text-right'
         }
       ]
+      if (this.mode === 'segments') {
+        f.splice(1, 0, {
+          key: 'len',
+          label: 'Len [' + this.units.dist + ']',
+          formatter: (value, key, item) => {
+            return (value * this.units.distScale).toFixed(2)
+          },
+          thClass: 'text-right',
+          tdClass: 'text-right'
+        })
+        f.unshift({
+          key: 'waypoint2.name',
+          label: 'End'
+        })
+        f.unshift({
+          key: 'waypoint1.name',
+          label: 'Start',
+          thClass: 'd-none d-md-table-cell',
+          tdClass: 'd-none d-md-table-cell'
+        })
+      }
       if (this.showTerrain) {
         f.push({
           key: 'factors.tF',
@@ -258,7 +212,9 @@ export default {
           })
         }
       }
-      if (this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
+      if (
+        this.mode === 'segments' &&
+        this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
         f.push({
           key: 'collapse',
           label: '',
@@ -267,14 +223,23 @@ export default {
       }
       return f
     },
-    movingTimeTot: function () {
-      if (this.segments[0].time) {
-        var t = 0
-        this.segments.forEach(s => { t += s.time })
-        return t
-      } else {
-        return 0
+    gain: function () {
+      let v = this.segments.reduce((t, x) => { return t + x.gain }, 0)
+      if (this.course.scales) {
+        v = v * this.course.scales.gain
       }
+      return v
+    },
+    loss: function () {
+      let v = this.segments.reduce((t, x) => { return t + x.loss }, 0)
+      if (this.course.scales) {
+        v = v * this.course.scales.loss
+      }
+      return v
+    },
+    time: function () {
+      let t = this.segments.reduce((t, x) => { return t + x.time }, 0)
+      return timeUtil.sec2string(t, '[h]:m:ss')
     },
     showTerrain: function () {
       for (let i = 0; i < this.segments.length; i++) {
@@ -322,17 +287,12 @@ export default {
       if (s.length) {
         this.$emit(
           'select',
-          'segment',
+          this.mode,
           [s[0].start, s[0].end]
         )
       } else {
-        this.$emit('select', 'segment', [])
+        this.$emit('select', this.mode, [])
       }
-    },
-    forceSegmentUpdate: function () {
-      // this is a hack because the computed property won't update
-      // when this.course.waypoints[i] change
-      this.updateTrigger++
     },
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)
