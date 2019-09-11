@@ -339,10 +339,11 @@ export default {
           arr[i].collapsed = true
         }
       })
-      this.$logger('compute-segments', t)
+      this.$logger('Course|compute|segments', t)
       return arr
     },
     splits: function () {
+      let t = this.$logger()
       let p = this.course.points
       var tot = p[p.length - 1].loc * this.units.distScale
       let breaks = [0]
@@ -354,6 +355,7 @@ export default {
       if (tot / this.units.distScale > breaks[breaks.length - 1]) {
         breaks.push(tot / this.units.distScale)
       }
+      this.$logger('Course|compute|splits', t)
       return util.calcSegments(p, breaks, this.pacing)
     }
   },
@@ -738,15 +740,15 @@ export default {
       this.$logger('iteratePaceCalc', t)
     },
     updateFocus: function (type, focus) {
-      if (type === 'segment') this.$refs.splitTable.clear()
-      if (type === 'split') this.$refs.segmentTable.clear()
+      if (type === 'segments') this.$refs.splitTable.clear()
+      if (type === 'splits') this.$refs.segmentTable.clear()
       this.mapFocus = focus
       this.$refs.profile.focus(focus)
     },
     waypointClick: function (id) {
       this.tableTabIndex = 2
       this.$refs.waypointTable.selectWaypoint(id)
-    },    
+    },
     forceSegmentUpdate: function () {
       // this is a hack because the computed property won't update
       // when this.course.waypoints[i] change

@@ -17,7 +17,9 @@
     <template slot="FOOT_len">
       {{ course.distance | formatDist(units.distScale) }}
     </template>
-    <template slot="FOOT_end">{{ segments[segments.length - 1].end | formatDist(units.distScale) }}</template>
+    <template slot="FOOT_end">
+      {{ segments[segments.length - 1].end | formatDist(units.distScale) }}
+    </template>
     <template slot="FOOT_gain">{{ gain | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_loss">{{ loss | formatAlt(units.altScale) }}</template>
     <template slot="FOOT_grade">&nbsp;</template>
@@ -51,7 +53,9 @@
       >
         &#9650;
       </b-button>
-      <div v-if="row.item.waypoint1.tier===2" style="text-align:center">&#8944;</div>
+      <div v-if="row.item.waypoint1.tier===2" style="text-align:center">
+        &#8944;
+      </div>
     </template>
   </b-table>
 </template>
@@ -63,8 +67,7 @@ export default {
   props: ['course', 'segments', 'units', 'pacing', 'busy', 'mode'],
   data () {
     return {
-      clearing: false,
-      updateTrigger: 0
+      clearing: false
     }
   },
   filters: {
@@ -284,17 +287,12 @@ export default {
       if (s.length) {
         this.$emit(
           'select',
-          'segment',
+          this.mode,
           [s[0].start, s[0].end]
         )
       } else {
-        this.$emit('select', 'segment', [])
+        this.$emit('select', this.mode, [])
       }
-    },
-    forceSegmentUpdate: function () {
-      // this is a hack because the computed property won't update
-      // when this.course.waypoints[i] change
-      this.updateTrigger++
     },
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)
