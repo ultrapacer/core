@@ -63,7 +63,8 @@
           v-for="wp in spannedWaypoints(row.item)”
           v-bind:key="wp._id" class="mb-2">
           {{ wp.name }}<br />
-          {{ wp.notes }}
+          {{ wp.description }}<br />
+          {{ wp.delay / 60 }} minute delay
         </p>
       </b-card>
     </template>
