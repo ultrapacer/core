@@ -11,13 +11,9 @@ function sec2string (val, format) {
     case 'hh:mm':
       return `${leftZero(h)}:${leftZero(m)}`
     case 'am/pm':
-      if (h === 24) {
-        return `12:${leftZero(m)}${String.fromCharCode(160)}AM`
-      } else if (h >= 12) {
-        return `${h - 12}:${leftZero(m)}${String.fromCharCode(160)}PM`
-      } else {
-        return `${h}:${leftZero(m)}${String.fromCharCode(160)}AM`
-      }
+      let suf = (h % 24 < 12) ? 'AM' : 'PM'
+      h = h % 12 || 12
+      return `${h}:${leftZero(m)}${String.fromCharCode(160)}${suf}`
     case 'h:mm:ss':
       return `${h}:${leftZero(m)}:${leftZero(s)}`
     case '[h]:m:ss':
