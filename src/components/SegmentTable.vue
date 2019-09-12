@@ -57,6 +57,16 @@
         &#8944;
       </div>
     </template>
+    <template slot="row-details" slot-scope="row">
+      <b-card>
+        <p
+          v-for="wp in spannedWaypoints(row.item)”
+          v-bind:key="wp._id" class="mb-2">
+          {{ wp.name }}<br />
+          {{ wp.notes }}
+        </p>
+      </b-card>
+    </template>
   </b-table>
 </template>
 
@@ -296,6 +306,12 @@ export default {
     },
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)
+    },
+    spannedWaypoints: function (s) {
+      return this.course.waypoints.filter((wp) => {
+        round(wp.location, 4) >= round(s.start, 4) &&
+        round(wp.location, 4) < round(s.end, 4)
+      })
     }
   }
 }
