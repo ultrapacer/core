@@ -58,16 +58,21 @@
       </div>
     </template>
     <template slot="row-details" slot-scope="row">
-      <b-card>
-        <p
+      <b-list-group>
+        <b-list-group-item v-if="showTerrain">
+          Terrain factor:
+          <b>{{ ((row.item.factors.tF - 1) * 100).toFixed(1) }} %</b>
+        </b-list-group-item>
+        <b-list-group-item
           v-for="wp in spannedWaypoints(row.item)"
-         v-bind:key="wp._id"
+          v-bind:key="wp._id"
+          v-if="wp.tier < 3 && (wp.delay || wp.description)"
           class="mb-2">
-          {{ wp.name }}<br />
-          {{ wp.description }}<br />
-          {{ wp.delay / 60 }} minute delay
-        </p>
-      </b-card>
+          <b>{{ wp.name }} ({{ $waypointTypes[wp.type] }}), {{ wp.location | formatDist(units.distScale) }} {{ units.dist }}</b><br/>
+          <span v-if="wp.delay">Delay: {{ wp.delay / 60 }} minutes<br/></span>
+          <span v-if="wp.description">Notes: {{ wp.description }}</span>
+        </b-list-group-item>
+      </b-list-group>
     </template>
   </b-table>
 </template>
@@ -163,17 +168,6 @@ export default {
           label: 'Start',
           thClass: 'd-none d-md-table-cell',
           tdClass: 'd-none d-md-table-cell'
-        })
-      }
-      if (this.showTerrain) {
-        f.push({
-          key: 'factors.tF',
-          label: 'Terrain',
-          formatter: (value, key, item) => {
-            return '+' + ((value - 1) * 100).toFixed(1) + '%'
-          },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
         })
       }
       if (this.segments[0].time) {
@@ -301,7 +295,7 @@ export default {
       if (segment.length) {
         this.segments.filter(s => s._showDetails && s.start !== segment.start)
           .forEach(s => { this.$set(s, '_showDetails', false) })
-        if (segment[0].delay) {
+        if (this.hasDetailedInfo(segment[0])) {
           this.$set(segment[0], '_showDetails', !segment._showDetails)
         }
         this.$emit(
@@ -324,6 +318,15 @@ export default {
         round(wp.location, 4) <= round(s.end, 4)
       )
       return wps
+    },
+    hasDetailedInfo: function (s) {
+      if (this.showTerrain) { return true }
+      let v = false
+      this.spannedWaypoints(s).forEach(wp => {
+        console.log(wp)
+        if (wp.delay || wp.description) { v = true }
+      })
+      return v
     }
   }
 }
