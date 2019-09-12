@@ -60,8 +60,9 @@
     <template slot="row-details" slot-scope="row">
       <b-card>
         <p
-          v-for="wp in spannedWaypoints(row.item)”
-          v-bind:key="wp._id" class="mb-2">
+          v-for="wp in spannedWaypoints(row.item)"
+         v-bind:key="wp._id"
+          class="mb-2">
           {{ wp.name }}<br />
           {{ wp.description }}<br />
           {{ wp.delay / 60 }} minute delay
@@ -213,7 +214,7 @@ export default {
         if (this.course._plan.startTime) {
           f.push({
             key: 'clock',
-            label: 'Clock',
+            label: 'Arrival',
             formatter: (value, key, item) => {
               let c = item.elapsed + this.course._plan.startTime
               return timeUtil.sec2string(c % 86400, 'am/pm')
@@ -267,6 +268,8 @@ export default {
     clear: async function () {
       this.clearing = true
       await this.$refs.table.clearSelected()
+      this.segments.filter(s => s._showDetails)
+        .forEach(s => { this.$set(s, '_showDetails', false) })
       this.clearing = false
     },
     expandRow: function (s) {
@@ -293,15 +296,22 @@ export default {
       }
       this.$emit('hide', arr)
     },
-    selectRow: function (s) {
+    selectRow: function (segment) {
       if (this.clearing) return
-      if (s.length) {
+      if (segment.length) {
+        this.segments.filter(s => s._showDetails && s.start !== segment.start)
+          .forEach(s => { this.$set(s, '_showDetails', false) })
+        if (segment[0].delay) {
+          this.$set(segment[0], '_showDetails', !segment._showDetails)
+        }
         this.$emit(
           'select',
           this.mode,
-          [s[0].start, s[0].end]
+          [segment[0].start, segment[0].end]
         )
       } else {
+        this.segments.filter(s => s._showDetails)
+          .forEach(s => { this.$set(s, '_showDetails', false) })
         this.$emit('select', this.mode, [])
       }
     },
@@ -309,10 +319,11 @@ export default {
       return timeUtil.sec2string(s, f)
     },
     spannedWaypoints: function (s) {
-      return this.course.waypoints.filter((wp) => {
-        round(wp.location, 4) >= round(s.start, 4) &&
-        round(wp.location, 4) < round(s.end, 4)
-      })
+      let wps = this.course.waypoints.filter(wp =>
+        round(wp.location, 4) > round(s.start, 4) &&
+        round(wp.location, 4) <= round(s.end, 4)
+      )
+      return wps
     }
   }
 }
