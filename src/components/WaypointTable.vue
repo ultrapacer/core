@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import wputil from '../../shared/waypointUtilities'
+import wputil from '../util/waypoints'
 import api from '@/api'
 export default {
   props: ['course', 'units', 'editing', 'editFn', 'delFn', 'updFn'],

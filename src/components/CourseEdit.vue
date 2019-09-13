@@ -88,6 +88,7 @@
 <script>
 import api from '@/api'
 import util from '../../shared/utilities'
+import wputil from '../util/waypoints'
 const gpxParse = require('gpx-parse')
 export default {
   props: ['course'],
@@ -142,6 +143,37 @@ export default {
         this.model.distance = p2[p2.length - 1].loc
         this.model.gain = stats.gain
         this.model.loss = stats.loss
+
+        if (this.model._id) {
+          // update all waypoints to fit updated course:
+          let waypoints = await api.getWaypoints(this.model._id)
+          if (waypoints.length) {
+            await Promise.all(waypoints.map(async wp => {
+              let t = this.$logger()
+              var wpold = wp.location
+              // scale waypoint location for new course distance:
+              if (wp.type === 'finish') {
+                wp.location = this.model.distance
+              } else {
+                wp.location = wp.location * this.model.distance / this.course.distance
+              }
+              if (wp.type !== 'start' && wp.type !== 'finish') {
+                try {
+                  var wpdelta = Math.abs(wpold - wp.location)
+                  // iteration threshold th:
+                  var th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
+                  // resolve closest distance for waypoint LLA
+                  wp.location = wputil.nearestLoc(wp, p2, th)
+                } catch (err) {
+                  console.log(err)
+                }
+              }
+              wputil.updateLLA(wp, p2)
+              await api.updateWaypoint(wp._id, wp)
+              this.$logger(`CourseEdit|save|adjustWaypoint: ${wp.name}`, t)
+            }))
+          }
+        }
       }
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
