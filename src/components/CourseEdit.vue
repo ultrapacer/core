@@ -88,7 +88,7 @@
 <script>
 import api from '@/api'
 import util from '../../shared/utilities'
-import wputil from '../../shared/waypointUtilities'
+import wputil from '../util/waypoints'
 const gpxParse = require('gpx-parse')
 export default {
   props: ['course'],
@@ -145,8 +145,7 @@ export default {
         this.model.loss = stats.loss
 
         if (this.model._id) {
-          // update all waypoints:
-
+          // update all waypoints to fit updated course:
           let waypoints = await api.getWaypoints(this.model._id)
           if (waypoints.length) {
             await Promise.all(waypoints.map(async wp => {

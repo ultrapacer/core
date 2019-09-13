@@ -1,5 +1,5 @@
 /* eslint new-cap: 0 */
-const util = require('./utilities')
+const util = require('../../shared/utilities')
 const sgeo = require('sgeo')
 
 function updateLLA (waypoint, points) {
