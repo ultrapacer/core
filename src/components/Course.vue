@@ -200,7 +200,6 @@ export default {
       segment: {},
       segments: [],
       segmentDisplayTier: 1,
-      updateTrigger: 0,
       splits: [],
       waypoint: {},
       pacing: {},
@@ -300,67 +299,6 @@ export default {
       } else {
         return null
       }
-    },
-    segments: function () {
-      let t = this.$logger()
-      // eslint-disable-next-line
-      this.updateTrigger // hack for force recompute
-      var breaks = []
-      let wps = []
-      this.course.waypoints.forEach((x, i) => {
-        if (this.course.waypoints[i].show) {
-          breaks.push(x.location)
-          wps.push(x)
-        }
-      })
-      let arr = util.calcSegments(this.course.points, breaks, this.pacing)
-      arr.forEach((x, i) => {
-        arr[i].waypoint1 = wps[i]
-        arr[i].waypoint2 = wps[i + 1]
-        arr[i].collapsed = false
-        arr[i].collapseable = false
-        let ind = this.course.waypoints.findIndex(
-          x => x._id === arr[i].waypoint1._id
-        )
-        if (
-          arr[i].waypoint1.tier === 1 &&
-          this.course.waypoints.filter((x, j) =>
-            j > ind &&
-            j < this.course.waypoints.findIndex((x, j) =>
-              j > ind && x.tier === 1
-            ) &&
-            x.tier === 2
-          ).length
-        ) {
-          arr[i].collapseable = true
-        }
-        if (
-          arr[i].collapseable &&
-          arr[i].waypoint2.tier === 1
-        ) {
-          arr[i].collapsed = true
-        }
-      })
-      this.$logger('Course|compute|segments', t)
-      return arr
-    },
-    splits: function () {
-      let t = this.$logger()
-      // eslint-disable-next-line
-      this.updateTrigger // hack for force recompute
-      let p = this.course.points
-      var tot = p[p.length - 1].loc * this.units.distScale
-      let breaks = [0]
-      var i = 1
-      while (i < tot) {
-        breaks.push(i / this.units.distScale)
-        i++
-      }
-      if (tot / this.units.distScale > breaks[breaks.length - 1]) {
-        breaks.push(tot / this.units.distScale)
-      }
-      this.$logger('Course|compute|splits', t)
-      return util.calcSegments(p, breaks, this.pacing)
     }
   },
   filters: {
@@ -620,14 +558,30 @@ export default {
       this.busy = true
       this.$calculating.setCalculating(true)
       await this.iteratePaceCalc()
+      this.updateSplits()
+      let lastSplits = this.splits.map(x => { return x.time })
+      let elapsed = this.splits[this.splits.length - 1].elapsed
+      function changed (times, last) {
+        for (let i = 0; i < times.length; i++) {
+          if (Math.abs(times[i] - last[i]) >= 1) {
+            return true
+          }
+        }
+        return false
+      }
       if (this.course._plan && this.course._plan.heatModel && this.course._plan.startTime) {
         let t = this.$logger()
-        let lnF = this.pacing.nF
         for (var i = 0; i < 10; i++) {
           await this.iteratePaceCalc()
-          if (Math.abs(lnF - this.pacing.nF) < 0.0001) { break }
-          lnF = this.pacing.nF
+          this.updateSplits()
+          if (
+            !changed(this.splits.map(x => { return x.time }), lastSplits) &&
+            Math.abs(elapsed - this.splits[this.splits.length - 1].elapsed) < 1
+          ) { break }
+          lastSplits = this.splits.map(x => { return x.time })
+          elapsed = this.splits[this.splits.length - 1].elapsed
         }
+        this.updateSegments()
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
       }
       this.busy = false
@@ -743,6 +697,65 @@ export default {
       }
       this.$logger('iteratePaceCalc', t)
     },
+    updateSegments: function () {
+      let t = this.$logger()
+      var breaks = []
+      let wps = []
+      this.course.waypoints.forEach((x, i) => {
+        if (this.course.waypoints[i].show) {
+          breaks.push(x.location)
+          wps.push(x)
+        }
+      })
+      let arr = util.calcSegments(this.course.points, breaks, this.pacing)
+      arr.forEach((x, i) => {
+        arr[i].waypoint1 = wps[i]
+        arr[i].waypoint2 = wps[i + 1]
+        arr[i].collapsed = false
+        arr[i].collapseable = false
+        let ind = this.course.waypoints.findIndex(
+          x => x._id === arr[i].waypoint1._id
+        )
+        if (
+          arr[i].waypoint1.tier === 1 &&
+          this.course.waypoints.filter((x, j) =>
+            j > ind &&
+            j < this.course.waypoints.findIndex((x, j) =>
+              j > ind && x.tier === 1
+            ) &&
+            x.tier === 2
+          ).length
+        ) {
+          arr[i].collapseable = true
+        }
+        if (
+          arr[i].collapseable &&
+          arr[i].waypoint2.tier === 1
+        ) {
+          arr[i].collapsed = true
+        }
+      })
+      this.$logger('Course|updateSegments', t)
+      this.segments = arr
+    },
+    updateSplits: function () {
+      let t = this.$logger()
+      // eslint-disable-next-line
+      this.updateTrigger // hack for force recompute
+      let p = this.course.points
+      var tot = p[p.length - 1].loc * this.units.distScale
+      let breaks = [0]
+      var i = 1
+      while (i < tot) {
+        breaks.push(i / this.units.distScale)
+        i++
+      }
+      if (tot / this.units.distScale > breaks[breaks.length - 1]) {
+        breaks.push(tot / this.units.distScale)
+      }
+      this.$logger('Course|updateSplits', t)
+      this.splits = util.calcSegments(p, breaks, this.pacing)
+    },
     updateFocus: function (type, focus) {
       if (type === 'segments') this.$refs.splitTable.clear()
       if (type === 'splits') this.$refs.segmentTable.clear()
@@ -753,17 +766,12 @@ export default {
       this.tableTabIndex = 2
       this.$refs.waypointTable.selectWaypoint(id)
     },
-    forceSegmentUpdate: function () {
-      // this is a hack because the computed property won't update
-      // when this.course.waypoints[i] change
-      this.updateTrigger++
-    },
     waypointShow: function (arr) {
       let wps = this.course.waypoints.filter(x => arr.includes(x._id))
       wps.forEach((x, i) => {
         wps[i].show = true
       })
-      this.forceSegmentUpdate()
+      this.updateSegments()
       this.$refs.profile.forceWaypointsUpdate()
       this.$refs.map.forceUpdate()
     },
@@ -772,7 +780,7 @@ export default {
       wps.forEach((x, i) => {
         wps[i].show = false
       })
-      this.forceSegmentUpdate()
+      this.updateSegments()
       this.$refs.profile.forceWaypointsUpdate()
       this.$refs.map.forceUpdate()
     }
