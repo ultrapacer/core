@@ -581,9 +581,9 @@ export default {
           lastSplits = this.splits.map(x => { return x.time })
           elapsed = this.splits[this.splits.length - 1].elapsed
         }
-        this.updateSegments()
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
       }
+      this.updateSegments()
       this.busy = false
       this.$calculating.setCalculating(false)
     },
