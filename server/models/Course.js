@@ -45,7 +45,8 @@ var CourseSchema = new Schema({
   waypoints: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Waypoint'
-  }]
+  }],
+  cache: {}
 }, {
   collection: 'courses'
 })

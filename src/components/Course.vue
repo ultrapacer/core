@@ -198,8 +198,10 @@ export default {
       course: {},
       plan: {},
       segment: {},
+      segments: [],
       segmentDisplayTier: 1,
-      segmentUpdateTrigger: 0,
+      updateTrigger: 0,
+      splits: [],
       waypoint: {},
       pacing: {},
       mapFocus: [],
@@ -302,7 +304,7 @@ export default {
     segments: function () {
       let t = this.$logger()
       // eslint-disable-next-line
-      this.segmentUpdateTrigger // hack for force recompute
+      this.updateTrigger // hack for force recompute
       var breaks = []
       let wps = []
       this.course.waypoints.forEach((x, i) => {
@@ -344,6 +346,8 @@ export default {
     },
     splits: function () {
       let t = this.$logger()
+      // eslint-disable-next-line
+      this.updateTrigger // hack for force recompute
       let p = this.course.points
       var tot = p[p.length - 1].loc * this.units.distScale
       let breaks = [0]
@@ -752,7 +756,7 @@ export default {
     forceSegmentUpdate: function () {
       // this is a hack because the computed property won't update
       // when this.course.waypoints[i] change
-      this.segmentUpdateTrigger++
+      this.updateTrigger++
     },
     waypointShow: function (arr) {
       let wps = this.course.waypoints.filter(x => arr.includes(x._id))
