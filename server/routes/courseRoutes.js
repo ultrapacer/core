@@ -5,7 +5,6 @@ var Course = require('../models/Course')
 var User = require('../models/User')
 var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
-var wputil = require('../../shared/waypointUtilities')
 
 // Defined store route
 courseRoutes.route('/').post(async function (req, res) {
@@ -46,41 +45,13 @@ courseRoutes.route('/:id').put(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var course = await Course.findById(req.params.id).exec()
     if (course._user.equals(user._id)) {
-      course.name = req.body.name
-      course.description = req.body.description
-      course.public = req.body.public
+      let fields = ['name', 'description', 'public']
       if (req.body.points) {
-        course.points = req.body.points
-        course.source = req.body.source
-        var old = course.distance
-        course.distance = req.body.distance
-        course.gain = req.body.gain
-        course.loss = req.body.loss
-        var waypoints = await Waypoint.find({ _course: course })
-          .sort('location').exec()
-        await Promise.all(waypoints.map(async wp => {
-          var wpold = wp.location
-          // scale waypoint location for new course distance:
-          if (wp.type === 'finish') {
-            wp.location = course.distance
-          } else {
-            wp.location = wp.location * course.distance / old
-          }
-          if (wp.type !== 'start' && wp.type !== 'finish') {
-            try {
-              var wpdelta = Math.abs(wpold - wp.location)
-              // iteration threshold th:
-              var th = Math.max(0.5, Math.min(wpdelta, course.distance))
-              // resolve closest distance for waypoint LLA
-              wp.location = wputil.nearestLoc(wp, course.points, th)
-            } catch (err) {
-              console.log(err)
-            }
-          }
-          wputil.updateLLA(wp, course.points)
-          await wp.save()
-        }))
+        fields.push('points', 'source', 'distance', 'gain', 'loss')
       }
+      fields.forEach(f => {
+        course[f] = req.body[f]
+      })
       await course.save()
       res.json('Update complete')
     } else {
