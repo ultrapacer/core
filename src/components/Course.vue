@@ -559,17 +559,18 @@ export default {
       this.$calculating.setCalculating(true)
       await this.iteratePaceCalc()
       this.updateSplits()
-      let lastSplits = this.splits.map(x => { return x.time })
-      let elapsed = this.splits[this.splits.length - 1].elapsed
-      function changed (times, last) {
-        for (let i = 0; i < times.length; i++) {
-          if (Math.abs(times[i] - last[i]) >= 1) {
-            return true
-          }
-        }
-        return false
-      }
+      this.updateSegments()
       if (this.course._plan && this.course._plan.heatModel && this.course._plan.startTime) {
+        let lastSplits = this.splits.map(x => { return x.time })
+        let elapsed = this.splits[this.splits.length - 1].elapsed
+        function changed (times, last) {
+          for (let i = 0; i < times.length; i++) {
+            if (Math.abs(times[i] - last[i]) >= 1) {
+              return true
+            }
+          }
+          return false
+        }
         let t = this.$logger()
         for (var i = 0; i < 10; i++) {
           await this.iteratePaceCalc()
@@ -581,9 +582,9 @@ export default {
           lastSplits = this.splits.map(x => { return x.time })
           elapsed = this.splits[this.splits.length - 1].elapsed
         }
+        this.updateSegments()
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
       }
-      this.updateSegments()
       this.busy = false
       this.$calculating.setCalculating(false)
     },
