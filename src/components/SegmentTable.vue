@@ -31,7 +31,7 @@
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
     <template slot="FOOT_clock" v-if="course._plan">
-      {{ sec2string((course._plan.startTime + pacing.time) % 86400, 'am/pm') }}
+      {{ sec2string(segments[segments.length - 1].tod, 'am/pm') }}
     </template>
     <template slot="FOOT_pace">
       {{ pacing.pace / units.distScale | formatTime }}
@@ -191,21 +191,21 @@ export default {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
           thClass:
-            this.course._plan.startTime
+            this.segments[0].hasOwnProperty('tod')
               ? 'd-none d-md-table-cell text-right'
               : 'text-right',
           tdClass:
-            this.course._plan.startTime
+            this.segments[0].hasOwnProperty('tod')
               ? 'd-none d-md-table-cell text-right'
               : 'text-right'
         })
-        if (this.course._plan.startTime) {
+        if (this.segments[0].hasOwnProperty('tod')) {
           f.push({
             key: 'clock',
             label: 'Clock',
             formatter: (value, key, item) => {
-              let c = item.elapsed + this.course._plan.startTime
-              return timeUtil.sec2string(c % 86400, 'am/pm')
+              let c = item.tod
+              return timeUtil.sec2string(c, 'am/pm')
             },
             thClass: 'text-right',
             tdClass: 'text-right'

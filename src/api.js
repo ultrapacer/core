@@ -99,5 +99,5 @@ export default {
   },
   updatePlanCache (id, data) {
     return this.executeAuth('put', `/api/plan/${id}/cache`, data)
-  },
+  }
 }

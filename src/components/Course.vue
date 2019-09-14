@@ -10,7 +10,7 @@
             <b-form-group label-size="sm" label="Plan" label-cols="4"  label-cols-lg="2">
               <b-form-select
                   type="number"
-                  v-model="course._plan"
+                  v-model="plan"
                   :options="plansSelect"
                   @change="calcPlan"
                   size="sm"
@@ -107,10 +107,10 @@
               </b-btn>
             </div>
           </b-tab>
-          <b-tab v-if="course._plan && course._plan.name" title="Plan">
+          <b-tab v-if="plan" title="Plan">
             <plan-details
                 :course="course"
-                :plan="course._plan"
+                :plan="plan"
                 :pacing="pacing"
                 :units="units"
                 :busy="busy"
@@ -197,9 +197,7 @@ export default {
       saving: false,
       course: {},
       plan: {},
-      segment: {},
       segments: [],
-      segmentDisplayTier: 1,
       splits: [],
       waypoint: {},
       pacing: {},
@@ -232,8 +230,8 @@ export default {
     planOwner: function () {
       if (
         this.isAuthenticated &&
-        this.course._plan &&
-        String(this.user._id) === String(this.course._plan._user)
+        this.plan &&
+        String(this.user._id) === String(this.plan._user)
       ) {
         return true
       } else {
@@ -264,9 +262,9 @@ export default {
       let t = this.$logger()
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
-      if (!this.course._plan) { return [] }
+      if (!this.plan) { return [] }
       let wps = this.course.waypoints
-      let wpdelay = (this.course._plan) ? this.course._plan.waypointDelay : 0
+      let wpdelay = (this.plan) ? this.plan.waypointDelay : 0
       let d = []
       wps.forEach((x, i) => {
         if (x.type === 'aid' || x.type === 'water') {
@@ -301,14 +299,6 @@ export default {
       }
     }
   },
-  filters: {
-    formatDist (val, distScale) {
-      return (val * distScale).toFixed(2)
-    },
-    formatAlt (val, altScale) {
-      return (val * altScale).toFixed(0)
-    }
-  },
   async created () {
     if (screen.width < 992) {
       this.$bvToast.toast('Page not optimized for small/mobile screens', {
@@ -323,11 +313,15 @@ export default {
     let t = this.$logger()
     try {
       if (this.$route.params.plan) {
+        console.log('load plan')
         this.course = await api.getCourse(this.$route.params.plan, 'plan')
-        this.course._plan = this.course.plans.find(
-          x => x._id === this.course._plan
+        this.plan = this.course.plans.find(
+          x => x._id === this.$route.params.plan
         )
+        console.log(this.course.plans)
+        console.log(this.plan)
       } else {
+        console.log('load course')
         this.course = await api.getCourse(this.$route.params.course)
       }
     } catch (err) {
@@ -378,7 +372,15 @@ export default {
     }
     this.course.len = this.course.points[this.course.points.length - 1].loc
     this.checkWaypoints()
-    await this.updatePacing()
+    console.log(this.plan)
+    if (this.plan.cache) {
+      this.$logger('Course|created: using cached data')
+      this.pacing = this.plan.cache.pacing
+      this.segments = this.plan.cache.segments
+      this.splits = this.plan.cache.splits
+    } else {
+      await this.updatePacing()
+    }
     this.initializing = false
     setTimeout(() => {
       this.showMap = true
@@ -387,6 +389,8 @@ export default {
         this.$router.push({query: {}})
       }
     }, 500)
+    this.busy = false
+    this.$calculating.setCalculating(false)
     this.$logger('Finish')
   },
   methods: {
@@ -469,8 +473,8 @@ export default {
             this.user._courses.push(this.course._id)
           }
         }
-        if (this.course._plan) {
-          let p = this.course._plan
+        if (this.plan) {
+          let p = this.plan
           this.$refs.planEdit.show({
             heatModel: p.heatModel ? {...p.heatModel} : null,
             startTime: p.startTime || null,
@@ -496,7 +500,7 @@ export default {
       }
     },
     async editPlan () {
-      this.$refs.planEdit.show(this.course._plan)
+      this.$refs.planEdit.show(this.plan)
     },
     async deletePlan (plan, cb) {
       this.$refs.delModal.show(
@@ -505,12 +509,12 @@ export default {
         async () => {
           await api.deletePlan(plan._id)
           this.course.plans = await api.getPlans(this.course._id, this.user._id)
-          if (this.course._plan._id === plan._id) {
+          if (this.plan._id === plan._id) {
             if (this.course.plans.length) {
-              this.course._plan = this.course.plans[0]
+              this.plan = this.course.plans[0]
               await this.calcPlan()
             } else {
-              this.course._plan = {}
+              this.plan = {}
               this.pacing = {}
               this.$router.push({
                 name: 'Course',
@@ -533,26 +537,35 @@ export default {
       this.course.plans = await api.getPlans(this.course._id, this.user._id)
       for (var i = 0, il = this.course.plans.length; i < il; i++) {
         if (this.course.plans[i]._id === plan._id) {
-          this.course._plan = this.course.plans[i]
+          this.plan = this.course.plans[i]
         }
       }
+      delete this.plan.cache
       await this.calcPlan()
       if (typeof callback === 'function') callback()
     },
     async calcPlan () {
-      if (!this.course._plan) { return }
+      if (!this.plan) { return }
       this.$router.push({
         name: 'Plan',
         params: {
-          'plan': this.course._plan._id
+          'plan': this.plan._id
         }
       })
       if (this.owner) {
-        api.selectCoursePlan(this.course._id, {plan: this.course._plan._id})
+        api.selectCoursePlan(this.course._id, {plan: this.plan._id})
       }
-      this.busy = true
-      this.$calculating.setCalculating(true)
-      setTimeout(() => { this.updatePacing() }, 10)
+      console.log(this.plan.name)
+      if (this.plan.cache) {
+        this.$logger('Course|calcPlan: using cached data')
+        this.pacing = this.plan.cache.pacing
+        this.segments = this.plan.cache.segments
+        this.splits = this.plan.cache.splits
+      } else {
+        this.busy = true
+        this.$calculating.setCalculating(true)
+        setTimeout(() => { this.updatePacing() }, 10)
+      }
     },
     async updatePacing () {
       this.busy = true
@@ -560,23 +573,23 @@ export default {
       await this.iteratePaceCalc()
       this.updateSplits()
       this.updateSegments()
-      if (this.course._plan && this.course._plan.heatModel && this.course._plan.startTime) {
+      if (this.plan && this.plan.heatModel && this.plan.startTime) {
         let lastSplits = this.splits.map(x => { return x.time })
         let elapsed = this.splits[this.splits.length - 1].elapsed
-        function changed (times, last) {
-          for (let i = 0; i < times.length; i++) {
-            if (Math.abs(times[i] - last[i]) >= 1) {
-              return true
-            }
-          }
-          return false
-        }
         let t = this.$logger()
         for (var i = 0; i < 10; i++) {
           await this.iteratePaceCalc()
           this.updateSplits()
+          let hasChanged = false
+          let newSplits = this.splits.map(x => { return x.time })
+          for (let j = 0; j < newSplits.length; j++) {
+            if (Math.abs(newSplits[j] - lastSplits[j]) >= 1) {
+              hasChanged = true
+              break
+            }
+          }
           if (
-            !changed(this.splits.map(x => { return x.time }), lastSplits) &&
+            !hasChanged &&
             Math.abs(elapsed - this.splits[this.splits.length - 1].elapsed) < 1
           ) { break }
           lastSplits = this.splits.map(x => { return x.time })
@@ -585,13 +598,27 @@ export default {
         this.updateSegments()
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
       }
+      if (this.plan) {
+        this.plan.cache = {
+          pacing: this.pacing,
+          segments: this.segments,
+          splits: this.splits
+        }
+        if (this.planOwner) {
+          this.$logger('Course|updatePacing: saving plan cache')
+          api.updatePlanCache(
+            this.plan._id,
+            { cache: this.plan.cache }
+          )
+        }
+      }
       this.busy = false
       this.$calculating.setCalculating(false)
     },
     async iteratePaceCalc () {
       let t = this.$logger()
       var plan = false
-      if (this.course._plan && this.course._plan.name) { plan = true }
+      if (this.plan && this.plan.name) { plan = true }
 
       // calculate course normalizing factor:
       var tot = 0
@@ -607,10 +634,10 @@ export default {
           gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
           aF: nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel),
           tF: nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors),
-          hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], this.course._plan.heatModel) : 1,
+          hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], this.plan.heatModel) : 1,
           dF: nF.dF(
             [p[j - 1].loc, p[j].loc],
-            plan ? this.course._plan.drift : 0,
+            plan ? this.plan.drift : 0,
             this.course.len
           )
         }
@@ -641,16 +668,16 @@ export default {
         })
 
         // calculate time, pace, and normalized pace:
-        if (this.course._plan.pacingMethod === 'time') {
-          time = this.course._plan.pacingTarget
+        if (this.plan.pacingMethod === 'time') {
+          time = this.plan.pacingTarget
           pace = (time - delay) / this.course.len
           np = pace / this.course.norm
-        } else if (this.course._plan.pacingMethod === 'pace') {
-          pace = this.course._plan.pacingTarget
+        } else if (this.plan.pacingMethod === 'pace') {
+          pace = this.plan.pacingTarget
           time = pace * this.course.len + delay
           np = pace / this.course.norm
-        } else if (this.course._plan.pacingMethod === 'np') {
-          np = this.course._plan.pacingTarget
+        } else if (this.plan.pacingMethod === 'np') {
+          np = this.plan.pacingTarget
           pace = np * this.course.norm
           time = pace * this.course.len + delay
         }
@@ -665,9 +692,9 @@ export default {
         pace: pace,
         nF: this.course.norm,
         np: np,
-        drift: plan ? this.course._plan.drift : 0,
+        drift: plan ? this.plan.drift : 0,
         altModel: this.course.altModel,
-        heatModel: plan ? this.course._plan.heatModel : null,
+        heatModel: plan ? this.plan.heatModel : null,
         tFs: this.terrainFactors,
         delays: this.delays
       }
@@ -680,10 +707,10 @@ export default {
         arr.forEach((x, i) => {
           p[i + 1].time = x.elapsed
         })
-        if (this.course._plan.startTime !== null) {
+        if (this.plan.startTime !== null) {
           p.forEach((x, i) => {
             // tod: time of day in seconds from local midnight
-            p[i].tod = (x.time + this.course._plan.startTime) % 86400
+            p[i].tod = (x.time + this.plan.startTime) % 86400
           })
         } else {
           p.forEach((x, i) => {
