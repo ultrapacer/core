@@ -105,10 +105,7 @@ export default {
           key: 'gain',
           label: `Gain [${this.units.alt}]`,
           formatter: (value, key, item) => {
-            if (item.collapsed) {
-              let subs = this.subSegments(item)
-              value += subs.reduce((g, x) => { return g + x.gain }, 0)
-            }
+            value = this.rollup(item, 'sum', 'gain', value)
             let scale = 1
             if (this.course.scales) {
               scale = this.course.scales.gain
@@ -123,10 +120,7 @@ export default {
           key: 'loss',
           label: 'Loss [' + this.units.alt + ']',
           formatter: (value, key, item) => {
-            if (item.collapsed) {
-              let subs = this.subSegments(item)
-              value += subs.reduce((l, x) => { return l + x.loss }, 0)
-            }
+            value = this.rollup(item, 'sum', 'loss', value)
             let scale = 1
             if (this.course.scales) {
               scale = this.course.scales.loss
@@ -152,10 +146,7 @@ export default {
           key: 'len',
           label: 'Len [' + this.units.dist + ']',
           formatter: (value, key, item) => {
-            if (item.collapsed) {
-              let subs = this.subSegments(item)
-              value += subs.reduce((l, x) => { return l + x.len }, 0)
-            }
+            value = this.rollup(item, 'sum', 'len', value)
             return (value * this.units.distScale).toFixed(2)
           },
           thClass: 'text-right',
@@ -349,12 +340,14 @@ export default {
         )
       )
     },
-    rollup: function (segment, method, value) {
+    rollup: function (segment, method, field, value) {
       if (segment.collapsed) {
         let subs = this.subSegments(segment)
-        if (subs.length) {
-          value = subs[subs.length - 1].end
+        if (method === 'sum') {
+          return value + subs.reduce((l, x) => { return l + x[field] }, 0)
         }
+      } else {
+        return value
       }
     },
     sec2string: function (s, f) {
