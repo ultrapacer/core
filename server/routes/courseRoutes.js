@@ -6,7 +6,7 @@ var User = require('../models/User')
 var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
 
-// Defined store route
+// SAVE NEW
 courseRoutes.route('/').post(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
@@ -42,8 +42,10 @@ courseRoutes.route('/').get(async function (req, res) {
 // UPDATE
 courseRoutes.route('/:id').put(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.id).exec()
+    let [user, course] = await Promise.all([
+      User.findOne({ auth0ID: req.user.sub }).exec(),
+      Course.findById(req.params.id).exec()
+    ])
     if (course._user.equals(user._id)) {
       let fields = ['name', 'description', 'public']
       if (req.body.points) {
@@ -53,6 +55,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
         course[f] = req.body[f]
       })
       await course.save()
+      await course.clearCache()
       res.json('Update complete')
     } else {
       res.status(403).send('No permission')

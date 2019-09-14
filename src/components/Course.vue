@@ -313,15 +313,11 @@ export default {
     let t = this.$logger()
     try {
       if (this.$route.params.plan) {
-        console.log('load plan')
         this.course = await api.getCourse(this.$route.params.plan, 'plan')
         this.plan = this.course.plans.find(
           x => x._id === this.$route.params.plan
         )
-        console.log(this.course.plans)
-        console.log(this.plan)
       } else {
-        console.log('load course')
         this.course = await api.getCourse(this.$route.params.course)
       }
     } catch (err) {
@@ -372,7 +368,6 @@ export default {
     }
     this.course.len = this.course.points[this.course.points.length - 1].loc
     this.checkWaypoints()
-    console.log(this.plan)
     if (this.plan.cache) {
       this.$logger('Course|created: using cached data')
       this.pacing = this.plan.cache.pacing
@@ -555,7 +550,6 @@ export default {
       if (this.owner) {
         api.selectCoursePlan(this.course._id, {plan: this.plan._id})
       }
-      console.log(this.plan.name)
       if (this.plan.cache) {
         this.$logger('Course|calcPlan: using cached data')
         this.pacing = this.plan.cache.pacing

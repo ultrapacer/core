@@ -2,6 +2,7 @@
 var express = require('express')
 var waypointRoutes = express.Router()
 var Course = require('../models/Course')
+var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
 var User = require('../models/User')
 
@@ -14,6 +15,7 @@ waypointRoutes.route('/').post(async function (req, res) {
     }
     waypoint._user = await User.findOne({ auth0ID: req.user.sub }).exec()
     await waypoint.save()
+    await Plan.updateMany({ _course: waypoint._course }, { cache: null })
     res.json('Update complete')
   } catch (err) {
     console.log(err)
@@ -39,9 +41,9 @@ waypointRoutes.route('/:id').put(async function (req, res) {
       waypoint.pointsIndex = req.body.pointsIndex
       let tF = req.body.terrainFactor
       waypoint.terrainFactor = isNaN(tF) ? null : tF
-      waypoint.save().then(post => {
-        res.json('Update complete')
-      })
+      await waypoint.save()
+      await Plan.updateMany({ _course: waypoint._course }, { cache: null })
+      res.json('Update complete')
     } else {
       res.status(403).send('No permission')
     }

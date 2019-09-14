@@ -69,6 +69,10 @@ CourseSchema.methods.addData = async function (user = null, plan = null) {
   }
 }
 
+CourseSchema.methods.clearCache = async function () {
+  await Plan.updateMany({ _course: this }, { cache: null })
+}
+
 CourseSchema.pre('remove', function () {
   Plan.remove({_course: this._id}).exec()
   Waypoint.remove({_course: this._id}).exec()
