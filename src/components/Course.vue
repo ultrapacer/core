@@ -197,6 +197,7 @@ export default {
       saving: false,
       course: {},
       plan: {},
+      plans: [],
       segments: [],
       splits: [],
       waypoint: {},
@@ -209,10 +210,10 @@ export default {
   computed: {
     plansSelect: function () {
       var p = []
-      for (var i = 0, il = this.course.plans.length; i < il; i++) {
+      for (var i = 0, il = this.plans.length; i < il; i++) {
         p.push({
-          value: this.course.plans[i],
-          text: this.course.plans[i].name
+          value: this.plans[i],
+          text: this.plans[i].name
         })
       }
       return p
@@ -314,11 +315,14 @@ export default {
     try {
       if (this.$route.params.plan) {
         this.course = await api.getCourse(this.$route.params.plan, 'plan')
-        this.plan = this.course.plans.find(
-          x => x._id === this.$route.params.plan
-        )
       } else {
         this.course = await api.getCourse(this.$route.params.course)
+      }
+      this.plans = this.course.plans
+      if (this.$route.params.plan) {
+        this.plan = this.plans.find(
+          x => x._id === this.$route.params.plan
+        )
       }
     } catch (err) {
       console.log(err)
@@ -423,6 +427,9 @@ export default {
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
       this.checkWaypoints()
+      this.plans.forEach(p => {
+        p.cache = null
+      })
       await this.updatePacing()
       if (typeof callback === 'function') callback()
     },
@@ -503,10 +510,10 @@ export default {
         plan,
         async () => {
           await api.deletePlan(plan._id)
-          this.course.plans = await api.getPlans(this.course._id, this.user._id)
+          this.plans = await api.getPlans(this.course._id, this.user._id)
           if (this.plan._id === plan._id) {
-            if (this.course.plans.length) {
-              this.plan = this.course.plans[0]
+            if (this.plans.length) {
+              this.plan = this.plans[0]
               await this.calcPlan()
             } else {
               this.plan = {}
@@ -529,10 +536,10 @@ export default {
       )
     },
     async refreshPlans (plan, callback) {
-      this.course.plans = await api.getPlans(this.course._id, this.user._id)
-      for (var i = 0, il = this.course.plans.length; i < il; i++) {
-        if (this.course.plans[i]._id === plan._id) {
-          this.plan = this.course.plans[i]
+      this.plans = await api.getPlans(this.course._id, this.user._id)
+      for (var i = 0, il = this.plans.length; i < il; i++) {
+        if (this.plans[i]._id === plan._id) {
+          this.plan = this.plans[i]
         }
       }
       delete this.plan.cache
