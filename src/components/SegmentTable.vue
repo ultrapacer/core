@@ -349,6 +349,14 @@ export default {
         )
       )
     },
+    rollup: function (segment, method, value) {
+      if (segment.collapsed) {
+        let subs = this.subSegments(segment)
+        if (subs.length) {
+          value = subs[subs.length - 1].end
+        }
+      }
+    },
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)
     }
