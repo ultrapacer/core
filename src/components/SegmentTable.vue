@@ -2,7 +2,7 @@
   <b-table
     ref="table"
     :busy="busy"
-    :items="segments"
+    :items="visibleSegments"
     :fields="fields"
     primary-key="waypoint1._id"
     selectable
@@ -67,7 +67,8 @@ export default {
   props: ['course', 'segments', 'units', 'pacing', 'busy', 'mode'],
   data () {
     return {
-      clearing: false
+      clearing: false,
+      visibleTrigger: 0
     }
   },
   filters: {
@@ -89,6 +90,12 @@ export default {
           key: 'end',
           label: 'Dist [' + this.units.dist + ']',
           formatter: (value, key, item) => {
+            if (item.collapsed) {
+              let subs = this.subSegments(item)
+              if (subs.length) {
+                value = subs[subs.length - 1].end
+              }
+            }
             return (value * this.units.distScale).toFixed(2)
           },
           thClass: 'text-right',
@@ -98,6 +105,10 @@ export default {
           key: 'gain',
           label: `Gain [${this.units.alt}]`,
           formatter: (value, key, item) => {
+            if (item.collapsed) {
+              let subs = this.subSegments(item)
+              value += subs.reduce((g, x) => { return g + x.gain }, 0)
+            }
             let scale = 1
             if (this.course.scales) {
               scale = this.course.scales.gain
@@ -112,6 +123,10 @@ export default {
           key: 'loss',
           label: 'Loss [' + this.units.alt + ']',
           formatter: (value, key, item) => {
+            if (item.collapsed) {
+              let subs = this.subSegments(item)
+              value += subs.reduce((l, x) => { return l + x.loss }, 0)
+            }
             let scale = 1
             if (this.course.scales) {
               scale = this.course.scales.loss
@@ -137,6 +152,10 @@ export default {
           key: 'len',
           label: 'Len [' + this.units.dist + ']',
           formatter: (value, key, item) => {
+            if (item.collapsed) {
+              let subs = this.subSegments(item)
+              value += subs.reduce((l, x) => { return l + x.len }, 0)
+            }
             return (value * this.units.distScale).toFixed(2)
           },
           thClass: 'text-right',
@@ -199,13 +218,18 @@ export default {
               ? 'd-none d-md-table-cell text-right'
               : 'text-right'
         })
-        console.log(this.showClock)
         if (this.showClock) {
           f.push({
             key: 'clock',
             label: 'Clock',
             formatter: (value, key, item) => {
               let c = item.tod
+              if (item.collapsed) {
+                let subs = this.subSegments(item)
+                if (subs.length) {
+                  c = subs[subs.length - 1].tod
+                }
+              }
               return timeUtil.sec2string(c, 'am/pm')
             },
             thClass: 'text-right',
@@ -254,6 +278,15 @@ export default {
     },
     showClock: function () {
       return this.segments[0].hasOwnProperty('tod')
+    },
+    visibleSegments: function() {
+      this.visibleTrigger++
+      console.log('a')
+      if (this.mode === 'splits') {
+        return this.segments
+      } else {
+        return this.segments.filter(x=>x.waypoint1.show)
+      }
     }
   },
   methods: {
@@ -263,6 +296,7 @@ export default {
       this.clearing = false
     },
     expandRow: function (s) {
+      console.log('exp')
       let wps = this.course.waypoints
       let i = wps.findIndex(x => s.waypoint1._id === x._id)
       i++
@@ -273,9 +307,13 @@ export default {
         }
         i++
       }
+      s.collapsed = false
+      let subs = this.subSegments(s)
       this.$emit('show', arr)
+      this.visibleTrigger++
     },
     collapseRow: function (s) {
+      console.log('coll')
       let wps = this.course.waypoints
       let i = wps.findIndex(x => s.waypoint1._id === x._id)
       i++
@@ -284,7 +322,9 @@ export default {
         arr.push(wps[i]._id)
         i++
       }
+      s.collapsed = true
       this.$emit('hide', arr)
+      this.visibleTrigger++
     },
     selectRow: function (s) {
       if (this.clearing) return
@@ -297,6 +337,17 @@ export default {
       } else {
         this.$emit('select', this.mode, [])
       }
+    },
+    subSegments: function (segment) {
+      let ind = this.segments.findIndex(
+        s => s.waypoint1._id === segment.waypoint1._id
+      )
+      return this.segments.filter((x, j) =>
+        j > ind &&
+        j < this.segments.findIndex((x, j) =>
+          j > ind && x.collapseable
+        )
+      )
     },
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)

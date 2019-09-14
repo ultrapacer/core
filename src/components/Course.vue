@@ -319,6 +319,7 @@ export default {
         this.course = await api.getCourse(this.$route.params.course)
       }
       this.plans = this.course.plans
+      this.syncCache()
       if (this.$route.params.plan) {
         this.plan = this.plans.find(
           x => x._id === this.$route.params.plan
@@ -537,6 +538,7 @@ export default {
     },
     async refreshPlans (plan, callback) {
       this.plans = await api.getPlans(this.course._id, this.user._id)
+      this.syncCache()
       for (var i = 0, il = this.plans.length; i < il; i++) {
         if (this.plans[i]._id === plan._id) {
           this.plan = this.plans[i]
@@ -731,8 +733,8 @@ export default {
       let t = this.$logger()
       var breaks = []
       let wps = []
-      this.course.waypoints.forEach((x, i) => {
-        if (this.course.waypoints[i].show) {
+      this.course.waypoints.forEach(x => {
+        if (x.tier < 3) {
           breaks.push(x.location)
           wps.push(x)
         }
@@ -743,26 +745,9 @@ export default {
         arr[i].waypoint2 = wps[i + 1]
         arr[i].collapsed = false
         arr[i].collapseable = false
-        let ind = this.course.waypoints.findIndex(
-          x => x._id === arr[i].waypoint1._id
-        )
-        if (
-          arr[i].waypoint1.tier === 1 &&
-          this.course.waypoints.filter((x, j) =>
-            j > ind &&
-            j < this.course.waypoints.findIndex((x, j) =>
-              j > ind && x.tier === 1
-            ) &&
-            x.tier === 2
-          ).length
-        ) {
-          arr[i].collapseable = true
-        }
-        if (
-          arr[i].collapseable &&
-          arr[i].waypoint2.tier === 1
-        ) {
+        if (x.waypoint1.tier === 1 && x.waypoint2.tier > 1) {
           arr[i].collapsed = true
+          arr[i].collapseable = true
         }
         if (this.plan && this.plan.startTime !== null) {
           arr[i].tod = (x.elapsed + this.plan.startTime)
@@ -810,7 +795,6 @@ export default {
       wps.forEach((x, i) => {
         wps[i].show = true
       })
-      this.updateSegments()
       this.$refs.profile.forceWaypointsUpdate()
       this.$refs.map.forceUpdate()
     },
@@ -819,9 +803,22 @@ export default {
       wps.forEach((x, i) => {
         wps[i].show = false
       })
-      this.updateSegments()
       this.$refs.profile.forceWaypointsUpdate()
       this.$refs.map.forceUpdate()
+    },
+    syncCache: function () {
+      this.plans.forEach(p=>{
+        if (p.cache) {
+          p.cache.segments.forEach(s=>{
+            s.waypoint1 = this.course.waypoints.find(
+              wp=>wp._id === s.waypoint1._id
+            )
+            s.waypoint2 = this.course.waypoints.find(
+              wp=>wp._id === s.waypoint2._id
+            )
+          })
+        }
+      })
     }
   }
 }
