@@ -130,6 +130,7 @@ export default {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
+            value = this.rollup(item, 'weightedAvg', 'grade', value)
             return (value).toFixed(1) + '%'
           },
           thClass: 'd-none d-md-table-cell text-right',
@@ -193,6 +194,7 @@ export default {
           key: 'elapsed',
           label: 'Elapsed',
           formatter: (value, key, item) => {
+            value = this.rollup(item, 'sum', 'elapsed', value)
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
           thClass:
@@ -335,12 +337,26 @@ export default {
         let subs = this.subSegments(segment)
         switch (method) {
           case 'sum':
-            return value + subs.reduce((l, x) => { return l + x[field] }, 0)
+            return segment[field] + subs.reduce((l, x) => { return l + x[field] }, 0)
           case 'last':
             return subs[subs.length - 1][field]
+          case 'weightedAvg':
+            let v = segment[field]
+            let t = segment.len
+            subs.forEach(s => {
+              v += s.len * s[field]
+              t += s.len
+            })
+            return v / t
+          case 'avg':
+            let v = segment[field]
+            subs.forEach(s => {
+              v += s[field]
+            })
+            return v / (subs.length + 1)
         }
       } else {
-        return value
+        return segment[field]
       }
     },
     sec2string: function (s, f) {
