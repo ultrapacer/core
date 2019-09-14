@@ -90,12 +90,7 @@ export default {
           key: 'end',
           label: 'Dist [' + this.units.dist + ']',
           formatter: (value, key, item) => {
-            if (item.collapsed) {
-              let subs = this.subSegments(item)
-              if (subs.length) {
-                value = subs[subs.length - 1].end
-              }
-            }
+            value = this.rollup(item, 'last', 'end', value)
             return (value * this.units.distScale).toFixed(2)
           },
           thClass: 'text-right',
@@ -215,12 +210,7 @@ export default {
             label: 'Clock',
             formatter: (value, key, item) => {
               let c = item.tod
-              if (item.collapsed) {
-                let subs = this.subSegments(item)
-                if (subs.length) {
-                  c = subs[subs.length - 1].tod
-                }
-              }
+              c = this.rollup(item, 'last', 'tod', c)
               return timeUtil.sec2string(c, 'am/pm')
             },
             thClass: 'text-right',
@@ -343,8 +333,11 @@ export default {
     rollup: function (segment, method, field, value) {
       if (segment.collapsed) {
         let subs = this.subSegments(segment)
-        if (method === 'sum') {
-          return value + subs.reduce((l, x) => { return l + x[field] }, 0)
+        switch (method) {
+          case 'sum':
+            return value + subs.reduce((l, x) => { return l + x[field] }, 0)
+          case 'last':
+            return subs[subs.length - 1][field]
         }
       } else {
         return value
