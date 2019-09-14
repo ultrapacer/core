@@ -2,7 +2,6 @@
 var express = require('express')
 var waypointRoutes = express.Router()
 var Course = require('../models/Course')
-var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
 var User = require('../models/User')
 
@@ -15,7 +14,7 @@ waypointRoutes.route('/').post(async function (req, res) {
     }
     waypoint._user = await User.findOne({ auth0ID: req.user.sub }).exec()
     await waypoint.save()
-    await Plan.updateMany({ _course: waypoint._course }, { cache: null })
+    await course.clearCache()
     res.json('Update complete')
   } catch (err) {
     console.log(err)
@@ -42,7 +41,7 @@ waypointRoutes.route('/:id').put(async function (req, res) {
       let tF = req.body.terrainFactor
       waypoint.terrainFactor = isNaN(tF) ? null : tF
       await waypoint.save()
-      await Plan.updateMany({ _course: waypoint._course }, { cache: null })
+      await course.clearCache()
       res.json('Update complete')
     } else {
       res.status(403).send('No permission')
@@ -60,6 +59,7 @@ waypointRoutes.route('/:id').delete(async function (req, res) {
     var waypoint = await Waypoint.findById(req.params.id).populate('_course', '_user').exec()
     if (waypoint._course._user.equals(user._id)) {
       await waypoint.remove()
+      await course.clearCache()
       res.json('Successfully removed')
     } else {
       res.status(403).send('No permission')
