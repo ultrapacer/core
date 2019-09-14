@@ -629,6 +629,7 @@ export default {
         min: {gF: 100, aF: 100, tF: 100, hF: 100, dF: 100}
       }
       var p = this.course.points
+      console.log(p[1])
       for (let j = 1, jl = p.length; j < jl; j++) {
         // determine pacing factor for point
         let fs = {
@@ -763,9 +764,12 @@ export default {
         ) {
           arr[i].collapsed = true
         }
+        if (this.plan && this.plan.startTime !== null) {
+          arr[i].tod = (x.elapsed + this.plan.startTime)
+        }
       })
-      this.$logger('Course|updateSegments', t)
       this.segments = arr
+      this.$logger('Course|updateSegments', t)
     },
     updateSplits: function () {
       let t = this.$logger()
@@ -782,8 +786,14 @@ export default {
       if (tot / this.units.distScale > breaks[breaks.length - 1]) {
         breaks.push(tot / this.units.distScale)
       }
+      let arr = util.calcSegments(p, breaks, this.pacing)
+      if (this.plan && this.plan.startTime !== null) {
+        arr.forEach((x, i) => {
+          arr[i].tod = (x.elapsed + this.plan.startTime)
+        })
+      }
+      this.splits = arr
       this.$logger('Course|updateSplits', t)
-      this.splits = util.calcSegments(p, breaks, this.pacing)
     },
     updateFocus: function (type, focus) {
       if (type === 'segments') this.$refs.splitTable.clear()

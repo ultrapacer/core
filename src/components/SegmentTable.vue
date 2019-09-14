@@ -191,15 +191,16 @@ export default {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
           thClass:
-            this.segments[0].hasOwnProperty('tod')
+            this.showClock
               ? 'd-none d-md-table-cell text-right'
               : 'text-right',
           tdClass:
-            this.segments[0].hasOwnProperty('tod')
+            this.showClock
               ? 'd-none d-md-table-cell text-right'
               : 'text-right'
         })
-        if (this.segments[0].hasOwnProperty('tod')) {
+        console.log(this.showClock)
+        if (this.showClock) {
           f.push({
             key: 'clock',
             label: 'Clock',
@@ -250,6 +251,9 @@ export default {
         }
       }
       return false
+    },
+    showClock: function () {
+      return this.segments[0].hasOwnProperty('tod')
     }
   },
   methods: {
