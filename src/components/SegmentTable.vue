@@ -90,8 +90,8 @@ export default {
           key: 'end',
           label: 'Dist [' + this.units.dist + ']',
           formatter: (value, key, item) => {
-            value = this.rollup(item, 'last', 'end', value)
-            return (value * this.units.distScale).toFixed(2)
+            let v = this.rollup(item, 'last', 'end')
+            return (v * this.units.distScale).toFixed(2)
           },
           thClass: 'text-right',
           tdClass: 'text-right'
@@ -100,12 +100,12 @@ export default {
           key: 'gain',
           label: `Gain [${this.units.alt}]`,
           formatter: (value, key, item) => {
-            value = this.rollup(item, 'sum', 'gain', value)
+            let v = this.rollup(item, 'sum', 'gain')
             let scale = 1
             if (this.course.scales) {
               scale = this.course.scales.gain
             }
-            return (value * scale * this.units.altScale).toFixed(0)
+            return (v * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-md-table-cell text-right',
@@ -115,12 +115,12 @@ export default {
           key: 'loss',
           label: 'Loss [' + this.units.alt + ']',
           formatter: (value, key, item) => {
-            value = this.rollup(item, 'sum', 'loss', value)
+            let v = this.rollup(item, 'sum', 'loss')
             let scale = 1
             if (this.course.scales) {
               scale = this.course.scales.loss
             }
-            return (value * scale * this.units.altScale).toFixed(0)
+            return (v * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-md-table-cell text-right',
@@ -130,8 +130,8 @@ export default {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
-            value = this.rollup(item, 'weightedAvg', 'grade', value)
-            return (value).toFixed(1) + '%'
+            let v = this.rollup(item, 'weightedAvg', 'grade')
+            return (v).toFixed(1) + '%'
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -142,15 +142,19 @@ export default {
           key: 'len',
           label: 'Len [' + this.units.dist + ']',
           formatter: (value, key, item) => {
-            value = this.rollup(item, 'sum', 'len', value)
-            return (value * this.units.distScale).toFixed(2)
+            let v = this.rollup(item, 'sum', 'len')
+            return (v * this.units.distScale).toFixed(2)
           },
           thClass: 'text-right',
           tdClass: 'text-right'
         })
         f.unshift({
           key: 'waypoint2.name',
-          label: 'End'
+          label: 'End',
+          formatter: (value, key, item) => {
+            let v = this.rollup(item, 'last', 'waypoint2')
+            return v.name
+          }
         })
         f.unshift({
           key: 'waypoint1.name',
@@ -164,7 +168,8 @@ export default {
           key: 'factors.tF',
           label: 'Terrain',
           formatter: (value, key, item) => {
-            return '+' + ((value - 1) * 100).toFixed(1) + '%'
+            let v = this.rollup(item, 'weightedAvg', 'factors.tF')
+            return '+' + ((v - 1) * 100).toFixed(1) + '%'
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -175,7 +180,8 @@ export default {
           key: 'time',
           label: 'Moving Time',
           formatter: (value, key, item) => {
-            return timeUtil.sec2string(value, '[h]:m:ss')
+            let v = this.rollup(item, 'sum', 'time')
+            return timeUtil.sec2string(v, '[h]:m:ss')
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -184,8 +190,10 @@ export default {
           key: 'pace',
           label: `Pace [/${this.units.dist}]`,
           formatter: (value, key, item) => {
-            let l = item.len * this.units.distScale
-            return timeUtil.sec2string(item.time / l, '[h]:m:ss')
+            let time = this.rollup(item, 'sum', 'time', value)
+            let len = this.rollup(item, 'sum', 'len', value)
+            let pace = time / len / this.units.distScale
+            return timeUtil.sec2string(pace, '[h]:m:ss')
           },
           thClass: 'text-right',
           tdClass: 'text-right'
@@ -194,8 +202,8 @@ export default {
           key: 'elapsed',
           label: 'Elapsed',
           formatter: (value, key, item) => {
-            value = this.rollup(item, 'sum', 'elapsed', value)
-            return timeUtil.sec2string(value, '[h]:m:ss')
+            let v = this.rollup(item, 'sum', 'elapsed', value)
+            return timeUtil.sec2string(v, '[h]:m:ss')
           },
           thClass:
             this.showClock
@@ -211,9 +219,8 @@ export default {
             key: 'clock',
             label: 'Clock',
             formatter: (value, key, item) => {
-              let c = item.tod
-              c = this.rollup(item, 'last', 'tod', c)
-              return timeUtil.sec2string(c, 'am/pm')
+              let v = this.rollup(item, 'last', 'tod')
+              return timeUtil.sec2string(v, 'am/pm')
             },
             thClass: 'text-right',
             tdClass: 'text-right'
