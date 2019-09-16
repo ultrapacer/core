@@ -267,6 +267,7 @@ export default {
       if (this.mode === 'splits') {
         return this.segments
       }
+      let t = this.$logger()
       let arr = this.segments.filter(x => x.waypoint1.show)
       let arr2 = []
       arr.forEach((s, i) => {
@@ -294,6 +295,7 @@ export default {
         }
         arr2.push(seg)
       })
+      this.$logger('SegmentTable|visibleSegments')
       return arr2
     }
   },
