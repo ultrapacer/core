@@ -743,12 +743,6 @@ export default {
       arr.forEach((x, i) => {
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
-        arr[i].collapsed = false
-        arr[i].collapseable = false
-        if (x.waypoint1.tier === 1 && x.waypoint2.tier > 1) {
-          arr[i].collapsed = true
-          arr[i].collapseable = true
-        }
         if (this.plan && this.plan.startTime !== null) {
           arr[i].tod = (x.elapsed + this.plan.startTime)
         }
