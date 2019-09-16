@@ -287,7 +287,7 @@ export default {
         seg.factors.tF = this.rollup(subs, s, 'weightedAvg', 'factors.tF')
         if (s.time) {
           seg.time = this.rollup(subs, s, 'sum', 'time')
-          seg.pace = this.rollup(subs, s, 'sum', 'time') / this.rollup(subs, s, 'sum', 'len')
+          seg.pace = seg.time / seg.len
           seg.elapsed = this.rollup(subs, s, 'last', 'elapsed')
         }
         if (this.showClock) {
