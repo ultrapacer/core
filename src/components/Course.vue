@@ -85,6 +85,7 @@
                 :editing="editing"
                 :editFn="editWaypoint"
                 :delFn="deleteWaypoint"
+                @setUpdateFlag="setUpdateFlag"
               ></waypoint-table>
             <div v-if="editing">
               <b-btn variant="success" @click.prevent="newWaypoint()">
@@ -92,7 +93,7 @@
               </b-btn>
               <b-btn
                   variant="outline-primary"
-                  @click.prevent="editing=false"
+                  @click.prevent="editing=false; updatePacing()"
                   style="float:right"
                 >
                 <v-icon name="edit"></v-icon><span>editing: on</span>
@@ -156,6 +157,7 @@
       :terrainFactors="terrainFactors"
       @refresh="refreshWaypoints"
       @delete="deleteWaypoint"
+      @setUpdateFlag="setUpdateFlag"
     ></waypoint-edit>
     <delete-modal
       ref="delModal"
@@ -204,7 +206,8 @@ export default {
       pacing: {},
       mapFocus: [],
       showMap: false,
-      tableTabIndex: 0
+      tableTabIndex: 0,
+      updateFlag: false
     }
   },
   computed: {
@@ -292,8 +295,13 @@ export default {
     },
     waypointShowMode: function () {
       if (this.editing && this.tableTabIndex === 2) {
+        this.clearPlan()
         return 3
-      } else if (this.tableTabIndex === 2) {
+      }
+      if (this.updateFlag) {
+        this.updatePacing()
+      }
+      if (this.tableTabIndex === 2) {
         return 2
       } else {
         return null
@@ -389,6 +397,14 @@ export default {
         this.$router.push({query: {}})
       }
     }, 500)
+    window.addEventListener("beforeunload", async (evt) => {
+      evt.preventDefault()
+      if (this.updateFlag) {
+        await updatePacing()
+      }
+      evt.returnValue = ''
+      return null
+    })
     this.busy = false
     this.$calculating.setCalculating(false)
     this.$logger('Finish')
@@ -570,8 +586,21 @@ export default {
         setTimeout(() => { this.updatePacing() }, 10)
       }
     },
+    async clearPlan () {
+      // deselect the current plan
+      if (!this.plan) { return }
+      this.plan = {}
+      this.$router.push({
+        name: 'Course',
+        params: {
+          'course': this.course._id
+        }
+      })
+      this.$logger('Course|clearPlan')
+    },
     async updatePacing () {
       this.busy = true
+      this.updateFlag = false
       this.$calculating.setCalculating(true)
       await this.iteratePaceCalc()
       this.updateSplits()
@@ -814,6 +843,9 @@ export default {
           })
         }
       })
+    },
+    setUpdateFlag: function () {
+      this.updateFlag = true
     }
   }
 }
