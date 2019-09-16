@@ -254,6 +254,13 @@ export default {
     showClock: function () {
       return this.segments[0].hasOwnProperty('tod')
     },
+    collapseableIds: function () {
+      return this.segments.filter((s, i) => 
+        i < this.segments.length - 1 &&
+        s.waypoint1.tier === 1 &&
+        this.segments[i + 1].waypoint1.tier > 1
+      ).map(s => { return s.waypoint1._id })
+    },
     visibleSegments: function () {
       // eslint-disable-next-line
       this.visibleTrigger++
@@ -265,7 +272,7 @@ export default {
       arr.forEach((s, i) => {
         let subs = this.subSegments(s)
         let seg = {
-          collapseable: s.collapseable,
+          collapseable: this.collapseableIds.includes(s.waypoint1._id),
           collapsed: subs.length > 1,
           waypoint1: arr[i].waypoint1,
           waypoint2: this.rollup(subs, arr[i], 'last', 'waypoint2'),
@@ -297,7 +304,6 @@ export default {
       this.clearing = false
     },
     expandRow: function (s) {
-      s.collapsed = false
       let subs = this.subSegments(s)
       subs.splice(0, 1)
       let arr = subs.map(x => { return x.waypoint1._id })
@@ -305,7 +311,6 @@ export default {
       this.visibleTrigger++
     },
     collapseRow: function (segment) {
-      segment.collapsed = true
       let ind = this.segments.findIndex(
         s => s.waypoint1._id === segment.waypoint1._id
       )
