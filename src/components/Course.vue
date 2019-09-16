@@ -807,14 +807,15 @@ export default {
       this.$refs.map.forceUpdate()
     },
     syncCache: function () {
-      this.plans.forEach(p=>{
+      // makes the waypoints in the cached data the same objects as waypoints
+      this.plans.forEach(p => {
         if (p.cache) {
-          p.cache.segments.forEach(s=>{
+          p.cache.segments.forEach(s => {
             s.waypoint1 = this.course.waypoints.find(
-              wp=>wp._id === s.waypoint1._id
+              wp => wp._id === s.waypoint1._id
             )
             s.waypoint2 = this.course.waypoints.find(
-              wp=>wp._id === s.waypoint2._id
+              wp => wp._id === s.waypoint2._id
             )
           })
         }

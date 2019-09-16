@@ -13,9 +13,14 @@ waypointRoutes.route('/').post(async function (req, res) {
       waypoint.terrainFactor = null
     }
     waypoint._user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    await waypoint.save()
-    await course.clearCache()
-    res.json('Update complete')
+    let course = await Course.findById(waypoint._course).select('_user').exec()
+    if (waypoint._user.equals(course._user)) {
+      await waypoint.save()
+      await course.clearCache()
+      res.json('Update complete')
+    } else {
+      res.status(403).send('No permission')
+    }
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
@@ -58,8 +63,8 @@ waypointRoutes.route('/:id').delete(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     var waypoint = await Waypoint.findById(req.params.id).populate('_course', '_user').exec()
     if (waypoint._course._user.equals(user._id)) {
+      await waypoint._course.clearCache()
       await waypoint.remove()
-      await course.clearCache()
       res.json('Successfully removed')
     } else {
       res.status(403).send('No permission')

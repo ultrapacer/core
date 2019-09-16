@@ -30,7 +30,7 @@
     <template slot="FOOT_elapsed">
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
-    <template slot="FOOT_clock" v-if="course._plan">
+    <template slot="FOOT_tod" v-if="course._plan">
       {{ sec2string(segments[segments.length - 1].tod, 'am/pm') }}
     </template>
     <template slot="FOOT_pace">
@@ -90,8 +90,7 @@ export default {
           key: 'end',
           label: 'Dist [' + this.units.dist + ']',
           formatter: (value, key, item) => {
-            let v = this.rollup(item, 'last', 'end')
-            return (v * this.units.distScale).toFixed(2)
+            return (value * this.units.distScale).toFixed(2)
           },
           thClass: 'text-right',
           tdClass: 'text-right'
@@ -100,12 +99,11 @@ export default {
           key: 'gain',
           label: `Gain [${this.units.alt}]`,
           formatter: (value, key, item) => {
-            let v = this.rollup(item, 'sum', 'gain')
             let scale = 1
             if (this.course.scales) {
               scale = this.course.scales.gain
             }
-            return (v * scale * this.units.altScale).toFixed(0)
+            return (value * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-md-table-cell text-right',
@@ -115,12 +113,11 @@ export default {
           key: 'loss',
           label: 'Loss [' + this.units.alt + ']',
           formatter: (value, key, item) => {
-            let v = this.rollup(item, 'sum', 'loss')
             let scale = 1
             if (this.course.scales) {
               scale = this.course.scales.loss
             }
-            return (v * scale * this.units.altScale).toFixed(0)
+            return (value * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-md-table-cell text-right',
@@ -130,8 +127,7 @@ export default {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
-            let v = this.rollup(item, 'weightedAvg', 'grade')
-            return (v).toFixed(1) + '%'
+            return (value).toFixed(1) + '%'
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -142,19 +138,14 @@ export default {
           key: 'len',
           label: 'Len [' + this.units.dist + ']',
           formatter: (value, key, item) => {
-            let v = this.rollup(item, 'sum', 'len')
-            return (v * this.units.distScale).toFixed(2)
+            return (value * this.units.distScale).toFixed(2)
           },
           thClass: 'text-right',
           tdClass: 'text-right'
         })
         f.unshift({
           key: 'waypoint2.name',
-          label: 'End',
-          formatter: (value, key, item) => {
-            let v = this.rollup(item, 'last', 'waypoint2')
-            return v.name
-          }
+          label: 'End'
         })
         f.unshift({
           key: 'waypoint1.name',
@@ -168,8 +159,7 @@ export default {
           key: 'factors.tF',
           label: 'Terrain',
           formatter: (value, key, item) => {
-            let v = this.rollup(item, 'weightedAvg', 'factors.tF')
-            return '+' + ((v - 1) * 100).toFixed(1) + '%'
+            return '+' + ((value - 1) * 100).toFixed(1) + '%'
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -180,8 +170,7 @@ export default {
           key: 'time',
           label: 'Moving Time',
           formatter: (value, key, item) => {
-            let v = this.rollup(item, 'sum', 'time')
-            return timeUtil.sec2string(v, '[h]:m:ss')
+            return timeUtil.sec2string(value, '[h]:m:ss')
           },
           thClass: 'd-none d-md-table-cell text-right',
           tdClass: 'd-none d-md-table-cell text-right'
@@ -190,10 +179,8 @@ export default {
           key: 'pace',
           label: `Pace [/${this.units.dist}]`,
           formatter: (value, key, item) => {
-            let time = this.rollup(item, 'sum', 'time', value)
-            let len = this.rollup(item, 'sum', 'len', value)
-            let pace = time / len / this.units.distScale
-            return timeUtil.sec2string(pace, '[h]:m:ss')
+            let l = item.len * this.units.distScale
+            return timeUtil.sec2string(item.time / l, '[h]:m:ss')
           },
           thClass: 'text-right',
           tdClass: 'text-right'
@@ -202,8 +189,7 @@ export default {
           key: 'elapsed',
           label: 'Elapsed',
           formatter: (value, key, item) => {
-            let v = this.rollup(item, 'sum', 'elapsed', value)
-            return timeUtil.sec2string(v, '[h]:m:ss')
+            return timeUtil.sec2string(value, '[h]:m:ss')
           },
           thClass:
             this.showClock
@@ -216,11 +202,10 @@ export default {
         })
         if (this.showClock) {
           f.push({
-            key: 'clock',
+            key: 'tod',
             label: 'Clock',
             formatter: (value, key, item) => {
-              let v = this.rollup(item, 'last', 'tod')
-              return timeUtil.sec2string(v, 'am/pm')
+              return timeUtil.sec2string(value, 'am/pm')
             },
             thClass: 'text-right',
             tdClass: 'text-right'
@@ -239,14 +224,14 @@ export default {
       return f
     },
     gain: function () {
-      let v = this.segments.reduce((t, x) => { return t + x.gain }, 0)
+      let v = this.visibleSegments.reduce((t, x) => { return t + x.gain }, 0)
       if (this.course.scales) {
         v = v * this.course.scales.gain
       }
       return v
     },
     loss: function () {
-      let v = this.segments.reduce((t, x) => { return t + x.loss }, 0)
+      let v = this.visibleSegments.reduce((t, x) => { return t + x.loss }, 0)
       if (this.course.scales) {
         v = v * this.course.scales.loss
       }
@@ -269,14 +254,40 @@ export default {
     showClock: function () {
       return this.segments[0].hasOwnProperty('tod')
     },
-    visibleSegments: function() {
+    visibleSegments: function () {
+      // eslint-disable-next-line
       this.visibleTrigger++
-      console.log('a')
       if (this.mode === 'splits') {
         return this.segments
-      } else {
-        return this.segments.filter(x=>x.waypoint1.show)
       }
+      let arr = this.segments.filter(x => x.waypoint1.show)
+      let arr2 = []
+      arr.forEach((s, i) => {
+        let subs = this.subSegments(s)
+        let seg = {
+          collapseable: s.collapseable,
+          collapsed: subs.length > 1,
+          waypoint1: arr[i].waypoint1,
+          waypoint2: this.rollup(subs, arr[i], 'last', 'waypoint2'),
+          end: this.rollup(subs, s, 'last', 'end'),
+          len: this.rollup(subs, s, 'sum', 'len'),
+          gain: this.rollup(subs, s, 'sum', 'gain'),
+          loss: this.rollup(subs, s, 'sum', 'loss'),
+          grade: this.rollup(subs, s, 'weightedAvg', 'grade'),
+          factors: {...s.factors}
+        }
+        seg.factors.tF = this.rollup(subs, s, 'weightedAvg', 'factors.tF')
+        if (s.time) {
+          seg.time = this.rollup(subs, s, 'sum', 'time')
+          seg.pace = this.rollup(subs, s, 'sum', 'time') / this.rollup(subs, s, 'sum', 'len')
+          seg.elapsed = this.rollup(subs, s, 'last', 'elapsed')
+        }
+        if (this.showClock) {
+          seg.tod = this.rollup(subs, s, 'last', 'tod')
+        }
+        arr2.push(seg)
+      })
+      return arr2
     }
   },
   methods: {
@@ -286,33 +297,25 @@ export default {
       this.clearing = false
     },
     expandRow: function (s) {
-      console.log('exp')
-      let wps = this.course.waypoints
-      let i = wps.findIndex(x => s.waypoint1._id === x._id)
-      i++
-      let arr = []
-      while (wps[i].tier > 1) {
-        if (wps[i].tier !== 3) {
-          arr.push(wps[i]._id)
-        }
-        i++
-      }
       s.collapsed = false
       let subs = this.subSegments(s)
+      subs.splice(0, 1)
+      let arr = subs.map(x => { return x.waypoint1._id })
       this.$emit('show', arr)
       this.visibleTrigger++
     },
-    collapseRow: function (s) {
-      console.log('coll')
-      let wps = this.course.waypoints
-      let i = wps.findIndex(x => s.waypoint1._id === x._id)
-      i++
-      let arr = []
-      while (wps[i].tier > 1) {
-        arr.push(wps[i]._id)
-        i++
-      }
-      s.collapsed = true
+    collapseRow: function (segment) {
+      segment.collapsed = true
+      let ind = this.segments.findIndex(
+        s => s.waypoint1._id === segment.waypoint1._id
+      )
+      let next = this.segments.findIndex((x, j) =>
+        j > ind && x.waypoint1.tier === 1
+      )
+      let subs = this.segments.filter((x, j) =>
+        j > ind && (next < 0 || j < next)
+      )
+      let arr = subs.map(x => { return x.waypoint1._id })
       this.$emit('hide', arr)
       this.visibleTrigger++
     },
@@ -332,38 +335,39 @@ export default {
       let ind = this.segments.findIndex(
         s => s.waypoint1._id === segment.waypoint1._id
       )
+      let next = this.segments.findIndex((x, j) =>
+        j > ind && x.waypoint1.show
+      )
       return this.segments.filter((x, j) =>
-        j > ind &&
-        j < this.segments.findIndex((x, j) =>
-          j > ind && x.collapseable
-        )
+        j >= ind && (next < 0 || j < next)
       )
     },
-    rollup: function (segment, method, field, value) {
-      if (segment.collapsed) {
-        let subs = this.subSegments(segment)
-        switch (method) {
-          case 'sum':
-            return segment[field] + subs.reduce((l, x) => { return l + x[field] }, 0)
-          case 'last':
-            return subs[subs.length - 1][field]
-          case 'weightedAvg':
-            let v = segment[field]
-            let t = segment.len
-            subs.forEach(s => {
-              v += s.len * s[field]
-              t += s.len
-            })
-            return v / t
-          case 'avg':
-            let v = segment[field]
-            subs.forEach(s => {
-              v += s[field]
-            })
-            return v / (subs.length + 1)
+    rollup: function (subs, segment, method, field) {
+      switch (method) {
+        case 'sum': {
+          return subs.reduce((v, x) => { return v + x[field] }, 0)
         }
-      } else {
-        return segment[field]
+        case 'last': {
+          return subs[subs.length - 1][field]
+        }
+        case 'weightedAvg': {
+          let v = 0
+          let t = 0
+          subs.forEach(s => {
+            v += s.len * this.parseField(s, field)
+            t += s.len
+          })
+          return v / t
+        }
+      }
+    },
+    parseField: function (obj, field) {
+      let arr = field.split('.')
+      switch (arr.length) {
+        case 1:
+          return obj[field]
+        case 2:
+          return obj[arr[0]][arr[1]]
       }
     },
     sec2string: function (s, f) {
