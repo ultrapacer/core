@@ -141,6 +141,7 @@ export default {
       this.updatingWaypointTimeoutID = String(waypoint._id)
       this.updatingWaypointTimeout = setTimeout(() => {
         api.updateWaypoint(waypoint._id, waypoint)
+        this.$emit('setUpdateFlag')
       }, 2000)
     },
     selectWaypoint: function (id) {
