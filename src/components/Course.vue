@@ -397,14 +397,16 @@ export default {
         this.$router.push({query: {}})
       }
     }, 500)
-    window.addEventListener("beforeunload", async (evt) => {
-      evt.preventDefault()
+    window.addEventListener('beforeunload', (event) => {
       if (this.updateFlag) {
-        await updatePacing()
+        event.returnValue = ''
+        event.preventDefault();
+        updatePacing()
+        return null
+      } else {
+        return
       }
-      evt.returnValue = ''
-      return null
-    })
+    })    
     this.busy = false
     this.$calculating.setCalculating(false)
     this.$logger('Finish')
