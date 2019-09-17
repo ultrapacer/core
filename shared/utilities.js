@@ -16,8 +16,9 @@ function calcStats (points) {
     }
   }
   return {
-    gain: Math.round(gain),
-    loss: Math.round(loss)
+    gain: gain,
+    loss: loss,
+    dist: points[points.length -1].loc
   }
 }
 
