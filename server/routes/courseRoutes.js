@@ -35,7 +35,8 @@ courseRoutes.route('/').get(async function (req, res) {
       }
     ]
   }
-  var courses = await Course.find(q).select('-points').collation({'locale': 'en'}).sort('name').exec()
+  var courses = await Course.find(q).select('-points')
+    .collation({'locale': 'en'}).sort('name').exec()
   res.json(courses)
 })
 
