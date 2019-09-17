@@ -446,9 +446,7 @@ export default {
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
       this.checkWaypoints()
-      this.plans.forEach(p => {
-        p.cache = null
-      })
+      this.clearCache()
       await this.updatePacing()
       if (typeof callback === 'function') callback()
     },
@@ -831,6 +829,12 @@ export default {
       this.$refs.profile.forceWaypointsUpdate()
       this.$refs.map.forceUpdate()
     },
+    clearCache: function () {
+      this.plans.forEach(p => {
+        p.cache = null
+      })
+      this.$logger('Course|clearCache')
+    },
     syncCache: function () {
       // makes the waypoints in the cached data the same objects as waypoints
       this.plans.forEach(p => {
@@ -847,6 +851,7 @@ export default {
       })
     },
     setUpdateFlag: function () {
+      this.clearCache()
       this.updateFlag = true
     }
   }
