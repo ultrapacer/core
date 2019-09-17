@@ -255,7 +255,7 @@ export default {
       return this.segments[0].hasOwnProperty('tod')
     },
     collapseableIds: function () {
-      return this.segments.filter((s, i) => 
+      return this.segments.filter((s, i) =>
         i < this.segments.length - 1 &&
         s.waypoint1.tier === 1 &&
         this.segments[i + 1].waypoint1.tier > 1
@@ -295,7 +295,7 @@ export default {
         }
         arr2.push(seg)
       })
-      this.$logger('SegmentTable|visibleSegments')
+      this.$logger('SegmentTable|visibleSegments', t)
       return arr2
     }
   },

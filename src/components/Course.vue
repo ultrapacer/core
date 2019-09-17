@@ -93,7 +93,7 @@
               </b-btn>
               <b-btn
                   variant="outline-primary"
-                  @click.prevent="editing=false; updatePacing()"
+                  @click.prevent="editing=false"
                   style="float:right"
                 >
                 <v-icon name="edit"></v-icon><span>editing: on</span>
@@ -295,13 +295,8 @@ export default {
     },
     waypointShowMode: function () {
       if (this.editing && this.tableTabIndex === 2) {
-        this.clearPlan()
         return 3
-      }
-      if (this.updateFlag) {
-        this.updatePacing()
-      }
-      if (this.tableTabIndex === 2) {
+      } else if (this.tableTabIndex === 2) {
         return 2
       } else {
         return null
@@ -396,7 +391,7 @@ export default {
         this[this.$route.query.method]()
         this.$router.push({query: {}})
       }
-    }, 500)    
+    }, 500)
     this.busy = false
     this.$calculating.setCalculating(false)
     this.$logger('Finish')
@@ -436,8 +431,7 @@ export default {
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
       this.checkWaypoints()
-      this.clearCache()
-      await this.updatePacing()
+      this.setUpdateFlag()
       if (typeof callback === 'function') callback()
     },
     checkWaypoints () {
@@ -650,7 +644,6 @@ export default {
         min: {gF: 100, aF: 100, tF: 100, hF: 100, dF: 100}
       }
       var p = this.course.points
-      console.log(p[1])
       for (let j = 1, jl = p.length; j < jl; j++) {
         // determine pacing factor for point
         let fs = {
@@ -841,8 +834,27 @@ export default {
       })
     },
     setUpdateFlag: function () {
-      this.clearCache()
       this.updateFlag = true
+    }
+  },
+  watch: {
+    editing: function (val) {
+      // update after disabling editing
+      if (!val && this.updateFlag) {
+        this.updatePacing()
+      }
+    },
+    tableTabIndex: function (val) {
+      // if editing and navigating away from waypoint table, recalc
+      if (this.updateFlag && this.tableTabIndex !== 2) {
+        this.updatePacing()
+      }
+    },
+    updateFlag: function (val) {
+      // when update flag transitions to true, clear cached data
+      if (val) {
+        this.clearCache()
+      }
     }
   }
 }
