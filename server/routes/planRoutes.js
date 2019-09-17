@@ -28,6 +28,7 @@ planRoutes.route('/:id').put(async function (req, res) {
       fields.forEach(f => {
         plan[f] = req.body[f]
       })
+      plan.cache = null
       await plan.save()
       res.json(plan)
     } else {
