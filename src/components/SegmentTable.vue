@@ -30,7 +30,7 @@
     <template slot="FOOT_elapsed">
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
-    <template slot="FOOT_tod" v-if="course._plan">
+    <template slot="FOOT_tod">
       {{ sec2string(segments[segments.length - 1].tod, 'am/pm') }}
     </template>
     <template slot="FOOT_pace">
