@@ -71,6 +71,9 @@ export default {
         return this.course.waypoints.filter(x => x.tier < 3)
       }
     },
+    showTerrain: function () {
+      return this.waypoints.findIndex(wp => wp.terrainFactor) >= 0
+    },
     fields: function () {
       var f = [
         {
@@ -103,6 +106,25 @@ export default {
           tdClass: 'd-none d-sm-table-cell text-right'
         }
       ]
+      if (this.showTerrain) {
+        f.push({
+          key: 'terrainFactor',
+          label: 'Terrain',
+          formatter: (value, key, item) => {
+            if (value === null) {
+              let i = this.waypoints.lastIndexOf((wp, j) =>
+                j < this.waypoints.findIndex(wp => wp._id === item._id) &&
+                wp.terrainFactor
+              )
+              value = (i) ? this.waypoints[j].terrainFactor : 0
+              }
+            }
+            return `+${value}%`
+          },
+          thClass: 'd-none d-md-table-cell text-right',
+          tdClass: 'd-none d-md-table-cell text-right'
+        })
+      }
       if (this.editing) {
         f.push({
           key: 'actions',
