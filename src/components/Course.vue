@@ -108,7 +108,7 @@
               </b-btn>
             </div>
           </b-tab>
-          <b-tab v-if="plan" title="Plan">
+          <b-tab v-if="planAssigned" title="Plan">
             <plan-details
                 :course="course"
                 :plan="plan"
@@ -232,6 +232,10 @@ export default {
         return false
       }
     },
+    planAssigned: function () {
+      if (this.plan && this.plan._id) { return true }
+      return false
+    },
     planOwner: function () {
       if (
         this.isAuthenticated &&
@@ -274,9 +278,9 @@ export default {
       let t = this.$logger()
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
-      if (!this.plan) { return [] }
+      if (!this.planAssigned) { return [] }
       let wps = this.course.waypoints
-      let wpdelay = (this.plan) ? this.plan.waypointDelay : 0
+      let wpdelay = (this.planAssigned) ? this.plan.waypointDelay : 0
       let d = []
       wps.forEach((x, i) => {
         if (x.type === 'aid' || x.type === 'water') {
@@ -479,7 +483,7 @@ export default {
             this.user._courses.push(this.course._id)
           }
         }
-        if (this.plan) {
+        if (this.planAssigned) {
           let p = this.plan
           this.$refs.planEdit.show({
             heatModel: p.heatModel ? {...p.heatModel} : null,
@@ -542,17 +546,13 @@ export default {
     async refreshPlans (plan, callback) {
       this.plans = await api.getPlans(this.course._id, this.user._id)
       this.syncCache()
-      for (var i = 0, il = this.plans.length; i < il; i++) {
-        if (this.plans[i]._id === plan._id) {
-          this.plan = this.plans[i]
-        }
-      }
+      this.plan = this.plans.find(p => p._id === plan._id)
       delete this.plan.cache
       await this.calcPlan()
       if (typeof callback === 'function') callback()
     },
     async calcPlan () {
-      if (!this.plan) { return }
+      if (!this.planAssigned) { return }
       this.$router.push({
         name: 'Plan',
         params: {
@@ -570,7 +570,7 @@ export default {
     },
     async clearPlan () {
       // deselect the current plan
-      if (!this.plan) { return }
+      if (!this.planAssigned) { return }
       this.plan = {}
       this.$router.push({
         name: 'Course',
@@ -588,7 +588,7 @@ export default {
       await this.iteratePaceCalc()
       this.updateSplits()
       // if factors are time-based (eg heat), iterate solution:
-      if (this.plan && this.plan.heatModel && this.plan.startTime) {
+      if (this.planAssigned && this.plan.heatModel && this.plan.startTime) {
         let lastSplits = this.kilometers.map(x => { return x.time })
         let elapsed = this.kilometers[this.kilometers.length - 1].elapsed
         let t = this.$logger()
@@ -615,7 +615,7 @@ export default {
       this.updateSplits('miles')
       this.updateSegments()
       let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
-      if (this.plan && this.plan._id) {
+      if (this.planAssigned) {
         this.plan.cache = {}
         cacheFields.forEach(f => {
           this.plan.cache[f] = this[f]
@@ -647,7 +647,7 @@ export default {
     async iteratePaceCalc () {
       let t = this.$logger()
       var plan = false
-      if (this.plan && this.plan.name) { plan = true }
+      if (this.planAssigned) { plan = true }
 
       // calculate course normalizing factor:
       var tot = 0
@@ -768,7 +768,7 @@ export default {
       arr.forEach((x, i) => {
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
-        if (this.plan && this.plan.startTime !== null) {
+        if (this.planAssigned && this.plan.startTime !== null) {
           arr[i].tod = (x.elapsed + this.plan.startTime)
         }
       })
@@ -792,7 +792,7 @@ export default {
         breaks.push(tot / distScale)
       }
       let arr = util.calcSegments(p, breaks, this.pacing)
-      if (this.plan && this.plan.startTime !== null) {
+      if (this.planAssigned && this.plan.startTime !== null) {
         arr.forEach((x, i) => {
           arr[i].tod = (x.elapsed + this.plan.startTime)
         })
@@ -850,7 +850,7 @@ export default {
     useCache: function (cache) {
       // if cache data is stored, assign it
       let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
-      if (this.plan && this.plan._id) {
+      if (this.planAssigned) {
         if (this.plan.cache) {
           this.$logger('Course|useCache: using cached plan data')
           cacheFields.forEach(f => {
