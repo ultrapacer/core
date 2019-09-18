@@ -2,7 +2,7 @@
   <b-table
     ref="table"
     :busy="busy"
-    :items="segments"
+    :items="visibleSegments"
     :fields="fields"
     primary-key="waypoint1._id"
     selectable
@@ -30,8 +30,8 @@
     <template slot="FOOT_elapsed">
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
-    <template slot="FOOT_clock" v-if="course._plan">
-      {{ sec2string((course._plan.startTime + pacing.time) % 86400, 'am/pm') }}
+    <template slot="FOOT_tod">
+      {{ sec2string(segments[segments.length - 1].tod, 'am/pm') }}
     </template>
     <template slot="FOOT_pace">
       {{ pacing.pace / units.distScale | formatTime }}
@@ -67,7 +67,8 @@ export default {
   props: ['course', 'segments', 'units', 'pacing', 'busy', 'mode'],
   data () {
     return {
-      clearing: false
+      clearing: false,
+      visibleTrigger: 0
     }
   },
   filters: {
@@ -191,21 +192,20 @@ export default {
             return timeUtil.sec2string(value, '[h]:m:ss')
           },
           thClass:
-            this.course._plan.startTime
+            this.showClock
               ? 'd-none d-md-table-cell text-right'
               : 'text-right',
           tdClass:
-            this.course._plan.startTime
+            this.showClock
               ? 'd-none d-md-table-cell text-right'
               : 'text-right'
         })
-        if (this.course._plan.startTime) {
+        if (this.showClock) {
           f.push({
-            key: 'clock',
+            key: 'tod',
             label: 'Clock',
             formatter: (value, key, item) => {
-              let c = item.elapsed + this.course._plan.startTime
-              return timeUtil.sec2string(c % 86400, 'am/pm')
+              return timeUtil.sec2string(value, 'am/pm')
             },
             thClass: 'text-right',
             tdClass: 'text-right'
@@ -224,14 +224,14 @@ export default {
       return f
     },
     gain: function () {
-      let v = this.segments.reduce((t, x) => { return t + x.gain }, 0)
+      let v = this.visibleSegments.reduce((t, x) => { return t + x.gain }, 0)
       if (this.course.scales) {
         v = v * this.course.scales.gain
       }
       return v
     },
     loss: function () {
-      let v = this.segments.reduce((t, x) => { return t + x.loss }, 0)
+      let v = this.visibleSegments.reduce((t, x) => { return t + x.loss }, 0)
       if (this.course.scales) {
         v = v * this.course.scales.loss
       }
@@ -250,6 +250,53 @@ export default {
         }
       }
       return false
+    },
+    showClock: function () {
+      return this.segments[0].hasOwnProperty('tod')
+    },
+    collapseableIds: function () {
+      return this.segments.filter((s, i) =>
+        i < this.segments.length - 1 &&
+        s.waypoint1.tier === 1 &&
+        this.segments[i + 1].waypoint1.tier > 1
+      ).map(s => { return s.waypoint1._id })
+    },
+    visibleSegments: function () {
+      // eslint-disable-next-line
+      this.visibleTrigger++
+      if (this.mode === 'splits') {
+        return this.segments
+      }
+      let t = this.$logger()
+      let arr = this.segments.filter(x => x.waypoint1.show)
+      let arr2 = []
+      arr.forEach((s, i) => {
+        let subs = this.subSegments(s)
+        let seg = {
+          collapseable: this.collapseableIds.includes(s.waypoint1._id),
+          collapsed: subs.length > 1,
+          waypoint1: arr[i].waypoint1,
+          waypoint2: this.rollup(subs, arr[i], 'last', 'waypoint2'),
+          end: this.rollup(subs, s, 'last', 'end'),
+          len: this.rollup(subs, s, 'sum', 'len'),
+          gain: this.rollup(subs, s, 'sum', 'gain'),
+          loss: this.rollup(subs, s, 'sum', 'loss'),
+          grade: this.rollup(subs, s, 'weightedAvg', 'grade'),
+          factors: {...s.factors}
+        }
+        seg.factors.tF = this.rollup(subs, s, 'weightedAvg', 'factors.tF')
+        if (s.time) {
+          seg.time = this.rollup(subs, s, 'sum', 'time')
+          seg.pace = seg.time / seg.len
+          seg.elapsed = this.rollup(subs, s, 'last', 'elapsed')
+        }
+        if (this.showClock) {
+          seg.tod = this.rollup(subs, s, 'last', 'tod')
+        }
+        arr2.push(seg)
+      })
+      this.$logger('SegmentTable|visibleSegments', t)
+      return arr2
     }
   },
   methods: {
@@ -259,28 +306,25 @@ export default {
       this.clearing = false
     },
     expandRow: function (s) {
-      let wps = this.course.waypoints
-      let i = wps.findIndex(x => s.waypoint1._id === x._id)
-      i++
-      let arr = []
-      while (wps[i].tier > 1) {
-        if (wps[i].tier !== 3) {
-          arr.push(wps[i]._id)
-        }
-        i++
-      }
+      let subs = this.subSegments(s)
+      subs.splice(0, 1)
+      let arr = subs.map(x => { return x.waypoint1._id })
       this.$emit('show', arr)
+      this.visibleTrigger++
     },
-    collapseRow: function (s) {
-      let wps = this.course.waypoints
-      let i = wps.findIndex(x => s.waypoint1._id === x._id)
-      i++
-      let arr = []
-      while (wps[i].tier > 1) {
-        arr.push(wps[i]._id)
-        i++
-      }
+    collapseRow: function (segment) {
+      let ind = this.segments.findIndex(
+        s => s.waypoint1._id === segment.waypoint1._id
+      )
+      let next = this.segments.findIndex((x, j) =>
+        j > ind && x.waypoint1.tier === 1
+      )
+      let subs = this.segments.filter((x, j) =>
+        j > ind && (next < 0 || j < next)
+      )
+      let arr = subs.map(x => { return x.waypoint1._id })
       this.$emit('hide', arr)
+      this.visibleTrigger++
     },
     selectRow: function (s) {
       if (this.clearing) return
@@ -292,6 +336,45 @@ export default {
         )
       } else {
         this.$emit('select', this.mode, [])
+      }
+    },
+    subSegments: function (segment) {
+      let ind = this.segments.findIndex(
+        s => s.waypoint1._id === segment.waypoint1._id
+      )
+      let next = this.segments.findIndex((x, j) =>
+        j > ind && x.waypoint1.show
+      )
+      return this.segments.filter((x, j) =>
+        j >= ind && (next < 0 || j < next)
+      )
+    },
+    rollup: function (subs, segment, method, field) {
+      switch (method) {
+        case 'sum': {
+          return subs.reduce((v, x) => { return v + x[field] }, 0)
+        }
+        case 'last': {
+          return subs[subs.length - 1][field]
+        }
+        case 'weightedAvg': {
+          let v = 0
+          let t = 0
+          subs.forEach(s => {
+            v += s.len * this.parseField(s, field)
+            t += s.len
+          })
+          return v / t
+        }
+      }
+    },
+    parseField: function (obj, field) {
+      let arr = field.split('.')
+      switch (arr.length) {
+        case 1:
+          return obj[field]
+        case 2:
+          return obj[arr[0]][arr[1]]
       }
     },
     sec2string: function (s, f) {

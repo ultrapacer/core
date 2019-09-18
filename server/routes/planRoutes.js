@@ -28,6 +28,24 @@ planRoutes.route('/:id').put(async function (req, res) {
       fields.forEach(f => {
         plan[f] = req.body[f]
       })
+      plan.cache = null
+      await plan.save()
+      res.json(plan)
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    res.status(400).send(err)
+  }
+})
+
+//  UPDATE CACHE
+planRoutes.route('/:id/cache').put(async function (req, res) {
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var plan = await Plan.findById(req.params.id).exec()
+    if (user.equals(plan._user)) {
+      plan.cache = req.body.cache
       await plan.save()
       res.json(plan)
     } else {

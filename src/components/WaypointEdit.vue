@@ -217,6 +217,7 @@ export default {
       this.$emit('refresh', () => {
         this.saving = false
         this.clear()
+        this.$emit('setUpdateFlag')
         this.$bvModal.hide('waypoint-edit-modal')
       })
     },
@@ -229,6 +230,7 @@ export default {
         if (!err) {
           this.$bvModal.hide('waypoint-edit-modal')
         }
+        this.$emit('setUpdateFlag')
         this.deleting = false
       })
     }

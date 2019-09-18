@@ -70,6 +70,9 @@ export default {
   useCourse (id) {
     return this.executeAuth('put', `/api/courses/${id}/use`)
   },
+  updateCourseCache (id, data) {
+    return this.executeAuth('put', `/api/course/${id}/cache`, data)
+  },
   getWaypoints (courseID) {
     return this.executeAuth('get', `/api/course/${courseID}/waypoints`)
   },
@@ -93,5 +96,8 @@ export default {
   },
   deletePlan (id) {
     return this.executeAuth('delete', `/api/plan/${id}`)
+  },
+  updatePlanCache (id, data) {
+    return this.executeAuth('put', `/api/plan/${id}/cache`, data)
   }
 }
