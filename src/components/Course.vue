@@ -632,7 +632,6 @@ export default {
         cacheFields.forEach(f => {
           this.course.cache[f] = this[f]
         })
-        console.log(this.owner)
         if (this.owner) {
           this.$logger('Course|updatePacing: saving course cache')
           api.updateCourseCache(
