@@ -283,6 +283,7 @@ export default {
           collapsed: subs.length > 1,
           waypoint1: arr[i].waypoint1,
           waypoint2: this.rollup(subs, arr[i], 'last', 'waypoint2'),
+          start: arr[i].start,
           end: this.rollup(subs, s, 'last', 'end'),
           len: this.rollup(subs, s, 'sum', 'len'),
           gain: this.rollup(subs, s, 'sum', 'gain'),
