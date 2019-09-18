@@ -204,6 +204,25 @@ courseRoutes.route('/:course/use').put(async function (req, res) {
   }
 })
 
+//  UPDATE CACHE
+courseRoutes.route('/:id/cache').put(async function (req, res) {
+  try {
+    let [user, course] = await Promise.all([
+      User.findOne({ auth0ID: req.user.sub }).exec(),
+      Course.findById(req.params.id).exec()
+    ])
+    if (user.equals(course._user)) {
+      course.cache = req.body.cache
+      await course.save()
+      res.json('Cached')
+    } else {
+      res.status(403).send('No permission')	      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    res.status(400).send(err)
+  }
+})
+
 async function validateWaypoints (course, waypoints) {
   if (
     !waypoints.find(waypoint => waypoint.type === 'start') ||
