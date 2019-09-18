@@ -201,7 +201,8 @@ export default {
       plan: {},
       plans: [],
       segments: [],
-      splits: [],
+      miles: [],
+      kilometers: [],
       waypoint: {},
       pacing: {},
       mapFocus: [],
@@ -240,6 +241,13 @@ export default {
         return true
       } else {
         return false
+      }
+    },
+    splits: function () {
+      if (this.units.dist === 'km') {
+        return this.kilometers
+      } else {
+        return this.miles
       }
     },
     terrainFactors: function () {
@@ -376,12 +384,7 @@ export default {
     }
     this.course.len = this.course.points[this.course.points.length - 1].loc
     this.checkWaypoints()
-    if (this.plan.cache) {
-      this.$logger('Course|created: using cached data')
-      this.pacing = this.plan.cache.pacing
-      this.segments = this.plan.cache.segments
-      this.splits = this.plan.cache.splits
-    } else {
+    if (!this.useCache()) {
       await this.updatePacing()
     }
     this.initializing = false
@@ -559,12 +562,7 @@ export default {
       if (this.owner) {
         api.selectCoursePlan(this.course._id, {plan: this.plan._id})
       }
-      if (this.plan.cache) {
-        this.$logger('Course|calcPlan: using cached data')
-        this.pacing = this.plan.cache.pacing
-        this.segments = this.plan.cache.segments
-        this.splits = this.plan.cache.splits
-      } else {
+      if (!this.useCache()) {
         this.busy = true
         this.$calculating.setCalculating(true)
         setTimeout(() => { this.updatePacing() }, 10)
@@ -583,21 +581,22 @@ export default {
       this.$logger('Course|clearPlan')
     },
     async updatePacing () {
+      // update splits, segments, and pacing
       this.busy = true
       this.updateFlag = false
       this.$calculating.setCalculating(true)
       await this.iteratePaceCalc()
       this.updateSplits()
-      this.updateSegments()
+      // if factors are time-based (eg heat), iterate solution:
       if (this.plan && this.plan.heatModel && this.plan.startTime) {
-        let lastSplits = this.splits.map(x => { return x.time })
-        let elapsed = this.splits[this.splits.length - 1].elapsed
+        let lastSplits = this.kilometers.map(x => { return x.time })
+        let elapsed = this.kilometers[this.kilometers.length - 1].elapsed
         let t = this.$logger()
         for (var i = 0; i < 10; i++) {
           await this.iteratePaceCalc()
           this.updateSplits()
           let hasChanged = false
-          let newSplits = this.splits.map(x => { return x.time })
+          let newSplits = this.kilometers.map(x => { return x.time })
           for (let j = 0; j < newSplits.length; j++) {
             if (Math.abs(newSplits[j] - lastSplits[j]) >= 1) {
               hasChanged = true
@@ -606,20 +605,21 @@ export default {
           }
           if (
             !hasChanged &&
-            Math.abs(elapsed - this.splits[this.splits.length - 1].elapsed) < 1
+            Math.abs(elapsed - this.kilometers[this.kilometers.length - 1].elapsed) < 1
           ) { break }
-          lastSplits = this.splits.map(x => { return x.time })
-          elapsed = this.splits[this.splits.length - 1].elapsed
+          lastSplits = this.kilometers.map(x => { return x.time })
+          elapsed = this.kilometers[this.kilometers.length - 1].elapsed
         }
-        this.updateSegments()
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
       }
-      if (this.plan) {
-        this.plan.cache = {
-          pacing: this.pacing,
-          segments: this.segments,
-          splits: this.splits
-        }
+      this.updateSplits('miles')
+      this.updateSegments()
+      let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
+      if (this.plan && this.plan._id) {
+        this.plan.cache = {}
+        cacheFields.forEach(f => {
+          this.plan.cache[f] = this[f]
+        })
         if (this.planOwner) {
           this.$logger('Course|updatePacing: saving plan cache')
           api.updatePlanCache(
@@ -628,11 +628,11 @@ export default {
           )
         }
       } else {
-        this.course.cache = {
-          pacing: this.pacing,
-          segments: this.segments,
-          splits: this.splits
-        }
+        this.course.cache = {}
+        cacheFields.forEach(f => {
+          this.course.cache[f] = this[f]
+        })
+        console.log(this.owner)
         if (this.owner) {
           this.$logger('Course|updatePacing: saving course cache')
           api.updateCourseCache(
@@ -775,20 +775,21 @@ export default {
       this.segments = arr
       this.$logger('Course|updateSegments', t)
     },
-    updateSplits: function () {
+    updateSplits: function (unit = 'kilometers') {
       let t = this.$logger()
       // eslint-disable-next-line
       this.updateTrigger // hack for force recompute
+      let distScale = (unit === 'kilometers') ? 0.621371 : 1
       let p = this.course.points
-      var tot = p[p.length - 1].loc * this.units.distScale
+      var tot = p[p.length - 1].loc * distScale
       let breaks = [0]
       var i = 1
       while (i < tot) {
-        breaks.push(i / this.units.distScale)
+        breaks.push(i / distScale)
         i++
       }
-      if (tot / this.units.distScale > breaks[breaks.length - 1]) {
-        breaks.push(tot / this.units.distScale)
+      if (tot / distScale > breaks[breaks.length - 1]) {
+        breaks.push(tot / distScale)
       }
       let arr = util.calcSegments(p, breaks, this.pacing)
       if (this.plan && this.plan.startTime !== null) {
@@ -796,8 +797,8 @@ export default {
           arr[i].tod = (x.elapsed + this.plan.startTime)
         })
       }
-      this.splits = arr
-      this.$logger('Course|updateSplits', t)
+      this[unit] = arr
+      this.$logger(`Course|updateSplits: ${unit}`, t)
     },
     updateFocus: function (type, focus) {
       if (type === 'segments') this.$refs.splitTable.clear()
@@ -845,6 +846,31 @@ export default {
           })
         }
       })
+    },
+    useCache: function (cache) {
+      // if cache data is stored, assign it
+      let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
+      if (this.plan && this.plan._id) {
+        if (this.plan.cache) {
+          this.$logger('Course|useCache: using cached plan data')
+          cacheFields.forEach(f => {
+            this[f] = this.plan.cache[f]
+          })
+          return true
+        } else {
+          this.$logger('Course|useCache: no cached plan data')
+          return false
+        }
+      } else if (this.course.cache) {
+        this.$logger('Course|useCache: using cached course data')
+        cacheFields.forEach(f => {
+          this[f] = this.course.cache[f]
+        })
+        return true
+      } else {
+        this.$logger('Course|useCache: no cached course data')
+        return false
+      }
     },
     setUpdateFlag: function () {
       this.updateFlag = true

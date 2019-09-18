@@ -71,7 +71,7 @@ CourseSchema.methods.addData = async function (user = null, plan = null) {
 
 CourseSchema.methods.clearCache = async function () {
   await Promise.all([
-    this.update({ cache: null }),
+    this.updateOne({ cache: null }),
     Plan.updateMany({ _course: this }, { cache: null })
   ])
 }
