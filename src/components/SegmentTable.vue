@@ -12,7 +12,6 @@
     foot-clone
     small
   >
-    <template slot="FOOT_waypoint1.name">&nbsp;</template>
     <template slot="FOOT_waypoint2.name">&nbsp;</template>
     <template slot="FOOT_len">
       {{ course.distance | formatDist(units.distScale) }}
@@ -163,12 +162,6 @@ export default {
         f.unshift({
           key: 'waypoint2.name',
           label: 'End'
-        })
-        f.unshift({
-          key: 'waypoint1.name',
-          label: 'Start',
-          thClass: 'd-none d-md-table-cell',
-          tdClass: 'd-none d-md-table-cell'
         })
       }
       if (this.segments[0].time) {
