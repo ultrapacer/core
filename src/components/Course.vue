@@ -627,6 +627,19 @@ export default {
             { cache: this.plan.cache }
           )
         }
+      } else {
+        this.course.cache = {
+          pacing: this.pacing,
+          segments: this.segments,
+          splits: this.splits
+        }
+        if (this.owner) {
+          this.$logger('Course|updatePacing: saving course cache')
+          api.updateCourseCache(
+            this.course._id,
+            { cache: this.course.cache }
+          )
+        }
       }
       this.busy = false
       this.$calculating.setCalculating(false)
