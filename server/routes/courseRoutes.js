@@ -55,10 +55,8 @@ courseRoutes.route('/:id').put(async function (req, res) {
       fields.forEach(f => {
         course[f] = req.body[f]
       })
-      await Promise.all([
-        course.save(),
-        course.clearCache()
-      ])
+      await course.save()
+      await course.clearCache()
       res.json('Update complete')
     } else {
       res.status(403).send('No permission')
