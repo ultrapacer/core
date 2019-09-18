@@ -404,13 +404,12 @@ export default {
       return wps
     },
     hasDetailedInfo: function (s) {
-      if (this.showTerrain) { return true }
-      let v = false
-      this.spannedWaypoints(s).forEach(wp => {
-        console.log(wp)
-        if (wp.delay || wp.description) { v = true }
-      })
-      return v
+      return (
+        this.showTerrain ||
+        this.spannedWaypoints(s).filter(
+          wp => wp.delay || wp.description.length
+        ).length > 0
+      )
     }
   }
 }
