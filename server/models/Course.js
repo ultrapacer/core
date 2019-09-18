@@ -45,7 +45,8 @@ var CourseSchema = new Schema({
   waypoints: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Waypoint'
-  }]
+  }],
+  cache: {}
 }, {
   collection: 'courses'
 })
@@ -66,6 +67,13 @@ CourseSchema.methods.addData = async function (user = null, plan = null) {
   } else {
     this._plan = null
   }
+}
+
+CourseSchema.methods.clearCache = async function () {
+  await Promise.all([
+    this.updateOne({ cache: null }),
+    Plan.updateMany({ _course: this }, { cache: null })
+  ])
 }
 
 CourseSchema.pre('remove', function () {

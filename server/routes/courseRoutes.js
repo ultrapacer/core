@@ -6,7 +6,7 @@ var User = require('../models/User')
 var Plan = require('../models/Plan')
 var Waypoint = require('../models/Waypoint')
 
-// Defined store route
+// SAVE NEW
 courseRoutes.route('/').post(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
@@ -35,15 +35,18 @@ courseRoutes.route('/').get(async function (req, res) {
       }
     ]
   }
-  var courses = await Course.find(q).select('-points').collation({'locale': 'en'}).sort('name').exec()
+  var courses = await Course.find(q).select('-points')
+    .collation({'locale': 'en'}).sort('name').exec()
   res.json(courses)
 })
 
 // UPDATE
 courseRoutes.route('/:id').put(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.id).exec()
+    let [user, course] = await Promise.all([
+      User.findOne({ auth0ID: req.user.sub }).exec(),
+      Course.findById(req.params.id).exec()
+    ])
     if (course._user.equals(user._id)) {
       let fields = ['name', 'description', 'public']
       if (req.body.points) {
@@ -53,6 +56,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
         course[f] = req.body[f]
       })
       await course.save()
+      await course.clearCache()
       res.json('Update complete')
     } else {
       res.status(403).send('No permission')
@@ -93,7 +97,7 @@ courseRoutes.route('/:id').delete(async function (req, res) {
 courseRoutes.route('/:courseid/plan').put(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.courseid).exec()
+    var course = await Course.findById(req.params.courseid).select('_user').exec()
     if (user.equals(course._user)) {
       course._plan = await Plan.findById(req.body.plan).exec()
       await course.save()
@@ -183,8 +187,10 @@ courseRoutes.route('/:course/plans/:user_id').get(async function (req, res) {
 courseRoutes.route('/:course/use').put(async function (req, res) {
   console.log(1)
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.course).select(['_user', 'public']).exec()
+    let [user, course] = await Promise.all([
+      User.findOne({ auth0ID: req.user.sub }).exec(),
+      Course.findById(req.params.course).select(['_user', 'public']).exec()
+    ])
     if (user.equals(course._user) || course.public) {
       if (!user._courses.find(x => course.equals(x))) {
         user._courses.push(course)
@@ -196,6 +202,25 @@ courseRoutes.route('/:course/use').put(async function (req, res) {
     }
   } catch (err) {
     console.log(err)
+    res.status(400).send(err)
+  }
+})
+
+//  UPDATE CACHE
+courseRoutes.route('/:id/cache').put(async function (req, res) {
+  try {
+    let [user, course] = await Promise.all([
+      User.findOne({ auth0ID: req.user.sub }).exec(),
+      Course.findById(req.params.id).select('_user').exec()
+    ])
+    if (user.equals(course._user)) {
+      course.cache = req.body.cache
+      course.save()
+      res.json('Cached')
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
     res.status(400).send(err)
   }
 })
