@@ -334,7 +334,8 @@ export default {
         this.course = await api.getCourse(this.$route.params.course)
       }
       this.plans = this.course.plans
-      this.syncCache()
+      this.syncCache(this.course)
+      this.syncCache(this.plans)
       if (this.$route.params.plan) {
         this.plan = this.plans.find(
           x => x._id === this.$route.params.plan
@@ -545,7 +546,7 @@ export default {
     },
     async refreshPlans (plan, callback) {
       this.plans = await api.getPlans(this.course._id, this.user._id)
-      this.syncCache()
+      this.syncCache(this.plans)
       this.plan = this.plans.find(p => p._id === plan._id)
       delete this.plan.cache
       await this.calcPlan()
@@ -831,11 +832,12 @@ export default {
       })
       this.$logger('Course|clearCache')
     },
-    syncCache: function () {
+    syncCache: function (obj) {
       // makes the waypoints in the cached data the same objects as waypoints
-      this.plans.forEach(p => {
-        if (p.cache) {
-          p.cache.segments.forEach(s => {
+      if (!Array.isArray(obj)) { obj = [obj] }
+      obj.forEach(x => {
+        if (x.cache) {
+          x.cache.segments.forEach(s => {
             s.waypoint1 = this.course.waypoints.find(
               wp => wp._id === s.waypoint1._id
             )
