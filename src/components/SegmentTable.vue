@@ -65,10 +65,10 @@
         <b-list-group-item
           v-for="wp in spannedWaypoints(row.item)"
           v-bind:key="wp._id"
-          v-if="wp.tier < 3 && (wp.delay || wp.description)"
+          v-if="wp.tier < 3 && (waypointDelay(wp) || wp.description)"
           class="mb-2">
           <b>{{ wp.name }} ({{ $waypointTypes[wp.type] }}), {{ wp.location | formatDist(units.distScale) }} {{ units.dist }}</b><br/>
-          <span v-if="wp.delay">Delay: {{ wp.delay / 60 }} minutes<br/></span>
+          <span v-if="waypointDelay(wp)">Delay: {{ waypointDelay(wp) / 60 }} minutes<br/></span>
           <span v-if="wp.description">Notes: {{ wp.description }}</span>
         </b-list-group-item>
       </b-list-group>
@@ -108,8 +108,12 @@ export default {
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
           },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          thClass:
+            (this.mode === 'splits')
+              ? 'text-right' : 'd-none d-md-table-cell text-right',
+          tdClass:
+            (this.mode === 'splits')
+              ? 'text-right' : 'd-none d-md-table-cell text-right'
         },
         {
           key: 'gain',
@@ -122,8 +126,12 @@ export default {
             return (value * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          thClass:
+            (this.mode === 'splits' || !this.segments[0].time)
+              ? 'text-right' : 'd-none d-md-table-cell text-right',
+          tdClass:
+            (this.mode === 'splits' || !this.segments[0].time)
+              ? 'text-right' : 'd-none d-md-table-cell text-right'
         },
         {
           key: 'loss',
@@ -136,8 +144,12 @@ export default {
             return (value * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          thClass:
+            (this.mode === 'splits' || !this.segments[0].time)
+              ? 'text-right' : 'd-none d-md-table-cell text-right',
+          tdClass:
+            (this.mode === 'splits' || !this.segments[0].time)
+              ? 'text-right' : 'd-none d-md-table-cell text-right'
         },
         {
           key: 'grade',
@@ -165,15 +177,17 @@ export default {
         })
       }
       if (this.segments[0].time) {
-        f.push({
-          key: 'time',
-          label: 'Moving Time',
-          formatter: (value, key, item) => {
-            return timeUtil.sec2string(value, '[h]:m:ss')
-          },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
-        })
+        if (this.mode === 'segments') {
+          f.push({
+            key: 'time',
+            label: 'Moving Time',
+            formatter: (value, key, item) => {
+              return timeUtil.sec2string(value, '[h]:m:ss')
+            },
+            thClass: 'd-none d-md-table-cell text-right',
+            tdClass: 'd-none d-md-table-cell text-right'
+          })
+        }
         f.push({
           key: 'pace',
           label: `Pace [/${this.units.dist}]`,
@@ -206,8 +220,12 @@ export default {
             formatter: (value, key, item) => {
               return timeUtil.sec2string(value, 'am/pm')
             },
-            thClass: 'text-right',
-            tdClass: 'text-right'
+            thClass:
+            (this.mode === 'splits')
+              ? 'd-none d-md-table-cell text-right' : 'text-right',
+            tdClass:
+            (this.mode === 'splits')
+              ? 'd-none d-md-table-cell text-right' : 'text-right'
           })
         }
       }
@@ -331,7 +349,7 @@ export default {
     selectRow: function (segment) {
       if (this.clearing) return
       if (segment.length) {
-        this.segments.filter(s => s._showDetails && s.start !== segment.start)
+        this.visibleSegments.filter(s => s._showDetails && s.start !== segment.start)
           .forEach(s => { this.$set(s, '_showDetails', false) })
         if (this.hasDetailedInfo(segment[0])) {
           this.$set(segment[0], '_showDetails', !segment._showDetails)
@@ -342,7 +360,7 @@ export default {
           [segment[0].start, segment[0].end]
         )
       } else {
-        this.segments.filter(s => s._showDetails)
+        this.visibleSegments.filter(s => s._showDetails)
           .forEach(s => { this.$set(s, '_showDetails', false) })
         this.$emit('select', this.mode, [])
       }
@@ -400,9 +418,17 @@ export default {
       return (
         this.showTerrain ||
         this.spannedWaypoints(s).filter(
-          wp => wp.delay || wp.description.length
+          wp =>
+            wp.description.length ||
+            this.waypointDelay(wp)
         ).length > 0
       )
+    },
+    waypointDelay: function (wp) {
+      let d = this.pacing.delays.find(d =>
+        round(d.loc, 4) === round(wp.location, 4)
+      )
+      return (d) ? d.delay : 0
     }
   }
 }

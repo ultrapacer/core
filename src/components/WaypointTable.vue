@@ -112,12 +112,13 @@ export default {
           label: 'Terrain',
           formatter: (value, key, item) => {
             if (value === null) {
-              let i = this.waypoints.lastIndexOf((wp, j) =>
-                j < this.waypoints.findIndex(wp => wp._id === item._id) &&
+              // if waypoint doesn't have a value, show previous
+              let i = this.waypoints.findIndex(wp => wp._id === item._id)
+              let wp = this.waypoints.filter((wp, j) =>
+                j < i &&
                 wp.terrainFactor
-              )
-              value = (i) ? this.waypoints[j].terrainFactor : 0
-              }
+              ).pop()
+              value = (wp) ? wp.terrainFactor : 0
             }
             return `+${value}%`
           },
