@@ -100,6 +100,19 @@ export default {
     }
   },
   computed: {
+    mobileFields: function () {
+      if (this.pacing.time) {
+        return {
+          splits: ['end', 'gain', 'loss', 'pace'],
+          segments: ['waypoint2.name', 'len', 'tod']
+        }
+      } else {
+        return {
+          splits: ['end', 'gain', 'loss'],
+          segments: ['waypoint2.name', 'len', 'gain', 'loss']
+        }
+      }
+    },
     fields: function () {
       var f = [
         {
@@ -107,13 +120,7 @@ export default {
           label: 'Dist [' + this.units.dist + ']',
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
-          },
-          thClass:
-            (this.mode === 'splits')
-              ? 'text-right' : 'd-none d-md-table-cell text-right',
-          tdClass:
-            (this.mode === 'splits')
-              ? 'text-right' : 'd-none d-md-table-cell text-right'
+          }
         },
         {
           key: 'gain',
@@ -125,13 +132,7 @@ export default {
             }
             return (value * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-          },
-          thClass:
-            (this.mode === 'splits' || !this.segments[0].time)
-              ? 'text-right' : 'd-none d-md-table-cell text-right',
-          tdClass:
-            (this.mode === 'splits' || !this.segments[0].time)
-              ? 'text-right' : 'd-none d-md-table-cell text-right'
+          }
         },
         {
           key: 'loss',
@@ -143,22 +144,14 @@ export default {
             }
             return (value * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-          },
-          thClass:
-            (this.mode === 'splits' || !this.segments[0].time)
-              ? 'text-right' : 'd-none d-md-table-cell text-right',
-          tdClass:
-            (this.mode === 'splits' || !this.segments[0].time)
-              ? 'text-right' : 'd-none d-md-table-cell text-right'
+          }
         },
         {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
             return (value).toFixed(1) + '%'
-          },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          }
         }
       ]
       if (this.mode === 'segments') {
@@ -167,9 +160,7 @@ export default {
           label: 'Len [' + this.units.dist + ']',
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
-          },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          }
         })
         f.unshift({
           key: 'waypoint2.name',
@@ -183,9 +174,7 @@ export default {
             label: 'Moving Time',
             formatter: (value, key, item) => {
               return timeUtil.sec2string(value, '[h]:m:ss')
-            },
-            thClass: 'd-none d-md-table-cell text-right',
-            tdClass: 'd-none d-md-table-cell text-right'
+            }
           })
         }
         f.push({
@@ -194,24 +183,14 @@ export default {
           formatter: (value, key, item) => {
             let l = item.len * this.units.distScale
             return timeUtil.sec2string(item.time / l, '[h]:m:ss')
-          },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          }
         })
         f.push({
           key: 'elapsed',
           label: 'Elapsed',
           formatter: (value, key, item) => {
             return timeUtil.sec2string(value, '[h]:m:ss')
-          },
-          thClass:
-            this.showClock
-              ? 'd-none d-md-table-cell text-right'
-              : 'text-right',
-          tdClass:
-            this.showClock
-              ? 'd-none d-md-table-cell text-right'
-              : 'text-right'
+          }
         })
         if (this.showClock) {
           f.push({
@@ -219,16 +198,15 @@ export default {
             label: 'Arrival',
             formatter: (value, key, item) => {
               return timeUtil.sec2string(value, 'am/pm')
-            },
-            thClass:
-            (this.mode === 'splits')
-              ? 'd-none d-md-table-cell text-right' : 'text-right',
-            tdClass:
-            (this.mode === 'splits')
-              ? 'd-none d-md-table-cell text-right' : 'text-right'
+            }
           })
         }
       }
+      f.forEach((x, i) => {
+        f[i].thClass = this.getClass(x.key)
+        f[i].tdClass = f[i].thClass
+      })
+      console.log(f)
       if (
         this.mode === 'segments' &&
         this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
@@ -318,6 +296,15 @@ export default {
     }
   },
   methods: {
+    getClass: function (key) {
+      let lefts = ['waypoint2.name']
+      let base = lefts.includes(key) ? '' : 'text-right'
+      if (this.mobileFields[this.mode].includes(key)) {
+        return base
+      } else {
+        return `d-none d-md-table-cell ${base}`
+      }
+    },
     clear: async function () {
       this.clearing = true
       await this.$refs.table.clearSelected()
