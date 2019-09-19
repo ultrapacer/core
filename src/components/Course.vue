@@ -779,7 +779,7 @@ export default {
       let t = this.$logger()
       // eslint-disable-next-line
       this.updateTrigger // hack for force recompute
-      let distScale = (unit === 'kilometers') ? 0.621371 : 1
+      let distScale = (unit === 'kilometers') ? 1 : 0.621371
       let p = this.course.points
       var tot = p[p.length - 1].loc * distScale
       let breaks = [0]
