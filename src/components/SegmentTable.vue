@@ -59,6 +59,9 @@
     <template slot="row-details" slot-scope="row">
       <b-list-group>
         <b-list-group-item v-if="showTerrain">
+          <span v-if="!mobileFields[mode].includes('len')" class="d-md-none">
+           Distance: <b>{{ row.item.len | formatDist(units.distScale) }} {{units.dist}}</b>
+          <br/></span>
           Terrain factor:
           <b>{{ ((row.item.factors.tF - 1) * 100).toFixed(1) }} %</b>
         </b-list-group-item>
