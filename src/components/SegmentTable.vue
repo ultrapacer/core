@@ -56,14 +56,21 @@
         &#8944;
       </div>
     </template>
-    <template slot="row-details" slot-scope="row">
+    <template
+      slot="row-details"
+      slot-scope="row"
+      :class="(hasDetailedInfo(row.item)) ? '' : 'd-md-none'"
+    >
       <b-list-group>
-        <b-list-group-item v-if="showTerrain">
-          <span v-if="!mobileFields[mode].includes('len')" class="d-md-none">
-           Distance: <b>{{ row.item.len | formatDist(units.distScale) }} {{units.dist}}</b>
-          <br/></span>
-          Terrain factor:
-          <b>{{ ((row.item.factors.tF - 1) * 100).toFixed(1) }} %</b>
+        <b-list-group-item>
+          <b-row
+            v-for="f in fields"
+            v-if="!mobileFields.includes(f.key)"
+            :class="'mb-2' + (detailsFields.includes(f.key)) ? '' : ' d-md-none'"
+          >
+            <b-col sm="3" class="text-sm-right"><b>{{ f.label }}:</b></b-col>
+            <b-col>{{ f.formatter(row.item.age, f.key, row.item) }}</b-col>
+          </b-row>
         </b-list-group-item>
         <b-list-group-item
           v-for="wp in spannedWaypoints(row.item)"
@@ -104,18 +111,23 @@ export default {
   },
   computed: {
     mobileFields: function () {
-      if (this.pacing.time) {
-        return {
-          splits: ['end', 'gain', 'loss', 'pace'],
-          segments: ['waypoint2.name', 'len', 'tod']
+      if (this.mode === 'splits') {
+        if (this.pacing.time) {
+          return ['end', 'gain', 'loss', 'pace']
+        } else {
+          return ['end', 'gain', 'loss']
         }
       } else {
-        return {
-          splits: ['end', 'gain', 'loss'],
-          segments: ['waypoint2.name', 'len', 'gain', 'loss']
+        if (this.pacing.time) {
+          return ['waypoint2.name', 'len', 'elapsed']
+        } else {
+          return ['waypoint2.name', 'len', 'gain', 'loss']
         }
       }
     },
+    detailsFields: function () {
+      return ['factors.tF']
+    }
     fields: function () {
       var f = [
         {
@@ -169,6 +181,17 @@ export default {
           key: 'waypoint2.name',
           label: 'End'
         })
+      }
+      if (this.showTerrain) {	
+        f.push({	
+          key: 'factors.tF',	
+          label: 'Terrain',	
+          formatter: (value, key, item) => {	
+            return '+' + ((value - 1) * 100).toFixed(1) + '%'	
+          },	
+          thClass: 'd-none text-right',	
+          tdClass: 'd-none text-right'
+        })	
       }
       if (this.segments[0].time) {
         if (this.mode === 'segments') {
@@ -302,7 +325,7 @@ export default {
     getClass: function (key) {
       let lefts = ['waypoint2.name']
       let base = lefts.includes(key) ? '' : 'text-right'
-      if (this.mobileFields[this.mode].includes(key)) {
+      if (this.mobileFields.includes(key)) {
         return base
       } else {
         return `d-none d-md-table-cell ${base}`
@@ -341,9 +364,7 @@ export default {
       if (segment.length) {
         this.visibleSegments.filter(s => s._showDetails && s.start !== segment.start)
           .forEach(s => { this.$set(s, '_showDetails', false) })
-        if (this.hasDetailedInfo(segment[0])) {
-          this.$set(segment[0], '_showDetails', !segment._showDetails)
-        }
+        this.$set(segment[0], '_showDetails', !segment._showDetails)
         this.$emit(
           'select',
           this.mode,
