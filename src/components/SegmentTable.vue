@@ -11,6 +11,7 @@
     hover
     foot-clone
     small
+    class="segment-table"
   >
     <template slot="FOOT_waypoint2.name">&nbsp;</template>
     <template slot="FOOT_len">
@@ -56,10 +57,10 @@
         &#8944;
       </div>
     </template>
-    <template
-      v-slot:row-details="row"
-      v-bind:class="(hasDetailedInfo(row.item)) ? '' : 'd-md-none'">
-      <b-list-group>
+    <template v-slot:row-details="row">
+      <b-list-group
+        v-bind:class="(hasDetailedInfo(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
+      >
         <b-list-group-item
           v-bind:class="detailsFields.length ? '' : 'd-md-none'"
         >
@@ -374,13 +375,7 @@ export default {
       if (segment.length) {
         this.visibleSegments.filter(s => s._showDetails && s.start !== segment.start)
           .forEach(s => { this.$set(s, '_showDetails', false) })
-        if (
-          screen.width < 992 ||
-          this.detailsFields.length ||
-          this.hasDetailedInfo(segment[0])
-        ) {
-          this.$set(segment[0], '_showDetails', !segment._showDetails)
-        }
+        this.$set(segment[0], '_showDetails', !segment._showDetails)
         this.$emit(
           'select',
           this.mode,

@@ -52,6 +52,10 @@
   line-height: 1.2 !important;
   font-size: 0.7rem !important;
 }
+.segment-table .b-table-details td {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important
+}
 </style>
 <script>
 import api from '@/api'
