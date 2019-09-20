@@ -57,12 +57,12 @@
       </div>
     </template>
     <template
-      slot="row-details"
-      slot-scope="row"
-      :class="(hasDetailedInfo(row.item)) ? '' : 'd-md-none'"
-    >
+      v-slot:row-details="row"
+      v-bind:class="(hasDetailedInfo(row.item)) ? '' : 'd-md-none'">
       <b-list-group>
-        <b-list-group-item>
+        <b-list-group-item
+          v-bind:class="detailsFields.length ? '' : 'd-md-none'"
+        >
           <b-row
             v-for="f in fields"
             v-bind:key="f.key"
@@ -101,7 +101,6 @@ export default {
   data () {
     return {
       clearing: false,
-      detailsFields: ['factors.tF'],
       visibleTrigger: 0
     }
   },
@@ -118,6 +117,11 @@ export default {
     }
   },
   computed: {
+    detailsFields: function () {
+      let f = []
+      if (this.showTerrain) { f.push('factors.tF') }
+      return f
+    },
     mobileFields: function () {
       if (this.mode === 'splits') {
         if (this.pacing.time) {
@@ -370,7 +374,13 @@ export default {
       if (segment.length) {
         this.visibleSegments.filter(s => s._showDetails && s.start !== segment.start)
           .forEach(s => { this.$set(s, '_showDetails', false) })
-        this.$set(segment[0], '_showDetails', !segment._showDetails)
+        if (
+          screen.width < 992 ||
+          this.detailsFields.length ||
+          this.hasDetailedInfo(segment[0])
+        ) {
+          this.$set(segment[0], '_showDetails', !segment._showDetails)
+        }
         this.$emit(
           'select',
           this.mode,
@@ -436,7 +446,7 @@ export default {
         this.showTerrain ||
         this.spannedWaypoints(s).filter(
           wp =>
-            wp.description.length ||
+            wp.description ||
             this.waypointDelay(wp)
         ).length > 0
       )
