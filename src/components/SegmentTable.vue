@@ -67,7 +67,7 @@
             v-for="f in fields"
             v-bind:key="f.key"
             v-if="!mobileFields.includes(f.key)"
-            v-bind:class="detailsFields.includes(f.key) ? '' : 'mb-1 d-md-none'"
+            v-bind:class="detailsFields.includes(f.key) ? 'mb-1' : 'mb-1 d-md-none'"
           >
             <b-col sm="3" class="text-sm-right"><b>{{ f.label }}:</b></b-col>
             <b-col v-if="f.formatter">{{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}</b-col>
