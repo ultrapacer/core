@@ -69,7 +69,7 @@
             v-if="!mobileFields.includes(f.key)"
             v-bind:class="detailsFields.includes(f.key) ? 'mb-1' : 'mb-1 d-md-none'"
           >
-            <b-col sm="3" class="text-sm-right"><b>{{ f.label }}:</b></b-col>
+            <b-col cols="4" class="text-right"><b>{{ f.label }}:</b></b-col>
             <b-col v-if="f.formatter">{{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}</b-col>
           </b-row>
         </b-list-group-item>
@@ -80,11 +80,11 @@
           class="mb-1">
           <b>{{ wp.name }} ({{ $waypointTypes[wp.type] }}), {{ wp.location | formatDist(units.distScale) }} {{ units.dist }}</b><br/>
           <b-row               v-if="waypointDelay(wp)"            >
-            <b-col sm="3" class="text-sm-right"><b>Delay:</b></b-col>
-              <b-col>{{ waypointDelay(wp) / 60 }} minutes</b-col>
+            <b-col cols="4" class="text-sm-right"><b>Delay:</b></b-col>
+            <b-col>{{ waypointDelay(wp) / 60 }} minutes</b-col>
           </b-row>
           <b-row v-if="wp.description">
-            <b-col sm="3" class="text-sm-right"><b>Notes:</b></b-col>
+            <b-col cols="4" class="text-right"><b>Notes:</b></b-col>
             <b-col>{{ wp.description }}</b-col>
           </b-row>
         </b-list-group-item>
