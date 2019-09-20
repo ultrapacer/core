@@ -66,10 +66,10 @@
           <b-row
             v-for="f in fields"
             v-if="!mobileFields.includes(f.key)"
-            :class="'mb-2' + (detailsFields.includes(f.key)) ? '' : ' d-md-none'"
+            v-bind:class="detailsFields.includes(f.key) ? 'mb-2' : 'mb-2 d-md-none'"
           >
             <b-col sm="3" class="text-sm-right"><b>{{ f.label }}:</b></b-col>
-            <b-col>{{ f.formatter(row.item.age, f.key, row.item) }}</b-col>
+            <b-col v-if="f.formatter">{{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}</b-col>
           </b-row>
         </b-list-group-item>
         <b-list-group-item
@@ -78,8 +78,14 @@
           v-if="wp.tier < 3 && (waypointDelay(wp) || wp.description)"
           class="mb-2">
           <b>{{ wp.name }} ({{ $waypointTypes[wp.type] }}), {{ wp.location | formatDist(units.distScale) }} {{ units.dist }}</b><br/>
-          <span v-if="waypointDelay(wp)">Delay: {{ waypointDelay(wp) / 60 }} minutes<br/></span>
-          <span v-if="wp.description">Notes: {{ wp.description }}</span>
+          <b-row               v-if="waypointDelay(wp)"            >
+            <b-col sm="3" class="text-sm-right"><b>Delay:</b></b-col>
+              <b-col>{{ waypointDelay(wp) / 60 }} minutes</b-col>
+          </b-row>
+          <b-row v-if="wp.description">
+            <b-col sm="3" class="text-sm-right"><b>Notes:</b></b-col>
+            <b-col>{{ wp.description }}</b-col>
+          </b-row>
         </b-list-group-item>
       </b-list-group>
     </template>
@@ -94,6 +100,7 @@ export default {
   data () {
     return {
       clearing: false,
+      detailsFields: ['factors.tF'],
       visibleTrigger: 0
     }
   },
@@ -113,21 +120,18 @@ export default {
     mobileFields: function () {
       if (this.mode === 'splits') {
         if (this.pacing.time) {
-          return ['end', 'gain', 'loss', 'pace']
+          return ['end', 'gain', 'loss', 'pace', 'collapse']
         } else {
-          return ['end', 'gain', 'loss']
+          return ['end', 'gain', 'loss', 'collapse']
         }
       } else {
         if (this.pacing.time) {
-          return ['waypoint2.name', 'len', 'elapsed']
+          return ['waypoint2.name', 'len', 'elapsed', 'collapse']
         } else {
-          return ['waypoint2.name', 'len', 'gain', 'loss']
+          return ['waypoint2.name', 'len', 'gain', 'loss', 'collapse']
         }
       }
     },
-    detailsFields: function () {
-      return ['factors.tF']
-    }
     fields: function () {
       var f = [
         {
@@ -232,7 +236,6 @@ export default {
         f[i].thClass = this.getClass(x.key)
         f[i].tdClass = f[i].thClass
       })
-      console.log(f)
       if (
         this.mode === 'segments' &&
         this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
