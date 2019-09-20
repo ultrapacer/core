@@ -65,8 +65,9 @@
         <b-list-group-item>
           <b-row
             v-for="f in fields"
+            v-bind:key="f.key"
             v-if="!mobileFields.includes(f.key)"
-            v-bind:class="detailsFields.includes(f.key) ? 'mb-2' : 'mb-2 d-md-none'"
+            v-bind:class="detailsFields.includes(f.key) ? '' : 'mb-1 d-md-none'"
           >
             <b-col sm="3" class="text-sm-right"><b>{{ f.label }}:</b></b-col>
             <b-col v-if="f.formatter">{{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}</b-col>
@@ -76,7 +77,7 @@
           v-for="wp in spannedWaypoints(row.item)"
           v-bind:key="wp._id"
           v-if="wp.tier < 3 && (waypointDelay(wp) || wp.description)"
-          class="mb-2">
+          class="mb-1">
           <b>{{ wp.name }} ({{ $waypointTypes[wp.type] }}), {{ wp.location | formatDist(units.distScale) }} {{ units.dist }}</b><br/>
           <b-row               v-if="waypointDelay(wp)"            >
             <b-col sm="3" class="text-sm-right"><b>Delay:</b></b-col>
@@ -186,16 +187,14 @@ export default {
           label: 'End'
         })
       }
-      if (this.showTerrain) {	
-        f.push({	
-          key: 'factors.tF',	
-          label: 'Terrain',	
-          formatter: (value, key, item) => {	
-            return '+' + ((value - 1) * 100).toFixed(1) + '%'	
-          },	
-          thClass: 'd-none text-right',	
-          tdClass: 'd-none text-right'
-        })	
+      if (this.showTerrain) {
+        f.push({
+          key: 'factors.tF',
+          label: 'Terrain',
+          formatter: (value, key, item) => {
+            return '+' + ((value - 1) * 100).toFixed(1) + '%'
+          }
+        })
       }
       if (this.segments[0].time) {
         if (this.mode === 'segments') {
@@ -331,7 +330,11 @@ export default {
       if (this.mobileFields.includes(key)) {
         return base
       } else {
-        return `d-none d-md-table-cell ${base}`
+        if (this.detailsFields.includes(key)) {
+          return `d-none`
+        } else {
+          return `d-none d-md-table-cell ${base}`
+        }
       }
     },
     clear: async function () {
