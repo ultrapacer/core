@@ -12,7 +12,6 @@
     foot-clone
     small
   >
-    <template slot="FOOT_waypoint1.name">&nbsp;</template>
     <template slot="FOOT_waypoint2.name">&nbsp;</template>
     <template slot="FOOT_len">
       {{ course.distance | formatDist(units.distScale) }}
@@ -57,6 +56,40 @@
         &#8944;
       </div>
     </template>
+    <template
+      slot="row-details"
+      slot-scope="row"
+      :class="(hasDetailedInfo(row.item)) ? '' : 'd-md-none'"
+    >
+      <b-list-group>
+        <b-list-group-item>
+          <b-row
+            v-for="f in fields"
+            v-bind:key="f.key"
+            v-if="!mobileFields.includes(f.key)"
+            v-bind:class="detailsFields.includes(f.key) ? 'mb-1' : 'mb-1 d-md-none'"
+          >
+            <b-col sm="3" class="text-sm-right"><b>{{ f.label }}:</b></b-col>
+            <b-col v-if="f.formatter">{{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}</b-col>
+          </b-row>
+        </b-list-group-item>
+        <b-list-group-item
+          v-for="wp in spannedWaypoints(row.item)"
+          v-bind:key="wp._id"
+          v-if="wp.tier < 3 && (waypointDelay(wp) || wp.description)"
+          class="mb-1">
+          <b>{{ wp.name }} ({{ $waypointTypes[wp.type] }}), {{ wp.location | formatDist(units.distScale) }} {{ units.dist }}</b><br/>
+          <b-row               v-if="waypointDelay(wp)"            >
+            <b-col sm="3" class="text-sm-right"><b>Delay:</b></b-col>
+              <b-col>{{ waypointDelay(wp) / 60 }} minutes</b-col>
+          </b-row>
+          <b-row v-if="wp.description">
+            <b-col sm="3" class="text-sm-right"><b>Notes:</b></b-col>
+            <b-col>{{ wp.description }}</b-col>
+          </b-row>
+        </b-list-group-item>
+      </b-list-group>
+    </template>
   </b-table>
 </template>
 
@@ -68,6 +101,7 @@ export default {
   data () {
     return {
       clearing: false,
+      detailsFields: ['factors.tF'],
       visibleTrigger: 0
     }
   },
@@ -84,6 +118,21 @@ export default {
     }
   },
   computed: {
+    mobileFields: function () {
+      if (this.mode === 'splits') {
+        if (this.pacing.time) {
+          return ['end', 'gain', 'loss', 'pace', 'collapse']
+        } else {
+          return ['end', 'gain', 'loss', 'collapse']
+        }
+      } else {
+        if (this.pacing.time) {
+          return ['waypoint2.name', 'len', 'elapsed', 'collapse']
+        } else {
+          return ['waypoint2.name', 'len', 'gain', 'loss', 'collapse']
+        }
+      }
+    },
     fields: function () {
       var f = [
         {
@@ -91,9 +140,7 @@ export default {
           label: 'Dist [' + this.units.dist + ']',
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
-          },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          }
         },
         {
           key: 'gain',
@@ -105,9 +152,7 @@ export default {
             }
             return (value * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-          },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          }
         },
         {
           key: 'loss',
@@ -119,18 +164,14 @@ export default {
             }
             return (value * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-          },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          }
         },
         {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
             return (value).toFixed(1) + '%'
-          },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          }
         }
       ]
       if (this.mode === 'segments') {
@@ -139,19 +180,11 @@ export default {
           label: 'Len [' + this.units.dist + ']',
           formatter: (value, key, item) => {
             return (value * this.units.distScale).toFixed(2)
-          },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          }
         })
         f.unshift({
           key: 'waypoint2.name',
           label: 'End'
-        })
-        f.unshift({
-          key: 'waypoint1.name',
-          label: 'Start',
-          thClass: 'd-none d-md-table-cell',
-          tdClass: 'd-none d-md-table-cell'
         })
       }
       if (this.showTerrain) {
@@ -160,58 +193,48 @@ export default {
           label: 'Terrain',
           formatter: (value, key, item) => {
             return '+' + ((value - 1) * 100).toFixed(1) + '%'
-          },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          }
         })
       }
       if (this.segments[0].time) {
-        f.push({
-          key: 'time',
-          label: 'Moving Time',
-          formatter: (value, key, item) => {
-            return timeUtil.sec2string(value, '[h]:m:ss')
-          },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
-        })
+        if (this.mode === 'segments') {
+          f.push({
+            key: 'time',
+            label: 'Moving Time',
+            formatter: (value, key, item) => {
+              return timeUtil.sec2string(value, '[h]:m:ss')
+            }
+          })
+        }
         f.push({
           key: 'pace',
           label: `Pace [/${this.units.dist}]`,
           formatter: (value, key, item) => {
             let l = item.len * this.units.distScale
             return timeUtil.sec2string(item.time / l, '[h]:m:ss')
-          },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          }
         })
         f.push({
           key: 'elapsed',
           label: 'Elapsed',
           formatter: (value, key, item) => {
             return timeUtil.sec2string(value, '[h]:m:ss')
-          },
-          thClass:
-            this.showClock
-              ? 'd-none d-md-table-cell text-right'
-              : 'text-right',
-          tdClass:
-            this.showClock
-              ? 'd-none d-md-table-cell text-right'
-              : 'text-right'
+          }
         })
         if (this.showClock) {
           f.push({
             key: 'tod',
-            label: 'Clock',
+            label: 'Arrival',
             formatter: (value, key, item) => {
               return timeUtil.sec2string(value, 'am/pm')
-            },
-            thClass: 'text-right',
-            tdClass: 'text-right'
+            }
           })
         }
       }
+      f.forEach((x, i) => {
+        f[i].thClass = this.getClass(x.key)
+        f[i].tdClass = f[i].thClass
+      })
       if (
         this.mode === 'segments' &&
         this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
@@ -301,9 +324,24 @@ export default {
     }
   },
   methods: {
+    getClass: function (key) {
+      let lefts = ['waypoint2.name']
+      let base = lefts.includes(key) ? '' : 'text-right'
+      if (this.mobileFields.includes(key)) {
+        return base
+      } else {
+        if (this.detailsFields.includes(key)) {
+          return `d-none`
+        } else {
+          return `d-none d-md-table-cell ${base}`
+        }
+      }
+    },
     clear: async function () {
       this.clearing = true
       await this.$refs.table.clearSelected()
+      this.segments.filter(s => s._showDetails)
+        .forEach(s => { this.$set(s, '_showDetails', false) })
       this.clearing = false
     },
     expandRow: function (s) {
@@ -327,15 +365,20 @@ export default {
       this.$emit('hide', arr)
       this.visibleTrigger++
     },
-    selectRow: function (s) {
+    selectRow: function (segment) {
       if (this.clearing) return
-      if (s.length) {
+      if (segment.length) {
+        this.visibleSegments.filter(s => s._showDetails && s.start !== segment.start)
+          .forEach(s => { this.$set(s, '_showDetails', false) })
+        this.$set(segment[0], '_showDetails', !segment._showDetails)
         this.$emit(
           'select',
           this.mode,
-          [s[0].start, s[0].end]
+          [segment[0].start, segment[0].end]
         )
       } else {
+        this.visibleSegments.filter(s => s._showDetails)
+          .forEach(s => { this.$set(s, '_showDetails', false) })
         this.$emit('select', this.mode, [])
       }
     },
@@ -380,6 +423,29 @@ export default {
     },
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)
+    },
+    spannedWaypoints: function (s) {
+      let wps = this.course.waypoints.filter(wp =>
+        round(wp.location, 4) > round(s.start, 4) &&
+        round(wp.location, 4) <= round(s.end, 4)
+      )
+      return wps
+    },
+    hasDetailedInfo: function (s) {
+      return (
+        this.showTerrain ||
+        this.spannedWaypoints(s).filter(
+          wp =>
+            wp.description.length ||
+            this.waypointDelay(wp)
+        ).length > 0
+      )
+    },
+    waypointDelay: function (wp) {
+      let d = this.pacing.delays.find(d =>
+        round(d.loc, 4) === round(wp.location, 4)
+      )
+      return (d) ? d.delay : 0
     }
   }
 }

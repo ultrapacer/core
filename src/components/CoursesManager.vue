@@ -89,10 +89,21 @@ export default {
           }
         },
         {
-          key: 'elevation',
+          key: 'gain',
+          sortable: true,
           formatter: (value, key, item) => {
-            return '+' + (item.gain * this.altScale).toFixed(0) + '/' +
-              (item.loss * this.altScale).toFixed(0)
+            return (value * this.altScale).toFixed(0)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+          },
+          thClass: 'd-none d-sm-table-cell',
+          tdClass: 'd-none d-sm-table-cell'
+        },
+        {
+          key: 'loss',
+          sortable: true,
+          formatter: (value, key, item) => {
+            return (value * this.altScale).toFixed(0)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-sm-table-cell',
           tdClass: 'd-none d-sm-table-cell'
