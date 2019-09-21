@@ -11,6 +11,14 @@
         </b-col>
       </b-row>
       <b-row class="mb-3">
+        <b-col sm="2" class="text-sm-right"><b>Altitude:</b></b-col>
+        <b-col>
+          The altitude model is an excellent l exponentially increasing factor. The default model has a lower threshold of {{ defaults.alt.th }} meters, under which altitude is assumed to be insignificant. Above {{ defaults.alt.th }}, the time to run a given distance increases at a rate of {{ defaults.alt.rate }}% every {{ defaults.alt.span }}, compounded continuously.<br/>
+          Users can change the altitude model threshold and rate on the Settings page.<br/>
+          <img style="width:100%; max-width:468px; max-height:299px" src="../assets/altModel.png">
+        </b-col>
+      </b-row>
+      <b-row class="mb-3">
         <b-col sm="2" class="text-sm-right"><b>Terrain:</b></b-col>
         <b-col>
           The terrain model is manually input by waypoint based on course knowledge. It is intended to cover anything that is too small to appear in elevation data.<br/>
