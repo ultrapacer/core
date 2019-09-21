@@ -7,10 +7,20 @@ var defaults = {
     th: 750 // m
   },
   gradeFactor: {
-    // f = a*x^2 + b*x + c
-    a: 0.00155005,
-    b: 0.03171216,
-    c: 1.05768568
+    // f = a*x^2 + b*x
+    // goes linear at lower and upper bounds
+    a: 0.0021,
+    b: 0.0340,
+    lower: {
+      lim: -22,
+      m: -0.0584,
+      b: -0.0164
+    },
+    upper: {
+      lim: 16,
+      m: 0.1012,
+      b: 0.4624
+    }
   }
 }
 
@@ -18,8 +28,13 @@ function gradeFactor (grade, model) {
   if (model === null || typeof (model) === 'undefined') {
     model = defaults.gradeFactor
   }
-  let fact = model.a * (grade ** 2) + model.b * (grade) + model.c
-  return fact
+  if (grade < model.lower.lim) {
+    return model.lower.m * grade + model.lower.b
+  } else if (grade > model.upper.lim) {
+    return model.upper.m * grade + model.upper.b
+  } else {
+    return model.a * (grade ** 2) + model.b * (grade) + 1
+  }
 }
 
 function altFactor (alt, model) {
