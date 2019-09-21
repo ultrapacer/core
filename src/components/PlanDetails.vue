@@ -91,12 +91,12 @@
     <p class="mb-1">
       Steepest Climb:
       <b>{{ maxGrade.toFixed(1) }}%</b> grade
-      [<b>{{ pacing.fstats.max.gF - 1 | percentWithPace(pacing.np, units) }}</b>]
+      [<b>{{ gF(maxGrade) - 1 | percentWithPace(pacing.np, units) }}</b>]
     </p>
     <p class="mb-1">
       Steepest Descent:
       <b>{{ minGrade.toFixed(1) }}%</b> grade
-      [<b>{{ pacing.fstats.min.gF - 1 | percentWithPace(pacing.np, units) }}</b>]
+      [<b>{{ gF(minGrade) - 1 | percentWithPace(pacing.np, units) }}</b>]
     </p>
   </b-list-group-item>
   <b-list-group-item v-if="pacing.factors.aF > 1">
@@ -166,6 +166,7 @@
 
 <script>
 import timeUtil from '../../shared/timeUtilities'
+import {gF} from '../../shared/normFactor'
 import {round} from '../../shared/utilities'
 export default {
   props: ['plan', 'pacing', 'units', 'course', 'busy'],
@@ -281,7 +282,8 @@ export default {
     },
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)
-    }
+    },
+    gF: function (grade) { return gF(grade) }
   }
 }
 </script>

@@ -13,6 +13,7 @@
           <b-nav-item to="/settings" v-if="isAuthenticated">Settings</b-nav-item>
           <b-nav-item href="#" @click.prevent="login" v-if="!isAuthenticated">Login</b-nav-item>
           <b-nav-item href="#" @click.prevent="logout" v-else>Logout</b-nav-item>
+          <b-nav-item to="/help">Help</b-nav-item>
         </b-navbar-nav>
       </b-collapse>
       <span v-if="$calculating.isCalculating()"><b-spinner variant="primary" label="Spinning"></b-spinner></span>
