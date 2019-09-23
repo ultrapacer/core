@@ -87,7 +87,7 @@
 
 <script>
 import api from '@/api'
-import util from '../../shared/utilities'
+import util from '../util/points'
 import wputil from '../util/waypoints'
 const gpxParse = require('gpx-parse')
 export default {

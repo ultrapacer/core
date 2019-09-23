@@ -4,7 +4,7 @@
 </template>
 
 <script>
-import util from '../../shared/utilities'
+import util from '../util/points'
 import LineChart from './LineChart.js'
 
 export default {

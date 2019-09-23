@@ -2,6 +2,7 @@
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
 const nF = require('./normFactor')
+const mathUtil = require('./math')
 
 function calcStats (points) {
   var gain = 0
@@ -83,7 +84,7 @@ function calcSegments (p, breaks, pacing) {
     j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
     if (j > j0) {
       // interpolate
-      delta0 = interp(
+      delta0 = mathUtil.interp(
         p[i - 1].loc,
         p[i].loc,
         p[i - 1].alt,
@@ -111,7 +112,7 @@ function calcSegments (p, breaks, pacing) {
           factors.aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
           factors.tF = nF.tF([p[i - 1].loc, s[j].start], pacing.tFs)
           if (p[i].hasOwnProperty('tod')) {
-            let startTod = interp(
+            let startTod = mathUtil.interp(
               p[i - 1].loc,
               p[i].loc,
               p[i - 1].tod,
@@ -137,7 +138,7 @@ function calcSegments (p, breaks, pacing) {
         factors.tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
         if (p[i].hasOwnProperty('tod')) {
           let startTod = (i < p.length - 1)
-            ? interp(
+            ? mathUtil.interp(
               p[i].loc,
               p[i + 1].loc,
               p[i].tod,
@@ -268,7 +269,7 @@ function pointWLSQ (p, locs, gt) {
       xyr.push([p[i].loc, p[i].alt, w])
     }
 
-    var ab = linearRegression(xyr)
+    var ab = mathUtil.linearRegression(xyr)
     var grade = ab[0] / 10
     if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
     var alt = (x * ab[0]) + ab[1]
@@ -278,46 +279,6 @@ function pointWLSQ (p, locs, gt) {
     })
   })
   return ga
-}
-
-function linearRegression (xyr) {
-  var i
-  var x
-  var y
-  var r
-  var sumx = 0
-  var sumy = 0
-  var sumx2 = 0
-  var sumxy = 0
-  var sumr = 0
-  var a
-  var b
-
-  for (i = 0; i < xyr.length; i++) {
-    // this is our data pair
-    x = xyr[i][0]; y = xyr[i][1]
-
-    // this is the weight for that pair
-    // set to 1 (and simplify code accordingly, ie, sumr becomes xy.length) if
-    // weighting is not needed
-    r = xyr[i][2]
-
-    // consider checking for NaN in the x, y and r variables here
-    // (add a continue statement in that case)
-
-    sumr += r
-    sumx += r * x
-    sumx2 += r * (x * x)
-    sumy += r * y
-    sumxy += r * (x * y)
-  }
-
-  // note: the denominator is the variance of the random variable X
-  // the only case when it is 0 is the degenerate case X==constant
-  b = (sumy * sumx2 - sumx * sumxy) / (sumr * sumx2 - sumx * sumx)
-  a = (sumr * sumxy - sumx * sumy) / (sumr * sumx2 - sumx * sumx)
-
-  return [a, b]
 }
 
 function getElevation (points, location) {
@@ -404,14 +365,14 @@ function getLatLonAltFromDistance (points, location, start) {
           llas.push({
             lat: Number(p3.lat),
             lon: Number(p3.lng),
-            alt: interp(
+            alt: mathUtil.interp(
               points[i - 1].loc,
               points[i].loc,
               points[i - 1].alt,
               points[i].alt,
               location
             ),
-            grade: interp(
+            grade: mathUtil.interp(
               points[i - 1].loc,
               points[i].loc,
               points[i - 1].grade,
@@ -437,14 +398,6 @@ function getLatLonAltFromDistance (points, location, start) {
   }
 }
 
-function round (num, digits) {
-  return Math.round(num * (10 ** digits)) / 10 ** digits
-}
-
-function interp (x0, x1, y0, y1, x) {
-  return y0 + (x - x0) / (x1 - x0) * (y1 - y0)
-}
-
 module.exports = {
   addLoc: addLoc,
   calcStats: calcStats,
@@ -453,6 +406,4 @@ module.exports = {
   getElevation: getElevation,
   getLatLonAltFromDistance: getLatLonAltFromDistance,
   pointWLSQ: pointWLSQ,
-  round: round,
-  interp: interp
 }

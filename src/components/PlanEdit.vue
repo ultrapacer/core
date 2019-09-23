@@ -189,7 +189,7 @@
 
 <script>
 import api from '@/api'
-import timeUtil from '../../shared/timeUtilities'
+import timeUtil from '../util/time'
 export default {
   props: ['course', 'units'],
   data () {
