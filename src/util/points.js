@@ -398,12 +398,12 @@ function getLatLonAltFromDistance (points, location, start) {
   }
 }
 
-module.exports = {
+export default {
   addLoc: addLoc,
   calcStats: calcStats,
   cleanPoints: cleanPoints,
   calcSegments: calcSegments,
   getElevation: getElevation,
   getLatLonAltFromDistance: getLatLonAltFromDistance,
-  pointWLSQ: pointWLSQ,
+  pointWLSQ: pointWLSQ
 }
