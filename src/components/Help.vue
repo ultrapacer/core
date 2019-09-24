@@ -4,9 +4,9 @@
     <p>The help and documentation is a work in progress. Send questions to <b-link href="mailto:danny@ultrapacer.com">danny@ultrapacer.com</b-link>.</p>
     <p>Report bugs, request features, or contribute on <b-link href="https://github.com/amokrunner/ultrapacer/issues" target="_blank">Github</b-link>.</p>
     <b-card title="Models">
-      <p>The models below are applied for pacing calcuations.</br>
-      <b>Grade</b> and <b>Altitude</b> are defined automatically by elevation data in the GPX track.</br>
-      <b>Terrain</b> is manually defined for each Course by setting "Terrain Factors" for Waypoints.</br>
+      <p>The models below are applied for pacing calculations.<br/>
+      <b>Grade</b> and <b>Altitude</b> are defined automatically by elevation data in the GPX track.<br/>
+      <b>Terrain</b> is manually defined for each Course by setting "Terrain Factors" for Waypoints.<br/>
       <b>Heat</b> and <b>Drift</b> are manually defined for each Plan.</p>
       <b-row class="mb-3">
         <b-col md="2" class="text-md-right"><b>Grade:</b></b-col>
@@ -57,7 +57,7 @@
 </template>
 
 <script>
-import {defaults} from '../../shared/normFactor'
+import {defaults} from '@/util/normFactor'
 export default {
   title: 'Help',
   data () {

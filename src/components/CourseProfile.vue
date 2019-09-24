@@ -4,7 +4,7 @@
 </template>
 
 <script>
-import util from '../../shared/utilities'
+import { pointWLSQ } from '@/util/geo'
 import LineChart from './LineChart.js'
 
 export default {
@@ -211,12 +211,12 @@ export default {
       var chartProfile = []
       var chartGrade = []
       xs = Array(pmax + 1).fill(0).map((e, i) => i++ * this.course.len / pmax)
-      ysa = util.pointWLSQ(
+      ysa = pointWLSQ(
         this.course.points,
         xs,
         this.course.len / pmax / 5
       )
-      ysg = util.pointWLSQ(
+      ysg = pointWLSQ(
         this.course.points,
         xs,
         5 * this.course.len / pmax

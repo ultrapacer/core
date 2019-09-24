@@ -189,7 +189,7 @@
 
 <script>
 import api from '@/api'
-import timeUtil from '../../shared/timeUtilities'
+import {sec2string, string2sec} from '../util/time'
 export default {
   props: ['course', 'units'],
   data () {
@@ -274,27 +274,27 @@ export default {
           this.model.pacingMethod === 'np'
         ) {
           s = s / this.units.distScale
-          this.model.pacingTargetF = timeUtil.sec2string(s, 'mm:ss')
+          this.model.pacingTargetF = sec2string(s, 'mm:ss')
         } else {
-          this.model.pacingTargetF = timeUtil.sec2string(s, 'hh:mm:ss')
+          this.model.pacingTargetF = sec2string(s, 'hh:mm:ss')
         }
       } else {
         this.model.pacingTargetF = ''
       }
-      this.model.waypointDelayF = timeUtil.sec2string(
+      this.model.waypointDelayF = sec2string(
         this.model.waypointDelay,
         'mm:ss'
       )
       this.model.startTimeF = ''
       if (this.model.startTime !== null) {
-        this.model.startTimeF = timeUtil.sec2string(
+        this.model.startTimeF = sec2string(
           this.model.startTime,
           'hh:mm'
         )
       }
       if (this.model.heatModel !== null) {
-        this.hF.rise = timeUtil.sec2string(this.model.heatModel.start - 1800, 'hh:mm')
-        this.hF.set = timeUtil.sec2string(this.model.heatModel.stop - 3600, 'hh:mm')
+        this.hF.rise = sec2string(this.model.heatModel.start - 1800, 'hh:mm')
+        this.hF.set = sec2string(this.model.heatModel.stop - 3600, 'hh:mm')
         this.hF.max = this.model.heatModel.max
         this.hF.baseline = this.model.heatModel.baseline || 0
         this.hF.enabled = true
@@ -310,7 +310,7 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
-      this.model.pacingTarget = timeUtil.string2sec(this.model.pacingTargetF)
+      this.model.pacingTarget = string2sec(this.model.pacingTargetF)
       if (
         this.model.pacingMethod === 'pace' ||
         this.model.pacingMethod === 'np'
@@ -318,21 +318,21 @@ export default {
         this.model.pacingTarget = this.model.pacingTarget * this.units.distScale
       }
       if (this.model.startTimeF.length) {
-        this.model.startTime = timeUtil.string2sec(`${this.model.startTimeF}:00`)
+        this.model.startTime = string2sec(`${this.model.startTimeF}:00`)
       } else {
         this.model.startTime = null
       }
       if (this.hF.enabled) {
         this.model.heatModel = {
-          start: timeUtil.string2sec(`${this.hF.rise}:00`) + 1800, // rise + 30m
-          stop: timeUtil.string2sec(`${this.hF.set}:00`) + 3600, // set + 1 hrs
+          start: string2sec(`${this.hF.rise}:00`) + 1800, // rise + 30m
+          stop: string2sec(`${this.hF.set}:00`) + 3600, // set + 1 hrs
           max: this.hF.max,
           baseline: this.hF.baseline
         }
       } else {
         this.model.heatModel = null
       }
-      this.model.waypointDelay = timeUtil.string2sec(this.model.waypointDelayF)
+      this.model.waypointDelay = string2sec(this.model.waypointDelayF)
       var p = {}
       if (this.model._id) {
         p = await api.updatePlan(this.model._id, this.model)
