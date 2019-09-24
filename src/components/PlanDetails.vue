@@ -107,13 +107,13 @@
     </p>
     <p class="mb-1">
       Highest Altitude Factor:
-      <b>{{ pacing.fstats.max.aF - 1 | percentWithPace(pacing.np, units) }}</b>
+      <b>{{ aF(maxAltitude) - 1 | percentWithPace(pacing.np, units) }}</b>
       at
       <b>{{ maxAltitude | formatAlt(units.altScale) }} {{ units.alt }}</b>
     </p>
     <p class="mb-1">
       Lowest Altitude Factor:
-      <b>{{ pacing.fstats.min.aF - 1 | percentWithPace(pacing.np, units) }}</b>
+      <b>{{ aF(minAltitude) - 1 | percentWithPace(pacing.np, units) }}</b>
       at
       <b>{{ minAltitude | formatAlt(units.altScale) }} {{ units.alt }}</b>
     </p>
@@ -166,7 +166,7 @@
 
 <script>
 import timeUtil from '../../shared/timeUtilities'
-import {gF} from '../../shared/normFactor'
+import {aF, gF} from '../../shared/normFactor'
 import {round} from '../../shared/utilities'
 export default {
   props: ['plan', 'pacing', 'units', 'course', 'busy'],
@@ -283,7 +283,8 @@ export default {
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)
     },
-    gF: function (grade) { return gF(grade) }
+    gF: function (grade) { return gF(grade) },
+    aF: function (alt) { return aF(alt, this.course.altModel) }
   }
 }
 </script>
