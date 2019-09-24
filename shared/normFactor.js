@@ -38,6 +38,12 @@ function gradeFactor (grade, model) {
 }
 
 function altFactor (alt, model) {
+  // returns an exponential altitude factor
+  // alt: altitude [km]
+  // model format:
+  //    rate: % increase per span
+  //    span: meters for % increase
+  //      th: alt threshold where model starts [m]
   if (model === null || typeof (model) === 'undefined') {
     model = defaults.alt
   }
