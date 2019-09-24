@@ -87,8 +87,8 @@
 
 <script>
 import api from '@/api'
-import util from '../util/points'
-import wputil from '../util/waypoints'
+import geo from '@/util/geo'
+import wputil from '@/util/waypoints'
 const gpxParse = require('gpx-parse')
 export default {
   props: ['course'],
@@ -138,8 +138,8 @@ export default {
         this.model.points = this.gpxPoints
         let p2 = []
         this.model.points.forEach((x) => { p2.push({...x}) })
-        util.addLoc(p2)
-        var stats = util.calcStats(p2)
+        geo.addLoc(p2)
+        var stats = geo.calcStats(p2)
         this.model.distance = p2[p2.length - 1].loc
         this.model.gain = stats.gain
         this.model.loss = stats.loss
@@ -209,7 +209,7 @@ export default {
           if (error) {
             throw error
           } else {
-            this.gpxPoints = util.cleanPoints(data.tracks[0].segments[0])
+            this.gpxPoints = geo.cleanPoints(data.tracks[0].segments[0])
           }
         })
       }

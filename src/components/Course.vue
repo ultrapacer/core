@@ -167,9 +167,9 @@
 
 <script>
 import api from '@/api'
-import util from '../util/points'
-import {round} from '../util/math'
-import nF from '../util/normFactor'
+import geo from '@/util/geo'
+import {round} from '@/util/math'
+import nF from '@/util/normFactor'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
@@ -351,21 +351,21 @@ export default {
 
     this.$title = this.course.name
     t = this.$logger()
-    util.addLoc(this.course.points)
+    geo.addLoc(this.course.points)
     t = this.$logger('Added locations')
     let pmax = round(Math.min(7500, this.course.points[this.course.points.length - 1].loc / 0.025), 0)
     if (this.course.points.length > pmax) {
       let t = this.$logger()
-      let stats = util.calcStats(this.course.points)
+      let stats = geo.calcStats(this.course.points)
       let len = this.course.points[this.course.points.length - 1].loc
       let xs = Array(pmax).fill(0).map((e, i) => i++ * len / (pmax - 1))
-      let adj = util.pointWLSQ(
+      let adj = geo.pointWLSQ(
         this.course.points,
         xs,
         0.05
       )
       let p2 = []
-      let llas = util.getLatLonAltFromDistance(this.course.points, xs, 0)
+      let llas = geo.getLatLonAltFromDistance(this.course.points, xs, 0)
       xs.forEach((x, i) => {
         p2.push({
           alt: adj[i].alt,
@@ -376,7 +376,7 @@ export default {
           dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
         })
       })
-      let stats2 = util.calcStats(p2)
+      let stats2 = geo.calcStats(p2)
       this.course.scales = {
         gain: stats.gain / stats2.gain,
         loss: stats.loss / stats2.loss,
@@ -733,7 +733,7 @@ export default {
       if (plan) {
         let breaks = this.course.points.map(x => x.loc)
         p[0].time = 0
-        let arr = util.calcSegments(p, breaks, this.pacing)
+        let arr = geo.calcSegments(p, breaks, this.pacing)
         arr.forEach((x, i) => {
           p[i + 1].time = x.elapsed
         })
@@ -765,7 +765,7 @@ export default {
           wps.push(x)
         }
       })
-      let arr = util.calcSegments(this.course.points, breaks, this.pacing)
+      let arr = geo.calcSegments(this.course.points, breaks, this.pacing)
       arr.forEach((x, i) => {
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
@@ -792,7 +792,7 @@ export default {
       if (tot / distScale > breaks[breaks.length - 1]) {
         breaks.push(tot / distScale)
       }
-      let arr = util.calcSegments(p, breaks, this.pacing)
+      let arr = geo.calcSegments(p, breaks, this.pacing)
       if (this.planAssigned && this.plan.startTime !== null) {
         arr.forEach((x, i) => {
           arr[i].tod = (x.elapsed + this.plan.startTime)

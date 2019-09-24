@@ -1,8 +1,8 @@
 /* eslint new-cap: 0 */
+import nF from './normFactor'
+import { interp, linearRegression } from './math'
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
-const nF = require('./normFactor')
-const mathUtil = require('./math')
 
 function calcStats (points) {
   var gain = 0
@@ -84,7 +84,7 @@ function calcSegments (p, breaks, pacing) {
     j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
     if (j > j0) {
       // interpolate
-      delta0 = mathUtil.interp(
+      delta0 = interp(
         p[i - 1].loc,
         p[i].loc,
         p[i - 1].alt,
@@ -112,7 +112,7 @@ function calcSegments (p, breaks, pacing) {
           factors.aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
           factors.tF = nF.tF([p[i - 1].loc, s[j].start], pacing.tFs)
           if (p[i].hasOwnProperty('tod')) {
-            let startTod = mathUtil.interp(
+            let startTod = interp(
               p[i - 1].loc,
               p[i].loc,
               p[i - 1].tod,
@@ -138,7 +138,7 @@ function calcSegments (p, breaks, pacing) {
         factors.tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
         if (p[i].hasOwnProperty('tod')) {
           let startTod = (i < p.length - 1)
-            ? mathUtil.interp(
+            ? interp(
               p[i].loc,
               p[i + 1].loc,
               p[i].tod,
@@ -242,7 +242,7 @@ function addLoc (p) {
   return p
 }
 
-function pointWLSQ (p, locs, gt) {
+export function pointWLSQ (p, locs, gt) {
   // p: points array of {loc, lat, lon, alt}
   // locs: array of locations (km)
   // gt: grade smoothing threshold
@@ -269,7 +269,7 @@ function pointWLSQ (p, locs, gt) {
       xyr.push([p[i].loc, p[i].alt, w])
     }
 
-    var ab = mathUtil.linearRegression(xyr)
+    var ab = linearRegression(xyr)
     var grade = ab[0] / 10
     if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
     var alt = (x * ab[0]) + ab[1]
@@ -316,7 +316,7 @@ function getElevation (points, location) {
   }
 }
 
-function getLatLonAltFromDistance (points, location, start) {
+export function getLatLonAltFromDistance (points, location, start) {
   // if the start index is passed, make sure you go the right direction:
   var i0 = Math.min(start, points.length - 1) || 0
   if (i0 > 0 && (points[i0].loc > location)) {
@@ -365,14 +365,14 @@ function getLatLonAltFromDistance (points, location, start) {
           llas.push({
             lat: Number(p3.lat),
             lon: Number(p3.lng),
-            alt: mathUtil.interp(
+            alt: interp(
               points[i - 1].loc,
               points[i].loc,
               points[i - 1].alt,
               points[i].alt,
               location
             ),
-            grade: mathUtil.interp(
+            grade: interp(
               points[i - 1].loc,
               points[i].loc,
               points[i - 1].grade,
