@@ -1,5 +1,5 @@
 /* eslint new-cap: 0 */
-const util = require('../../shared/utilities')
+import { getLatLonAltFromDistance } from './geo'
 const sgeo = require('sgeo')
 
 function updateLLA (waypoint, points) {
@@ -12,7 +12,7 @@ function updateLLA (waypoint, points) {
     waypoint.lat = points[points.length - 1].lat
     waypoint.lon = points[points.length - 1].lon
   } else {
-    var lla = util.getLatLonAltFromDistance(points, waypoint.location, waypoint.pointsIndex)
+    var lla = getLatLonAltFromDistance(points, waypoint.location, waypoint.pointsIndex)
     waypoint.lat = lla.lat
     waypoint.lon = lla.lon
     waypoint.elevation = lla.alt
@@ -48,7 +48,7 @@ function nearestLoc (waypoint, p, th) {
         locs.push(l)
       }
     }
-    var llas = util.getLatLonAltFromDistance(p, locs)
+    var llas = getLatLonAltFromDistance(p, locs)
     llas.forEach(lla => {
       var LLA2 = new sgeo.latlon(lla.lat, lla.lon)
       lla.dist = Number(LLA1.distanceTo(LLA2))
@@ -61,7 +61,7 @@ function nearestLoc (waypoint, p, th) {
   return loc
 }
 
-module.exports = {
+export default {
   updateLLA: updateLLA,
   sortWaypointsByDistance: sortWaypointsByDistance,
   nearestLoc: nearestLoc

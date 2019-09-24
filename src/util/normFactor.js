@@ -2,7 +2,7 @@
 
 var defaults = {
   alt: {
-    rate: 4, // %
+    rate: 6, // %
     span: 1000, // m
     th: 750 // m
   },
@@ -38,6 +38,12 @@ function gradeFactor (grade, model) {
 }
 
 function altFactor (alt, model) {
+  // returns an exponential altitude factor
+  // alt: altitude [km]
+  // model format:
+  //    rate: % increase per span
+  //    span: meters for % increase
+  //      th: alt threshold where model starts [m]
   if (model === null || typeof (model) === 'undefined') {
     model = defaults.alt
   }
@@ -47,9 +53,12 @@ function altFactor (alt, model) {
   } else {
     a = alt
   }
-  let r = model.rate / model.span / 100
-  let fact = (1 + r) ** Math.max(0, a - model.th)
-  return fact
+  if (a <= model.th) {
+    return 1
+  } else {
+    let r = model.rate / model.span / 100
+    return (1 + r) ** (a - model.th)
+  }
 }
 
 function driftFactor (loc, drift, length) {
