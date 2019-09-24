@@ -2,7 +2,7 @@
 
 var defaults = {
   alt: {
-    rate: 4, // %
+    rate: 6, // %
     span: 1000, // m
     th: 750 // m
   },

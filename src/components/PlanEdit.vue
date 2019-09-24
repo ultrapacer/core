@@ -294,7 +294,7 @@ export default {
       }
       if (this.model.heatModel !== null) {
         this.hF.rise = timeUtil.sec2string(this.model.heatModel.start - 1800, 'hh:mm')
-        this.hF.set = timeUtil.sec2string(this.model.heatModel.stop - 7200, 'hh:mm')
+        this.hF.set = timeUtil.sec2string(this.model.heatModel.stop - 3600, 'hh:mm')
         this.hF.max = this.model.heatModel.max
         this.hF.baseline = this.model.heatModel.baseline || 0
         this.hF.enabled = true
@@ -325,7 +325,7 @@ export default {
       if (this.hF.enabled) {
         this.model.heatModel = {
           start: timeUtil.string2sec(`${this.hF.rise}:00`) + 1800, // rise + 30m
-          stop: timeUtil.string2sec(`${this.hF.set}:00`) + 7200, // set + 1 hrs
+          stop: timeUtil.string2sec(`${this.hF.set}:00`) + 3600, // set + 1 hrs
           max: this.hF.max,
           baseline: this.hF.baseline
         }
