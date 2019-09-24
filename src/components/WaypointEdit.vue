@@ -123,7 +123,7 @@
 <script>
 import api from '@/api'
 import wputil from '../util/waypoints'
-import {tF} from '../../shared/normFactor'
+import {tF} from '../util/normFactor'
 export default {
   props: ['course', 'units', 'terrainFactors'],
   data () {

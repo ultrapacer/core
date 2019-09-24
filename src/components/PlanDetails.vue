@@ -165,9 +165,9 @@
 </template>
 
 <script>
-import timeUtil from '../../shared/timeUtilities'
-import {gF} from '../../shared/normFactor'
-import {round} from '../../shared/utilities'
+import {sec2string} from '../util/time'
+import {gF} from '../util/normFactor'
+import {round} from '../util/math'
 export default {
   props: ['plan', 'pacing', 'units', 'course', 'busy'],
   data () {
@@ -193,9 +193,9 @@ export default {
           this.plan.pacingMethod === 'np'
         ) {
           s = s / this.units.distScale
-          return timeUtil.sec2string(s, 'mm:ss')
+          return sec2string(s, 'mm:ss')
         } else {
-          return timeUtil.sec2string(s, 'hh:mm:ss')
+          return sec2string(s, 'hh:mm:ss')
         }
       } else {
         return ''
@@ -271,7 +271,7 @@ export default {
         let fact = val > 0 ? 1 : -1
         val = fact * val
         let dPace = val * np / units.distScale
-        str = `${str} (${timeUtil.sec2string(dPace, '[h]:m:ss')} min/${units.dist})`
+        str = `${str} (${sec2string(dPace, '[h]:m:ss')} min/${units.dist})`
       }
       return str
     }
@@ -281,7 +281,7 @@ export default {
       return p / this.units.distScale
     },
     sec2string: function (s, f) {
-      return timeUtil.sec2string(s, f)
+      return sec2string(s, f)
     },
     gF: function (grade) { return gF(grade) }
   }

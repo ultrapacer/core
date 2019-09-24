@@ -55,7 +55,7 @@
 
 <script>
 import api from '@/api'
-import {defaults} from '../../shared/normFactor'
+import {defaults} from '../util/normFactor'
 export default {
   title: 'Settings',
   props: ['user'],

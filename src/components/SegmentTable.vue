@@ -95,8 +95,8 @@
 </template>
 
 <script>
-import { round } from '../../shared/utilities'
-import timeUtil from '../../shared/timeUtilities'
+import { round } from '../util/math'
+import timeUtil from '../util/time'
 export default {
   props: ['course', 'segments', 'units', 'pacing', 'busy', 'mode'],
   data () {
