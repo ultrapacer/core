@@ -17,8 +17,8 @@
                 ></b-form-select>
             </b-form-group>
           </b-col>
-          <b-col cols="4" md="4" lg="3" xl="3" style="text-align:left">
-            <b-btn @click="editPlan()" class="mr-1" size="sm"  v-if="planOwner">
+          <b-col cols="4" md="3" lg="3" xl="2" class="pl-n3 pr-n5" style="text-align:left">
+            <b-btn @click="editPlan()" class="ml-n4 mr-1" size="sm" v-if="planOwner">
               <v-icon name="edit"></v-icon>
             </b-btn>
             <b-btn variant="success" @click.prevent="newPlan()" size="sm"
@@ -43,6 +43,13 @@
             </b-btn>
           </b-col>
         </b-row>
+      </b-col>
+      <b-col cols=2 md=1 class="ml-n3" style="text-align:right">
+        <b-btn v-if="!initializing" @click="$refs.download.generateFile()" class="mr-1" size="sm" v-b-popover.hover.blur.bottomright.d250.v-info="
+                'Download GPX file.'
+              ">
+          <v-icon name="download"></v-icon>
+        </b-btn>
       </b-col>
     </b-row>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
@@ -162,6 +169,10 @@
     <delete-modal
       ref="delModal"
     ></delete-modal>
+    <download-gpx
+      ref="download"
+      :id="course._id"
+    ></download-gpx>
   </div>
 </template>
 
@@ -173,6 +184,7 @@ import nF from '@/util/normFactor'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
+import DownloadGpx from './DownloadGPX'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
 import PlanDetails from './PlanDetails'
@@ -186,6 +198,7 @@ export default {
     CourseMap,
     CourseProfile,
     DeleteModal,
+    DownloadGpx,
     SegmentTable,
     WaypointTable,
     PlanDetails,
