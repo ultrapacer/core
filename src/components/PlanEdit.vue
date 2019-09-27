@@ -336,9 +336,11 @@ export default {
       var p = {}
       if (this.model._id) {
         p = await api.updatePlan(this.model._id, this.model)
+        this.$ga.event('Plan', 'edit')
       } else {
         this.model._course = this.course._id
         p = await api.createPlan(this.model)
+        this.$ga.event('Plan', 'create')
       }
       await this.$emit('refresh', p, () => {
         this.saving = false
