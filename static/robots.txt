@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /css/
+Disallow: /assets/
+Disallow: /js/
+Disallow: /privacy
+Sitemap: https://ultrapacer.com/sitemap.xml

@@ -94,8 +94,8 @@ export default {
       this.profile = data.profile
     },
     async updateUser () {
+      this.$ga.set({ dimension0: true })
       this.user = await api.getUser()
-      this.$ga.set({ authenticated: true })
     }
   }
 }
