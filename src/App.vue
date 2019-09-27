@@ -95,6 +95,7 @@ export default {
     },
     async updateUser () {
       this.user = await api.getUser()
+      this.$ga.set({ authenticated: true })
     }
   }
 }

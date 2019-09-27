@@ -31,10 +31,19 @@ Vue.component('v-icon', VIcon)
 
 Vue.use(BootstrapVue)
 Vue.use(AuthPlugin)
-
 Vue.use(VueAnalytics, {
   id: 'UA-148791352-1',
-  router
+  router,
+  ignoreRoutes: ['/callback'],
+  set: [{
+    authenticated: false
+  }],
+  debug: {
+    sendHitTask: process.env.NODE_ENV === 'production'
+  },
+  autoTracking: {
+    exception: true
+  }
 })
 Vue.use(VuePageTitle, {
   // prefix: 'My App - ',
