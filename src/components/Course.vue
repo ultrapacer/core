@@ -341,6 +341,14 @@ export default {
         variant: 'warning',
         'auto-hide-delay': 4000
       })
+    } else if (!this.isAuthenticated) {
+      this.$bvToast.toast('Welome to ultraPacer, a web app that helps you make pacing plans for trail races and adventures. To create a pace plan for this course, select the "New Pacing Plan" button on the top right of this page and use the "Sign Up" option. Happy running!', {
+        title: 'Welcome!',
+        toaster: 'b-toaster-bottom-right',
+        solid: true,
+        variant: 'info',
+        'auto-hide-delay': 5000
+      })
     }
     this.$calculating.setCalculating(true)
     let t = this.$logger()
