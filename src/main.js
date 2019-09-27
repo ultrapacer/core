@@ -8,6 +8,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import AuthPlugin from './plugins/auth'
 import LoggerPlugin from './plugins/logger'
+import VueAnalytics from 'vue-analytics'
 import VuePageTitle from 'vue-page-title'
 import VueTheMask from 'vue-the-mask'
 
@@ -30,6 +31,11 @@ Vue.component('v-icon', VIcon)
 
 Vue.use(BootstrapVue)
 Vue.use(AuthPlugin)
+Vue.use(VueAnalytics, {
+  id: 'UA-148791352-1',
+  router,
+  ignoreRoutes: ['/callback']
+})
 Vue.use(VuePageTitle, {
   // prefix: 'My App - ',
   suffix: '- ultraPacer'

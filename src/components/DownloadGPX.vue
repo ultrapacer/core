@@ -48,6 +48,7 @@ export default {
       textarr.push('  </trkseg>', ' </trk>', '</gpx>')
       var data = new Blob([textarr.join('\r')], {type: 'text/plain'})
       this.downloadURL = window.URL.createObjectURL(data)
+      this.$ga.event('Course', 'download', this.course.public ? this.course.name : 'private')
     }
   }
 }

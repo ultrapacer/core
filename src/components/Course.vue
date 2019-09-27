@@ -310,6 +310,9 @@ export default {
       this.$logger('compute-delays', t)
       return d
     },
+    publicName: function () {
+      return this.course.public ? this.course.name : 'private'
+    },
     units: function () {
       var u = {
         dist: (this.isAuthenticated) ? this.user.distUnits : 'mi',
@@ -347,6 +350,7 @@ export default {
       } else {
         this.course = await api.getCourse(this.$route.params.course)
       }
+      this.$ga.event('Course', 'view', this.publicName)
       this.plans = this.course.plans
       this.syncCache(this.course)
       this.syncCache(this.plans)
@@ -354,6 +358,7 @@ export default {
         this.plan = this.plans.find(
           x => x._id === this.$route.params.plan
         )
+        this.$ga.event('Plan', 'view', this.publicName)
       }
     } catch (err) {
       console.log(err)
@@ -533,6 +538,7 @@ export default {
         plan,
         async () => {
           await api.deletePlan(plan._id)
+          this.$ga.event('Plan', 'delete', this.publicName)
           this.plans = await api.getPlans(this.course._id, this.user._id)
           if (this.plan._id === plan._id) {
             if (this.plans.length) {
@@ -577,6 +583,7 @@ export default {
       if (this.owner) {
         api.selectCoursePlan(this.course._id, {plan: this.plan._id})
       }
+      this.$ga.event('Plan', 'view', this.publicName)
       if (!this.useCache()) {
         this.busy = true
         this.$calculating.setCalculating(true)

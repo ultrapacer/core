@@ -177,8 +177,10 @@ export default {
       }
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
+        this.$ga.event('Course', 'edit')
       } else {
         await api.createCourse(this.model)
+        this.$ga.event('Course', 'create')
       }
       this.$emit('refresh', () => {
         this.saving = false
@@ -194,6 +196,7 @@ export default {
       this.deleting = true
       this.$emit('delete', this.course, async (err) => {
         if (!err) {
+          this.$ga.event('Course', 'delete')
           this.$bvModal.hide('course-edit-modal')
         }
         this.deleting = false
