@@ -533,6 +533,7 @@ export default {
         plan,
         async () => {
           await api.deletePlan(plan._id)
+          this.$ga.event('Plan', 'delete')
           this.plans = await api.getPlans(this.course._id, this.user._id)
           if (this.plan._id === plan._id) {
             if (this.plans.length) {
