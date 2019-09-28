@@ -192,7 +192,7 @@ import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
 
 export default {
-  title: 'Loading',
+  title: 'Course',
   props: ['isAuthenticated', 'user'],
   components: {
     CourseMap,
