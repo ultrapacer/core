@@ -37,7 +37,10 @@ Vue.use(VueAnalytics, {
   ignoreRoutes: ['/callback'],
   debug: {
     sendHitTask: process.env.NODE_ENV !== 'development'
-  }
+  },
+  set: [
+    { field: 'dimension1', value: false }
+  ]
 })
 Vue.use(VuePageTitle, {
   // prefix: 'My App - ',

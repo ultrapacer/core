@@ -95,7 +95,7 @@ export default {
       this.isAuthenticated = data.loggedIn
       this.profile = data.profile
       this.$ga.event('User', 'authenticated')
-      this.$ga.set({ 'dimension0': 'authenticated' })
+      this.$ga.set({ 'dimension1': true })
     },
     async updateUser () {
       this.user = await api.getUser()
