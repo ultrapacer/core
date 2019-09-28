@@ -345,6 +345,15 @@ export default {
         this.$ga.event('Plan', 'create',
           this.course.public ? this.course.name : 'private'
         )
+        if (String(p._user._id) !== String(this.course._user)) {
+          this.$bvToast.toast(`View, edit, and add plans for "${this.course.name}" next time you log in by selecting "Courses" in the top menu.`, {
+            title: `New plan for "${this.course.name}!`,
+            toaster: 'b-toaster-bottom-right',
+            solid: true,
+            variant: 'info',
+            'auto-hide-delay': 5000
+          })
+        }
       }
       await this.$emit('refresh', p, () => {
         this.saving = false

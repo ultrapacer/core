@@ -333,15 +333,6 @@ export default {
     }
   },
   async created () {
-    if (screen.width < 992) {
-      this.$bvToast.toast('Page not optimized for small/mobile screens', {
-        title: 'Warning',
-        toaster: 'b-toaster-bottom-center',
-        solid: true,
-        variant: 'warning',
-        'auto-hide-delay': 4000
-      })
-    }
     this.$calculating.setCalculating(true)
     let t = this.$logger()
     try {
@@ -422,6 +413,25 @@ export default {
     this.busy = false
     this.$calculating.setCalculating(false)
     this.$logger('Finish')
+    setTimeout(() => {
+      if (screen.width < 992) {
+        this.$bvToast.toast('Page not optimized for small/mobile screens', {
+          title: 'Warning',
+          toaster: 'b-toaster-bottom-center',
+          solid: true,
+          variant: 'warning',
+          'auto-hide-delay': 4000
+        })
+      } else if (!this.isAuthenticated) {
+        this.$bvToast.toast('Welome to ultraPacer, a web app that helps you make pacing plans for trail races and adventures. To create a pace plan for this course, select the "New Pacing Plan" button on the top right of this page and use the "Sign Up" option. Happy running!', {
+          title: 'Welcome!',
+          toaster: 'b-toaster-bottom-right',
+          solid: true,
+          variant: 'info',
+          'auto-hide-delay': 5000
+        })
+      }
+    }, 1000)
   },
   methods: {
     async newWaypoint () {
