@@ -9,10 +9,17 @@
       @ok="handleOk"
     >
       <form ref="courseform" @submit.prevent="">
-        <b-form-group label="Name">
-          <b-form-input type="text" v-model="model.name" required>
-          </b-form-input>
-        </b-form-group>
+        <b-input-group
+          prepend="Name"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Name: name for the course, for example \'\'Western States 100\'\''
+          "
+        >
+        <b-form-input type="text" v-model="model.name" required>
+        </b-form-input>
+        </b-input-group>
         <b-form-group label="Privacy">
           <b-form-checkbox
             v-model="model.public"
@@ -65,6 +72,36 @@
           <b-form-textarea rows="4" v-model="model.description">
           </b-form-textarea>
         </b-form-group>
+        <h5>Event-specific information:</h5>
+        <b-input-group
+          prepend="Event Date"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Date: use for races, etc.'
+          "
+        >
+          <b-form-input
+            type="date"
+            v-model="model.eventDate"
+            >
+          </b-form-input>
+        </b-input-group>
+        
+        <b-input-group
+          prepend="Start Time"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Start Time: time of day event begins'
+          "
+        >
+          <b-form-input
+            type="time"
+            v-model="model.eventTime"
+            >
+          </b-form-input>
+        </b-input-group>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
         <div v-if="model._id" style="text-align: left; flex: auto">

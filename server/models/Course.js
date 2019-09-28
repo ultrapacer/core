@@ -32,6 +32,10 @@ var CourseSchema = new Schema({
     type: Date,
     default: null
   },
+  eventTime: {
+    type: Number,
+    default: null
+  },
   _plan: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Plan'
