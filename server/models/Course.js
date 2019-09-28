@@ -28,6 +28,10 @@ var CourseSchema = new Schema({
     type: Boolean,
     default: false
   },
+  eventDate: {
+    type: Date,
+    default: null
+  },
   _plan: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Plan'
