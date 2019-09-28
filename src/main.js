@@ -34,7 +34,13 @@ Vue.use(AuthPlugin)
 Vue.use(VueAnalytics, {
   id: 'UA-148791352-1',
   router,
-  ignoreRoutes: ['/callback']
+  ignoreRoutes: ['/callback'],
+  debug: {
+    sendHitTask: process.env.NODE_ENV !== 'development'
+  },
+  set: [
+    { field: 'dimension1', value: false }
+  ]
 })
 Vue.use(VuePageTitle, {
   // prefix: 'My App - ',

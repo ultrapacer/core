@@ -85,16 +85,19 @@ export default {
   methods: {
     login () {
       this.$auth.login()
+      this.$ga.event('User', 'login')
     },
     logout () {
       this.$auth.logOut()
+      this.$ga.event('User', 'logout')
     },
     handleLoginEvent (data) {
       this.isAuthenticated = data.loggedIn
       this.profile = data.profile
+      this.$ga.event('User', 'authenticated')
+      this.$ga.set({ 'dimension1': true })
     },
     async updateUser () {
-      this.$ga.set({ dimension0: true })
       this.user = await api.getUser()
     }
   }
