@@ -33,24 +33,7 @@
           (<b-link @click="changeTrack">change</b-link>)
         </b-form-group>
         <div v-if="showTrackForms && model.source">
-          <b-form-group label="Source">
-            <b-form-radio v-model="model.source.type" value="gpx">
-              GPX file
-            </b-form-radio>
-            <b-form-radio
-              v-model="model.source.type"
-              value="stravaRoute"
-              disabled>
-              Strava Route
-            </b-form-radio>
-            <b-form-radio
-              v-model="model.source.type"
-              value="stravaActivity"
-              disabled>
-              Strava Activity
-            </b-form-radio>
-          </b-form-group>
-          <b-form-group v-if="model.source.type==='gpx'">
+          <b-form-group>
             <b-form-file
                 :state="Boolean(gpxFile)"
                 v-model="gpxFile"
@@ -68,17 +51,13 @@
             <p class="lead">Strava integration coming soon...</p>
           </b-form-group>
         </div>
-        <b-form-group label="Description">
-          <b-form-textarea rows="4" v-model="model.description">
-          </b-form-textarea>
-        </b-form-group>
-        <h5>Event-specific information:</h5>
+        
         <b-input-group
           prepend="Event Date"
           class="mb-2"
           size="sm"
           v-b-popover.hover.bottomright.d250.v-info="
-            'Date: use for races, etc.'
+            'Date [optional]: use for races, etc.'
           "
         >
           <b-form-input
@@ -87,13 +66,12 @@
             >
           </b-form-input>
         </b-input-group>
-        
         <b-input-group
           prepend="Start Time"
           class="mb-2"
           size="sm"
           v-b-popover.hover.bottomright.d250.v-info="
-            'Start Time: time of day event begins'
+            'Start Time [optional]: time of day event begins'
           "
         >
           <b-form-input
@@ -101,6 +79,10 @@
             v-model="model.eventTime"
             >
           </b-form-input>
+        </b-input-group>
+        <b-input-group label="Notes">
+          <b-form-textarea rows="4" v-model="model.description">
+          </b-form-textarea>
         </b-input-group>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
@@ -131,18 +113,13 @@ export default {
   props: ['course'],
   data () {
     return {
-      defaults: { source: { type: 'gpx' } },
+      defaults: {},
       gpxFile: null,
       gpxPoints: [],
       model: {},
       saving: false,
       deleting: false,
-      showTrackForms: true,
-      sources: {
-        gpx: 'GPX File',
-        stravaActivity: 'Strava Activity',
-        stravaRoute: 'Strava Route'
-      }
+      showTrackForms: true
     }
   },
   watch: {
