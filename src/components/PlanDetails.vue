@@ -21,13 +21,13 @@
       Moving Time:
       <b>{{ sec2string(pacing.time - pacing.delay, '[h]:m:ss') }}</b>
     </p>
-    <p class="mb-1" v-if="plan.startTime">
+    <p class="mb-1" v-if="course.eventTime">
       Start Time:
-      <b>{{ sec2string(plan.startTime, 'am/pm') }}</b>
+      <b>{{ sec2string(course.eventTime, 'am/pm') }}</b>
     </p>
-    <p class="mb-1" v-if="plan.startTime">
+    <p class="mb-1" v-if="course.eventTime">
       Finish Time:
-      <b>{{ sec2string((plan.startTime + pacing.time) % 86400, 'am/pm') }}</b>
+      <b>{{ sec2string((course.eventTime + pacing.time) % 86400, 'am/pm') }}</b>
     </p>
   </b-list-group-item>
   <b-list-group-item>
