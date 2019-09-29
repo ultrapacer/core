@@ -119,9 +119,6 @@ export default {
     async show (course) {
       if (course._id) {
         this.model = Object.assign({}, course)
-        if (this.model.eventDate) {
-          this.model.eventDate = this.model.eventDate.split('T')[0]
-        }
       } else {
         this.model = Object.assign({}, this.defaults)
       }

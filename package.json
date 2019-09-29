@@ -1,14 +1,11 @@
 {
-  "name": "pacer",
+  "name": "ultraPacer",
   "version": "1.0.0",
-  "description": "A Vue.js project",
-  "author": "Danny Murphy <danny@amokrunner.com>",
+  "description": "ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, and fatigue.",
+  "author": "Danny Murphy <danny@ultrapacer.com>",
   "private": true,
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
-    "unit": "jest --config test/unit/jest.conf.js --coverage",
-    "e2e": "node test/e2e/runner.js",
-    "test": "npm run unit && npm run e2e",
     "lint": "eslint --ext .js,.vue server.js src shared server",
     "lintfix": "eslint --ext .js,.vue --fix server.js src shared server",
     "build": "node build/build.js"
@@ -64,7 +61,7 @@
     "jest": "^22.0.4",
     "jest-serializer-vue": "^0.3.0",
     "leaflet": "^1.5.1",
-    "nightwatch": "^0.9.12",
+    "moment-timezone": "^0.5.26",
     "node-notifier": "^5.1.2",
     "optimize-css-assets-webpack-plugin": "^3.2.0",
     "ora": "^1.2.0",

@@ -152,6 +152,7 @@
       v-if="isAuthenticated"
       ref="planEdit"
       :course="course"
+      :event="event"
       :units="units"
       @refresh="refreshPlans"
       @delete="deletePlan"
@@ -181,6 +182,7 @@ import api from '@/api'
 import geo from '@/util/geo'
 import {round} from '@/util/math'
 import nF from '@/util/normFactor'
+import {string2sec} from '../util/time'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
@@ -190,6 +192,8 @@ import WaypointTable from './WaypointTable'
 import PlanDetails from './PlanDetails'
 import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
+import SunCalc from 'suncalc'
+import moment from 'moment-timezone'
 
 export default {
   title: 'Course',
@@ -226,6 +230,29 @@ export default {
     }
   },
   computed: {
+    event: function () {
+      if (!this.course.points) { return {} }
+      let e = {}
+      if (this.course.eventDate) { e.date = this.course.eventDate }
+      if (this.course.eventTime) {
+        e.timeString = this.course.eventTime
+        e.time = string2sec(`${e.timeString}:00`)
+      }
+      if (this.course.eventDate && this.course.eventTime) {
+        //let tz = geoTz(this.course.points[0].lat, this.course.points[0].lon)
+        //console.log(tz)
+        let d = moment.tz(e.date, "America/Los_Angeles")
+        console.log(d)
+        console.log(new Date(d))
+        let times = SunCalc.getTimes(
+          new Date(d),
+          this.course.points[0].lat,
+          this.course.points[0].lon
+        )
+        console.log(times)
+      }
+      return e
+    },
     plansSelect: function () {
       var p = []
       for (var i = 0, il = this.plans.length; i < il; i++) {

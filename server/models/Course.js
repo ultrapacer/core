@@ -29,7 +29,7 @@ var CourseSchema = new Schema({
     default: false
   },
   eventDate: {
-    type: Date,
+    type: String,
     default: null
   },
   eventTime: {
