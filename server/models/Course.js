@@ -29,11 +29,7 @@ var CourseSchema = new Schema({
     default: false
   },
   eventDate: {
-    type: String,
-    default: null
-  },
-  eventTime: {
-    type: String,
+    type: Date,
     default: null
   },
   _plan: {
