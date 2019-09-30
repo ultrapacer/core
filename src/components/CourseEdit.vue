@@ -53,7 +53,11 @@
             'Date [optional]: use for races, etc.'
           "
         >
-          <b-form-input type="date" v-model="model.eventDate">
+          <b-form-input
+            type="date"
+            v-model="eventDate"
+            :required="Boolean(eventDate)"
+          >
           </b-form-input>
         </b-input-group>
         <b-input-group
@@ -64,7 +68,11 @@
             'Start Time [optional]: time of day event begins'
           "
         >
-          <b-form-input type="time" v-model="model.eventTime">
+          <b-form-input
+            type="time"
+            v-model="eventTime"
+            :required="Boolean(eventDate)"
+          >
           </b-form-input>
         </b-input-group>
         <b-form-checkbox
@@ -112,7 +120,9 @@ export default {
       gpxPoints: [],
       model: {},
       saving: false,
-      deleting: false
+      deleting: false,
+      eventDate: null,
+      eventTime: null
     }
   },
   methods: {
