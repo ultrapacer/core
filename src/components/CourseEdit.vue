@@ -148,6 +148,9 @@ export default {
           let m = moment(this.model.eventStart).tz(this.model.eventTimezone)
           this.eventDate = m.format('YYYY-MM-DD')
           this.eventTime = m.format('kk:mm')
+        } else {
+          this.eventDate = null
+          this.eventTime = null
         }
       } else {
         this.model = Object.assign({}, this.defaults)
