@@ -213,7 +213,6 @@ export default {
         this.model.eventStart = moment.tz(`${this.eventDate} ${this.eventTime}`, this.model.eventTimezone).toDate()
       } else {
         this.model.eventStart = null
-        this.model.eventTimezone = null
       }
 
       if (this.model._id) {
