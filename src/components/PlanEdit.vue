@@ -56,26 +56,61 @@
               @change="checkTargetFormat"
             ></b-form-input>
         </b-input-group>
-        <b-input-group
-          prepend="Start time"
-          append="(24-hour)"
-          class="mb-2"
-          size="sm"
+        
+        <b-form-checkbox
+          v-if="Boolean(course.eventStart)"
+          v-model="customStart"
+          :value="true"
+            size="sm"
+            class="mb-2"
+          :checked-value="false"
+          :unchecked-value="true"
           v-b-popover.hover.bottomright.d250.v-info="
-            'Start time: event start time of day in 24-hour format.'
+            'If unchecked, defined your own start date and time, below'
           "
         >
+          Use course start time of {{ course.eventStart | datetime(course.eventTimezone) }}
+        </b-form-checkbox>
+        <b-input-group
+          v-if="customStart"
+          prepend="Event Date"
+          class="mb-2"
+          size="sm"
+        >
           <b-form-input
-              type="text"
-              v-model="model.startTimeF"
-              min="0"
-              v-mask="'##:##'"
-              placeholder="hh:mm"
-              size="sm"
-              :formatter="format_hhmm"
-              lazy-formatter
-            ></b-form-input>
+            type="date"
+            v-model="eventDate"
+            :required="Boolean(eventDate)"
+          >
+          </b-form-input>
         </b-input-group>
+        <b-input-group
+          v-if="customStart"
+          prepend="Start Time"
+          class="mb-2"
+          size="sm"
+        >
+          <b-form-input
+            type="time"
+            v-model="eventTime"
+            :required="Boolean(eventDate)"
+          >
+          </b-form-input>
+        </b-input-group>
+        <b-input-group
+          v-if="customStart"
+          prepend="Timezone"
+          class="mb-2"
+          size="sm"
+        >
+          <b-form-select
+            :options="timezones"
+            v-model="model.eventTimezone"
+            :required="Boolean(eventTime)"
+          >
+          </b-form-select>
+        </b-input-group>
+        
         <b-input-group
           prepend="Aid station delay"
           class="mb-2"
@@ -189,6 +224,7 @@
 
 <script>
 import api from '@/api'
+import moment from 'moment-timezone'
 import {sec2string, string2sec} from '../util/time'
 export default {
   props: ['course', 'units'],
@@ -199,7 +235,9 @@ export default {
         waypointDelay: 60,
         drift: 0,
         startTime: null,
-        heatModel: null
+        heatModel: null,
+        eventStart: null,
+        eventTimezone: moment.tz.guess()
       },
       model: {},
       pacingMethods: [
@@ -215,7 +253,11 @@ export default {
         set: '',
         baseline: '',
         max: ''
-      }
+      },
+      customStart: false,
+      eventDate: null,
+      eventTime: null,
+      timezones: moment.tz.names()
     }
   },
   computed: {
@@ -285,12 +327,15 @@ export default {
         this.model.waypointDelay,
         'mm:ss'
       )
-      this.model.startTimeF = ''
-      if (this.model.startTime !== null) {
-        this.model.startTimeF = sec2string(
-          this.model.startTime,
-          'hh:mm'
-        )
+      if (this.model.eventStart) {
+        let m = moment(this.model.eventStart).tz(this.model.eventTimezone)
+        this.eventDate = m.format('YYYY-MM-DD')
+        this.eventTime = m.format('kk:mm')
+        this.customStart = true
+      } else {
+        this.eventDate = null
+        this.eventTime = null
+        this.customStart = !Boolean(this.course.eventStart)
       }
       if (this.model.heatModel !== null) {
         this.hF.rise = sec2string(this.model.heatModel.start - 1800, 'hh:mm')
@@ -317,10 +362,10 @@ export default {
       ) {
         this.model.pacingTarget = this.model.pacingTarget * this.units.distScale
       }
-      if (this.model.startTimeF.length) {
-        this.model.startTime = string2sec(`${this.model.startTimeF}:00`)
+      if (this.customStart && this.eventTime && this.eventDate) {
+        this.model.eventStart = moment.tz(`${this.eventDate} ${this.eventTime}`, this.model.eventTimezone).toDate()
       } else {
-        this.model.startTime = null
+        this.model.eventStart = null
       }
       if (this.hF.enabled) {
         this.model.heatModel = {
@@ -422,6 +467,12 @@ export default {
       }
       this.validateTime(event.target, v, 24)
       return v
+    }
+  },
+  filters: {
+    datetime: function(val, tz) {
+      let m = moment(val).tz(tz)
+      return m.format()
     }
   }
 }
