@@ -28,7 +28,7 @@ var CourseSchema = new Schema({
     type: Boolean,
     default: false
   },
-  eventDate: {
+  eventStart: {
     type: Date,
     default: null
   },
