@@ -118,6 +118,7 @@
           <b-tab v-if="planAssigned" title="Plan">
             <plan-details
                 :course="course"
+                :event="event"
                 :plan="plan"
                 :pacing="pacing"
                 :units="units"
@@ -231,19 +232,29 @@ export default {
   },
   computed: {
     event: function () {
-      if (!this.course.points) { return {} }
-      let e = {}
-      if (this.course.eventStart) {
-        let m = moment(this.course.eventStart).tz(this.course.eventTimezone)
-        e.timeString = m.format('kk:mm')
-        e.time = string2sec(`${e.timeString}:00`)
-        let times = SunCalc.getTimes(
-          m.toDate(),
-          this.course.points[0].lat,
-          this.course.points[0].lon
-        )
-        console.log(times)
+      let e = {
+        start: null,
+        timezone: moment.tz.guess()
       }
+      if (this.plan.eventStart) {
+        e.start = this.plan.eventStart
+        e.timezone = this.plan.eventTimezone
+      } else if (this.course.eventStart) {
+        e.startTime = this.course.eventStart
+        e.timezone = this.course.eventTimezone
+      } else {
+        return e
+      }
+      let m = moment(e.start).tz(e.timezone)
+      e.timeString = m.format('kk:mm')
+      e.time = string2sec(`${e.timeString}:00`)
+      let times = SunCalc.getTimes(
+        m.toDate(),
+        this.course.points[0].lat,
+        this.course.points[0].lon
+      )
+      console.log(times)
+      this.$logger('Course|compute-event')
       return e
     },
     plansSelect: function () {
