@@ -21,13 +21,13 @@
       Moving Time:
       <b>{{ sec2string(pacing.time - pacing.delay, '[h]:m:ss') }}</b>
     </p>
-    <p class="mb-1" v-if="course.eventTime">
+    <p class="mb-1" v-if="event.startTime">
       Start Time:
-      <b>{{ sec2string(course.eventTime, 'am/pm') }}</b>
+      <b>{{ sec2string(event.startTime, 'am/pm') }}</b>
     </p>
-    <p class="mb-1" v-if="course.eventTime">
+    <p class="mb-1" v-if="event.startTime">
       Finish Time:
-      <b>{{ sec2string((course.eventTime + pacing.time) % 86400, 'am/pm') }}</b>
+      <b>{{ sec2string((event.startTime + pacing.time) % 86400, 'am/pm') }}</b>
     </p>
   </b-list-group-item>
   <b-list-group-item>
@@ -169,7 +169,7 @@ import {sec2string} from '../util/time'
 import {aF, gF} from '../util/normFactor'
 import {round} from '../util/math'
 export default {
-  props: ['plan', 'pacing', 'units', 'course', 'busy'],
+  props: ['plan', 'pacing', 'units', 'course', 'event', 'busy'],
   data () {
     return {
       methods: {
