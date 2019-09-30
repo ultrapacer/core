@@ -651,7 +651,7 @@ export default {
       await this.iteratePaceCalc()
       this.updateSplits()
       // if factors are time-based (eg heat), iterate solution:
-      if (this.planAssigned && this.plan.heatModel && this.plan.startTime) {
+      if (this.planAssigned && this.plan.heatModel && this.event.startTime) {
         let lastSplits = this.kilometers.map(x => { return x.time })
         let elapsed = this.kilometers[this.kilometers.length - 1].elapsed
         let t = this.$logger()
@@ -798,10 +798,10 @@ export default {
         arr.forEach((x, i) => {
           p[i + 1].time = x.elapsed
         })
-        if (this.plan.startTime !== null) {
+        if (this.event.startTime !== null) {
           p.forEach((x, i) => {
             // tod: time of day in seconds from local midnight
-            p[i].tod = (x.time + this.plan.startTime) % 86400
+            p[i].tod = (x.time + this.event.startTime) % 86400
           })
         } else {
           p.forEach((x, i) => {
@@ -830,8 +830,8 @@ export default {
       arr.forEach((x, i) => {
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
-        if (this.planAssigned && this.plan.startTime !== null) {
-          arr[i].tod = (x.elapsed + this.plan.startTime)
+        if (this.planAssigned && this.event.startTime !== null) {
+          arr[i].tod = (x.elapsed + this.event.startTime)
         }
       })
       this.segments = arr
@@ -854,9 +854,9 @@ export default {
         breaks.push(tot / distScale)
       }
       let arr = geo.calcSegments(p, breaks, this.pacing)
-      if (this.planAssigned && this.plan.startTime !== null) {
+      if (this.planAssigned && this.event.startTime !== null) {
         arr.forEach((x, i) => {
-          arr[i].tod = (x.elapsed + this.plan.startTime)
+          arr[i].tod = (x.elapsed + this.event.startTime)
         })
       }
       this[unit] = arr
