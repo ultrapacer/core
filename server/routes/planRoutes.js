@@ -24,7 +24,7 @@ planRoutes.route('/:id').put(async function (req, res) {
     var plan = await Plan.findById(req.params.id).exec()
     if (user.equals(plan._user)) {
       let fields = ['name', 'description', 'pacingMethod', 'pacingTarget',
-        'drift', 'startTime', 'heatModel', 'waypointDelay']
+        'drift', 'startTime', 'heatModel', 'waypointDelay', 'eventStart', 'eventTimezone']
       fields.forEach(f => {
         plan[f] = req.body[f]
       })
