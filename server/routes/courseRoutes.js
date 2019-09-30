@@ -48,7 +48,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
       Course.findById(req.params.id).exec()
     ])
     if (course._user.equals(user._id)) {
-      let fields = ['name', 'description', 'public', 'eventDate']
+      let fields = ['name', 'description', 'public', 'eventStart']
       if (req.body.points) {
         fields.push('points', 'source', 'distance', 'gain', 'loss')
       }
