@@ -233,19 +233,12 @@ export default {
     event: function () {
       if (!this.course.points) { return {} }
       let e = {}
-      if (this.course.eventDate) { e.date = this.course.eventDate }
-      if (this.course.eventTime) {
-        e.timeString = this.course.eventTime
+      if (this.course.eventStart) {
+        let m = moment(this.course.eventStart).tz(this.course.eventTimezone)
+        e.timeString = m.format('kk:mm')
         e.time = string2sec(`${e.timeString}:00`)
-      }
-      if (this.course.eventDate && this.course.eventTime) {
-        //let tz = geoTz(this.course.points[0].lat, this.course.points[0].lon)
-        //console.log(tz)
-        let d = moment.tz(e.date, "America/Los_Angeles")
-        console.log(d)
-        console.log(new Date(d))
         let times = SunCalc.getTimes(
-          new Date(d),
+          m.toDate(),
           this.course.points[0].lat,
           this.course.points[0].lon
         )

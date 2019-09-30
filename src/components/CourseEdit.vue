@@ -75,6 +75,18 @@
           >
           </b-form-input>
         </b-input-group>
+        <b-input-group
+          prepend="Timezone"
+          class="mb-2"
+          size="sm"
+        >
+          <b-form-select
+            :options="timezones"
+            v-model="model.eventTimezone"
+            :required="Boolean(eventTime)"
+          >
+          </b-form-select>
+        </b-input-group>
         <b-form-checkbox
           v-model="model.public"
           :value="true"
@@ -110,28 +122,32 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
+import moment from 'moment-timezone'
 import wputil from '@/util/waypoints'
 const gpxParse = require('gpx-parse')
 export default {
   data () {
     return {
-      defaults: {},
+      defaults: {eventTimezone: moment.tz.guess()},
       gpxFile: null,
       gpxPoints: [],
       model: {},
       saving: false,
       deleting: false,
       eventDate: null,
-      eventTime: null
+      eventTime: null,
+      timezones: moment.tz.names()
     }
   },
   methods: {
     async show (course) {
       if (course._id) {
         this.model = Object.assign({}, course)
+        if (!this.model.eventTimezone) { this.model.eventTimezone = moment.tz.guess() }
         if (this.model.eventStart) {
-          let m = moment(this.model.eventStart)
-          this.eventDate = this.model.eventStart.split('T')[0]
+          let m = moment(this.model.eventStart).tz(this.model.eventTimezone)
+          this.eventDate = m.format('YYYY-MM-DD')
+          this.eventTime = m.format('kk:mm')
         }
       } else {
         this.model = Object.assign({}, this.defaults)
@@ -192,6 +208,14 @@ export default {
         }
         this.model.distance = stats.dist
       }
+
+      if (this.eventTime && this.eventDate) {
+        this.model.eventStart = moment.tz(`${this.eventDate} ${this.eventTime}`, this.model.eventTimezone).toDate()
+      } else {
+        this.model.eventStart = null
+        this.model.eventTimezone = null
+      }
+
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
         this.$ga.event('Course', 'edit')
