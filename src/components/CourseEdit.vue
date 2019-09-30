@@ -129,6 +129,10 @@ export default {
     async show (course) {
       if (course._id) {
         this.model = Object.assign({}, course)
+        if (this.model.eventStart) {
+          let m = moment(this.model.eventStart)
+          this.eventDate = this.model.eventStart.split('T')[0]
+        }
       } else {
         this.model = Object.assign({}, this.defaults)
       }
