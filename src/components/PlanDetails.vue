@@ -11,11 +11,11 @@
       of <b>{{ pacingTargetF }}</b>
     </p>
   </b-list-group-item>
-  <b-list-group-item v-if="this.event.sun">
+  <b-list-group-item v-if="event.sun">
     <h5 class="mb-1">Event</h5>
     <b-row>
       <b-col md="3" class="text-md-right">Date/Time:</b-col>
-      <b-col><b>{{ this.event.start | datetime(course.eventTimezone) }}</b></b-col>
+      <b-col><b>{{ event.start | datetime(event.timezone) }}</b></b-col>
     </b-row>
     <b-row>
       <b-col md="3" class="text-md-right">Dawn:</b-col>
