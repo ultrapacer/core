@@ -253,7 +253,12 @@ export default {
         this.course.points[0].lat,
         this.course.points[0].lon
       )
-      console.log(times)
+      e.sun = {
+        dawn: string2sec(moment(times.dawn).tz(e.timezone).format('HH:mm:ss'))
+        rise: string2sec(moment(times.sunrise).tz(e.timezone).format('HH:mm:ss'))
+        set: string2sec(moment(times.sunset).tz(e.timezone).format('HH:mm:ss'))
+        dusk: string2sec(moment(times.dusk).tz(e.timezone).format('HH:mm:ss'))
+      }
       this.$logger('Course|compute-event')
       return e
     },
