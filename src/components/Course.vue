@@ -115,7 +115,7 @@
               </b-btn>
             </div>
           </b-tab>
-          <b-tab v-if="planAssigned" title="Plan">
+          <b-tab v-if="event.sun || planAssigned" title="Details">
             <plan-details
                 :course="course"
                 :event="event"
@@ -234,29 +234,30 @@ export default {
     event: function () {
       let e = {
         start: null,
+        startTime: null,
         timezone: moment.tz.guess()
       }
       if (this.plan.eventStart) {
         e.start = this.plan.eventStart
         e.timezone = this.plan.eventTimezone
       } else if (this.course.eventStart) {
-        e.startTime = this.course.eventStart
+        e.start = this.course.eventStart
         e.timezone = this.course.eventTimezone
       } else {
         return e
       }
       let m = moment(e.start).tz(e.timezone)
       e.timeString = m.format('kk:mm')
-      e.time = string2sec(`${e.timeString}:00`)
+      e.startTime = string2sec(`${e.timeString}:00`)
       let times = SunCalc.getTimes(
         m.toDate(),
         this.course.points[0].lat,
         this.course.points[0].lon
       )
       e.sun = {
-        dawn: string2sec(moment(times.dawn).tz(e.timezone).format('HH:mm:ss'))
-        rise: string2sec(moment(times.sunrise).tz(e.timezone).format('HH:mm:ss'))
-        set: string2sec(moment(times.sunset).tz(e.timezone).format('HH:mm:ss'))
+        dawn: string2sec(moment(times.dawn).tz(e.timezone).format('HH:mm:ss')),
+        rise: string2sec(moment(times.sunrise).tz(e.timezone).format('HH:mm:ss')),
+        set: string2sec(moment(times.sunset).tz(e.timezone).format('HH:mm:ss')),
         dusk: string2sec(moment(times.dusk).tz(e.timezone).format('HH:mm:ss'))
       }
       this.$logger('Course|compute-event')
@@ -264,7 +265,7 @@ export default {
     },
     heatModel: function () {
       if (
-        !this.event.sun || 
+        !this.event.sun ||
         !this.planAssigned ||
         !this.plan.heatModel
       ) { return null }
@@ -564,7 +565,8 @@ export default {
           let p = this.plan
           this.$refs.planEdit.show({
             heatModel: p.heatModel ? {...p.heatModel} : null,
-            startTime: p.startTime || null,
+            eventStart: p.eventStart,
+            eventTimezone: p.eventTimezone,
             pacingMethod: p.pacingMethod,
             waypointDelay: p.waypointDelay,
             drift: p.drift

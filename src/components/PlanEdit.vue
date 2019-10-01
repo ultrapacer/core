@@ -56,61 +56,60 @@
               @change="checkTargetFormat"
             ></b-form-input>
         </b-input-group>
-        
+
         <b-form-checkbox
           v-if="Boolean(course.eventStart)"
           v-model="customStart"
+          @change="customStartDefaults"
+          size="sm"
+          class="mb-2"
           :value="true"
-            size="sm"
-            class="mb-2"
-          :checked-value="false"
-          :unchecked-value="true"
+          :unchecked-value="false"
           v-b-popover.hover.bottomright.d250.v-info="
             'If unchecked, defined your own start date and time, below'
           "
         >
-          Use course start time of {{ course.eventStart | datetime(course.eventTimezone) }}
+          Custom start time [override {{ course.eventStart | datetime(course.eventTimezone) }}]
         </b-form-checkbox>
-        <b-input-group
-          v-if="customStart"
-          prepend="Event Date"
-          class="mb-2"
-          size="sm"
-        >
-          <b-form-input
-            type="date"
-            v-model="eventDate"
-            :required="Boolean(eventDate)"
+        <b-form-group v-if="customStart" class="mb-0" :style="(course.eventStart) ? 'padding-left: 1em' : ''">
+          <b-input-group
+            prepend="Event Date"
+            class="mb-2"
+            size="sm"
           >
-          </b-form-input>
-        </b-input-group>
-        <b-input-group
-          v-if="customStart"
-          prepend="Start Time"
-          class="mb-2"
-          size="sm"
-        >
-          <b-form-input
-            type="time"
-            v-model="eventTime"
-            :required="Boolean(eventDate)"
+            <b-form-input
+              type="date"
+              v-model="eventDate"
+              :required="Boolean(eventDate)"
+            >
+            </b-form-input>
+          </b-input-group>
+          <b-input-group
+            prepend="Start Time"
+            class="mb-2"
+            size="sm"
           >
-          </b-form-input>
-        </b-input-group>
-        <b-input-group
-          v-if="customStart"
-          prepend="Timezone"
-          class="mb-2"
-          size="sm"
-        >
-          <b-form-select
-            :options="timezones"
-            v-model="model.eventTimezone"
-            :required="Boolean(eventTime)"
+            <b-form-input
+              type="time"
+              v-model="eventTime"
+              :required="Boolean(eventDate)"
+            >
+            </b-form-input>
+          </b-input-group>
+          <b-input-group
+            prepend="Timezone"
+            class="mb-2"
+            size="sm"
           >
-          </b-form-select>
-        </b-input-group>
-        
+            <b-form-select
+              :options="timezones"
+              v-model="model.eventTimezone"
+              :required="Boolean(eventTime)"
+            >
+            </b-form-select>
+          </b-input-group>
+        </b-form-group>
+
         <b-input-group
           prepend="Aid station delay"
           class="mb-2"
@@ -155,7 +154,7 @@
         >
           Apply heat factor
         </b-form-checkbox>
-        <b-form-group v-if="hF.enabled" style="padding-left: 1em">
+        <b-form-group v-if="hF.enabled" class="mb-0" style="padding-left: 1em">
           <b-input-group prepend="Baseline" append=" %" class="mb-2" size="sm"
             v-b-popover.hover.bottomright.d250.v-info="
               'Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event.'
@@ -308,7 +307,7 @@ export default {
       } else {
         this.eventDate = null
         this.eventTime = null
-        this.customStart = !Boolean(this.course.eventStart)
+        this.customStart = !this.course.eventStart
       }
       if (this.model.heatModel !== null) {
         this.hF.max = this.model.heatModel.max
@@ -436,16 +435,8 @@ export default {
       }
       this.validateTime(event.target, v, 24)
       return v
-    }
-  },
-  filters: {
-    datetime: function(val, tz) {
-      let m = moment(val).tz(tz)
-      return m.format()
-    }
-  },
-  watch: {
-    customStart: function (val) {
+    },
+    customStartDefaults: function (val) {
       if (val && Boolean(this.course.eventStart)) {
         let m = moment(this.course.eventStart).tz(this.course.eventTimezone)
         this.eventDate = m.format('YYYY-MM-DD')
@@ -454,8 +445,15 @@ export default {
       } else {
         this.eventDate = null
         this.eventTime = null
+        this.model.eventStart = null
         this.model.eventTimezone = moment.tz.guess()
       }
+    }
+  },
+  filters: {
+    datetime: function (val, tz) {
+      let m = moment(val).tz(tz)
+      return m.format('M/D/YYYY | h:mm A')
     }
   }
 }
