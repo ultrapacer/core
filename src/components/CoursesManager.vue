@@ -48,7 +48,7 @@
       </b-col>
     </b-row>
     <course-edit
-      :course="course"
+      ref="courseEdit"
       @refresh="refreshCourses"
       @delete="deleteCourse"
     ></course-edit>
@@ -72,7 +72,6 @@ export default {
   data () {
     return {
       initializing: true,
-      course: {},
       courses: [],
       courseEditor: false,
       fields: [
@@ -145,10 +144,10 @@ export default {
       this.$router.push({path: '/course/' + course._id})
     },
     async newCourse () {
-      this.course = {}
+      this.$refs.courseEdit.show({})
     },
     async editCourse (course) {
-      this.course = Object.assign({}, course)
+      this.$refs.courseEdit.show(course)
     },
     async deleteCourse (course, cb) {
       this.$refs.delModal.show(

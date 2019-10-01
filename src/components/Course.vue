@@ -115,9 +115,10 @@
               </b-btn>
             </div>
           </b-tab>
-          <b-tab v-if="planAssigned" title="Plan">
+          <b-tab v-if="event.sun || planAssigned" title="Details">
             <plan-details
                 :course="course"
+                :event="event"
                 :plan="plan"
                 :pacing="pacing"
                 :units="units"
@@ -152,6 +153,7 @@
       v-if="isAuthenticated"
       ref="planEdit"
       :course="course"
+      :event="event"
       :units="units"
       @refresh="refreshPlans"
       @delete="deletePlan"
@@ -181,6 +183,7 @@ import api from '@/api'
 import geo from '@/util/geo'
 import {round} from '@/util/math'
 import nF from '@/util/normFactor'
+import {string2sec} from '../util/time'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
@@ -190,6 +193,8 @@ import WaypointTable from './WaypointTable'
 import PlanDetails from './PlanDetails'
 import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
+import SunCalc from 'suncalc'
+import moment from 'moment-timezone'
 
 export default {
   title: 'Course',
@@ -226,6 +231,49 @@ export default {
     }
   },
   computed: {
+    event: function () {
+      let e = {
+        start: null,
+        startTime: null,
+        timezone: moment.tz.guess()
+      }
+      if (this.plan.eventStart) {
+        e.start = this.plan.eventStart
+        e.timezone = this.plan.eventTimezone
+      } else if (this.course.eventStart) {
+        e.start = this.course.eventStart
+        e.timezone = this.course.eventTimezone
+      } else {
+        return e
+      }
+      let m = moment(e.start).tz(e.timezone)
+      e.timeString = m.format('kk:mm')
+      e.startTime = string2sec(`${e.timeString}:00`)
+      let times = SunCalc.getTimes(
+        m.toDate(),
+        this.course.points[0].lat,
+        this.course.points[0].lon
+      )
+      e.sun = {
+        dawn: string2sec(moment(times.dawn).tz(e.timezone).format('HH:mm:ss')),
+        rise: string2sec(moment(times.sunrise).tz(e.timezone).format('HH:mm:ss')),
+        set: string2sec(moment(times.sunset).tz(e.timezone).format('HH:mm:ss')),
+        dusk: string2sec(moment(times.dusk).tz(e.timezone).format('HH:mm:ss'))
+      }
+      this.$logger('Course|compute-event')
+      return e
+    },
+    heatModel: function () {
+      if (
+        !this.event.sun ||
+        !this.planAssigned ||
+        !this.plan.heatModel
+      ) { return null }
+      let hM = {...this.plan.heatModel}
+      hM.start = this.event.sun.rise + 1800
+      hM.stop = this.event.sun.set + 3600
+      return hM
+    },
     plansSelect: function () {
       var p = []
       for (var i = 0, il = this.plans.length; i < il; i++) {
@@ -517,7 +565,8 @@ export default {
           let p = this.plan
           this.$refs.planEdit.show({
             heatModel: p.heatModel ? {...p.heatModel} : null,
-            startTime: p.startTime || null,
+            eventStart: p.eventStart,
+            eventTimezone: p.eventTimezone,
             pacingMethod: p.pacingMethod,
             waypointDelay: p.waypointDelay,
             drift: p.drift
@@ -620,7 +669,7 @@ export default {
       await this.iteratePaceCalc()
       this.updateSplits()
       // if factors are time-based (eg heat), iterate solution:
-      if (this.planAssigned && this.plan.heatModel && this.plan.startTime) {
+      if (this.planAssigned && this.heatModel && this.event.startTime) {
         let lastSplits = this.kilometers.map(x => { return x.time })
         let elapsed = this.kilometers[this.kilometers.length - 1].elapsed
         let t = this.$logger()
@@ -694,7 +743,7 @@ export default {
           gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
           aF: nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel),
           tF: nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors),
-          hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], this.plan.heatModel) : 1,
+          hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], this.heatModel) : 1,
           dF: nF.dF(
             [p[j - 1].loc, p[j].loc],
             plan ? this.plan.drift : 0,
@@ -754,7 +803,7 @@ export default {
         np: np,
         drift: plan ? this.plan.drift : 0,
         altModel: this.course.altModel,
-        heatModel: plan ? this.plan.heatModel : null,
+        heatModel: this.heatModel,
         tFs: this.terrainFactors,
         delays: this.delays
       }
@@ -767,10 +816,10 @@ export default {
         arr.forEach((x, i) => {
           p[i + 1].time = x.elapsed
         })
-        if (this.plan.startTime !== null) {
+        if (this.event.startTime !== null) {
           p.forEach((x, i) => {
             // tod: time of day in seconds from local midnight
-            p[i].tod = (x.time + this.plan.startTime) % 86400
+            p[i].tod = (x.time + this.event.startTime) % 86400
           })
         } else {
           p.forEach((x, i) => {
@@ -799,8 +848,8 @@ export default {
       arr.forEach((x, i) => {
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
-        if (this.planAssigned && this.plan.startTime !== null) {
-          arr[i].tod = (x.elapsed + this.plan.startTime)
+        if (this.planAssigned && this.event.startTime !== null) {
+          arr[i].tod = (x.elapsed + this.event.startTime)
         }
       })
       this.segments = arr
@@ -823,9 +872,9 @@ export default {
         breaks.push(tot / distScale)
       }
       let arr = geo.calcSegments(p, breaks, this.pacing)
-      if (this.planAssigned && this.plan.startTime !== null) {
+      if (this.planAssigned && this.event.startTime !== null) {
         arr.forEach((x, i) => {
-          arr[i].tod = (x.elapsed + this.plan.startTime)
+          arr[i].tod = (x.elapsed + this.event.startTime)
         })
       }
       this[unit] = arr

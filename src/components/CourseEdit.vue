@@ -9,62 +9,96 @@
       @ok="handleOk"
     >
       <form ref="courseform" @submit.prevent="">
-        <b-form-group label="Name">
-          <b-form-input type="text" v-model="model.name" required>
-          </b-form-input>
-        </b-form-group>
-        <b-form-group label="Privacy">
-          <b-form-checkbox
-            v-model="model.public"
-            value="true"
-            unchecked-value="false">
-            Visible to public
-          </b-form-checkbox>
-        </b-form-group>
-        <b-form-group v-if="!showTrackForms && model.source" label="Source">
-          {{ sources[course.source.type] }}: {{ course.source.name }}
-          (<b-link @click="changeTrack">change</b-link>)
-        </b-form-group>
-        <div v-if="showTrackForms && model.source">
-          <b-form-group label="Source">
-            <b-form-radio v-model="model.source.type" value="gpx">
-              GPX file
-            </b-form-radio>
-            <b-form-radio
-              v-model="model.source.type"
-              value="stravaRoute"
-              disabled>
-              Strava Route
-            </b-form-radio>
-            <b-form-radio
-              v-model="model.source.type"
-              value="stravaActivity"
-              disabled>
-              Strava Activity
-            </b-form-radio>
-          </b-form-group>
-          <b-form-group v-if="model.source.type==='gpx'">
-            <b-form-file
-                :state="Boolean(gpxFile)"
-                v-model="gpxFile"
-                placeholder="Choose a GPX file..."
-                drop-placeholder="Drop GPX file here..."
-                accept=".gpx"
-                @change="loadGPX"
-                required
-              ></b-form-file>
-          </b-form-group>
-          <b-form-group v-if="model.source.type==='stravaRoute'">
-            <p class="lead">Strava integration coming soon...</p>
-          </b-form-group>
-          <b-form-group v-if="model.source.type==='stravaActivity'">
-            <p class="lead">Strava integration coming soon...</p>
-          </b-form-group>
-        </div>
-        <b-form-group label="Description">
-          <b-form-textarea rows="4" v-model="model.description">
+        <b-input-group
+          prepend="Name"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Name: name for the course, for example \'\'Western States 100\'\''
+          "
+        >
+        <b-form-input type="text" v-model="model.name" required>
+        </b-form-input>
+        </b-input-group>
+        <b-input-group prepend="Description"
+          class="mb-2"
+          size="sm"
+        >
+          <b-form-textarea rows="2" v-model="model.description">
           </b-form-textarea>
-        </b-form-group>
+        </b-input-group>
+        <b-input-group
+          prepend="File"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'File: GPX format file exported from a GPS track or route builder.'
+          "
+        >
+          <b-form-file
+            size="sm"
+            v-model="gpxFile"
+            :placeholder="(model.source) ? model.source.name : 'Choose a GPX file...'"
+            accept=".gpx"
+            @change="loadGPX"
+            no-drop
+            :required="!Boolean(model.source)"
+          ></b-form-file>
+        </b-input-group>
+        <b-input-group
+          prepend="Event Date"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Date [optional]: use for races, etc.'
+          "
+        >
+          <b-form-input
+            type="date"
+            v-model="eventDate"
+            :required="Boolean(eventDate)"
+          >
+          </b-form-input>
+        </b-input-group>
+        <b-input-group
+          prepend="Start Time"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Start Time [optional]: time of day event begins'
+          "
+        >
+          <b-form-input
+            type="time"
+            v-model="eventTime"
+            :required="Boolean(eventDate)"
+          >
+          </b-form-input>
+        </b-input-group>
+        <b-input-group
+          prepend="Timezone"
+          class="mb-2"
+          size="sm"
+        >
+          <b-form-select
+            :options="timezones"
+            v-model="model.eventTimezone"
+            :required="Boolean(eventTime)"
+          >
+          </b-form-select>
+        </b-input-group>
+        <b-form-checkbox
+          v-model="model.public"
+          :value="true"
+            size="sm"
+            class="mb-2"
+          :unchecked-value="false"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Visibility: if public, anybody with the link can view and make plans for the course.'
+          "
+        >
+          Visible to public
+        </b-form-checkbox>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
         <div v-if="model._id" style="text-align: left; flex: auto">
@@ -88,42 +122,41 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
+import moment from 'moment-timezone'
 import wputil from '@/util/waypoints'
 const gpxParse = require('gpx-parse')
 export default {
-  props: ['course'],
   data () {
     return {
-      defaults: { source: { type: 'gpx' } },
+      defaults: {eventTimezone: moment.tz.guess()},
       gpxFile: null,
       gpxPoints: [],
       model: {},
       saving: false,
       deleting: false,
-      showTrackForms: true,
-      sources: {
-        gpx: 'GPX File',
-        stravaActivity: 'Strava Activity',
-        stravaRoute: 'Strava Route'
-      }
-    }
-  },
-  watch: {
-    course: function (val) {
-      if (val._id) {
-        this.model = Object.assign({}, val)
-        if (this.model.points) {
-          delete this.model.points
-        }
-        this.showTrackForms = false
-      } else {
-        this.model = Object.assign({}, this.defaults)
-        this.showTrackForms = true
-      }
-      this.$bvModal.show('course-edit-modal')
+      eventDate: null,
+      eventTime: null,
+      timezones: moment.tz.names()
     }
   },
   methods: {
+    async show (course) {
+      if (course._id) {
+        this.model = Object.assign({}, course)
+        if (!this.model.eventTimezone) { this.model.eventTimezone = moment.tz.guess() }
+        if (this.model.eventStart) {
+          let m = moment(this.model.eventStart).tz(this.model.eventTimezone)
+          this.eventDate = m.format('YYYY-MM-DD')
+          this.eventTime = m.format('kk:mm')
+        } else {
+          this.eventDate = null
+          this.eventTime = null
+        }
+      } else {
+        this.model = Object.assign({}, this.defaults)
+      }
+      this.$bvModal.show('course-edit-modal')
+    },
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
       if (this.$refs.courseform.reportValidity()) {
@@ -133,14 +166,16 @@ export default {
     async save () {
       if (this.saving) { return }
       this.saving = true
-      if (this.model.source.type === 'gpx' && this.gpxPoints.length) {
-        this.model.source.name = this.gpxFile.name
+      if (this.gpxPoints.length) {
+        this.model.source = {
+          type: 'gpx',
+          name: this.gpxFile.name
+        }
         this.model.points = this.gpxPoints
         let p2 = []
         this.model.points.forEach((x) => { p2.push({...x}) })
         geo.addLoc(p2)
         var stats = geo.calcStats(p2)
-        this.model.distance = p2[p2.length - 1].loc
         this.model.gain = stats.gain
         this.model.loss = stats.loss
 
@@ -153,9 +188,9 @@ export default {
               var wpold = wp.location
               // scale waypoint location for new course distance:
               if (wp.type === 'finish') {
-                wp.location = this.model.distance
+                wp.location = stats.dist
               } else {
-                wp.location = wp.location * this.model.distance / this.course.distance
+                wp.location = wp.location * stats.dist / this.model.distance
               }
               if (wp.type !== 'start' && wp.type !== 'finish') {
                 try {
@@ -174,7 +209,15 @@ export default {
             }))
           }
         }
+        this.model.distance = stats.dist
       }
+
+      if (this.eventTime && this.eventDate) {
+        this.model.eventStart = moment.tz(`${this.eventDate} ${this.eventTime}`, this.model.eventTimezone).toDate()
+      } else {
+        this.model.eventStart = null
+      }
+
       if (this.model._id) {
         await api.updateCourse(this.model._id, this.model)
         this.$ga.event('Course', 'edit')
@@ -189,7 +232,6 @@ export default {
       })
     },
     clear () {
-      this.showTrackForms = true
       this.model = Object.assign({}, this.defaults)
     },
     async remove () {
@@ -201,9 +243,6 @@ export default {
         }
         this.deleting = false
       })
-    },
-    async changeTrack () {
-      this.showTrackForms = true
     },
     async loadGPX (f) {
       const reader = new FileReader()

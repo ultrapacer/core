@@ -31,6 +31,14 @@ var PlanSchema = new Schema({
     type: Number,
     default: null
   },
+  eventStart: {
+    type: Date,
+    default: null
+  },
+  eventTimezone: {
+    type: String,
+    default: null
+  },
   heatModel: {
     type: {},
     default: null

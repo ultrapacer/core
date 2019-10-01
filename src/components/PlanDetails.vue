@@ -4,14 +4,37 @@
   <b-spinner label="Loading..." ></b-spinner>
 </div>
 <div v-else>
-<b-list-group v-if="plan && plan.name && pacing && pacing.time">
-  <b-list-group-item>
+<b-list-group style="font-size:0.9rem">
+  <b-list-group-item v-if="showPaceInfo">
     <h5 class="mb-1">Pacing Calculation Basis</h5>
     <p class="mb-1"><b>{{ methods[plan.pacingMethod] }}</b>
       of <b>{{ pacingTargetF }}</b>
     </p>
   </b-list-group-item>
-  <b-list-group-item>
+  <b-list-group-item v-if="event.sun">
+    <h5 class="mb-1">Event</h5>
+    <b-row>
+      <b-col md="3" class="text-md-right">Date/Time:</b-col>
+      <b-col><b>{{ event.start | datetime(event.timezone) }}</b></b-col>
+    </b-row>
+    <b-row>
+      <b-col md="3" class="text-md-right">Dawn:</b-col>
+      <b-col><b>{{ sec2string(event.sun.dawn, 'am/pm') }}</b></b-col>
+    </b-row>
+    <b-row>
+      <b-col md="3" class="text-md-right">Sunrise:</b-col>
+      <b-col><b>{{ sec2string(event.sun.rise, 'am/pm') }}</b></b-col>
+    </b-row>
+    <b-row>
+      <b-col md="3" class="text-md-right">Sunset:</b-col>
+      <b-col><b>{{ sec2string(event.sun.set, 'am/pm') }}</b></b-col>
+    </b-row>
+    <b-row>
+      <b-col md="3" class="text-md-right">Dusk:</b-col>
+      <b-col><b>{{ sec2string(event.sun.dusk, 'am/pm') }}</b></b-col>
+    </b-row>
+  </b-list-group-item>
+  <b-list-group-item v-if="showPaceInfo">
     <h5 class="mb-1">Time</h5>
     <p class="mb-1">
       Total Time:
@@ -21,16 +44,16 @@
       Moving Time:
       <b>{{ sec2string(pacing.time - pacing.delay, '[h]:m:ss') }}</b>
     </p>
-    <p class="mb-1" v-if="plan.startTime">
+    <p class="mb-1" v-if="event.startTime">
       Start Time:
-      <b>{{ sec2string(plan.startTime, 'am/pm') }}</b>
+      <b>{{ sec2string(event.startTime, 'am/pm') }}</b>
     </p>
-    <p class="mb-1" v-if="plan.startTime">
+    <p class="mb-1" v-if="event.startTime">
       Finish Time:
-      <b>{{ sec2string((plan.startTime + pacing.time) % 86400, 'am/pm') }}</b>
+      <b>{{ sec2string((event.startTime + pacing.time) % 86400, 'am/pm') }}</b>
     </p>
   </b-list-group-item>
-  <b-list-group-item>
+  <b-list-group-item v-if="showPaceInfo">
     <h5 class="mb-1">Paces</h5>
     <p class="mb-1">
       Average Pace:
@@ -47,7 +70,7 @@
     <small>&nbsp; * While Moving</small><br/>
     <small>&nbsp; ** Normalized for Grade, Altitude, Heat, & Terrain</small>
   </b-list-group-item>
-  <b-list-group-item v-if="pacing.delay">
+  <b-list-group-item v-if="showPaceInfo && pacing.delay">
     <h5 class="mb-1">Delays</h5>
     <p class="mb-1">
       Typical Aid Station Delay:
@@ -62,7 +85,7 @@
       <b>{{ sec2string(pacing.delay, '[h]:m:ss') }}</b>
     </p>
   </b-list-group-item>
-  <b-list-group-item v-if="plan.drift">
+  <b-list-group-item v-if="showPaceInfo && plan.drift">
     <h5 class="mb-1">Pace Drift</h5>
     <p class="mb-1">
       Pace Drift:
@@ -153,11 +176,11 @@
     </p>
   </b-list-group-item>
   <b-list-group-item >
-    <p v-if="!pacing.delay" class="mb-1">No Delays</p>
-    <p v-if="!plan.drift" class="mb-1">No Pace Drift</p>
+    <p v-if="showPaceInfo && !pacing.delay" class="mb-1">No Delays</p>
+    <p v-if="showPaceInfo && !plan.drift" class="mb-1">No Pace Drift</p>
     <p v-if="pacing.factors.aF <= 1" class="mb-1">No Altitude Effects</p>
     <p v-if="pacing.factors.tF <= 1" class="mb-1">No Terrain Effects</p>
-    <p v-if="pacing.factors.hF <= 1" class="mb-1">No Heat Effects</p>
+    <p v-if="showPaceInfo && pacing.factors.hF <= 1" class="mb-1">No Heat Effects</p>
   </b-list-group-item>
 </b-list-group>
 </div>
@@ -165,11 +188,12 @@
 </template>
 
 <script>
+import moment from 'moment-timezone'
 import {sec2string} from '../util/time'
 import {aF, gF} from '../util/normFactor'
 import {round} from '../util/math'
 export default {
-  props: ['plan', 'pacing', 'units', 'course', 'busy'],
+  props: ['plan', 'pacing', 'units', 'course', 'event', 'busy'],
   data () {
     return {
       methods: {
@@ -256,6 +280,13 @@ export default {
       })
       let d = da.reduce((a, b) => a + b, 0)
       return d
+    },
+    showPaceInfo: function () {
+      if (this.plan && this.plan.name && this.pacing && this.pacing.time) {
+        return true
+      } else {
+        return false
+      }
     }
   },
   filters: {
@@ -267,13 +298,19 @@ export default {
     },
     percentWithPace (val, np, units) {
       let str = `${(val > 0 ? '+' : '')}${(val * 100).toFixed(1)}% `
-      if (val !== 0) {
-        let fact = val > 0 ? 1 : -1
-        val = fact * val
-        let dPace = val * np / units.distScale
-        str = `${str} (${sec2string(dPace, '[h]:m:ss')} min/${units.dist})`
+      if (np) {
+        if (val !== 0) {
+          let fact = val > 0 ? 1 : -1
+          val = fact * val
+          let dPace = val * np / units.distScale
+          str = `${str} (${sec2string(dPace, '[h]:m:ss')} min/${units.dist})`
+        }
       }
       return str
+    },
+    datetime (val, tz) {
+      let m = moment(val).tz(tz)
+      return m.format('M/D/YYYY | h:mm A')
     }
   },
   methods: {

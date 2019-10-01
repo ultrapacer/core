@@ -56,26 +56,60 @@
               @change="checkTargetFormat"
             ></b-form-input>
         </b-input-group>
-        <b-input-group
-          prepend="Start time"
-          append="(24-hour)"
-          class="mb-2"
+
+        <b-form-checkbox
+          v-if="Boolean(course.eventStart)"
+          v-model="customStart"
+          @change="customStartDefaults"
           size="sm"
+          class="mb-2"
+          :value="true"
+          :unchecked-value="false"
           v-b-popover.hover.bottomright.d250.v-info="
-            'Start time: event start time of day in 24-hour format.'
+            'If unchecked, defined your own start date and time, below'
           "
         >
-          <b-form-input
-              type="text"
-              v-model="model.startTimeF"
-              min="0"
-              v-mask="'##:##'"
-              placeholder="hh:mm"
-              size="sm"
-              :formatter="format_hhmm"
-              lazy-formatter
-            ></b-form-input>
-        </b-input-group>
+          Custom start time [override {{ course.eventStart | datetime(course.eventTimezone) }}]
+        </b-form-checkbox>
+        <b-form-group v-if="customStart" class="mb-0" :style="(course.eventStart) ? 'padding-left: 1em' : ''">
+          <b-input-group
+            prepend="Event Date"
+            class="mb-2"
+            size="sm"
+          >
+            <b-form-input
+              type="date"
+              v-model="eventDate"
+              :required="Boolean(eventDate)"
+            >
+            </b-form-input>
+          </b-input-group>
+          <b-input-group
+            prepend="Start Time"
+            class="mb-2"
+            size="sm"
+          >
+            <b-form-input
+              type="time"
+              v-model="eventTime"
+              :required="Boolean(eventDate)"
+            >
+            </b-form-input>
+          </b-input-group>
+          <b-input-group
+            prepend="Timezone"
+            class="mb-2"
+            size="sm"
+          >
+            <b-form-select
+              :options="timezones"
+              v-model="model.eventTimezone"
+              :required="Boolean(eventTime)"
+            >
+            </b-form-select>
+          </b-input-group>
+        </b-form-group>
+
         <b-input-group
           prepend="Aid station delay"
           class="mb-2"
@@ -120,32 +154,7 @@
         >
           Apply heat factor
         </b-form-checkbox>
-        <b-form-group v-if="hF.enabled" style="padding-left: 1em">
-          <b-input-group prepend="Sun rise" class="mb-2" size="sm"
-            v-b-popover.hover.bottomright.d250.v-info="'Sun rise/set: time of day in 24-hour format.'
-          "
-        >
-            <b-form-input
-                v-model="hF.rise"
-                v-mask="'##:##'"
-                placeholder="hh:mm"
-                :formatter="format_hhmm"
-                lazy-formatter
-                class="mr-n1 mb-n2">
-            </b-form-input>
-            <b-input-group-append>
-              <b-input-group prepend="Set" size="sm">
-                <b-form-input
-                    v-model="hF.set"
-                    v-mask="'##:##'"
-                    class="mb-n2"
-                    placeholder="hh:mm"
-                    :formatter="format_hhmm"
-                    lazy-formatter>
-                </b-form-input>
-              </b-input-group>
-            </b-input-group-append>
-          </b-input-group>
+        <b-form-group v-if="hF.enabled" class="mb-0" style="padding-left: 1em">
           <b-input-group prepend="Baseline" append=" %" class="mb-2" size="sm"
             v-b-popover.hover.bottomright.d250.v-info="
               'Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event.'
@@ -189,6 +198,7 @@
 
 <script>
 import api from '@/api'
+import moment from 'moment-timezone'
 import {sec2string, string2sec} from '../util/time'
 export default {
   props: ['course', 'units'],
@@ -199,7 +209,9 @@ export default {
         waypointDelay: 60,
         drift: 0,
         startTime: null,
-        heatModel: null
+        heatModel: null,
+        eventStart: null,
+        eventTimezone: moment.tz.guess()
       },
       model: {},
       pacingMethods: [
@@ -211,11 +223,13 @@ export default {
       deleting: false,
       hF: {
         enabled: false,
-        rise: '',
-        set: '',
         baseline: '',
         max: ''
-      }
+      },
+      customStart: false,
+      eventDate: null,
+      eventTime: null,
+      timezones: moment.tz.names()
     }
   },
   computed: {
@@ -264,6 +278,7 @@ export default {
     async show (plan) {
       if (typeof (plan) !== 'undefined') {
         this.model = Object.assign({}, plan)
+        if (!this.model.eventTimezone) { this.model.eventTimezone = moment.tz.guess() }
       } else {
         this.model = Object.assign({}, this.defaults)
       }
@@ -285,16 +300,17 @@ export default {
         this.model.waypointDelay,
         'mm:ss'
       )
-      this.model.startTimeF = ''
-      if (this.model.startTime !== null) {
-        this.model.startTimeF = sec2string(
-          this.model.startTime,
-          'hh:mm'
-        )
+      if (this.model.eventStart) {
+        let m = moment(this.model.eventStart).tz(this.model.eventTimezone)
+        this.eventDate = m.format('YYYY-MM-DD')
+        this.eventTime = m.format('kk:mm')
+        this.customStart = true
+      } else {
+        this.eventDate = null
+        this.eventTime = null
+        this.customStart = !this.course.eventStart
       }
       if (this.model.heatModel !== null) {
-        this.hF.rise = sec2string(this.model.heatModel.start - 1800, 'hh:mm')
-        this.hF.set = sec2string(this.model.heatModel.stop - 3600, 'hh:mm')
         this.hF.max = this.model.heatModel.max
         this.hF.baseline = this.model.heatModel.baseline || 0
         this.hF.enabled = true
@@ -317,15 +333,13 @@ export default {
       ) {
         this.model.pacingTarget = this.model.pacingTarget * this.units.distScale
       }
-      if (this.model.startTimeF.length) {
-        this.model.startTime = string2sec(`${this.model.startTimeF}:00`)
+      if (this.customStart && this.eventTime && this.eventDate) {
+        this.model.eventStart = moment.tz(`${this.eventDate} ${this.eventTime}`, this.model.eventTimezone).toDate()
       } else {
-        this.model.startTime = null
+        this.model.eventStart = null
       }
       if (this.hF.enabled) {
         this.model.heatModel = {
-          start: string2sec(`${this.hF.rise}:00`) + 1800, // rise + 30m
-          stop: string2sec(`${this.hF.set}:00`) + 3600, // set + 1 hrs
           max: this.hF.max,
           baseline: this.hF.baseline
         }
@@ -422,6 +436,25 @@ export default {
       }
       this.validateTime(event.target, v, 24)
       return v
+    },
+    customStartDefaults: function (val) {
+      if (val && Boolean(this.course.eventStart)) {
+        let m = moment(this.course.eventStart).tz(this.course.eventTimezone)
+        this.eventDate = m.format('YYYY-MM-DD')
+        this.eventTime = m.format('kk:mm')
+        this.model.eventTimezone = this.course.eventTimezone
+      } else {
+        this.eventDate = null
+        this.eventTime = null
+        this.model.eventStart = null
+        this.model.eventTimezone = moment.tz.guess()
+      }
+    }
+  },
+  filters: {
+    datetime: function (val, tz) {
+      let m = moment(val).tz(tz)
+      return m.format('M/D/YYYY | h:mm A')
     }
   }
 }
