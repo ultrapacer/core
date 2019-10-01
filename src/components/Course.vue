@@ -262,6 +262,17 @@ export default {
       this.$logger('Course|compute-event')
       return e
     },
+    heatModel: function () {
+      if (
+        !this.event.sun || 
+        !this.planAssigned ||
+        !this.plan.heatModel
+      ) { return null }
+      let hM = {...this.plan.heatModel}
+      hM.start = this.event.sun.rise + 1800
+      hM.stop = this.event.sun.set + 3600
+      return hM
+    },
     plansSelect: function () {
       var p = []
       for (var i = 0, il = this.plans.length; i < il; i++) {
@@ -656,7 +667,7 @@ export default {
       await this.iteratePaceCalc()
       this.updateSplits()
       // if factors are time-based (eg heat), iterate solution:
-      if (this.planAssigned && this.plan.heatModel && this.event.startTime) {
+      if (this.planAssigned && this.heatModel && this.event.startTime) {
         let lastSplits = this.kilometers.map(x => { return x.time })
         let elapsed = this.kilometers[this.kilometers.length - 1].elapsed
         let t = this.$logger()
@@ -730,7 +741,7 @@ export default {
           gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
           aF: nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel),
           tF: nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors),
-          hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], this.plan.heatModel) : 1,
+          hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], this.heatModel) : 1,
           dF: nF.dF(
             [p[j - 1].loc, p[j].loc],
             plan ? this.plan.drift : 0,
@@ -790,7 +801,7 @@ export default {
         np: np,
         drift: plan ? this.plan.drift : 0,
         altModel: this.course.altModel,
-        heatModel: plan ? this.plan.heatModel : null,
+        heatModel: this.heatModel,
         tFs: this.terrainFactors,
         delays: this.delays
       }
