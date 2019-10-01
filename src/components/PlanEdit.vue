@@ -278,6 +278,7 @@ export default {
     async show (plan) {
       if (typeof (plan) !== 'undefined') {
         this.model = Object.assign({}, plan)
+        if (!this.model.eventTimezone) { this.model.eventTimezone = moment.tz.guess()}
       } else {
         this.model = Object.assign({}, this.defaults)
       }

@@ -280,7 +280,7 @@ export default {
       return false
     },
     showClock: function () {
-      return this.segments[0].tod !== null
+      return this.segments[0].hasOwnProperty('tod') && this.segments[0].tod !== null
     },
     collapseableIds: function () {
       return this.segments.filter((s, i) =>
