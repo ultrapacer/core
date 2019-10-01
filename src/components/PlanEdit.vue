@@ -156,31 +156,6 @@
           Apply heat factor
         </b-form-checkbox>
         <b-form-group v-if="hF.enabled" style="padding-left: 1em">
-          <b-input-group prepend="Sun rise" class="mb-2" size="sm"
-            v-b-popover.hover.bottomright.d250.v-info="'Sun rise/set: time of day in 24-hour format.'
-          "
-        >
-            <b-form-input
-                v-model="hF.rise"
-                v-mask="'##:##'"
-                placeholder="hh:mm"
-                :formatter="format_hhmm"
-                lazy-formatter
-                class="mr-n1 mb-n2">
-            </b-form-input>
-            <b-input-group-append>
-              <b-input-group prepend="Set" size="sm">
-                <b-form-input
-                    v-model="hF.set"
-                    v-mask="'##:##'"
-                    class="mb-n2"
-                    placeholder="hh:mm"
-                    :formatter="format_hhmm"
-                    lazy-formatter>
-                </b-form-input>
-              </b-input-group>
-            </b-input-group-append>
-          </b-input-group>
           <b-input-group prepend="Baseline" append=" %" class="mb-2" size="sm"
             v-b-popover.hover.bottomright.d250.v-info="
               'Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event.'
@@ -249,8 +224,6 @@ export default {
       deleting: false,
       hF: {
         enabled: false,
-        rise: '',
-        set: '',
         baseline: '',
         max: ''
       },
@@ -338,8 +311,6 @@ export default {
         this.customStart = !Boolean(this.course.eventStart)
       }
       if (this.model.heatModel !== null) {
-        this.hF.rise = sec2string(this.model.heatModel.start - 1800, 'hh:mm')
-        this.hF.set = sec2string(this.model.heatModel.stop - 3600, 'hh:mm')
         this.hF.max = this.model.heatModel.max
         this.hF.baseline = this.model.heatModel.baseline || 0
         this.hF.enabled = true
@@ -369,8 +340,6 @@ export default {
       }
       if (this.hF.enabled) {
         this.model.heatModel = {
-          start: string2sec(`${this.hF.rise}:00`) + 1800, // rise + 30m
-          stop: string2sec(`${this.hF.set}:00`) + 3600, // set + 1 hrs
           max: this.hF.max,
           baseline: this.hF.baseline
         }
@@ -473,6 +442,20 @@ export default {
     datetime: function(val, tz) {
       let m = moment(val).tz(tz)
       return m.format()
+    }
+  },
+  watch: {
+    customStart: function (val) {
+      if (val && Boolean(this.course.eventStart)) {
+        let m = moment(this.course.eventStart).tz(this.course.eventTimezone)
+        this.eventDate = m.format('YYYY-MM-DD')
+        this.eventTime = m.format('kk:mm')
+        this.model.eventTimezone = this.course.eventTimezone
+      } else {
+        this.eventDate = null
+        this.eventTime = null
+        this.model.eventTimezone = moment.tz.guess()
+      }
     }
   }
 }
