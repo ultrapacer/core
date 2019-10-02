@@ -59,58 +59,71 @@
   </b-list-group-item>
   <b-list-group-item v-if="showPaceInfo">
     <h5 class="mb-1">Paces</h5>
-    <p class="mb-1">
-      Average Pace:
-      <b>{{ sec2string(fPace(pacing.pace), 'mm:ss') }}</b> *
-    </p>
-    <p class="mb-1">
-      Average Normalized Pace:
-      <b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *,**
-    </p>
-    <p class="mb-1">
-      Average Overall Pace:
-      <b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b>
-    </p>
-    <small>&nbsp; * While Moving</small><br/>
-    <small>&nbsp; ** Normalized for Grade, Altitude, Heat, & Terrain</small>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Average:</b-col>
+      <b-col><b>{{ sec2string(fPace(pacing.pace), 'mm:ss') }}</b> *</b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Normalized:</b-col>
+      <b-col><b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *,**</b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Overall:</b-col>
+      <b-col><b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b></b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0"></b-col>
+      <b-col>
+        <small>&nbsp; * While Moving</small><br/>
+        <small>&nbsp; ** Normalized for Grade, Altitude, Heat, & Terrain</small>
+      </b-col>
+    </b-row>
   </b-list-group-item>
   <b-list-group-item v-if="showPaceInfo && pacing.delay">
-    <h5 class="mb-1">Delays</h5>
-    <p class="mb-1">
-      Typical Aid Station Delay:
-      <b>{{ sec2string(plan.waypointDelay, '[h]:m:ss') }}</b>
-    </p>
-    <p class="mb-1">
-      Number of Aid Stations:
-      <b>{{ aidStationCount }}</b>
-    </p>
-    <p class="mb-1">
-      Total Aid Station Delay:
-      <b>{{ sec2string(pacing.delay, '[h]:m:ss') }}</b>
-    </p>
+    <h5 class="mb-1">Aid Station Delays</h5>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Typical Delay:</b-col>
+      <b-col><b>{{ sec2string(plan.waypointDelay, '[h]:m:ss') }}</b></b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Quantity:</b-col>
+      <b-col><b>{{ aidStationCount }} stop<span v-if="aidStationCount>1">s</span></b></b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Total Delay:</b-col>
+      <b-col><b>{{ sec2string(pacing.delay, '[h]:m:ss') }}</b></b-col>
+    </b-row>
   </b-list-group-item>
   <b-list-group-item v-if="showPaceInfo && plan.drift">
     <h5 class="mb-1">Pace Drift</h5>
-    <p class="mb-1">
-      Pace Drift:
-      <b>{{ plan.drift }} %</b>
-    </p>
-    <p class="mb-1">
-      Starting Pace:
-      <b>{{ sec2string(fPace(startPace), 'mm:ss') }}</b> *
-    </p>
-    <p class="mb-1">
-      Average Pace:
-      <b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *
-    </p>
-    <p class="mb-1">
-      Ending Pace:
-      <b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *
-    </p>
-    <small>&nbsp; * Normalized for Grade, Altitude, Heat, & Terrain</small>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Pace Drift:</b-col>
+      <b-col><b>{{ plan.drift }} %</b></b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Starting Pace:</b-col>
+      <b-col><b>{{ sec2string(fPace(startPace), 'mm:ss') }}</b> *</b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Average Pace:</b-col>
+      <b-col><b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *</b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Ending Pace:</b-col>
+      <b-col><b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *</b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0"></b-col>
+      <b-col>
+        <small>&nbsp; * Normalized for Grade, Altitude, Heat, & Terrain</small>
+      </b-col>
+    </b-row>
   </b-list-group-item>
   <b-list-group-item>
     <h5 class="mb-1">Grade Effects</h5>
+    <b-row>
+      <b-col cols="1" class="text-right pr-0">
+      </b-col><b-col>
     <p class="mb-1">
       Overall Grade Factor:
       <b>{{ pacing.factors.gF - 1 | percentWithPace(pacing.np, units) }}</b>
@@ -125,9 +138,13 @@
       <b>{{ minGrade.toFixed(1) }}%</b> grade
       [<b>{{ gF(minGrade) - 1 | percentWithPace(pacing.np, units) }}</b>]
     </p>
+    </b-col></b-row>
   </b-list-group-item>
   <b-list-group-item v-if="pacing.factors.aF > 1">
     <h5 class="mb-1">Altitude Effects</h5>
+    <b-row>
+      <b-col cols="1" class="text-right pr-0">
+      </b-col><b-col>
     <p class="mb-1">
       Average Altitude Factor:
       <b>{{ pacing.factors.aF - 1 | percentWithPace(pacing.np, units) }}</b>
@@ -144,9 +161,13 @@
       at
       <b>{{ minAltitude | formatAlt(units.altScale) }} {{ units.alt }}</b>
     </p>
+    </b-col></b-row>
   </b-list-group-item>
   <b-list-group-item v-if="pacing.factors.tF > 1">
     <h5 class="mb-1">Terrain Effects</h5>
+    <b-row>
+      <b-col cols="1" class="text-right pr-0">
+      </b-col><b-col>
     <p class="mb-1">
       Overall Terrain Factor:
       <b>{{ pacing.factors.tF - 1 | percentWithPace(pacing.np, units) }}</b>
@@ -163,9 +184,13 @@
       over
       <b>{{ minTFdist | formatDist(units.distScale) }} {{ units.dist }}</b>
     </p>
+    </b-col></b-row>
   </b-list-group-item>
   <b-list-group-item v-if="pacing.factors.hF > 1">
     <h5 class="mb-1">Heat Effects</h5>
+    <b-row>
+      <b-col cols="1" class="text-right pr-0">
+      </b-col><b-col>
     <p class="mb-1">
       Average Heat Factor:
       <b>{{ pacing.factors.hF - 1 | percentWithPace(pacing.np, units) }}</b>
@@ -178,6 +203,7 @@
       Lowest Heat Factor:
       <b>{{ pacing.fstats.min.hF - 1 | percentWithPace(pacing.np, units) }}</b>
     </p>
+    </b-col></b-row>
   </b-list-group-item>
   <b-list-group-item >
     <p v-if="showPaceInfo && !pacing.delay" class="mb-1">No Delays</p>
