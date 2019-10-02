@@ -14,44 +14,48 @@
   <b-list-group-item v-if="event.sun">
     <h5 class="mb-1">Event</h5>
     <b-row>
-      <b-col md="3" class="text-md-right">Date/Time:</b-col>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Date/Time:</b-col>
       <b-col><b>{{ event.start | datetime(event.timezone) }}</b></b-col>
     </b-row>
     <b-row>
-      <b-col md="3" class="text-md-right">Dawn:</b-col>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Dawn:</b-col>
       <b-col><b>{{ sec2string(event.sun.dawn, 'am/pm') }}</b></b-col>
     </b-row>
     <b-row>
-      <b-col md="3" class="text-md-right">Sunrise:</b-col>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Sunrise:</b-col>
       <b-col><b>{{ sec2string(event.sun.rise, 'am/pm') }}</b></b-col>
     </b-row>
     <b-row>
-      <b-col md="3" class="text-md-right">Sunset:</b-col>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Sunset:</b-col>
       <b-col><b>{{ sec2string(event.sun.set, 'am/pm') }}</b></b-col>
     </b-row>
     <b-row>
-      <b-col md="3" class="text-md-right">Dusk:</b-col>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Dusk:</b-col>
       <b-col><b>{{ sec2string(event.sun.dusk, 'am/pm') }}</b></b-col>
     </b-row>
   </b-list-group-item>
   <b-list-group-item v-if="showPaceInfo">
     <h5 class="mb-1">Time</h5>
-    <p class="mb-1">
-      Total Time:
-      <b>{{ sec2string(pacing.time, '[h]:m:ss') }}</b>
-    </p>
-    <p class="mb-1">
-      Moving Time:
-      <b>{{ sec2string(pacing.time - pacing.delay, '[h]:m:ss') }}</b>
-    </p>
-    <p class="mb-1" v-if="event.startTime">
-      Start Time:
-      <b>{{ sec2string(event.startTime, 'am/pm') }}</b>
-    </p>
-    <p class="mb-1" v-if="event.startTime">
-      Finish Time:
-      <b>{{ sec2string((event.startTime + pacing.time) % 86400, 'am/pm') }}</b>
-    </p>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Total Time:</b-col>
+      <b-col><b>{{ sec2string(pacing.time, '[h]:m:ss') }}</b></b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">Moving Time:</b-col>
+      <b-col><b>{{ sec2string(pacing.time - pacing.delay, '[h]:m:ss') }}</b></b-col>
+    </b-row>
+    <b-row v-if="event.startTime">
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">
+        Start Time:
+      </b-col>
+      <b-col><b>{{ sec2string(event.startTime, 'am/pm') }}</b></b-col>
+    </b-row>
+    <b-row v-if="event.startTime">
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">
+        Finish Time:
+      </b-col>
+      <b-col><b>{{ sec2string((event.startTime + pacing.time) % 86400, 'am/pm') }}</b></b-col>
+    </b-row>
   </b-list-group-item>
   <b-list-group-item v-if="showPaceInfo">
     <h5 class="mb-1">Paces</h5>

@@ -25,7 +25,7 @@
           class="mb-2"
           size="sm"
           v-b-popover.hover.bottomright.d250.v-info="
-            'Pacing methods:\n - Finish time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'
+            'Pacing methods:\n - Elapsed time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'
           "
         >
           <b-form-select
@@ -57,21 +57,8 @@
             ></b-form-input>
         </b-input-group>
 
-        <b-form-checkbox
-          v-if="Boolean(course.eventStart)"
-          v-model="customStart"
-          @change="customStartDefaults"
-          size="sm"
-          class="mb-2"
-          :value="true"
-          :unchecked-value="false"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'If unchecked, defined your own start date and time, below'
-          "
-        >
-          Custom start time [override {{ course.eventStart | datetime(course.eventTimezone) }}]
-        </b-form-checkbox>
-        <b-form-group v-if="customStart" class="mb-0" :style="(course.eventStart) ? 'padding-left: 1em' : ''">
+        <div v-if="!Boolean(course.eventStart)">
+        <b-form-group v-if="customStart" :class="(course.eventStart) ? 'mb-0 pl-3' : 'mb-0'">
           <b-input-group
             prepend="Event Date"
             class="mb-2"
@@ -80,7 +67,7 @@
             <b-form-input
               type="date"
               v-model="eventDate"
-              :required="Boolean(eventDate)"
+              :required="Boolean(eventDate) || hF.enabled"
             >
             </b-form-input>
           </b-input-group>
@@ -92,7 +79,7 @@
             <b-form-input
               type="time"
               v-model="eventTime"
-              :required="Boolean(eventDate)"
+              :required="Boolean(eventDate) || hF.enabled"
             >
             </b-form-input>
           </b-input-group>
@@ -104,11 +91,12 @@
             <b-form-select
               :options="timezones"
               v-model="model.eventTimezone"
-              :required="Boolean(eventTime)"
+              :required="Boolean(eventTime) || hF.enabled"
             >
             </b-form-select>
           </b-input-group>
         </b-form-group>
+        </div>
 
         <b-input-group
           prepend="Aid station delay"
@@ -145,8 +133,8 @@
         <b-form-checkbox
           v-model="hF.enabled"
           :value="true"
-            size="sm"
-            class="mb-2"
+          size="sm"
+          class="mb-2"
           :unchecked-value="false"
           v-b-popover.hover.bottomright.d250.v-info="
             'Heat factor: pace modifier for heat and sun exposure.\nNOTE: Using a heat factor slows down the calculation time of this tool.'
@@ -173,9 +161,71 @@
           </b-input-group>
         </b-form-group>
         <b-input-group prepend="Notes" class="mb-2" size="sm">
-          <b-form-textarea rows="4" v-model="model.description" size="sm">
+          <b-form-textarea rows="2" v-model="model.description" size="sm">
           </b-form-textarea>
         </b-input-group>
+
+        <div v-if="Boolean(course.eventStart)">
+        <b-form-radio
+          v-if="Boolean(course.eventStart)"
+          v-model="customStart"
+          @change="customStartDefaults"
+          size="sm"
+          class="mb-0"
+          :value="false"
+        >
+          Use course start (<b>{{ course.eventStart | datetime(course.eventTimezone) }}</b>), or
+        </b-form-radio>
+        <b-form-radio
+          v-if="Boolean(course.eventStart)"
+          v-model="customStart"
+          @change="customStartDefaults"
+          size="sm"
+          class="mb-0"
+          :value="true"
+        >
+          Use custom start<span v-if="customStart">, defined below:</span>
+        </b-form-radio>
+        <b-form-group v-if="customStart" :class="(course.eventStart) ? 'mb-0 pl-3' : 'mb-0'">
+          <b-input-group
+            prepend="Event Date"
+            class="mb-2"
+            size="sm"
+          >
+            <b-form-input
+              type="date"
+              v-model="eventDate"
+              :required="Boolean(eventDate) || hF.enabled"
+            >
+            </b-form-input>
+          </b-input-group>
+          <b-input-group
+            prepend="Start Time"
+            class="mb-2"
+            size="sm"
+          >
+            <b-form-input
+              type="time"
+              v-model="eventTime"
+              :required="Boolean(eventDate) || hF.enabled"
+            >
+            </b-form-input>
+          </b-input-group>
+          <b-input-group
+            prepend="Timezone"
+            class="mb-2"
+            size="sm"
+          >
+            <b-form-select
+              :options="timezones"
+              v-model="model.eventTimezone"
+              :required="Boolean(eventTime) || hF.enabled"
+            >
+            </b-form-select>
+          </b-input-group>
+        </b-form-group>
+        </div>
+
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
         <div v-if="model._id" style="text-align: left; flex: auto">
@@ -215,7 +265,7 @@ export default {
       },
       model: {},
       pacingMethods: [
-        { value: 'time', text: 'Finish time' },
+        { value: 'time', text: 'Elapsed time' },
         { value: 'pace', text: 'Average pace' },
         { value: 'np', text: 'Normalized pace' }
       ],
