@@ -20,6 +20,7 @@ import 'vue-awesome/icons/edit'
 import 'vue-awesome/icons/facebook'
 import 'vue-awesome/icons/lock'
 import 'vue-awesome/icons/plus'
+import 'vue-awesome/icons/strava'
 import 'vue-awesome/icons/trash'
 import VIcon from 'vue-awesome/components/Icon'
 delete Icon.Default.prototype._getIconUrl
