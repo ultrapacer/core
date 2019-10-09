@@ -17,6 +17,11 @@
         </b-navbar-nav>
       </b-collapse>
       <span v-if="$calculating.isCalculating()"><b-spinner variant="primary" label="Spinning"></b-spinner></span>
+      <span v-else class="d-none d-md-block">
+        <b-link to="https://www.facebook.com/ultrapacer" target=”_blank”>
+          <v-icon name="facebook"></v-icon>
+        </b-link>
+      </span>
     </b-navbar>
     <!-- routes will be rendered here -->
     <router-view :isAuthenticated="isAuthenticated" :user="user" />
