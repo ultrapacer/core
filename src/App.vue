@@ -21,6 +21,9 @@
         <b-link to="https://www.facebook.com/ultrapacer" target=”_blank”>
           <v-icon name="facebook"></v-icon>
         </b-link>
+        <b-link to="https://www.strava.com/clubs/ultrapacer" target=”_blank”>
+          <v-icon name="strava"></v-icon>
+        </b-link>
       </span>
     </b-navbar>
     <!-- routes will be rendered here -->
