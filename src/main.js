@@ -15,11 +15,12 @@ import VueTheMask from 'vue-the-mask'
 import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-import 'vue-awesome/icons/trash'
-import 'vue-awesome/icons/edit'
-import 'vue-awesome/icons/plus'
-import 'vue-awesome/icons/lock'
 import 'vue-awesome/icons/download'
+import 'vue-awesome/icons/edit'
+import 'vue-awesome/icons/facebook'
+import 'vue-awesome/icons/lock'
+import 'vue-awesome/icons/plus'
+import 'vue-awesome/icons/trash'
 import VIcon from 'vue-awesome/components/Icon'
 delete Icon.Default.prototype._getIconUrl
 Icon.Default.mergeOptions({
