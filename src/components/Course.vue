@@ -133,6 +133,7 @@
             <course-profile
                 ref="profile"
                 :course="course"
+                :sunEvents="pacing.sunEventsByLoc"
                 :units="units"
                 :waypointShowMode="waypointShowMode"
                 @waypointClick="waypointClick"
@@ -647,6 +648,8 @@ export default {
         this.busy = true
         this.$calculating.setCalculating(true)
         setTimeout(() => { this.updatePacing() }, 10)
+      } else {
+        this.$refs.profile.update()
       }
     },
     async clearPlan () {
@@ -721,6 +724,7 @@ export default {
           )
         }
       }
+      this.$refs.profile.update()
       this.busy = false
       this.$calculating.setCalculating(false)
     },
@@ -812,6 +816,7 @@ export default {
         tFs: this.terrainFactors,
         delays: this.delays,
         sun: this.event.sun || null,
+        sunEventsByLoc: [],
         sunTime: {day: 0, twilight: 0, dark: 0},
         sunDist: {day: 0, twilight: 0, dark: 0}
       }
@@ -821,6 +826,8 @@ export default {
         let breaks = this.course.points.map(x => x.loc)
         p[0].time = 0
         p[0].dtime = 0
+        let sunType0 = ''
+        let sunType = ''
         let arr = geo.calcSegments(p, breaks, this.pacing)
         arr.forEach((x, i) => {
           p[i + 1].time = x.elapsed
@@ -834,18 +841,28 @@ export default {
               p[i].tod <= this.event.sun.dawn ||
               p[i].tod >= this.event.sun.dusk
             ) {
+              sunType = 'dark'
               this.pacing.sunTime.dark += p[i].dtime
               this.pacing.sunDist.dark += p[i].dloc
             } else if (
               p[i].tod < this.event.sun.rise ||
               p[i].tod > this.event.sun.set
             ) {
+              sunType = 'twilight'
               this.pacing.sunTime.twilight += p[i].dtime
               this.pacing.sunDist.twilight += p[i].dloc
             } else {
+              sunType = 'day'
               this.pacing.sunTime.day += p[i].dtime
               this.pacing.sunDist.day += p[i].dloc
             }
+            if (sunType !== sunType0) {
+              this.pacing.sunEventsByLoc.push({
+                'sunType': sunType,
+                loc: p[i].loc
+              })
+            }
+            sunType0 = sunType
           })
         } else {
           p.forEach((x, i) => {
