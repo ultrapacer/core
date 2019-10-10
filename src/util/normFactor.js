@@ -132,6 +132,16 @@ function terrainFactor (loc, tFs) {
   return (tF / 100) + 1
 }
 
+function darkFactor (tod, tF, sun) {
+  if (tod > sun.rise && tod < sun.set) {
+    return 1
+  } else if (tod < sun.dawn || tod > sun.dusk) {
+    return tF
+  } else {
+    return 1 + ((tF - 1)/ 2)
+  }
+}
+
 module.exports = {
   gradeFactor: gradeFactor,
   gF: gradeFactor,
@@ -143,5 +153,6 @@ module.exports = {
   tF: terrainFactor,
   heatFactor: heatFactor,
   hF: heatFactor,
+  darkFactor: darkFactor,
   defaults: defaults
 }
