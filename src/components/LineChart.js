@@ -11,7 +11,7 @@ export default {
       beforeDraw: function (chart) {
         var ctx = chart.chart.ctx
         var rules = chart.chart.options.backgroundRules
-        if (!rules || !rules.length) { return }
+        if (!rules || rules.length <= 1) { return }
         var yaxis = chart.chart.scales['y-axis-2']
         var xaxis = chart.chart.scales['x-axis-0']
         function distToPixels (d) {
@@ -29,7 +29,7 @@ export default {
         rules.forEach((r, i) => {
           let x1 = distToPixels(r.loc)
           let x2 = distToPixels(i < rules.length - 1 ? rules[i + 1].loc : xaxis.max)
-          if (r.sunType === 'twilight' && rules.length > 1) {
+          if (r.sunType === 'twilight') {
             let grd = ctx.createLinearGradient(x1, 0, x2, 0)
             if (
               (i > 0 && rules[i - 1].sunType === 'day') ||
