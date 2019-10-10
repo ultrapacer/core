@@ -14,9 +14,11 @@
           <b-nav-item href="#" @click.prevent="login" v-if="!isAuthenticated">Login</b-nav-item>
           <b-nav-item href="#" @click.prevent="logout" v-else>Logout</b-nav-item>
           <b-nav-item to="/help">Help</b-nav-item>
+          <menu-social class="d-block d-md-none "></menu-social>
         </b-navbar-nav>
       </b-collapse>
       <span v-if="$calculating.isCalculating()"><b-spinner variant="primary" label="Spinning"></b-spinner></span>
+      <menu-social v-else class="d-none d-md-block navbar-nav "></menu-social>
     </b-navbar>
     <!-- routes will be rendered here -->
     <router-view :isAuthenticated="isAuthenticated" :user="user" />
@@ -60,8 +62,12 @@
 </style>
 <script>
 import api from '@/api'
+import MenuSocial from './components/MenuSocial'
 export default {
   name: 'app',
+  components: {
+    MenuSocial
+  },
   data () {
     return {
       isAuthenticated: false,
