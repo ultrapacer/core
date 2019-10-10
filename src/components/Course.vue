@@ -724,7 +724,9 @@ export default {
           )
         }
       }
-      this.$refs.profile.update()
+      if (this.$refs.profile) {
+        this.$refs.profile.update()
+      }
       this.busy = false
       this.$calculating.setCalculating(false)
     },
