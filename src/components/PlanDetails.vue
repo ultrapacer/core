@@ -75,7 +75,7 @@
       <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0"></b-col>
       <b-col>
         <small>&nbsp; * While Moving</small><br/>
-        <small>&nbsp; ** Normalized for Grade, Altitude, Heat, & Terrain</small>
+        <small>&nbsp; ** Normalized for {{ normString }}</small>
       </b-col>
     </b-row>
   </b-list-group-item>
@@ -115,7 +115,7 @@
     <b-row>
       <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0"></b-col>
       <b-col>
-        <small>&nbsp; * Normalized for Grade, Altitude, Heat, & Terrain</small>
+        <small>&nbsp; * Normalized for {{ normString }}</small>
       </b-col>
     </b-row>
   </b-list-group-item>
@@ -205,12 +205,59 @@
     </p>
     </b-col></b-row>
   </b-list-group-item>
+  <b-list-group-item v-if="showPaceInfo && pacing.factors.dark > 1">
+    <h5 class="mb-1">Darkness Effects</h5>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">
+        Avg. Factor:
+      </b-col>
+      <b-col>
+        <b>{{ pacing.factors.dark - 1 | percentWithPace(pacing.np, units) }}</b>
+      </b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">
+        Daylight Time:
+      </b-col>
+      <b-col>
+        <b>
+          {{ sec2string(pacing.sunTime.day, 'hh:mm:ss') }}&nbsp;
+          ({{ pacing.sunDist.day | formatDist(units.distScale) }} {{ units.dist }})
+        </b>
+      </b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">
+        Twilight Time:
+      </b-col>
+      <b-col>
+        <b>
+          {{ sec2string(pacing.sunTime.twilight, 'hh:mm:ss') }}&nbsp;
+          ({{ pacing.sunDist.twilight | formatDist(units.distScale) }} {{ units.dist }})
+        </b>
+      </b-col>
+    </b-row>
+    <b-row>
+      <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">
+        Dark Time:
+      </b-col>
+      <b-col>
+        <b>
+          {{ sec2string(pacing.sunTime.dark, 'hh:mm:ss') }}&nbsp;
+          ({{ pacing.sunDist.dark | formatDist(units.distScale) }} {{ units.dist }})
+        </b>
+      </b-col>
+    </b-row>
+  </b-list-group-item>
   <b-list-group-item >
     <p v-if="showPaceInfo && !pacing.delay" class="mb-1">No Delays</p>
-    <p v-if="showPaceInfo && !plan.drift" class="mb-1">No Pace Drift</p>
     <p v-if="pacing.factors.aF <= 1" class="mb-1">No Altitude Effects</p>
     <p v-if="pacing.factors.tF <= 1" class="mb-1">No Terrain Effects</p>
     <p v-if="showPaceInfo && pacing.factors.hF <= 1" class="mb-1">No Heat Effects</p>
+    <p v-if="showPaceInfo && pacing.factors.dark <= 1" class="mb-1">
+      No Darkness Effects
+    </p>
+    <p v-if="showPaceInfo && !plan.drift" class="mb-1">No Pace Drift</p>
   </b-list-group-item>
 </b-list-group>
 </div>
@@ -316,6 +363,22 @@ export default {
         return true
       } else {
         return false
+      }
+    },
+    normString: function () {
+      let a = ['grade']
+      if (this.pacing.factors.aF > 1) { a.push('altitude') }
+      if (this.pacing.factors.tF > 1) { a.push('terrain') }
+      if (this.showPaceInfo && this.pacing.factors.hF > 1) { a.push('heat') }
+      if (this.showPaceInfo && this.pacing.factors.dark > 1) { a.push('darkness') }
+      if (a.length === 1) {
+        return a[0]
+      } else if (a.length === 2) {
+        return `${a[0]} and ${a[1]}`
+      } else {
+        let last = a.pop()
+        let str = a.join(', ')
+        return `${str}, & ${last}`
       }
     }
   },

@@ -7,7 +7,8 @@
       <p>The models below are applied for pacing calculations.<br/>
       <b>Grade</b> and <b>Altitude</b> are defined automatically by elevation data in the GPX track.<br/>
       <b>Terrain</b> is manually defined for each Course by setting "Terrain Factors" for Waypoints.<br/>
-      <b>Heat</b> and <b>Drift</b> are manually defined for each Plan.</p>
+      <b>Heat</b> and <b>Drift</b> are manually defined for each Plan.<br/>
+      <b>Darkness</b> is calculated based on terrain and sunrise/sunset times.</p>
       <b-row class="mb-3">
         <b-col md="2" class="text-md-right"><b>Grade:</b></b-col>
         <b-col>
@@ -42,6 +43,13 @@
           The heat model the top half of a sinusoidal curve. A "baseline" heat factor can be applied outside of peak hours. The heat model activates 1/2 hour after sunrise and returns to baseline 1 hour after sunset, peaking at a maximum value as specified.<br/>
           A heat model can be defined for each plan. If no heat model is defined, no heat factor is used.<br/>
           <img class="pl-sm-3 pr-sm-3" style="width:100%; object-fit:contain" src="../assets/heatModel.png">
+        </b-col>
+      </b-row>
+      <b-row class="mb-3">
+        <b-col md="2" class="text-md-right"><b>Darkness:</b></b-col>
+        <b-col>
+          From dusk to dawn, a darkness factor equal to the terrain factor is applied (essentially doubling the terrain factor).<br/>
+          During twilight hours (from dawn to sunrise and sunset to dusk), the darkness factor is linearly applied between nothing (daytime) and the full darkness factor.
         </b-col>
       </b-row>
       <b-row class="mb-3">

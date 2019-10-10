@@ -1,4 +1,5 @@
 // normFactor.js
+var mathUtil = require('./math')
 
 var defaults = {
   alt: {
@@ -133,12 +134,41 @@ function terrainFactor (loc, tFs) {
 }
 
 function darkFactor (tod, tF, sun) {
-  if (tod > sun.rise && tod < sun.set) {
+  // returns a time-of-day based dark factor
+  // tod: time of day in seconds
+  // tF: terrainFactor
+  // sun: object w/ dawn, rise, set, dusk in time-of-day seconds
+  let t = 0
+  if (Array.isArray(tod)) {
+    t = (tod[0] + tod[1]) / 2
+  } else {
+    t = tod
+  }
+  if (t >= sun.rise && t <= sun.set) {
     return 1
-  } else if (tod < sun.dawn || tod > sun.dusk) {
+  } else if (t <= sun.dawn || t >= sun.dusk) {
     return tF
   } else {
-    return 1 + ((tF - 1)/ 2)
+    // during twilight, interpolate
+    let f = 0
+    if (t < sun.rise) {
+      f = mathUtil.interp(
+        sun.dawn,
+        sun.rise,
+        tF,
+        1,
+        t
+      )
+    } else {
+      f = mathUtil.interp(
+        sun.set,
+        sun.dusk,
+        1,
+        tF,
+        t
+      )
+    }
+    return f
   }
 }
 
@@ -153,6 +183,6 @@ module.exports = {
   tF: terrainFactor,
   heatFactor: heatFactor,
   hF: heatFactor,
-  darkFactor: darkFactor,
+  dark: darkFactor,
   defaults: defaults
 }
