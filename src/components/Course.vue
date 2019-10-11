@@ -133,6 +133,7 @@
             <course-profile
                 ref="profile"
                 :course="course"
+                :sunEvents="pacing.sunEventsByLoc"
                 :units="units"
                 :waypointShowMode="waypointShowMode"
                 @waypointClick="waypointClick"
@@ -647,6 +648,8 @@ export default {
         this.busy = true
         this.$calculating.setCalculating(true)
         setTimeout(() => { this.updatePacing() }, 10)
+      } else {
+        this.$refs.profile.update()
       }
     },
     async clearPlan () {
@@ -669,7 +672,7 @@ export default {
       await this.iteratePaceCalc()
       this.updateSplits()
       // if factors are time-based (eg heat), iterate solution:
-      if (this.planAssigned && this.heatModel && this.event.startTime) {
+      if (this.planAssigned && this.event.startTime !== null) {
         let lastSplits = this.kilometers.map(x => { return x.time })
         let elapsed = this.kilometers[this.kilometers.length - 1].elapsed
         let t = this.$logger()
@@ -721,6 +724,9 @@ export default {
           )
         }
       }
+      if (this.$refs.profile) {
+        this.$refs.profile.update()
+      }
       this.busy = false
       this.$calculating.setCalculating(false)
     },
@@ -731,12 +737,13 @@ export default {
 
       // calculate course normalizing factor:
       var tot = 0
-      var factors = {gF: 0, aF: 0, tF: 0, hF: 0, dF: 0}
+      var factors = {gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0}
       let fstats = {
-        max: {gF: 0, aF: 0, tF: 0, hF: 0, dF: 0},
-        min: {gF: 100, aF: 100, tF: 100, hF: 100, dF: 100}
+        max: {gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0},
+        min: {gF: 100, aF: 100, tF: 100, hF: 100, dark: 100, dF: 100}
       }
       var p = this.course.points
+      let hasTOD = p[0].hasOwnProperty('tod')
       for (let j = 1, jl = p.length; j < jl; j++) {
         // determine pacing factor for point
         let fs = {
@@ -748,7 +755,11 @@ export default {
             [p[j - 1].loc, p[j].loc],
             plan ? this.plan.drift : 0,
             this.course.len
-          )
+          ),
+          dark: 1
+        }
+        if (hasTOD) {
+          fs.dark = nF.dark([p[j - 1].tod, p[j].tod], fs.tF, this.event.sun)
         }
         let len = p[j].loc - p[j - 1].loc
         let f = 1 // combined segment factor
@@ -805,21 +816,55 @@ export default {
         altModel: this.course.altModel,
         heatModel: this.heatModel,
         tFs: this.terrainFactors,
-        delays: this.delays
+        delays: this.delays,
+        sun: this.event.sun || null,
+        sunEventsByLoc: [],
+        sunTime: {day: 0, twilight: 0, dark: 0},
+        sunDist: {day: 0, twilight: 0, dark: 0}
       }
 
       // Add time to points
       if (plan) {
         let breaks = this.course.points.map(x => x.loc)
         p[0].time = 0
+        p[0].dtime = 0
+        let sunType0 = ''
+        let sunType = ''
         let arr = geo.calcSegments(p, breaks, this.pacing)
         arr.forEach((x, i) => {
           p[i + 1].time = x.elapsed
+          p[i + 1].dtime = x.time
         })
         if (this.event.startTime !== null) {
           p.forEach((x, i) => {
             // tod: time of day in seconds from local midnight
             p[i].tod = (x.time + this.event.startTime) % 86400
+            if (
+              p[i].tod <= this.event.sun.dawn ||
+              p[i].tod >= this.event.sun.dusk
+            ) {
+              sunType = 'dark'
+              this.pacing.sunTime.dark += p[i].dtime
+              this.pacing.sunDist.dark += p[i].dloc
+            } else if (
+              p[i].tod < this.event.sun.rise ||
+              p[i].tod > this.event.sun.set
+            ) {
+              sunType = 'twilight'
+              this.pacing.sunTime.twilight += p[i].dtime
+              this.pacing.sunDist.twilight += p[i].dloc
+            } else {
+              sunType = 'day'
+              this.pacing.sunTime.day += p[i].dtime
+              this.pacing.sunDist.day += p[i].dloc
+            }
+            if (sunType !== sunType0) {
+              this.pacing.sunEventsByLoc.push({
+                'sunType': sunType,
+                loc: p[i].loc
+              })
+            }
+            sunType0 = sunType
           })
         } else {
           p.forEach((x, i) => {

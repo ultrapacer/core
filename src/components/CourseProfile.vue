@@ -1,5 +1,5 @@
 <template>
-  <line-chart :chart-data="chartData" :options="chartOptions" :width="350" :height="300">
+  <line-chart ref="profile" :chart-data="chartData" :options="chartOptions" :width="350" :height="300">
   </line-chart>
 </template>
 
@@ -8,7 +8,7 @@ import { pointWLSQ } from '@/util/geo'
 import LineChart from './LineChart.js'
 
 export default {
-  props: ['course', 'units', 'waypointShowMode'],
+  props: ['course', 'sunEvents', 'units', 'waypointShowMode'],
   components: {
     LineChart
   },
@@ -30,7 +30,38 @@ export default {
       chartFocus: [],
       chartProfile: [],
       chartGrade: [],
-      chartOptions: {
+      mapFocus: [],
+      markerStyles: {
+        pointRadius: {
+        },
+        pointStyle: {
+          landmark: 'triangle',
+          water: 'rectRot',
+          junction: 'crossRot'
+        },
+        color: {
+          aid: 'red',
+          landmark: 'darkgreen',
+          water: 'darkblue',
+          start: 'black',
+          finish: 'black'
+        }
+      },
+      updateTrigger: 0
+    }
+  },
+  computed: {
+    backgroundRules: function () {
+      if (!this.sunEvents) { return [] }
+      let br = [...this.sunEvents]
+      br.forEach((s, i) => {
+        br[i] = {...br[i]}
+        br[i].loc = br[i].loc * this.units.distScale
+      })
+      return br
+    },
+    chartOptions: function () {
+      return {
         animation: {
           duration: 0
         },
@@ -49,7 +80,8 @@ export default {
                 } else {
                   return ''
                 }
-              }
+              },
+              max: (this.course.len * this.units.distScale) + 0.01
             }
           }],
           yAxes: [{
@@ -86,29 +118,10 @@ export default {
         legend: {
           display: false
         },
-        onClick: this.click
-      },
-      mapFocus: [],
-      markerStyles: {
-        pointRadius: {
-        },
-        pointStyle: {
-          landmark: 'triangle',
-          water: 'rectRot',
-          junction: 'crossRot'
-        },
-        color: {
-          aid: 'red',
-          landmark: 'darkgreen',
-          water: 'darkblue',
-          start: 'black',
-          finish: 'black'
-        }
-      },
-      updateTrigger: 0
-    }
-  },
-  computed: {
+        onClick: this.click,
+        backgroundRules: this.backgroundRules
+      }
+    },
     chartData: function () {
       return {
         datasets: [
@@ -122,6 +135,7 @@ export default {
           { data: this.chartGrade,
             pointRadius: 0,
             pointHoverRadius: 0,
+            backgroundColor: this.transparentize(this.chartColors.red, 0.75),
             showLine: true,
             yAxisID: 'y-axis-2'
           },
@@ -246,6 +260,10 @@ export default {
       // this is a hack because the computed property won't update
       // when this.course.waypoints[i] change
       this.updateTrigger++
+    },
+    update: function () {
+      this.$refs.profile.update()
+      this.$logger('CourseProfile|update')
     }
   }
 }

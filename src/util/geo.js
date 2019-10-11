@@ -77,9 +77,11 @@ function calcSegments (p, breaks, pacing) {
     gF: 0, // grade factor
     tF: 0, // terrain factor
     hF: 0, // heat factor
+    dark: 0, // dark factor
     dF: 0 // drift factor
   }
   let fk = Object.keys(factors)
+  let hasTOD = p[0].hasOwnProperty('tod')
   for (i = 1, il = p.length; i < il; i++) {
     j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
     if (j > j0) {
@@ -111,7 +113,7 @@ function calcSegments (p, breaks, pacing) {
           factors.dF = nF.driftFactor([p[i - 1].loc, s[j].start], pacing.drift, cLen)
           factors.aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
           factors.tF = nF.tF([p[i - 1].loc, s[j].start], pacing.tFs)
-          if (p[i].hasOwnProperty('tod')) {
+          if (hasTOD) {
             let startTod = interp(
               p[i - 1].loc,
               p[i].loc,
@@ -120,8 +122,10 @@ function calcSegments (p, breaks, pacing) {
               s[j].start
             )
             factors.hF = nF.hF([p[i - 1].tod, startTod], pacing.heatModel)
+            factors.dark = nF.dark([p[i - 1].tod, startTod], factors.tF, pacing.sun)
           } else {
             factors.hF = 1
+            factors.dark = 1
           }
           let f = 1
           fk.forEach(k => {
@@ -136,7 +140,7 @@ function calcSegments (p, breaks, pacing) {
         factors.dF = nF.driftFactor([p[i].loc, s[j].start], pacing.drift, cLen)
         factors.aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
         factors.tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
-        if (p[i].hasOwnProperty('tod')) {
+        if (hasTOD) {
           let startTod = (i < p.length - 1)
             ? interp(
               p[i].loc,
@@ -147,8 +151,10 @@ function calcSegments (p, breaks, pacing) {
             )
             : p[i].tod
           factors.hF = nF.hF([p[i].tod, startTod], pacing.heatModel)
+          factors.dark = nF.dark([p[i].tod, startTod], factors.tF, pacing.sun)
         } else {
           factors.hF = 1
+          factors.dark = 1
         }
         let f = 1
         fk.forEach(k => {
@@ -162,10 +168,12 @@ function calcSegments (p, breaks, pacing) {
         factors.dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
         factors.aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
         factors.tF = nF.tF([p[i - 1].loc, p[i].loc], pacing.tFs)
-        if (p[i].hasOwnProperty('tod')) {
+        if (hasTOD) {
           factors.hF = nF.hF([p[i - 1].tod, p[i].tod], pacing.heatModel)
+          factors.dark = nF.dark([p[i - 1].tod, p[i].tod], factors.tF, pacing.sun)
         } else {
           factors.hF = 1
+          factors.dark = 1
         }
         let f = 1
         fk.forEach(k => {
