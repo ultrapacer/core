@@ -22,6 +22,11 @@ var defaults = {
       m: 0.1012,
       b: 0.4624
     }
+  },
+  dark: {
+    // scaling of terrain factor applied in the dark to apply
+    // as the darkness factor
+    scale: 1
   }
 }
 
@@ -133,11 +138,13 @@ function terrainFactor (loc, tFs) {
   return (tF / 100) + 1
 }
 
-function darkFactor (tod, tF, sun) {
+function darkFactor (tod, tF, sun, model) {
   // returns a time-of-day based dark factor
   // tod: time of day in seconds
   // tF: terrainFactor
   // sun: object w/ dawn, rise, set, dusk in time-of-day seconds
+  // model format:
+  //    scale: scaling factor for terrain factor
   let t = 0
   if (Array.isArray(tod)) {
     t = (tod[0] + tod[1]) / 2
@@ -146,8 +153,13 @@ function darkFactor (tod, tF, sun) {
   }
   if (t >= sun.rise && t <= sun.set) {
     return 1
-  } else if (t <= sun.dawn || t >= sun.dusk) {
-    return tF
+  }
+  if (model === null || typeof (model) === 'undefined') {
+    model = defaults.dark
+  }
+  let fdark = model.scale * (tF - 1) + 1
+  if (t <= sun.dawn || t >= sun.dusk) {
+    return fdark
   } else {
     // during twilight, interpolate
     let f = 0
@@ -155,7 +167,7 @@ function darkFactor (tod, tF, sun) {
       f = mathUtil.interp(
         sun.dawn,
         sun.rise,
-        tF,
+        fdark,
         1,
         t
       )
@@ -164,7 +176,7 @@ function darkFactor (tod, tF, sun) {
         sun.set,
         sun.dusk,
         1,
-        tF,
+        fdark,
         t
       )
     }
