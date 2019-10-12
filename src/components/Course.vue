@@ -463,21 +463,24 @@ export default {
     this.$calculating.setCalculating(false)
     this.$logger('Finish')
     setTimeout(() => {
-      if (screen.width < 992) {
-        this.$bvToast.toast('Page not optimized for small/mobile screens', {
-          title: 'Warning',
+      if (!this.isAuthenticated) {
+        this.$bvToast.toast(
+          'ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue. To create a pace plan for this course, select the "New Pacing Plan" button on the top right of this page and use the "Sign Up" option (it\'s free). Happy running!',
+          {
+            title: 'Welcome to ultraPacer!',
+            toaster: 'b-toaster-bottom-right',
+            solid: true,
+            variant: 'info',
+            'auto-hide-delay': 5000
+          }
+        )
+      } else if (screen.width < 992) {
+        this.$bvToast.toast('Much of the info on this page is hidden on small screens. Select rows in tables to expand. Use a desktop or tablet for a better experience.', {
+          title: 'Smaller screens',
           toaster: 'b-toaster-bottom-center',
           solid: true,
-          variant: 'warning',
-          'auto-hide-delay': 4000
-        })
-      } else if (!this.isAuthenticated) {
-        this.$bvToast.toast('Welome to ultraPacer, a web app that helps you make pacing plans for trail races and adventures. To create a pace plan for this course, select the "New Pacing Plan" button on the top right of this page and use the "Sign Up" option. Happy running!', {
-          title: 'Welcome!',
-          toaster: 'b-toaster-bottom-right',
-          solid: true,
           variant: 'info',
-          'auto-hide-delay': 5000
+          'auto-hide-delay': 4000
         })
       }
     }, 1000)
@@ -555,6 +558,7 @@ export default {
       this.$logger('checkWaypoints', t)
     },
     async newPlan () {
+      this.$ga.event('Plan', 'add', this.publicName)
       if (this.isAuthenticated) {
         if (!this.owner) {
           if (!this.user._courses.find(x => x === this.course._id)) {
