@@ -471,17 +471,20 @@ export default {
             toaster: 'b-toaster-bottom-right',
             solid: true,
             variant: 'info',
-            'auto-hide-delay': 5000
+            autoHideDelay: 10000
           }
         )
       } else if (screen.width < 992) {
-        this.$bvToast.toast('Much of the info on this page is hidden on small screens. Select rows in tables to expand. Use a desktop or tablet for a better experience.', {
-          title: 'Smaller screens',
-          toaster: 'b-toaster-bottom-center',
-          solid: true,
-          variant: 'info',
-          'auto-hide-delay': 4000
-        })
+        this.$bvToast.toast(
+          'Much of the data on this page is hidden on small screens. Select rows in tables to expand. Use a desktop or tablet for a better experience.',
+          {
+            title: 'Small/mobile screen',
+            toaster: 'b-toaster-bottom-center',
+            solid: true,
+            variant: 'info',
+            autoHideDelay: 6000
+          }
+        )
       }
     }, 1000)
   },
