@@ -672,6 +672,7 @@ export default {
       this.$logger('Course|clearPlan')
     },
     async updatePacing () {
+      let t = this.$logger()
       // update splits, segments, and pacing
       this.busy = true
       this.updateFlag = false
@@ -736,12 +737,14 @@ export default {
       }
       this.busy = false
       this.$calculating.setCalculating(false)
+      this.$logger('Course|updatePacing', t)
     },
     async iteratePaceCalc () {
       let t = this.$logger()
       var plan = false
       if (this.planAssigned) { plan = true }
 
+      let t1 = this.$logger()
       // calculate course normalizing factor:
       var tot = 0
       var factors = {gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0}
@@ -751,9 +754,17 @@ export default {
       }
       var p = this.course.points
       let hasTOD = p[0].hasOwnProperty('tod')
+      let fs = {}
+      let elapsed = 0
+      if (plan && this.pacing.np) {
+        p[0].time = 0
+        p[0].dtime = 0
+      }
+      let sunType0 = ''
+      let sunType = ''
       for (let j = 1, jl = p.length; j < jl; j++) {
         // determine pacing factor for point
-        let fs = {
+        fs = {
           gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
           aF: nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel),
           tF: nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors),
@@ -777,12 +788,19 @@ export default {
           fstats.min[k] = Math.min(fstats.min[k], fs[k])
         })
         tot += f * len
+        if (plan && this.pacing.np) {
+          p[j].dtime = this.pacing.np * f * p[j].dloc
+          elapsed += p[j].dtime
+          p[j].time = elapsed
+        }
       }
       Object.keys(factors).forEach(k => {
         factors[k] = factors[k] / this.course.len
       })
       this.course.norm = (tot / this.course.len)
 
+      t1 = this.$logger('first-block', t1)
+      
       let delay = 0
       let time = 0
       let pace = 0
@@ -829,19 +847,14 @@ export default {
         sunTime: {day: 0, twilight: 0, dark: 0},
         sunDist: {day: 0, twilight: 0, dark: 0}
       }
+      
+      t1 = this.$logger('second-block', t1)
 
       // Add time to points
-      if (plan) {
-        let breaks = this.course.points.map(x => x.loc)
-        p[0].time = 0
-        p[0].dtime = 0
+      if (plan && p[0].hasOwnProperty('time')) {
         let sunType0 = ''
         let sunType = ''
-        let arr = geo.calcSegments(p, breaks, this.pacing)
-        arr.forEach((x, i) => {
-          p[i + 1].time = x.elapsed
-          p[i + 1].dtime = x.time
-        })
+        t1 = this.$logger('third-block', t1)
         if (this.event.startTime !== null) {
           p.forEach((x, i) => {
             // tod: time of day in seconds from local midnight
@@ -884,6 +897,8 @@ export default {
           delete p[i].tod
         })
       }
+      console.log(this.pacing)
+      t1 = this.$logger('fourth-block', t1)
       this.$logger('iteratePaceCalc', t)
     },
     updateSegments: function () {
