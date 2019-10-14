@@ -703,6 +703,50 @@ export default {
           elapsed = this.kilometers[this.kilometers.length - 1].elapsed
         }
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
+        let sunType0 = ''
+        let sunType = ''
+        this.pacing.sunEventsByLoc = []
+        this.pacing.sunTime = {day: 0, twilight: 0, dark: 0}
+        this.pacing.sunDist = {day: 0, twilight: 0, dark: 0}
+        p.forEach((x, i) => {
+          if (
+            p[i].tod <= this.event.sun.dawn ||
+            p[i].tod >= this.event.sun.dusk
+          ) {
+            sunType = 'dark'
+            this.pacing.sunTime.dark += p[i].dtime
+            this.pacing.sunDist.dark += p[i].dloc
+          } else if (
+            p[i].tod < this.event.sun.rise ||
+            p[i].tod > this.event.sun.set
+          ) {
+            sunType = 'twilight'
+            this.pacing.sunTime.twilight += p[i].dtime
+            this.pacing.sunDist.twilight += p[i].dloc
+          } else {
+            sunType = 'day'
+            this.pacing.sunTime.day += p[i].dtime
+            this.pacing.sunDist.day += p[i].dloc
+          }
+          if (sunType !== sunType0) {
+            this.pacing.sunEventsByLoc.push({
+              'sunType': sunType,
+              loc: p[i].loc
+            })
+          }
+          sunType0 = sunType
+        })
+      } elseif (this.planAssigned) {
+          p.forEach((x, i) => {
+            delete p[i].tod
+          })
+        }
+      } else {
+        p.forEach((x, i) => {
+          delete p[i].time
+          delete p[i].dtime
+          delete p[i].tod
+        })
       }
       this.updateSplits('miles')
       this.updateSegments()
@@ -759,6 +803,9 @@ export default {
       if (plan && this.pacing.np) {
         p[0].time = 0
         p[0].dtime = 0
+        if (this.event.startTime !== null) {
+          p[0].tod = this.event.startTime
+        }
       }
       let sunType0 = ''
       let sunType = ''
@@ -792,6 +839,9 @@ export default {
           p[j].dtime = this.pacing.np * f * p[j].dloc
           elapsed += p[j].dtime
           p[j].time = elapsed
+          if (this.event.startTime !== null) {
+            p[j].tod = (elapsed + this.event.startTime) % 86400
+          }
         }
       }
       Object.keys(factors).forEach(k => {
@@ -843,61 +893,9 @@ export default {
         tFs: this.terrainFactors,
         delays: this.delays,
         sun: this.event.sun || null,
-        sunEventsByLoc: [],
-        sunTime: {day: 0, twilight: 0, dark: 0},
-        sunDist: {day: 0, twilight: 0, dark: 0}
       }
       
       t1 = this.$logger('second-block', t1)
-
-      // Add time to points
-      if (plan && p[0].hasOwnProperty('time')) {
-        let sunType0 = ''
-        let sunType = ''
-        t1 = this.$logger('third-block', t1)
-        if (this.event.startTime !== null) {
-          p.forEach((x, i) => {
-            // tod: time of day in seconds from local midnight
-            p[i].tod = (x.time + this.event.startTime) % 86400
-            if (
-              p[i].tod <= this.event.sun.dawn ||
-              p[i].tod >= this.event.sun.dusk
-            ) {
-              sunType = 'dark'
-              this.pacing.sunTime.dark += p[i].dtime
-              this.pacing.sunDist.dark += p[i].dloc
-            } else if (
-              p[i].tod < this.event.sun.rise ||
-              p[i].tod > this.event.sun.set
-            ) {
-              sunType = 'twilight'
-              this.pacing.sunTime.twilight += p[i].dtime
-              this.pacing.sunDist.twilight += p[i].dloc
-            } else {
-              sunType = 'day'
-              this.pacing.sunTime.day += p[i].dtime
-              this.pacing.sunDist.day += p[i].dloc
-            }
-            if (sunType !== sunType0) {
-              this.pacing.sunEventsByLoc.push({
-                'sunType': sunType,
-                loc: p[i].loc
-              })
-            }
-            sunType0 = sunType
-          })
-        } else {
-          p.forEach((x, i) => {
-            delete p[i].tod
-          })
-        }
-      } else {
-        p.forEach((x, i) => {
-          delete p[i].time
-          delete p[i].tod
-        })
-      }
-      console.log(this.pacing)
       t1 = this.$logger('fourth-block', t1)
       this.$logger('iteratePaceCalc', t)
     },
