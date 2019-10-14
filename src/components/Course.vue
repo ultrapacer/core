@@ -672,13 +672,29 @@ export default {
       this.$logger('Course|clearPlan')
     },
     async updatePacing () {
+      let t = this.$logger()
       // update splits, segments, and pacing
       this.busy = true
       this.updateFlag = false
       this.$calculating.setCalculating(true)
+
+      // clear out time data if not applicable to this plan:
+      if (!this.planAssigned) {
+        this.course.points.forEach(x => {
+          delete x.time
+          delete x.dtime
+          delete x.tod
+        })
+      } else if (this.event.startTime === null) {
+        this.course.points.forEach(x => {
+          delete x.tod
+        })
+      }
+
       await this.iteratePaceCalc()
       this.updateSplits()
-      // if factors are time-based (eg heat), iterate solution:
+
+      // iterate solution:
       if (this.planAssigned && this.event.startTime !== null) {
         let lastSplits = this.kilometers.map(x => { return x.time })
         let elapsed = this.kilometers[this.kilometers.length - 1].elapsed
@@ -702,6 +718,7 @@ export default {
           elapsed = this.kilometers[this.kilometers.length - 1].elapsed
         }
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
+        this.updateSunTime()
       }
       this.updateSplits('miles')
       this.updateSegments()
@@ -736,6 +753,7 @@ export default {
       }
       this.busy = false
       this.$calculating.setCalculating(false)
+      this.$logger('Course|updatePacing', t)
     },
     async iteratePaceCalc () {
       let t = this.$logger()
@@ -751,9 +769,33 @@ export default {
       }
       var p = this.course.points
       let hasTOD = p[0].hasOwnProperty('tod')
+      let fs = {}
+      let elapsed = 0
+      if (plan && this.pacing.np) {
+        p[0].time = 0
+        p[0].dtime = 0
+        if (this.event.startTime !== null) {
+          p[0].tod = this.event.startTime
+        }
+      }
+
+      // variables & function for adding in delays:
+      let delay = 0
+      let delays = [...this.delays]
+      function getDelay (a, b) {
+        if (!delays.length) { return 0 }
+        while (delays.length && delays[0].loc < a) {
+          delays.shift()
+        }
+        if (delays.length && delays[0].loc < b) {
+          return delays[0].delay
+        }
+        return 0
+      }
+
       for (let j = 1, jl = p.length; j < jl; j++) {
         // determine pacing factor for point
-        let fs = {
+        fs = {
           gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
           aF: nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel),
           tF: nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors),
@@ -777,13 +819,22 @@ export default {
           fstats.min[k] = Math.min(fstats.min[k], fs[k])
         })
         tot += f * len
+        if (plan && this.pacing.np) {
+          p[j].dtime = this.pacing.np * f * p[j].dloc
+          delay = getDelay(p[j - 1].loc, p[j].loc)
+          elapsed += p[j].dtime + delay
+          p[j].elapsed = elapsed
+          if (this.event.startTime !== null) {
+            p[j].tod = (elapsed + this.event.startTime) % 86400
+          }
+        }
       }
       Object.keys(factors).forEach(k => {
         factors[k] = factors[k] / this.course.len
       })
       this.course.norm = (tot / this.course.len)
 
-      let delay = 0
+      delay = 0
       let time = 0
       let pace = 0
       let np = 0
@@ -824,67 +875,46 @@ export default {
         heatModel: this.heatModel,
         tFs: this.terrainFactors,
         delays: this.delays,
-        sun: this.event.sun || null,
-        sunEventsByLoc: [],
-        sunTime: {day: 0, twilight: 0, dark: 0},
-        sunDist: {day: 0, twilight: 0, dark: 0}
+        sun: this.event.sun || null
       }
 
-      // Add time to points
-      if (plan) {
-        let breaks = this.course.points.map(x => x.loc)
-        p[0].time = 0
-        p[0].dtime = 0
-        let sunType0 = ''
-        let sunType = ''
-        let arr = geo.calcSegments(p, breaks, this.pacing)
-        arr.forEach((x, i) => {
-          p[i + 1].time = x.elapsed
-          p[i + 1].dtime = x.time
-        })
-        if (this.event.startTime !== null) {
-          p.forEach((x, i) => {
-            // tod: time of day in seconds from local midnight
-            p[i].tod = (x.time + this.event.startTime) % 86400
-            if (
-              p[i].tod <= this.event.sun.dawn ||
-              p[i].tod >= this.event.sun.dusk
-            ) {
-              sunType = 'dark'
-              this.pacing.sunTime.dark += p[i].dtime
-              this.pacing.sunDist.dark += p[i].dloc
-            } else if (
-              p[i].tod < this.event.sun.rise ||
-              p[i].tod > this.event.sun.set
-            ) {
-              sunType = 'twilight'
-              this.pacing.sunTime.twilight += p[i].dtime
-              this.pacing.sunDist.twilight += p[i].dloc
-            } else {
-              sunType = 'day'
-              this.pacing.sunTime.day += p[i].dtime
-              this.pacing.sunDist.day += p[i].dloc
-            }
-            if (sunType !== sunType0) {
-              this.pacing.sunEventsByLoc.push({
-                'sunType': sunType,
-                loc: p[i].loc
-              })
-            }
-            sunType0 = sunType
-          })
+      this.$logger('iteratePaceCalc', t)
+    },
+    updateSunTime: function () {
+      // time in sun zones:
+      let sunType0 = ''
+      let sunType = ''
+      this.pacing.sunEventsByLoc = []
+      this.pacing.sunTime = {day: 0, twilight: 0, dark: 0}
+      this.pacing.sunDist = {day: 0, twilight: 0, dark: 0}
+      this.course.points.forEach((x, i) => {
+        if (
+          x.tod <= this.event.sun.dawn ||
+          x.tod >= this.event.sun.dusk
+        ) {
+          sunType = 'dark'
+          this.pacing.sunTime.dark += x.dtime
+          this.pacing.sunDist.dark += x.dloc
+        } else if (
+          x.tod < this.event.sun.rise ||
+          x.tod > this.event.sun.set
+        ) {
+          sunType = 'twilight'
+          this.pacing.sunTime.twilight += x.dtime
+          this.pacing.sunDist.twilight += x.dloc
         } else {
-          p.forEach((x, i) => {
-            delete p[i].tod
+          sunType = 'day'
+          this.pacing.sunTime.day += x.dtime
+          this.pacing.sunDist.day += x.dloc
+        }
+        if (sunType !== sunType0) {
+          this.pacing.sunEventsByLoc.push({
+            'sunType': sunType,
+            loc: x.loc
           })
         }
-      } else {
-        p.forEach((x, i) => {
-          delete p[i].time
-          delete p[i].tod
-        })
-      }
-      this.$logger('iteratePaceCalc', t)
+        sunType0 = sunType
+      })
     },
     updateSegments: function () {
       let t = this.$logger()
