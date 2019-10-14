@@ -29,3 +29,8 @@ npm install
 # serve with hot reload at localhost:3000
 npm run dev
 ```
+
+  
+## No License / Copyright
+The source code herin is copyright Amokrunner, LLC.
+This code may be forked, downloaded, and/or modified for the purposes of contributing to this project only. There is no license for any other use or distribution.
