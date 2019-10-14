@@ -677,9 +677,24 @@ export default {
       this.busy = true
       this.updateFlag = false
       this.$calculating.setCalculating(true)
+
+      // clear out time data if not applicable to this plan:
+      if (!this.planAssigned) {
+        this.course.points.forEach(x => {
+          delete x.time
+          delete x.dtime
+          delete x.tod
+        })
+      } else if (this.event.startTime === null) {
+        this.course.points.forEach(x => {
+          delete x.tod
+        })
+      }
+
       await this.iteratePaceCalc()
       this.updateSplits()
-      // if factors are time-based (eg heat), iterate solution:
+
+      // iterate solution:
       if (this.planAssigned && this.event.startTime !== null) {
         let lastSplits = this.kilometers.map(x => { return x.time })
         let elapsed = this.kilometers[this.kilometers.length - 1].elapsed
@@ -704,16 +719,6 @@ export default {
         }
         this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
         this.updateSunTime()
-      } else if (this.planAssigned) {
-        this.course.points.forEach((x, i) => {
-          delete x.tod
-        })
-      } else {
-        this.course.points.forEach((x, i) => {
-          delete x.time
-          delete x.dtime
-          delete x.tod
-        })
       }
       this.updateSplits('miles')
       this.updateSegments()
