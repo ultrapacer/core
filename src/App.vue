@@ -13,6 +13,7 @@
           <b-nav-item to="/settings" v-if="isAuthenticated">Settings</b-nav-item>
           <b-nav-item href="#" @click.prevent="login" v-if="!isAuthenticated">Login</b-nav-item>
           <b-nav-item href="#" @click.prevent="logout" v-else>Logout</b-nav-item>
+          <b-nav-item to="/about">About</b-nav-item>
           <b-nav-item to="/help">Help</b-nav-item>
           <menu-social class="d-block d-md-none "></menu-social>
         </b-navbar-nav>

@@ -8,6 +8,7 @@ import CoursesManager from '@/components/CoursesManager'
 import Course from '@/components/Course'
 import Settings from '@/components/Settings'
 import PrivacyPolicy from '@/components/PrivacyPolicy'
+import About from '@/components/About'
 import Help from '@/components/Help'
 
 Vue.use(Router)
@@ -63,6 +64,11 @@ let router = new Router({
       path: '/course/plan/:plan',
       name: 'Plan',
       component: Course
+    },
+    {
+      path: '/about',
+      name: 'About',
+      component: About
     },
     {
       path: '/help',
