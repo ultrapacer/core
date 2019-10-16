@@ -1,9 +1,14 @@
 <template>
   <div class="container-fluid mt-4" style="max-width:50rem">
+
   <b-card no-body class="mb-3">
     <b-row no-gutters>
-      <b-col sm="5" order="2" order-sm="1">
-        <b-card-img :src="require('../assets/aboutCourse.png')" class="rounded-0"></b-card-img>
+      <b-col sm="5" order="2" order-sm="1" style="text-align:center">
+        <b-card-img
+          :src="require('../assets/aboutCourse.png')"
+          class="rounded-0"
+          style="max-width:320px">
+        </b-card-img>
       </b-col>
       <b-col sm="7" order="1" order-sm="2">
         <b-card-body title="Create Courses">
@@ -24,16 +29,23 @@
           </b-card-text>
         </b-card-body>
       </b-col>
-      <b-col sm="5">
-        <b-card-img :src="require('../assets/aboutSplits.png')" class="rounded-0"></b-card-img>
+      <b-col sm="5" style="text-align:center">
+        <b-card-img
+          :src="require('../assets/aboutSplits.png')"
+          class="rounded-0"
+          style="max-width:320px"></b-card-img>
       </b-col>
     </b-row>
   </b-card>
 
-    <b-card no-body class="mb-3">
+  <b-card no-body class="mb-3">
     <b-row no-gutters>
-      <b-col sm="5" order="2" order-sm="1">
-        <b-card-img src="https://picsum.photos/400/400/?image=20" class="rounded-0"></b-card-img>
+      <b-col sm="5" order="2" order-sm="1" style="text-align:center">
+        <b-card-img
+          :src="require('../assets/aboutCourse.png')"
+          class="rounded-0"
+          style="max-width:320px">
+        </b-card-img>
       </b-col>
       <b-col sm="7" order="1" order-sm="2">
         <b-card-body title="Aid Station/Landmark Arrival Times">
@@ -54,8 +66,11 @@
           </b-card-text>
         </b-card-body>
       </b-col>
-      <b-col sm="5">
-        <b-card-img src="https://picsum.photos/400/400/?image=20" class="rounded-0"></b-card-img>
+      <b-col sm="5" style="text-align:center">
+        <b-card-img
+          :src="require('../assets/aboutSplits.png')"
+          class="rounded-0"
+          style="max-width:320px"></b-card-img>
       </b-col>
     </b-row>
   </b-card>

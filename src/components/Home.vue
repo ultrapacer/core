@@ -5,7 +5,7 @@
       <h1 class="display-3">ultraPacer</h1>
       <p class="lead pb-4">race & adventure pacing strategy</p>
       <b-button size="lg" variant="outline-primary" to="/courses">
-        {{ (isAuthenticated) ? 'My Courses' : 'Login/Signup' }}
+        {{ (isAuthenticated) ? 'Go to My Courses' : 'Login/Signup' }}
       </b-button>
     </div>
     <about-content v-if="!isAuthenticated">
