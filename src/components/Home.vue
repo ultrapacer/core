@@ -1,38 +1,15 @@
 <template>
-  <div :class="(!isAuthenticated) ? '' : 'hero'">
+  <div>
     <div class="mt-5" style="align-items: center;    justify-content: center;    text-align: center;">
       <img style="width:20%;height:20%" src="../assets/logo.png">
       <h1 class="display-3">ultraPacer</h1>
-      <p class="lead pb-4">race & adventure pacing strategy</p>
+      <p class="lead pb-2">race & adventure pacing strategy</p>
       <b-button size="lg" variant="outline-primary" to="/courses">
-        {{ (isAuthenticated) ? 'Go to My Courses' : 'Login/Signup' }}
+        Login/Signup
       </b-button>
     </div>
-  <about-content v-if="!isAuthenticated">
-  </about-content>
-  <!---
-  <div style="max-width:50rem">
-  <b-card no-body class="mb-3">
-    <b-row no-gutters>
-      <b-col sm="5" order="2" order-sm="1" style="vertical-align:center; text-align:center">
-        <div>
-        <b-button size="lg" variant="outline-primary" to="/courses">
-        'Login/Signup'
-        </b-button>
-        </div>
-      </b-col>
-      <b-col sm="7" order="1" order-sm="2">
-        <b-card-body title="Get Started (it's free)">
-          <b-card-text>
-            Upload GPS tracks to create courses and define waypoints (aid stations, landmarks, junctions, etc.) along the way.<b/>
-            Share your course for others to study the route and create their own pacing plans.
-          </b-card-text>
-        </b-card-body>
-      </b-col>
-    </b-row>
-  </b-card>
-  </div>--->
-  
+  <about-content>
+  </about-content>  
   </div>
 </template>
 
@@ -57,6 +34,33 @@ export default {
   props: ['isAuthenticated', 'user'],
   components: {
     AboutContent
-  }
+  },
+  data () {
+    return {
+      hideAbout: false
+    }
+  },
+  watch: {
+    isAuthenticated: function (val) {
+      if (val) {
+        setTimeout(()=>{
+          this.hideAbout = true
+          this.$bvToast.toast(
+            'Ready to rock and roll.',
+            {
+              title: 'Logged in!',
+              toaster: 'b-toaster-bottom-right',
+              solid: true,
+              variant: 'info',
+              autoHideDelay: 1000
+            }
+          )
+          this.$router.push({
+            name: 'CoursesManager'
+          })
+        }, 500)
+      }
+    }
+  },
 }
 </script>

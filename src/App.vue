@@ -8,13 +8,13 @@
       </b-navbar-brand>
       <b-collapse is-nav id="nav_collapse">
         <b-navbar-nav>
-          <b-nav-item to="/">Home</b-nav-item>
-          <b-nav-item to="/courses" v-if="isAuthenticated">Courses</b-nav-item>
+          <b-nav-item v-if="!isAuthenticated" to="/">Home</b-nav-item>
+          <b-nav-item v-if="isAuthenticated" to="/courses">Courses</b-nav-item>
           <b-nav-item to="/settings" v-if="isAuthenticated">Settings</b-nav-item>
+          <b-nav-item to="/help">Help</b-nav-item>
+          <b-nav-item to="/about">About</b-nav-item>
           <b-nav-item href="#" @click.prevent="login" v-if="!isAuthenticated">Login</b-nav-item>
           <b-nav-item href="#" @click.prevent="logout" v-else>Logout</b-nav-item>
-          <b-nav-item to="/about">About</b-nav-item>
-          <b-nav-item to="/help">Help</b-nav-item>
           <menu-social class="d-block d-md-none "></menu-social>
         </b-navbar-nav>
       </b-collapse>
