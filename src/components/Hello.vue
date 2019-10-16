@@ -2,12 +2,14 @@
   <div class="hero">
     <div>
       <img style="width:20%;height:20%" src="../assets/logo.png">
-      <h1 class="display-3">ultraPacer Beta</h1>
-      <p class="lead pb-4">pace your race</p>
-      <b-button size="lg" variant="outline-primary" to="/courses">Get Started!</b-button>
-      <p class="lead pt-5">send questions and feedback to<br/>
-      <a href="mailto:danny@ultrapacer.com">danny@ultrapacer.com</a></p>
+      <h1 class="display-3">ultraPacer</h1>
+      <p class="lead pb-4">race & adventure pacing strategy</p>
+      <b-button size="lg" variant="outline-primary" to="/courses">
+        {{ (isAuthenticated) ? 'My Courses' : 'Login/Signup' }}
+      </b-button>
     </div>
+    <about-content v-if="!isAuthenticated">
+    </about-content>
   </div>
 </template>
 
@@ -26,7 +28,12 @@
 </style>
 
 <script>
+import AboutContent from './AboutContent'
 export default {
-  title: 'Home'
+  title: 'Home',
+  props: ['isAuthenticated', 'user'],
+  components: {
+    AboutContent
+  }
 }
 </script>
