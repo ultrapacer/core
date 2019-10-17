@@ -8,7 +8,7 @@
     <b-row no-gutters>
       <b-col sm="5" order="2" order-sm="1" style="text-align:center">
         <b-card-img
-          src="https://i.imgur.com/qJgXe3P.jpg"
+          :src="require('../assets/aboutMe.jpg')"
           class="rounded-0"
           style="max-width:320px">
         </b-card-img>
