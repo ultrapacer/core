@@ -16,6 +16,7 @@ import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 import 'vue-awesome/icons/brands/github'
+import 'vue-awesome/icons/brands/instagram'
 import 'vue-awesome/icons/brands/facebook'
 import 'vue-awesome/icons/brands/strava'
 import 'vue-awesome/icons/download'
