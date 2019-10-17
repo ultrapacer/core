@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Hello from '@/components/Hello'
+import Home from '@/components/Home'
 import Callback from '@/components/Callback'
 import Profile from '@/components/Profile'
 import auth from './auth/authService'
@@ -8,6 +8,7 @@ import CoursesManager from '@/components/CoursesManager'
 import Course from '@/components/Course'
 import Settings from '@/components/Settings'
 import PrivacyPolicy from '@/components/PrivacyPolicy'
+import About from '@/components/About'
 import Help from '@/components/Help'
 
 Vue.use(Router)
@@ -17,8 +18,8 @@ let router = new Router({
   routes: [
     {
       path: '/',
-      name: 'Hello',
-      component: Hello
+      name: 'Home',
+      component: Home
     },
     {
       path: '/privacy',
@@ -63,6 +64,11 @@ let router = new Router({
       path: '/course/plan/:plan',
       name: 'Plan',
       component: Course
+    },
+    {
+      path: '/about',
+      name: 'About',
+      component: About
     },
     {
       path: '/help',
