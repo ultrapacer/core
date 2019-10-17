@@ -105,6 +105,13 @@ export default {
     },
     async updateUser () {
       this.user = await api.getUser()
+      if (!this.user.email) {
+        api.updateSettings(this.user._id, {email: this.$auth.profile.email})
+      }
+      if (this.user.admin) {
+        // ignore analytics metrics for admins
+        this.$ga.disable()
+      }
     }
   }
 }

@@ -5,6 +5,13 @@ var UserSchema = new Schema({
   auth0ID: {
     type: String
   },
+  email: {
+    type: String
+  },
+  admin: {
+    type: Boolean,
+    default: false
+  },
   distUnits: {
     type: String,
     default: 'mi'
