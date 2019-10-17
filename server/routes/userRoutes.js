@@ -9,7 +9,10 @@ userRoutes.route('/').get(async function (req, res) {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     if (user == null) {
       console.log('CREATING NEW USER')
-      user = new User({auth0ID: req.user.sub})
+      user = new User({
+        auth0ID: req.user.sub,
+        email: req.user.email
+      })
       await user.save()
       res.json(user)
     } else {
@@ -25,9 +28,12 @@ userRoutes.route('/').get(async function (req, res) {
 userRoutes.route('/:id').put(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    user.distUnits = req.body.distUnits
-    user.elevUnits = req.body.elevUnits
-    user.altModel = req.body.altModel
+    let fields = ['distUnits', 'elevUnits', 'altModel', 'email']
+    fields.forEach((f) => {
+      if (req.body.hasOwnProperty(f)) {
+        user[f] = req.body[f]
+      }
+    })
     await user.save()
     res.json('Update complete')
   } catch (err) {
