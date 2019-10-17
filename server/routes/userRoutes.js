@@ -8,16 +8,12 @@ userRoutes.route('/').get(async function (req, res) {
   try {
     var user = await User.findOne({ auth0ID: req.user.sub }).exec()
     if (user == null) {
-      console.log('CREATING NEW USER')
       user = new User({
-        auth0ID: req.user.sub,
-        email: req.user.email
+        auth0ID: req.user.sub
       })
       await user.save()
-      res.json(user)
-    } else {
-      res.json(user)
     }
+    res.json(user)
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
