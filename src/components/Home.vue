@@ -35,7 +35,6 @@
 import AboutContent from './AboutContent'
 import CoursesManager from './CoursesManager'
 export default {
-  title: () => { return this.isAuthenticated ? 'Courses' : 'Home' },
   props: ['isAuthenticated', 'user'],
   components: {
     AboutContent,
