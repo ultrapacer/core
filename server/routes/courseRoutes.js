@@ -155,7 +155,10 @@ courseRoutes.route('/:course/points').get(async function (req, res) {
       $or: [ { _user: user }, { public: true } ]
     }
     var course = await Course.findOne(q).select('points').exec()
-    res.json(course.points)
+    let p = course.points.map(x => {
+      return [x.lat, x.lon, x.alt]
+    })
+    res.json(p)
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
