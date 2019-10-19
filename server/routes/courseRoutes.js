@@ -113,11 +113,13 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 // GET COURSE
 courseRoutes.route('/:_id').get(async function (req, res) {
   try {
-    let user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    let course = await Course.findById(req.params._id).select('-points').exec()
+    let [user, course] = await Promise.all([
+      User.findOne({ auth0ID: req.user.sub }).exec(),
+      Course.findById(req.params._id).select('-points').exec()
+    ])
     if (user.equals(course._user) || course.public) {
       await course.addData(user, null)
-      await validateWaypoints(course, course.waypoints)
+      // await validateWaypoints(course, course.waypoints)
       res.json(course)
     } else {
       res.status(403).send('No permission')
@@ -131,8 +133,10 @@ courseRoutes.route('/:_id').get(async function (req, res) {
 // GET COURSE BY PLAN
 courseRoutes.route('/plan/:_id').get(async function (req, res) {
   try {
-    let user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    let plan = await Plan.findById(req.params._id).populate(['_user', '_course']).exec()
+    let [user, plan] = await Promise.all([
+      User.findOne({ auth0ID: req.user.sub }).exec(),
+      Plan.findById(req.params._id).populate(['_user', '_course']).exec()
+    ])
     let course = plan._course
     if (course._user.equals(user._id) || course.public) {
       await course.addData(plan._user, req.params._id)
@@ -172,7 +176,7 @@ courseRoutes.route('/:course/waypoints').get(async function (req, res) {
     var course = await Course.findById(req.params.course).select(['_user', 'public']).exec()
     if (course._user.equals(user._id) || course.public) {
       var waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
-      await validateWaypoints(course, waypoints)
+      // await validateWaypoints(course, waypoints)
       res.json(waypoints)
     } else {
       res.status(403).send('No permission')

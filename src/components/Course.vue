@@ -131,7 +131,7 @@
         </b-tabs>
       </b-col>
       <b-col lg="5" order="1">
-        <div v-if="!initializingPoints" class="sticky-top mt-3">
+        <div v-if="this.points.length" class="sticky-top mt-3">
           <div v-if="showMap">
             <course-profile
                 ref="profile"
@@ -219,7 +219,6 @@ export default {
   data () {
     return {
       initializing: true,
-      initializingPoints: true,
       busy: true,
       editing: false,
       saving: false,
@@ -400,6 +399,7 @@ export default {
         this.isAuthenticated,
         this.$route.params.plan ? 'plan' : 'course'
       )
+      t = this.$logger('Course|api.getCourse', t)
       this.getPoints()
       this.$ga.event('Course', 'view', this.publicName)
       this.plans = this.course.plans
@@ -462,12 +462,13 @@ export default {
         this.course._id,
         this.isAuthenticated
       )
-      t = this.$logger(`Course|getPoints: downloaded (${this.points.length} points)`, t)
+      t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
       this.points = pnts.map(x => {
         return {lat: x[0], lon: x[1], alt: x[2]}
       })
       geo.addLoc(this.points)
       t = this.$logger('Course|getPoints: Added locations', t)
+
       let pmax = round(Math.min(7500, this.points[this.points.length - 1].loc / 0.025), 0)
       if (this.points.length > pmax) {
         let stats = geo.calcStats(this.points)
@@ -507,7 +508,6 @@ export default {
       if (!this.pacing.factors) {
         await this.updatePacing()
       }
-      this.initializingPoints = false
     },
     async newWaypoint () {
       this.$refs.wpEdit.show({})
