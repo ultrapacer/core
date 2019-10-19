@@ -38,7 +38,7 @@
 <script>
 import {LMap, LTileLayer, LPolyline, LCircleMarker, LPopup} from 'vue2-leaflet'
 export default {
-  props: ['course', 'focus', 'waypointShowMode', 'units'],
+  props: ['course', 'points', 'focus', 'waypointShowMode', 'units'],
   components: {
     LMap,
     LTileLayer,
@@ -81,7 +81,7 @@ export default {
   },
   methods: {
     updateMapLatLon: function () {
-      var res = this.getLLs(this.course.points)
+      var res = this.getLLs(this.points)
       this.courseLL = res.ll
       this.courseCenter = res.center
       this.courseBounds = res.bounds
@@ -122,7 +122,7 @@ export default {
   watch: {
     focus: function (val) {
       if (val.length) {
-        var points = this.course.points.filter(p =>
+        var points = this.points.filter(p =>
           p.loc >= val[0] && p.loc <= val[1]
         )
         var res = this.getLLs(points)

@@ -39,7 +39,7 @@ export default {
     return this.executeAuth('get', '/api/courses')
   },
   async getCourse (id, authenticated, key = 'course') {
-    let sub = (key === 'plan') ? '/plan' : ''
+    let sub = (key === 'plan') ? 'plan/' : ''
     if (authenticated) {
       return this.executeAuth('get', `/api/course/${sub}${id}`)
     } else {

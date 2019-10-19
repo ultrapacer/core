@@ -3,6 +3,8 @@
     <b-row>
       <b-col class="d-none d-md-block">
         <h1 class="h1">{{ course.name }}</h1>
+        <p v-if="event.start">{{ event.start }}</p>
+        <p v-if="course.description">{{ course.description }}</p>
       </b-col>
       <b-col v-if="!initializing" style="text-align:right">
         <b-row v-if="plansSelect.length">
@@ -58,7 +60,7 @@
     <b-row v-if="!initializing">
       <b-col order="2">
         <b-tabs v-model="tableTabIndex" content-class="mt-3" small>
-          <b-tab title="Segments" active>
+          <b-tab title="Segments" v-if="segments.length" active>
             <segment-table
                 ref="segmentTable"
                 :course="course"
@@ -72,7 +74,7 @@
                 @hide="waypointHide"
               ></segment-table>
           </b-tab>
-          <b-tab title="Splits">
+          <b-tab title="Splits" v-if="splits.length">
             <segment-table
                 ref="splitTable"
                 :course="course"
@@ -115,9 +117,10 @@
               </b-btn>
             </div>
           </b-tab>
-          <b-tab v-if="event.sun || planAssigned" title="Details">
+          <b-tab v-if="pacing.factors" title="Details">
             <plan-details
                 :course="course"
+                :points="points"
                 :event="event"
                 :plan="plan"
                 :pacing="pacing"
@@ -128,11 +131,12 @@
         </b-tabs>
       </b-col>
       <b-col lg="5" order="1">
-        <div v-if="!initializing" class="sticky-top mt-3">
+        <div v-if="!initializingPoints" class="sticky-top mt-3">
           <div v-if="showMap">
             <course-profile
                 ref="profile"
                 :course="course"
+                :points="points"
                 :sunEvents="pacing.sunEventsByLoc"
                 :units="units"
                 :waypointShowMode="waypointShowMode"
@@ -142,6 +146,7 @@
                 ref="map"
                 v-if="showMap"
                 :course="course"
+                :points="points"
                 :focus="mapFocus"
                 :units="units"
                 :waypointShowMode="waypointShowMode"
@@ -214,12 +219,14 @@ export default {
   data () {
     return {
       initializing: true,
+      initializingPoints: true,
       busy: true,
       editing: false,
       saving: false,
       course: {},
       plan: {},
       plans: [],
+      points: [],
       segments: [],
       miles: [],
       kilometers: [],
@@ -233,7 +240,7 @@ export default {
   },
   computed: {
     event: function () {
-      if (!this.course.points) { return {} }
+      let t = this.$logger()
       let e = {
         start: null,
         startTime: null,
@@ -251,18 +258,20 @@ export default {
       let m = moment(e.start).tz(e.timezone)
       e.timeString = m.format('kk:mm')
       e.startTime = string2sec(`${e.timeString}:00`)
-      let times = SunCalc.getTimes(
-        m.toDate(),
-        this.course.points[0].lat,
-        this.course.points[0].lon
-      )
-      e.sun = {
-        dawn: string2sec(moment(times.dawn).tz(e.timezone).format('HH:mm:ss')),
-        rise: string2sec(moment(times.sunrise).tz(e.timezone).format('HH:mm:ss')),
-        set: string2sec(moment(times.sunset).tz(e.timezone).format('HH:mm:ss')),
-        dusk: string2sec(moment(times.dusk).tz(e.timezone).format('HH:mm:ss'))
+      if (this.points.length) {
+        let times = SunCalc.getTimes(
+          m.toDate(),
+          this.points[0].lat,
+          this.points[0].lon
+        )
+        e.sun = {
+          dawn: string2sec(moment(times.dawn).tz(e.timezone).format('HH:mm:ss')),
+          rise: string2sec(moment(times.sunrise).tz(e.timezone).format('HH:mm:ss')),
+          set: string2sec(moment(times.sunset).tz(e.timezone).format('HH:mm:ss')),
+          dusk: string2sec(moment(times.dusk).tz(e.timezone).format('HH:mm:ss'))
+        }
       }
-      this.$logger('Course|compute-event')
+      this.$logger('Course|compute-event', t)
       return e
     },
     heatModel: function () {
@@ -391,10 +400,7 @@ export default {
         this.isAuthenticated,
         this.$route.params.plan ? 'plan' : 'course'
       )
-      this.course.points = await api.getCoursePoints(
-        this.course._id,
-        this.isAuthenticated
-      )
+      this.getPoints()
       this.$ga.event('Course', 'view', this.publicName)
       this.plans = this.course.plans
       this.syncCache(this.course)
@@ -410,52 +416,8 @@ export default {
       this.$router.push({path: '/'})
       return
     }
-    this.$logger(`Course: downloaded course (${this.course.points.length} points)`, t)
-
     this.$title = this.course.name
-    t = this.$logger()
-    geo.addLoc(this.course.points)
-    t = this.$logger('Added locations')
-    let pmax = round(Math.min(7500, this.course.points[this.course.points.length - 1].loc / 0.025), 0)
-    if (this.course.points.length > pmax) {
-      let t = this.$logger()
-      let stats = geo.calcStats(this.course.points)
-      let len = this.course.points[this.course.points.length - 1].loc
-      let xs = Array(pmax).fill(0).map((e, i) => i++ * len / (pmax - 1))
-      let adj = geo.pointWLSQ(
-        this.course.points,
-        xs,
-        0.05
-      )
-      let p2 = []
-      let llas = geo.getLatLonAltFromDistance(this.course.points, xs, 0)
-      xs.forEach((x, i) => {
-        p2.push({
-          alt: adj[i].alt,
-          lat: llas[i].lat,
-          lon: llas[i].lon,
-          loc: x,
-          grade: adj[i].grade,
-          dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
-        })
-      })
-      let stats2 = geo.calcStats(p2)
-      this.course.scales = {
-        gain: stats.gain / stats2.gain,
-        loss: stats.loss / stats2.loss,
-        grade: (stats.gain - stats.loss) / (stats2.gain - stats2.loss)
-      }
-      p2.forEach((x, i) => {
-        p2[i].grade = p2[i].grade * this.course.scales.grade
-      })
-      this.course.points = p2
-      this.$logger(`Scaled course to ${pmax} points`, t)
-    }
-    this.course.len = this.course.points[this.course.points.length - 1].loc
-    this.checkWaypoints()
-    if (!this.useCache()) {
-      await this.updatePacing()
-    }
+    this.useCache()
     this.initializing = false
     setTimeout(() => {
       this.showMap = true
@@ -466,7 +428,6 @@ export default {
     }, 500)
     this.busy = false
     this.$calculating.setCalculating(false)
-    this.$logger('Finish')
     setTimeout(() => {
       if (!this.isAuthenticated) {
         this.$bvToast.toast(
@@ -492,8 +453,60 @@ export default {
         )
       }
     }, 1000)
+    this.$logger('Course|created', t)
   },
   methods: {
+    async getPoints () {
+      let t = this.$logger()
+      this.points = await api.getCoursePoints(
+        this.course._id,
+        this.isAuthenticated
+      )
+      this.$logger(`Course|getPoints: downloaded (${this.points.length} points)`, t)
+      t = this.$logger()
+      geo.addLoc(this.points)
+      t = this.$logger('Course|getPoints: Added locations', t)
+      let pmax = round(Math.min(7500, this.points[this.points.length - 1].loc / 0.025), 0)
+      if (this.points.length > pmax) {
+        let stats = geo.calcStats(this.points)
+        let len = this.points[this.points.length - 1].loc
+        let xs = Array(pmax).fill(0).map((e, i) => i++ * len / (pmax - 1))
+        let adj = geo.pointWLSQ(
+          this.points,
+          xs,
+          0.05
+        )
+        let p2 = []
+        let llas = geo.getLatLonAltFromDistance(this.points, xs, 0)
+        xs.forEach((x, i) => {
+          p2.push({
+            alt: adj[i].alt,
+            lat: llas[i].lat,
+            lon: llas[i].lon,
+            loc: x,
+            grade: adj[i].grade,
+            dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
+          })
+        })
+        let stats2 = geo.calcStats(p2)
+        this.course.scales = {
+          gain: stats.gain / stats2.gain,
+          loss: stats.loss / stats2.loss,
+          grade: (stats.gain - stats.loss) / (stats2.gain - stats2.loss)
+        }
+        p2.forEach((x, i) => {
+          p2[i].grade = p2[i].grade * this.course.scales.grade
+        })
+        this.points = p2
+        this.$logger(`Scaled course to ${pmax} points`, t)
+      }
+      this.course.len = this.points[this.points.length - 1].loc
+      this.checkWaypoints()
+      if (!this.pacing.factors) {
+        await this.updatePacing()
+      }
+      this.initializingPoints = false
+    },
     async newWaypoint () {
       this.$refs.wpEdit.show({})
     },
@@ -645,6 +658,7 @@ export default {
       if (typeof callback === 'function') callback()
     },
     async calcPlan () {
+      let t = this.$logger()
       if (!this.planAssigned) { return }
       this.$router.push({
         name: 'Plan',
@@ -663,6 +677,7 @@ export default {
       } else {
         this.$refs.profile.update()
       }
+      this.$logger('Course|calcPlan', t)
     },
     async clearPlan () {
       // deselect the current plan
@@ -685,13 +700,13 @@ export default {
 
       // clear out time data if not applicable to this plan:
       if (!this.planAssigned) {
-        this.course.points.forEach(x => {
+        this.points.forEach(x => {
           delete x.time
           delete x.dtime
           delete x.tod
         })
       } else if (this.event.startTime === null) {
-        this.course.points.forEach(x => {
+        this.points.forEach(x => {
           delete x.tod
         })
       }
@@ -772,7 +787,7 @@ export default {
         max: {gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0},
         min: {gF: 100, aF: 100, tF: 100, hF: 100, dark: 100, dF: 100}
       }
-      var p = this.course.points
+      var p = this.points
       let hasTOD = p[0].hasOwnProperty('tod')
       let fs = {}
       let elapsed = 0
@@ -892,7 +907,7 @@ export default {
       this.pacing.sunEventsByLoc = []
       this.pacing.sunTime = {day: 0, twilight: 0, dark: 0}
       this.pacing.sunDist = {day: 0, twilight: 0, dark: 0}
-      this.course.points.forEach((x, i) => {
+      this.points.forEach((x, i) => {
         if (
           x.tod <= this.event.sun.dawn ||
           x.tod >= this.event.sun.dusk
@@ -931,7 +946,7 @@ export default {
           wps.push(x)
         }
       })
-      let arr = geo.calcSegments(this.course.points, breaks, this.pacing)
+      let arr = geo.calcSegments(this.points, breaks, this.pacing)
       arr.forEach((x, i) => {
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
@@ -947,7 +962,7 @@ export default {
       // eslint-disable-next-line
       this.updateTrigger // hack for force recompute
       let distScale = (unit === 'kilometers') ? 1 : 0.621371
-      let p = this.course.points
+      let p = this.points
       var tot = p[p.length - 1].loc * distScale
       let breaks = [0]
       var i = 1

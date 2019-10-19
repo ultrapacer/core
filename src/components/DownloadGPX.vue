@@ -18,7 +18,7 @@
 <script>
 import api from '@/api'
 export default {
-  props: ['id'],
+  props: ['id', 'isAuthenticated'],
   data () {
     return {
       course: null,
@@ -33,7 +33,7 @@ export default {
         window.URL.revokeObjectURL(this.downloadURL)
       }
       this.$bvToast.show('my-toast')
-      this.course = await api.getCourse(this.id)
+      this.course = await api.getCourse(this.id, this.isAuthenticated)
       let textarr = ['<?xml version="1.0" encoding="UTF-8"?>',
         '<gpx creator="ultraPacer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" version="1.1" xmlns="http://www.topografix.com/GPX/1/1">',
         ' <trk>',
