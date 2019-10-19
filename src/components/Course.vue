@@ -458,12 +458,14 @@ export default {
   methods: {
     async getPoints () {
       let t = this.$logger()
-      this.points = await api.getCoursePoints(
+      let pnts = await api.getCoursePoints(
         this.course._id,
         this.isAuthenticated
       )
-      this.$logger(`Course|getPoints: downloaded (${this.points.length} points)`, t)
-      t = this.$logger()
+      t = this.$logger(`Course|getPoints: downloaded (${this.points.length} points)`, t)
+      this.points = pnts.map(x => {
+        return {lat: x[0], lon: x[1], alt: x[2]}
+      })
       geo.addLoc(this.points)
       t = this.$logger('Course|getPoints: Added locations', t)
       let pmax = round(Math.min(7500, this.points[this.points.length - 1].loc / 0.025), 0)
