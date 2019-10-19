@@ -38,4 +38,19 @@ publicRoutes.route('/course/plan/:_id').get(async function (req, res) {
   }
 })
 
+// GET COURSE POINTS
+publicRoutes.route('/:course/points').get(async function (req, res) {
+  try {
+    let q = {
+      _id: req.params.course,
+      public: true
+    }
+    var course = await Course.findOne(q).select('points').exec()
+    res.json(course.points)
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
 module.exports = publicRoutes

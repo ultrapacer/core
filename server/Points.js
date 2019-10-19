@@ -7,7 +7,7 @@ var PointsSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course'
   },
-  data: [Array],
+  data: [Array]
 }, {
   collection: 'points'
 })

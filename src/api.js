@@ -20,7 +20,7 @@ export default {
       return req.data
     })
   },
-  async executePublic (method, resource, data) {
+  async execute (method, resource, data) {
     return client({
       method,
       url: resource,
@@ -38,21 +38,19 @@ export default {
   getCourses () {
     return this.executeAuth('get', '/api/courses')
   },
-  async getCourse (id, key = 'course') {
-    try {
-      await Vue.prototype.$auth.getAccessToken()
-      if (key === 'plan') {
-        return this.executeAuth('get', `/api/course/plan/${id}`)
-      } else {
-        return this.executeAuth('get', `/api/course/${id}`)
-      }
-    } catch (err) {
-      console.log('Not authenticated. Attempting public access.')
-      if (key === 'plan') {
-        return this.executePublic('get', `/api-public/course/plan/${id}`)
-      } else {
-        return this.executePublic('get', `/api-public/course/${id}`)
-      }
+  async getCourse (id, authenticated, key = 'course') {
+    let sub = (key === 'plan') ? '/plan' : ''
+    if (authenticated) {
+      return this.executeAuth('get', `/api/course/${sub}${id}`)
+    } else {
+      return this.execute('get', `/api-public/course/${sub}${id}`)
+    }
+  },
+  async getCoursePoints (id, authenticated) {
+    if (authenticated) {
+      return this.executeAuth('get', `/api/course/${id}/points`)
+    } else {
+      return this.execute('get', `/api-public/course/${id}/points`)
     }
   },
   createCourse (data) {

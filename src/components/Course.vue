@@ -233,6 +233,7 @@ export default {
   },
   computed: {
     event: function () {
+      if (!this.course.points) { return {} }
       let e = {
         start: null,
         startTime: null,
@@ -385,11 +386,15 @@ export default {
     this.$calculating.setCalculating(true)
     let t = this.$logger()
     try {
-      if (this.$route.params.plan) {
-        this.course = await api.getCourse(this.$route.params.plan, 'plan')
-      } else {
-        this.course = await api.getCourse(this.$route.params.course)
-      }
+      this.course = await api.getCourse(
+        this.$route.params.plan ? this.$route.params.plan : this.$route.params.course,
+        this.isAuthenticated,
+        this.$route.params.plan ? 'plan' : 'course'
+      )
+      this.course.points = await api.getCoursePoints(
+        this.course._id,
+        this.isAuthenticated
+      )
       this.$ga.event('Course', 'view', this.publicName)
       this.plans = this.course.plans
       this.syncCache(this.course)
