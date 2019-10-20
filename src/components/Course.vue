@@ -131,27 +131,27 @@
         </b-tabs>
       </b-col>
       <b-col lg="5" order="1">
-        <div v-if="this.points.length" class="sticky-top mt-3">
-          <div v-if="showMap">
-            <course-profile
-                ref="profile"
-                :course="course"
-                :points="points"
-                :sunEvents="pacing.sunEventsByLoc"
-                :units="units"
-                :waypointShowMode="waypointShowMode"
-                @waypointClick="waypointClick"
-              ></course-profile>
-            <course-map
-                ref="map"
-                v-if="showMap"
-                :course="course"
-                :points="points"
-                :focus="mapFocus"
-                :units="units"
-                :waypointShowMode="waypointShowMode"
-              ></course-map>
-          </div>
+        <div v-if="this.points.length" class="sticky-top mt-1">
+          <course-profile
+              ref="profile"
+              :course="course"
+              :points="points"
+              :sunEvents="pacing.sunEventsByLoc"
+              :units="units"
+              :waypointShowMode="waypointShowMode"
+              @waypointClick="waypointClick"
+            ></course-profile>
+          <course-map
+              ref="map"
+              :course="course"
+              :points="points"
+              :focus="mapFocus"
+              :units="units"
+              :waypointShowMode="waypointShowMode"
+            ></course-map>
+        </div>
+        <div v-else class="d-flex justify-content-center mt-3 mb-3">
+          <b-spinner label="Loading..." ></b-spinner>
         </div>
       </b-col>
     </b-row>
@@ -232,7 +232,6 @@ export default {
       waypoint: {},
       pacing: {},
       mapFocus: [],
-      showMap: false,
       tableTabIndex: 0,
       updateFlag: false
     }
@@ -405,6 +404,7 @@ export default {
       this.plans = this.course.plans
       this.syncCache(this.course)
       this.syncCache(this.plans)
+      this.resetWaypointShow()
       if (this.$route.params.plan) {
         this.plan = this.plans.find(
           x => x._id === this.$route.params.plan
@@ -420,7 +420,6 @@ export default {
     this.useCache()
     this.initializing = false
     setTimeout(() => {
-      this.showMap = true
       if (this.$route.query.method) {
         this[this.$route.query.method]()
         this.$router.push({query: {}})
@@ -504,7 +503,6 @@ export default {
         this.$logger(`Scaled course to ${pmax} points`, t)
       }
       this.course.len = this.points[this.points.length - 1].loc
-      this.checkWaypoints()
       if (!this.pacing.factors) {
         await this.updatePacing()
       }
@@ -542,43 +540,14 @@ export default {
     },
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
-      this.checkWaypoints()
+      this.resetWaypointShow()
       this.setUpdateFlag()
       if (typeof callback === 'function') callback()
     },
-    checkWaypoints () {
-      let t = this.$logger()
-      // function ensures start at 0, finish at length,
-      // and all waypoints are within course
-      let wps = this.course.waypoints
-      let start = wps[wps.findIndex(x => x.type === 'start')]
-      if (start.location !== 0) {
-        console.log('Fixing waypoint: ' + start.name)
-        start.location = 0
-        api.updateWaypoint(start._id, start)
-      }
-      let max = (round(this.course.len * this.units.distScale, 2) - 0.01)
-      max = max / this.units.distScale
-      wps.filter(
-        x =>
-          x.type !== 'start' &&
-          x.type !== 'finish' &&
-          x.location > max
-      ).forEach((x, i) => {
-        console.log('Fixing waypoint: ' + x.name)
-        wps[i].location = max
-        api.updateWaypoint(wps[i]._id, wps[i])
+    resetWaypointShow () {
+      this.course.waypoints.forEach((x, i) => {
+        x.show = x.type === 'start' || x.tier === 1
       })
-      let finish = wps[wps.findIndex(x => x.type === 'finish')]
-      if (round(finish.location, 6) !== round(this.course.len, 6)) {
-        console.log('Fixing waypoint: ' + finish.name)
-        finish.location = this.course.len
-        api.updateWaypoint(finish._id, finish)
-      }
-      wps.forEach((x, i) => {
-        wps[i].show = x.type === 'start' || x.tier === 1
-      })
-      this.$logger('checkWaypoints', t)
     },
     async newPlan () {
       this.$ga.event('Plan', 'add', this.publicName)
