@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import axios from 'axios'
+import { logger } from './plugins/logger'
 
 const client = axios.create({
   json: true
@@ -7,7 +8,7 @@ const client = axios.create({
 
 export default {
   async executeAuth (method, resource, data) {
-    // inject the accessToken for each request
+    var t = logger()
     let accessToken = await Vue.prototype.$auth.getAccessToken()
     return client({
       method,
@@ -17,15 +18,18 @@ export default {
         Authorization: `Bearer ${accessToken}`
       }
     }).then(req => {
+      logger(`api|executeAuth|${method}|${resource}`, t)
       return req.data
     })
   },
   async execute (method, resource, data) {
+    var t = logger()
     return client({
       method,
       url: resource,
       data
     }).then(req => {
+      logger(`api|execute|${method}|${resource}`, t)
       return req.data
     })
   },

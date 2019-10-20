@@ -3,8 +3,8 @@
     <b-row>
       <b-col class="d-none d-md-block">
         <h1 class="h1">{{ course.name }}</h1>
-        <p v-if="event.start">{{ event.start }}</p>
-        <p v-if="course.description">{{ course.description }}</p>
+<!--         <p v-if="event.start">{{ event.start }}</p>
+        <p v-if="course.description">{{ course.description }}</p> -->
       </b-col>
       <b-col v-if="!initializing" style="text-align:right">
         <b-row v-if="plansSelect.length">
