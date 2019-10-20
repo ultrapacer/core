@@ -8,7 +8,7 @@ import { pointWLSQ } from '@/util/geo'
 import LineChart from './LineChart.js'
 
 export default {
-  props: ['course', 'sunEvents', 'units', 'waypointShowMode'],
+  props: ['course', 'points', 'sunEvents', 'units', 'waypointShowMode'],
   components: {
     LineChart
   },
@@ -226,12 +226,12 @@ export default {
       var chartGrade = []
       xs = Array(pmax + 1).fill(0).map((e, i) => i++ * this.course.len / pmax)
       ysa = pointWLSQ(
-        this.course.points,
+        this.points,
         xs,
         this.course.len / pmax / 5
       )
       ysg = pointWLSQ(
-        this.course.points,
+        this.points,
         xs,
         5 * this.course.len / pmax
       )

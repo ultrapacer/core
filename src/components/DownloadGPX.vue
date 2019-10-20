@@ -18,11 +18,12 @@
 <script>
 import api from '@/api'
 export default {
-  props: ['id'],
+  props: ['id', 'isAuthenticated'],
   data () {
     return {
       course: null,
-      downloadURL: null
+      downloadURL: null,
+      points: null
     }
   },
   methods: {
@@ -33,14 +34,18 @@ export default {
         window.URL.revokeObjectURL(this.downloadURL)
       }
       this.$bvToast.show('my-toast')
-      this.course = await api.getCourse(this.id)
+      this.course = await api.getCourse(this.id, this.isAuthenticated)
+      this.points = await api.getCoursePoints(this.id, this.isAuthenticated)
+      this.points = this.points.map(x => {
+        return {lat: x[0], lon: x[1], alt: x[2]}
+      })
       let textarr = ['<?xml version="1.0" encoding="UTF-8"?>',
         '<gpx creator="ultraPacer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" version="1.1" xmlns="http://www.topografix.com/GPX/1/1">',
         ' <trk>',
         '  <name>' + this.course.name + '</name>',
         '  <type>9</type>',
         '  <trkseg>']
-      this.course.points.forEach(p => {
+      this.points.forEach(p => {
         textarr.push(`  <trkpt lat="${p.lat}" lon="${p.lon}">`)
         textarr.push(`   <ele>${p.alt}</ele>`)
         textarr.push('  </trkpt>')

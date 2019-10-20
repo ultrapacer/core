@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import axios from 'axios'
+import { logger } from './plugins/logger'
 
 const client = axios.create({
   json: true
@@ -7,7 +8,7 @@ const client = axios.create({
 
 export default {
   async executeAuth (method, resource, data) {
-    // inject the accessToken for each request
+    var t = logger()
     let accessToken = await Vue.prototype.$auth.getAccessToken()
     return client({
       method,
@@ -17,15 +18,18 @@ export default {
         Authorization: `Bearer ${accessToken}`
       }
     }).then(req => {
+      logger(`api|executeAuth|${method}|${resource}`, t)
       return req.data
     })
   },
-  async executePublic (method, resource, data) {
+  async execute (method, resource, data) {
+    var t = logger()
     return client({
       method,
       url: resource,
       data
     }).then(req => {
+      logger(`api|execute|${method}|${resource}`, t)
       return req.data
     })
   },
@@ -38,21 +42,21 @@ export default {
   getCourses () {
     return this.executeAuth('get', '/api/courses')
   },
-  async getCourse (id, key = 'course') {
+  async getCourse (id, authenticated, key = 'course') {
+    let sub = (key === 'plan') ? 'plan/' : ''
     try {
       await Vue.prototype.$auth.getAccessToken()
-      if (key === 'plan') {
-        return this.executeAuth('get', `/api/course/plan/${id}`)
-      } else {
-        return this.executeAuth('get', `/api/course/${id}`)
-      }
+      return this.executeAuth('get', `/api/course/${sub}${id}`)
     } catch (err) {
-      console.log('Not authenticated. Attempting public access.')
-      if (key === 'plan') {
-        return this.executePublic('get', `/api-public/course/plan/${id}`)
-      } else {
-        return this.executePublic('get', `/api-public/course/${id}`)
-      }
+      return this.execute('get', `/api-public/course/${sub}${id}`)
+    }
+  },
+  async getCoursePoints (id, authenticated) {
+    try {
+      await Vue.prototype.$auth.getAccessToken()
+      return this.executeAuth('get', `/api/course/${id}/points`)
+    } catch (err) {
+      return this.execute('get', `/api-public/course/${id}/points`)
     }
   },
   createCourse (data) {

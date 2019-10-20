@@ -270,7 +270,7 @@ import {sec2string} from '../util/time'
 import {aF, gF} from '../util/normFactor'
 import {round} from '../util/math'
 export default {
-  props: ['plan', 'pacing', 'units', 'course', 'event', 'busy'],
+  props: ['plan', 'points', 'pacing', 'units', 'course', 'event', 'busy'],
   data () {
     return {
       methods: {
@@ -311,28 +311,28 @@ export default {
     maxAltitude: function () {
       var m = Math.max.apply(
         Math,
-        this.course.points.map(x => { return x.alt })
+        this.points.map(x => { return x.alt })
       )
       return m
     },
     minAltitude: function () {
       var m = Math.min.apply(
         Math,
-        this.course.points.map(x => { return x.alt })
+        this.points.map(x => { return x.alt })
       )
       return m
     },
     maxGrade: function () {
       var max = Math.max.apply(
         Math,
-        this.course.points.map(x => { return x.grade })
+        this.points.map(x => { return x.grade })
       )
       return max
     },
     minGrade: function () {
       var min = Math.min.apply(
         Math,
-        this.course.points.map(x => { return x.grade })
+        this.points.map(x => { return x.grade })
       )
       return min
     },

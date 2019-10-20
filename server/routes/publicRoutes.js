@@ -7,14 +7,13 @@ var Plan = require('../models/Plan')
 // GET COURSE
 publicRoutes.route('/course/:_id').get(async function (req, res) {
   try {
-    let q = { _id: req.params._id }
-    var course = await Course.findOne(q).populate(['_plan']).exec()
-    if (course.public) {
-      await course.addData()
-      res.json(course)
-    } else {
-      res.status(403).send('No permission')
+    let q = {
+      _id: req.params._id,
+      public: true
     }
+    var course = await Course.findOne(q).select('-points').populate(['_plan']).exec()
+    await course.addData()
+    res.json(course)
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
@@ -32,6 +31,24 @@ publicRoutes.route('/course/plan/:_id').get(async function (req, res) {
     } else {
       res.status(403).send('No permission')
     }
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
+// GET COURSE POINTS
+publicRoutes.route('/course/:course/points').get(async function (req, res) {
+  try {
+    let q = {
+      _id: req.params.course,
+      public: true
+    }
+    var course = await Course.findOne(q).select('points').exec()
+    let p = course.points.map(x => {
+      return [x.lat, x.lon, x.alt]
+    })
+    res.json(p)
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
