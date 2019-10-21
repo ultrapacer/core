@@ -235,7 +235,7 @@ export default {
           this.model.points = reduced.map(x => {
             return [x.lat, x.lon, x.alt]
           })
-          this.model.pointsRaw = points.map(x => {
+          this.model.raw = points.map(x => {
             return [x.lat, x.lon, x.alt]
           })
         } else {
