@@ -234,10 +234,10 @@ export default {
         }
         
         //reformat points for upload
-        points = points.map(x => {
+        this.model.rawPoints = points.map(x => {
           return [x.lat, x.lon, x.alt]
         })
-        reduced = reduced.map(x => {
+        this.model.points = reduced.map(x => {
           return [x.lat, x.lon, x.alt]
         })
       }
