@@ -171,11 +171,9 @@ export default {
           type: 'gpx',
           name: this.gpxFile.name
         }
-        this.model.points = this.gpxPoints
-        let p2 = []
-        this.model.points.forEach((x) => { p2.push({...x}) })
-        geo.addLoc(p2)
-        var stats = geo.calcStats(p2)
+        let points = this.gpxPoints
+        geo.addLoc(points)
+        var stats = geo.calcStats(points)
         this.model.gain = stats.gain
         this.model.loss = stats.loss
 
@@ -198,20 +196,52 @@ export default {
                   // iteration threshold th:
                   var th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
                   // resolve closest distance for waypoint LLA
-                  wp.location = wputil.nearestLoc(wp, p2, th)
+                  wp.location = wputil.nearestLoc(wp, points, th)
                 } catch (err) {
                   console.log(err)
                 }
               }
-              wputil.updateLLA(wp, p2)
+              wputil.updateLLA(wp, points)
               await api.updateWaypoint(wp._id, wp)
               this.$logger(`CourseEdit|save|adjustWaypoint: ${wp.name}`, t)
             }))
           }
         }
         this.model.distance = stats.dist
+        
+        // get reduced point set:
+        let pmax = round(Math.min(10000, points[points.length - 1].loc / 0.025), 0)
+        if (points.length > pmax) {
+          let len = points[points.length - 1].loc
+          let xs = Array(pmax).fill(0).map((e, i) => i++ * len / (pmax - 1))
+          let adj = geo.pointWLSQ(
+            points,
+            xs,
+            0.05
+          )
+          let reduced = []
+          let llas = geo.getLatLonAltFromDistance(points, xs, 0)
+          xs.forEach((x, i) => {
+            reduced.push({
+              alt: adj[i].alt,
+              lat: llas[i].lat,
+              lon: llas[i].lon,
+              loc: x,
+              grade: adj[i].grade,
+              dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
+            })
+          })
+        }
+        
+        //reformat points for upload
+        points = points.map(x => {
+          return [x.lat, x.lon, x.alt]
+        })
+        reduced = reduced.map(x => {
+          return [x.lat, x.lon, x.alt]
+        })
       }
-
+      
       if (this.eventTime && this.eventDate) {
         this.model.eventStart = moment.tz(`${this.eventDate} ${this.eventTime}`, this.model.eventTimezone).toDate()
       } else {
