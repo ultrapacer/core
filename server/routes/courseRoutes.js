@@ -153,11 +153,13 @@ courseRoutes.route('/:course/points').get(async function (req, res) {
       _id: req.params.course,
       $or: [ { _user: user }, { public: true } ]
     }
-    var course = await Course.findOne(q).select('points').exec()
-    let p = course.points.map(x => {
-      return [x.lat, x.lon, x.alt]
-    })
-    res.json(p)
+    var points = await Points.findOne(q).populate(['_course', '_course._user']).exec()
+    if (points._course.public || points._course._user.auth0ID === req.user.sub) {
+      await course.addData(plan._user, req.params._id)
+      res.json(points.data)
+    } else {
+      res.status(403).send('No permission')
+    }
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
