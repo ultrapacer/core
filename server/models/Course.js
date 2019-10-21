@@ -44,7 +44,7 @@ var CourseSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Plan'
   }],
-  points: {
+  _points: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Points'
   },
