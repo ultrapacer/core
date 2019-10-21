@@ -6,6 +6,10 @@ var PointsSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course'
   },
+  type: {
+    type: String,
+    default: 'raw'
+  },
   data: [],
 }, {
   collection: 'points'
