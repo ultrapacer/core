@@ -9,8 +9,8 @@ var Waypoint = require('../models/Waypoint')
 // SAVE NEW
 courseRoutes.route('/').post(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = new Course(req.body)
+    let user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    let course = new Course(req.body)
     course._user = user
     await course.save()
     res.status(200).json({'post': 'Course added successfully'})
@@ -50,10 +50,12 @@ courseRoutes.route('/:id').put(async function (req, res) {
     if (course._user.equals(user._id)) {
       let fields = ['name', 'description', 'public', 'eventStart', 'eventTimezone']
       if (req.body.points) {
-        fields.push('points', 'source', 'distance', 'gain', 'loss')
+        fields.push('points', 'raw', 'source', 'distance', 'gain', 'loss')
       }
       fields.forEach(f => {
-        course[f] = req.body[f]
+        if (req.body.hasOwnProperty(f)) {
+          course[f] = req.body[f]
+        }
       })
       await course.save()
       await course.clearCache()
