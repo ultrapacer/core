@@ -88,7 +88,6 @@ CourseSchema.methods.clearCache = async function () {
 }
 
 CourseSchema.pre('remove', function () {
-  Points.remove({_course: this._id}).exec()
   Plan.remove({_course: this._id}).exec()
   Waypoint.remove({_course: this._id}).exec()
 })
