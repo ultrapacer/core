@@ -231,15 +231,19 @@ export default {
               dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
             })
           })
+          //reformat points for upload
+          this.model.points = reduced.map(x => {
+            return [x.lat, x.lon, x.alt]
+          })
+          this.model.pointsRaw = points.map(x => {
+            return [x.lat, x.lon, x.alt]
+          })
+        } else {
+          //reformat points for upload
+          this.model.points = points.map(x => {
+            return [x.lat, x.lon, x.alt]
+          })
         }
-        
-        //reformat points for upload
-        this.model.rawPoints = points.map(x => {
-          return [x.lat, x.lon, x.alt]
-        })
-        this.model.points = reduced.map(x => {
-          return [x.lat, x.lon, x.alt]
-        })
       }
       
       if (this.eventTime && this.eventDate) {
