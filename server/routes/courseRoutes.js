@@ -35,7 +35,7 @@ courseRoutes.route('/').get(async function (req, res) {
       }
     ]
   }
-  var courses = await Course.find(q).select('-points')
+  var courses = await Course.find(q).select(['-points', '-raw'])
     .collation({'locale': 'en'}).sort('name').exec()
   res.json(courses)
 })
@@ -116,7 +116,7 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 courseRoutes.route('/:_id').get(async function (req, res) {
   try {
     let course = await Course.findById(req.params._id).populate('_user')
-      .select('-points').exec()
+      .select(['-points', '-raw']).exec()
     if (course.public || course._user.auth0ID === req.user.sub) {
       await course.addData(course._user, null)
       res.json(course)
