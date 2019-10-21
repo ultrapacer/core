@@ -11,7 +11,7 @@ publicRoutes.route('/course/:_id').get(async function (req, res) {
       _id: req.params._id,
       public: true
     }
-    var course = await Course.findOne(q).select('-points').populate(['_plan']).exec()
+    var course = await Course.findOne(q).select(['-points', '-raw']).populate(['_plan']).exec()
     await course.addData()
     res.json(course)
   } catch (err) {
