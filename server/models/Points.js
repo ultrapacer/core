@@ -7,8 +7,7 @@ var PointsSchema = new Schema({
     ref: 'Course'
   },
   type: {
-    type: String,
-    default: 'raw'
+    type: String
   },
   data: [],
 }, {
