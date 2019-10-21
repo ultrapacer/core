@@ -9,6 +9,9 @@
     <b-link href="https://github.com/amokrunner/ultrapacer" target="_blank" class="nav-link socialbutton">
       <v-icon name="brands/github"></v-icon>
     </b-link>
+    <b-link href="https://www.patreon.com/ultrapacer" target="_blank" class="nav-link socialbutton">
+      <v-icon name="brands/patreon"></v-icon>
+    </b-link>
     <b-link href="mailto:danny@ultrapacer.com" target="_blank" class="nav-link socialbutton">
       <v-icon name="envelope"></v-icon>
     </b-link>
