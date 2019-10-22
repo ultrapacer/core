@@ -210,10 +210,13 @@ export default {
         this.model.distance = stats.dist
         
         // get reduced point set:
-        let pmax = round(Math.min(10000, points[points.length - 1].loc / 0.025), 0)
-        if (points.length > pmax) {
+        let pmax = Math.floor(stats.dist / 0.025)
+        pmax += (stats.dist % 0.025 > 0) ? 2 : 1
           let len = points[points.length - 1].loc
-          let xs = Array(pmax).fill(0).map((e, i) => i++ * len / (pmax - 1))
+          let xs = Array(pmax - 1).fill(0).map((e, i) => i++ * 0.025)
+          if xs[xs.length - 1] < stats.dist) {
+            xs.push(stats.dist)
+          }
           let adj = geo.pointWLSQ(
             points,
             xs,
@@ -221,29 +224,29 @@ export default {
           )
           let reduced = []
           let llas = geo.getLatLonAltFromDistance(points, xs, 0)
-          xs.forEach((x, i) => {
-            reduced.push({
+          let reduced = xs.map((x, i) => {
+            return {
               alt: adj[i].alt,
               lat: llas[i].lat,
               lon: llas[i].lon,
               loc: x,
-              grade: adj[i].grade,
-              dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
-            })
+              grade: adj[i].grade
+            }
           })
           //reformat points for upload
-          this.model.points = reduced.map(x => {
-            return [x.lat, x.lon, x.alt]
+          this.model.points = reduced.map((x, i) => {
+            return [
+              round(llas[i].lat, 4),
+              round(llas[i].lon, 4),
+              round(x.alt, 1),
+              x,
+              round(adj[i].grade, 4)
+            ]
           })
           this.model.raw = points.map(x => {
             return [x.lat, x.lon, x.alt]
           })
-        } else {
-          //reformat points for upload
-          this.model.points = points.map(x => {
-            return [x.lat, x.lon, x.alt]
-          })
-        }
+          this.model.reduced = true
       }
       
       if (this.eventTime && this.eventDate) {
