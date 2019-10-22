@@ -45,10 +45,6 @@ var CourseSchema = new Schema({
     ref: 'Plan'
   }],
   points: [],
-  reduced: {
-    type: Boolean,
-    default: true
-  },
   raw: [],
   source: {},
   altModel: {},

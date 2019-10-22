@@ -187,7 +187,6 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
-import {round} from '@/util/math'
 import nF from '@/util/normFactor'
 import {string2sec} from '../util/time'
 import CourseMap from './CourseMap'
@@ -462,47 +461,26 @@ export default {
         this.isAuthenticated
       )
       t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
-      this.points = pnts.map(x => {
-        return {lat: x[0], lon: x[1], alt: x[2]}
-      })
-      geo.addLoc(this.points)
-      t = this.$logger('Course|getPoints: Added locations', t)
-
-      let pmax = round(Math.min(7500, this.points[this.points.length - 1].loc / 0.025), 0)
-      if (this.points.length > pmax) {
-        let stats = geo.calcStats(this.points)
-        let len = this.points[this.points.length - 1].loc
-        let xs = Array(pmax).fill(0).map((e, i) => i++ * len / (pmax - 1))
-        let adj = geo.pointWLSQ(
-          this.points,
-          xs,
-          0.05
-        )
-        let p2 = []
-        let llas = geo.getLatLonAltFromDistance(this.points, xs, 0)
-        xs.forEach((x, i) => {
-          p2.push({
-            alt: adj[i].alt,
-            lat: llas[i].lat,
-            lon: llas[i].lon,
-            loc: x,
-            grade: adj[i].grade,
-            dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
-          })
-        })
-        let stats2 = geo.calcStats(p2)
-        this.course.scales = {
-          gain: stats.gain / stats2.gain,
-          loss: stats.loss / stats2.loss,
-          grade: (stats.gain - stats.loss) / (stats2.gain - stats2.loss)
+      this.points = pnts.map((x, i) => {
+        return {
+          loc: x[0],
+          dloc: (i > 0) ? x[0] - pnts[i][0] : 0,
+          lat: x[1],
+          lon: x[2],
+          alt: x[3],
+          grade: x[4]
         }
-        p2.forEach((x, i) => {
-          p2[i].grade = p2[i].grade * this.course.scales.grade
-        })
-        this.points = p2
-        this.$logger(`Scaled course to ${pmax} points`, t)
+      })
+      let stats = geo.calcStats(this.points)
+      this.course.scales = {
+        gain: this.course.gain / stats.gain,
+        loss: this.course.loss / stats.loss,
+        grade: (this.course.gain - this.course.loss) / (stats.gain - stats.loss)
       }
-      this.course.len = this.points[this.points.length - 1].loc
+      this.points.forEach((x, i) => {
+        this.points[i].grade = this.points[i].grade * this.course.scales.grade
+      })
+      this.course.len = this.course.distance
       if (!this.pacing.factors) {
         await this.updatePacing()
       }

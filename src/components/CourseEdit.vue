@@ -124,6 +124,7 @@ import api from '@/api'
 import geo from '@/util/geo'
 import moment from 'moment-timezone'
 import wputil from '@/util/waypoints'
+import { round } from '@/util/math'
 const gpxParse = require('gpx-parse')
 export default {
   data () {
@@ -208,49 +209,39 @@ export default {
           }
         }
         this.model.distance = stats.dist
-        
+
         // get reduced point set:
-        let pmax = Math.floor(stats.dist / 0.025)
-        pmax += (stats.dist % 0.025 > 0) ? 2 : 1
-          let len = points[points.length - 1].loc
-          let xs = Array(pmax - 1).fill(0).map((e, i) => i++ * 0.025)
-          if xs[xs.length - 1] < stats.dist) {
-            xs.push(stats.dist)
-          }
-          let adj = geo.pointWLSQ(
-            points,
-            xs,
-            0.05
-          )
-          let reduced = []
-          let llas = geo.getLatLonAltFromDistance(points, xs, 0)
-          let reduced = xs.map((x, i) => {
-            return {
-              alt: adj[i].alt,
-              lat: llas[i].lat,
-              lon: llas[i].lon,
-              loc: x,
-              grade: adj[i].grade
-            }
-          })
-          //reformat points for upload
-          this.model.points = reduced.map((x, i) => {
-            return [
-              round(llas[i].lat, 4),
-              round(llas[i].lon, 4),
-              round(x.alt, 1),
-              x,
-              round(adj[i].grade, 4)
-            ]
-          })
-          this.model.raw = points.map(x => {
-            return [x.lat, x.lon, x.alt]
-          })
-          this.model.reduced = true
+        let numpoints = Math.floor(stats.dist / 0.025) + 1
+        let xs = Array(numpoints).fill(0).map((e, i) => round(i++ * 0.025, 3))
+        if (xs[xs.length - 1] < stats.dist) {
+          xs.push(stats.dist)
+        }
+
+        let adj = geo.pointWLSQ(
+          points,
+          xs,
+          0.05
+        )
+        let llas = geo.getLatLonAltFromDistance(points, xs, 0)
+        // reformat points for upload
+        this.model.points = xs.map((x, i) => {
+          return [
+            x,
+            round(llas[i].lat, 6),
+            round(llas[i].lon, 6),
+            round(adj[i].alt, 2),
+            round(adj[i].grade, 4)
+          ]
+        })
+        this.model.raw = points.map(x => {
+          return [x.lat, x.lon, x.alt]
+        })
       }
-      
+
       if (this.eventTime && this.eventDate) {
-        this.model.eventStart = moment.tz(`${this.eventDate} ${this.eventTime}`, this.model.eventTimezone).toDate()
+        this.model.eventStart = moment.tz(
+          `${this.eventDate} ${this.eventTime}`,
+          this.model.eventTimezone).toDate()
       } else {
         this.model.eventStart = null
       }
