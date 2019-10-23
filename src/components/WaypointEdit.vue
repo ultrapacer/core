@@ -125,7 +125,7 @@ import api from '@/api'
 import wputil from '../util/waypoints'
 import {tF} from '../util/normFactor'
 export default {
-  props: ['course', 'units', 'terrainFactors'],
+  props: ['course', 'points', 'units', 'terrainFactors'],
   data () {
     return {
       deleting: false,
@@ -207,7 +207,7 @@ export default {
       if (this.model.type !== 'start' && this.model.type !== 'finish') {
         this.model.location = this.model.locUserUnit / this.units.distScale
       }
-      wputil.updateLLA(this.model, this.course.points)
+      wputil.updateLLA(this.model, this.points)
       if (this.model._id) {
         await api.updateWaypoint(this.model._id, this.model)
       } else {

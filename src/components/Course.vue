@@ -168,6 +168,7 @@
       v-if="editing"
       ref="wpEdit"
       :course="course"
+      :points="points"
       :units="units"
       :terrainFactors="terrainFactors"
       @refresh="refreshWaypoints"

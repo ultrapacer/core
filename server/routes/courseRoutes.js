@@ -13,7 +13,7 @@ courseRoutes.route('/').post(async function (req, res) {
     var course = new Course(req.body)
     course._user = user
     await course.save()
-    
+
     // create start and finish waypoints:
     var ws = new Waypoint({
       name: 'Start',
@@ -34,7 +34,8 @@ courseRoutes.route('/').post(async function (req, res) {
       lon: course.raw[course.raw.length - 1][1],
       elevation: course.raw[course.raw.length - 1][2]
     })
-    
+    await wf.save()
+
     res.status(200).json({'post': 'Course added successfully'})
   } catch (err) {
     console.log(err)
@@ -141,6 +142,7 @@ courseRoutes.route('/:_id').get(async function (req, res) {
       .select(['-points', '-raw']).exec()
     if (course.public || course._user.auth0ID === req.user.sub) {
       await course.addData(course._user, null)
+      course._user = course._user._id // don't return all user data, just id
       res.json(course)
     } else {
       res.status(403).send('No permission')
@@ -157,7 +159,7 @@ courseRoutes.route('/plan/:_id').get(async function (req, res) {
     let plan = await Plan.findById(req.params._id)
       .populate(['_user', '_course']).exec()
     let course = plan._course
-    if (course.public || course._user.auth0ID === req.user.sub) {
+    if (course.public || plan._user.auth0ID === req.user.sub) {
       await course.addData(plan._user, req.params._id)
       res.json(course)
     } else {
