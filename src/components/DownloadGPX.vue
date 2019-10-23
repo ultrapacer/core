@@ -35,7 +35,7 @@ export default {
       }
       this.$bvToast.show('my-toast')
       this.course = await api.getCourse(this.id, this.isAuthenticated)
-      this.points = await api.getCoursePoints(this.id, this.isAuthenticated)
+      this.points = await api.getCourseField(this.id, 'raw')
       this.points = this.points.map(x => {
         return {lat: x[0], lon: x[1], alt: x[2]}
       })
