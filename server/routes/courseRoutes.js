@@ -20,9 +20,9 @@ courseRoutes.route('/').post(async function (req, res) {
       type: 'start',
       location: 0,
       _course: course._id,
-      lat: course.raw[0][0],
-      lon: course.raw[0][1],
-      elevation: course.raw[0][2]
+      lat: course.points[0].lat,
+      lon: course.points[0].lon,
+      elevation: course.points[0].alt
     })
     await ws.save()
     var wf = new Waypoint({
@@ -30,9 +30,9 @@ courseRoutes.route('/').post(async function (req, res) {
       type: 'finish',
       location: course.distance,
       _course: course._id,
-      lat: course.raw[course.raw.length - 1][0],
-      lon: course.raw[course.raw.length - 1][1],
-      elevation: course.raw[course.raw.length - 1][2]
+      lat: course.points[course.points.length - 1].lat,
+      lon: course.points[course.points.length - 1].lon,
+      elevation: course.points[course.points.length - 1].alt
     })
     await wf.save()
 
@@ -140,6 +140,7 @@ courseRoutes.route('/:_id').get(async function (req, res) {
       .select('-points').exec()
     if (course.public || course._user.auth0ID === req.user.sub) {
       await course.addData(course._user, null)
+      course._user = course._user._id // don't return all user data, just id
       res.json(course)
     } else {
       res.status(403).send('No permission')
@@ -156,7 +157,7 @@ courseRoutes.route('/plan/:_id').get(async function (req, res) {
     let plan = await Plan.findById(req.params._id)
       .populate(['_user', '_course']).exec()
     let course = plan._course
-    if (course.public || course._user.auth0ID === req.user.sub) {
+    if (course.public || plan._user.auth0ID === req.user.sub) {
       await course.addData(plan._user, req.params._id)
       res.json(course)
     } else {
