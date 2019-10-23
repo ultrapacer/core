@@ -13,6 +13,29 @@ courseRoutes.route('/').post(async function (req, res) {
     var course = new Course(req.body)
     course._user = user
     await course.save()
+
+    // create start and finish waypoints:
+    var ws = new Waypoint({
+      name: 'Start',
+      type: 'start',
+      location: 0,
+      _course: course._id,
+      lat: course.raw[0][0],
+      lon: course.raw[0][1],
+      elevation: course.raw[0][2]
+    })
+    await ws.save()
+    var wf = new Waypoint({
+      name: 'Finish',
+      type: 'finish',
+      location: course.distance,
+      _course: course._id,
+      lat: course.raw[course.raw.length - 1][0],
+      lon: course.raw[course.raw.length - 1][1],
+      elevation: course.raw[course.raw.length - 1][2]
+    })
+    await wf.save()
+
     res.status(200).json({'post': 'Course added successfully'})
   } catch (err) {
     console.log(err)
