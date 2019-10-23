@@ -456,9 +456,9 @@ export default {
   methods: {
     async getPoints () {
       let t = this.$logger()
-      let pnts = await api.getCoursePoints(
+      let pnts = await api.getCourseField(
         this.course._id,
-        this.isAuthenticated
+        'points'
       )
       t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
       this.points = pnts.map((x, i) => {
