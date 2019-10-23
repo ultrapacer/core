@@ -229,6 +229,7 @@ export default {
       segments: [],
       miles: [],
       kilometers: [],
+      scales: {},
       waypoint: {},
       pacing: {},
       mapFocus: [],
@@ -476,13 +477,13 @@ export default {
         }
       })
       let stats = geo.calcStats(this.points)
-      this.course.scales = {
+      this.scales = {
         gain: this.course.gain / stats.gain,
         loss: this.course.loss / stats.loss,
         grade: (this.course.gain - this.course.loss) / (stats.gain - stats.loss)
       }
       this.points.forEach((x, i) => {
-        this.points[i].grade = this.points[i].grade * this.course.scales.grade
+        this.points[i].grade = this.points[i].grade * this.scales.grade
       })
       if (!this.pacing.factors) {
         await this.updatePacing()
@@ -835,6 +836,7 @@ export default {
       }
 
       this.pacing = {
+        scales: this.scales,
         time: time,
         delay: delay,
         factors: factors,

@@ -152,8 +152,8 @@ export default {
           label: `Gain [${this.units.alt}]`,
           formatter: (value, key, item) => {
             let scale = 1
-            if (this.course.scales) {
-              scale = this.course.scales.gain
+            if (this.pacing.scales) {
+              scale = this.pacing.scales.gain
             }
             return (value * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -164,8 +164,8 @@ export default {
           label: 'Loss [' + this.units.alt + ']',
           formatter: (value, key, item) => {
             let scale = 1
-            if (this.course.scales) {
-              scale = this.course.scales.loss
+            if (this.pacing.scales) {
+              scale = this.pacing.scales.loss
             }
             return (value * scale * this.units.altScale).toFixed(0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -253,15 +253,15 @@ export default {
     },
     gain: function () {
       let v = this.visibleSegments.reduce((t, x) => { return t + x.gain }, 0)
-      if (this.course.scales) {
-        v = v * this.course.scales.gain
+      if (this.pacing.scales) {
+        v = v * this.pacing.scales.gain
       }
       return v
     },
     loss: function () {
       let v = this.visibleSegments.reduce((t, x) => { return t + x.loss }, 0)
-      if (this.course.scales) {
-        v = v * this.course.scales.loss
+      if (this.pacing.scales) {
+        v = v * this.pacing.scales.loss
       }
       return v
     },
