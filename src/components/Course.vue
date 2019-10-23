@@ -392,9 +392,11 @@ export default {
     this.$calculating.setCalculating(true)
     let t = this.$logger()
     try {
+      let accessToken = await this.$auth.getAccessToken()
+    } catch (err) {}
+    try {
       this.course = await api.getCourse(
         this.$route.params.plan ? this.$route.params.plan : this.$route.params.course,
-        this.isAuthenticated,
         this.$route.params.plan ? 'plan' : 'course'
       )
       t = this.$logger('Course|api.getCourse', t)
