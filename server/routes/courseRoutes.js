@@ -174,14 +174,10 @@ courseRoutes.route('/plan/:_id').get(async function (req, res) {
 // GET COURSE FIELD
 courseRoutes.route('/:course/field/:field').get(async function (req, res) {
   try {
-    let q = {
-      _id: req.params.course,
-      $or: [ { _user: user }, { public: true } ]
-    }
-    let course = await Course.findById(req.params._id).populate('_user')
-      .select(['_user', field]).exec()
+    let course = await Course.findById(req.params.course).populate('_user')
+      .select(['_user', req.params.field]).exec()
     if (course.public || course._user.auth0ID === req.user.sub) {
-      res.json(course[field])
+      res.json(course[req.params.field])
     } else {
       res.status(403).send('No permission')
     }

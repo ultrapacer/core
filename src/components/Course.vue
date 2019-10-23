@@ -468,7 +468,7 @@ export default {
       this.points = pnts.map((x, i) => {
         return {
           loc: x[0],
-          dloc: (i > 0) ? x[0] - pnts[i][0] : 0,
+          dloc: (i > 0) ? x[0] - pnts[i - 1][0] : 0,
           lat: x[1],
           lon: x[2],
           alt: x[3],
