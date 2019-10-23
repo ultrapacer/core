@@ -51,12 +51,12 @@ export default {
       return this.execute('get', `/api-public/course/${sub}${id}`)
     }
   },
-  async getCoursePoints (id, authenticated) {
+  async getCourseField (id, field) {
     try {
       await Vue.prototype.$auth.getAccessToken()
-      return this.executeAuth('get', `/api/course/${id}/points`)
+      return this.executeAuth('get', `/api/course/${id}/field/${field}`)
     } catch (err) {
-      return this.execute('get', `/api-public/course/${id}/points`)
+      return this.execute('get', `/api-public/course/${id}/field/${field}`)
     }
   },
   createCourse (data) {
