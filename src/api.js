@@ -44,18 +44,16 @@ export default {
   },
   async getCourse (id, authenticated, key = 'course') {
     let sub = (key === 'plan') ? 'plan/' : ''
-    try {
-      await Vue.prototype.$auth.getAccessToken()
+    if (Vue.prototype.$auth.isAuthenticated() {
       return this.executeAuth('get', `/api/course/${sub}${id}`)
-    } catch (err) {
+    } else {
       return this.execute('get', `/api-public/course/${sub}${id}`)
     }
   },
   async getCourseField (id, field) {
-    try {
-      await Vue.prototype.$auth.getAccessToken()
+    if (Vue.prototype.$auth.isAuthenticated() {
       return this.executeAuth('get', `/api/course/${id}/field/${field}`)
-    } catch (err) {
+    } else {
       return this.execute('get', `/api-public/course/${id}/field/${field}`)
     }
   },
