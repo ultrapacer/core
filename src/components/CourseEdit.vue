@@ -174,7 +174,7 @@ export default {
         }
         let points = this.gpxPoints
         geo.addLoc(points)
-        var stats = geo.calcStats(points)
+        let stats = geo.calcStats(points)
         this.model.gain = stats.gain
         this.model.loss = stats.loss
 

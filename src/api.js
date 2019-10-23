@@ -44,14 +44,14 @@ export default {
   },
   async getCourse (id, authenticated, key = 'course') {
     let sub = (key === 'plan') ? 'plan/' : ''
-    if (Vue.prototype.$auth.isAuthenticated() {
+    if (Vue.prototype.$auth.isAuthenticated()) {
       return this.executeAuth('get', `/api/course/${sub}${id}`)
     } else {
       return this.execute('get', `/api-public/course/${sub}${id}`)
     }
   },
   async getCourseField (id, field) {
-    if (Vue.prototype.$auth.isAuthenticated() {
+    if (Vue.prototype.$auth.isAuthenticated()) {
       return this.executeAuth('get', `/api/course/${id}/field/${field}`)
     } else {
       return this.execute('get', `/api-public/course/${id}/field/${field}`)

@@ -9,8 +9,8 @@ var Waypoint = require('../models/Waypoint')
 // SAVE NEW
 courseRoutes.route('/').post(async function (req, res) {
   try {
-    let user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    let course = new Course(req.body)
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var course = new Course(req.body)
     course._user = user
     await course.save()
     res.status(200).json({'post': 'Course added successfully'})

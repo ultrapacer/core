@@ -392,8 +392,9 @@ export default {
     this.$calculating.setCalculating(true)
     let t = this.$logger()
     try {
-      let accessToken = await this.$auth.getAccessToken()
+      await this.$auth.getAccessToken()
     } catch (err) {}
+    t = this.$logger('Course|created - auth initiated', t)
     try {
       this.course = await api.getCourse(
         this.$route.params.plan ? this.$route.params.plan : this.$route.params.course,
@@ -482,10 +483,10 @@ export default {
       this.points.forEach((x, i) => {
         this.points[i].grade = this.points[i].grade * this.course.scales.grade
       })
-      this.course.len = this.course.distance
       if (!this.pacing.factors) {
         await this.updatePacing()
       }
+      this.$logger('Course|getPoints: complete', t)
     },
     async newWaypoint () {
       this.$refs.wpEdit.show({})
@@ -774,7 +775,7 @@ export default {
           dF: nF.dF(
             [p[j - 1].loc, p[j].loc],
             plan ? this.plan.drift : 0,
-            this.course.len
+            this.course.distance
           ),
           dark: 1
         }
@@ -801,9 +802,9 @@ export default {
         }
       }
       Object.keys(factors).forEach(k => {
-        factors[k] = factors[k] / this.course.len
+        factors[k] = factors[k] / this.course.distance
       })
-      this.course.norm = (tot / this.course.len)
+      this.course.norm = (tot / this.course.distance)
 
       delay = 0
       let time = 0
@@ -819,16 +820,16 @@ export default {
         // calculate time, pace, and normalized pace:
         if (this.plan.pacingMethod === 'time') {
           time = this.plan.pacingTarget
-          pace = (time - delay) / this.course.len
+          pace = (time - delay) / this.course.distance
           np = pace / this.course.norm
         } else if (this.plan.pacingMethod === 'pace') {
           pace = this.plan.pacingTarget
-          time = pace * this.course.len + delay
+          time = pace * this.course.distance + delay
           np = pace / this.course.norm
         } else if (this.plan.pacingMethod === 'np') {
           np = this.plan.pacingTarget
           pace = np * this.course.norm
-          time = pace * this.course.len + delay
+          time = pace * this.course.distance + delay
         }
       }
 
