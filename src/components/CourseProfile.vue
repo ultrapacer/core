@@ -81,7 +81,7 @@ export default {
                   return ''
                 }
               },
-              max: (this.course.len * this.units.distScale) + 0.01
+              max: (this.course.distance * this.units.distScale) + 0.01
             }
           }],
           yAxes: [{
@@ -224,16 +224,16 @@ export default {
       var ysg = [] // y's array for grade
       var chartProfile = []
       var chartGrade = []
-      xs = Array(pmax + 1).fill(0).map((e, i) => i++ * this.course.len / pmax)
+      xs = Array(pmax + 1).fill(0).map((e, i) => i++ * this.course.distance / pmax)
       ysa = pointWLSQ(
         this.points,
         xs,
-        this.course.len / pmax / 5
+        this.course.distance / pmax / 5
       )
       ysg = pointWLSQ(
         this.points,
         xs,
-        5 * this.course.len / pmax
+        5 * this.course.distance / pmax
       )
       xs.forEach((x, i) => {
         chartProfile.push({

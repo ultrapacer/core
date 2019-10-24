@@ -60,8 +60,9 @@
     <b-row v-if="!initializing">
       <b-col order="2">
         <b-tabs v-model="tableTabIndex" content-class="mt-3" small>
-          <b-tab title="Segments" v-if="segments.length" active>
+          <b-tab title="Segments" active>
             <segment-table
+                v-if="segments.length"
                 ref="segmentTable"
                 :course="course"
                 :segments="segments"
@@ -73,9 +74,13 @@
                 @show="waypointShow"
                 @hide="waypointHide"
               ></segment-table>
+            <div v-else class="d-flex justify-content-center mt-3 mb-3">
+              <b-spinner label="Loading..." ></b-spinner>
+            </div>
           </b-tab>
-          <b-tab title="Splits" v-if="splits.length">
+          <b-tab title="Splits">
             <segment-table
+                v-if="splits.length"
                 ref="splitTable"
                 :course="course"
                 :segments="splits"
@@ -85,11 +90,15 @@
                 :mode="'splits'"
                 @select="updateFocus"
               ></segment-table>
+            <div v-else class="d-flex justify-content-center mt-3 mb-3">
+              <b-spinner label="Loading..." ></b-spinner>
+            </div>
           </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table
                 ref="waypointTable"
                 :course="course"
+                :points="points"
                 :units="units"
                 :editing="editing"
                 :editFn="editWaypoint"
@@ -188,8 +197,8 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
-import {round} from '@/util/math'
 import nF from '@/util/normFactor'
+import {round} from '../util/math'
 import {string2sec} from '../util/time'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
@@ -230,6 +239,7 @@ export default {
       segments: [],
       miles: [],
       kilometers: [],
+      scales: {},
       waypoint: {},
       pacing: {},
       mapFocus: [],
@@ -394,9 +404,12 @@ export default {
     this.$calculating.setCalculating(true)
     let t = this.$logger()
     try {
+      await this.$auth.getAccessToken()
+    } catch (err) {}
+    t = this.$logger('Course|created - auth initiated', t)
+    try {
       this.course = await api.getCourse(
         this.$route.params.plan ? this.$route.params.plan : this.$route.params.course,
-        this.isAuthenticated,
         this.$route.params.plan ? 'plan' : 'course'
       )
       t = this.$logger('Course|api.getCourse', t)
@@ -458,55 +471,57 @@ export default {
   methods: {
     async getPoints () {
       let t = this.$logger()
-      let pnts = await api.getCoursePoints(
+      let pnts = await api.getCourseField(
         this.course._id,
-        this.isAuthenticated
+        'points'
       )
       t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
-      this.points = pnts.map(x => {
-        return {lat: x[0], lon: x[1], alt: x[2]}
-      })
-      geo.addLoc(this.points)
-      t = this.$logger('Course|getPoints: Added locations', t)
-
-      let pmax = round(Math.min(7500, this.points[this.points.length - 1].loc / 0.025), 0)
-      if (this.points.length > pmax) {
-        let stats = geo.calcStats(this.points)
-        let len = this.points[this.points.length - 1].loc
-        let xs = Array(pmax).fill(0).map((e, i) => i++ * len / (pmax - 1))
-        let adj = geo.pointWLSQ(
-          this.points,
-          xs,
-          0.05
-        )
-        let p2 = []
-        let llas = geo.getLatLonAltFromDistance(this.points, xs, 0)
-        xs.forEach((x, i) => {
-          p2.push({
-            alt: adj[i].alt,
-            lat: llas[i].lat,
-            lon: llas[i].lon,
-            loc: x,
-            grade: adj[i].grade,
-            dloc: (i === 0) ? 0 : xs[i] - xs[i - 1]
-          })
-        })
-        let stats2 = geo.calcStats(p2)
-        this.course.scales = {
-          gain: stats.gain / stats2.gain,
-          loss: stats.loss / stats2.loss,
-          grade: (stats.gain - stats.loss) / (stats2.gain - stats2.loss)
+      if (pnts[0].lat) {
+        this.points = geo.reduce(pnts)
+        if (this.owner) {
+          let update = {
+            raw: pnts.map(x => {
+              return [x.lat, x.lon, x.alt]
+            }),
+            points: this.points.map(x => {
+              return [
+                x.loc,
+                round(x.lat, 6),
+                round(x.lon, 6),
+                round(x.alt, 2),
+                round(x.grade, 4)
+              ]
+            })
+          }
+          await api.updateCourse(this.course._id, update)
+          this.$logger(`Course|getPoints: uploading reformatted points)`)
         }
-        p2.forEach((x, i) => {
-          p2[i].grade = p2[i].grade * this.course.scales.grade
+        t = this.$logger(`Course|getPoints: reduced to (${this.points.length} points)`, t)
+      } else {
+        this.points = pnts.map((x, i) => {
+          return {
+            loc: x[0],
+            dloc: (i > 0) ? x[0] - pnts[i - 1][0] : 0,
+            lat: x[1],
+            lon: x[2],
+            alt: x[3],
+            grade: x[4]
+          }
         })
-        this.points = p2
-        this.$logger(`Scaled course to ${pmax} points`, t)
       }
-      this.course.len = this.points[this.points.length - 1].loc
+      let stats = geo.calcStats(this.points)
+      this.scales = {
+        gain: this.course.gain / stats.gain,
+        loss: this.course.loss / stats.loss,
+        grade: (this.course.gain - this.course.loss) / (stats.gain - stats.loss)
+      }
+      this.points.forEach((x, i) => {
+        this.points[i].grade = this.points[i].grade * this.scales.grade
+      })
       if (!this.pacing.factors) {
         await this.updatePacing()
       }
+      this.$logger('Course|getPoints: complete', t)
     },
     async newWaypoint () {
       this.$refs.wpEdit.show({})
@@ -795,7 +810,7 @@ export default {
           dF: nF.dF(
             [p[j - 1].loc, p[j].loc],
             plan ? this.plan.drift : 0,
-            this.course.len
+            this.course.distance
           ),
           dark: 1
         }
@@ -822,9 +837,9 @@ export default {
         }
       }
       Object.keys(factors).forEach(k => {
-        factors[k] = factors[k] / this.course.len
+        factors[k] = factors[k] / this.course.distance
       })
-      this.course.norm = (tot / this.course.len)
+      this.course.norm = (tot / this.course.distance)
 
       delay = 0
       let time = 0
@@ -840,20 +855,21 @@ export default {
         // calculate time, pace, and normalized pace:
         if (this.plan.pacingMethod === 'time') {
           time = this.plan.pacingTarget
-          pace = (time - delay) / this.course.len
+          pace = (time - delay) / this.course.distance
           np = pace / this.course.norm
         } else if (this.plan.pacingMethod === 'pace') {
           pace = this.plan.pacingTarget
-          time = pace * this.course.len + delay
+          time = pace * this.course.distance + delay
           np = pace / this.course.norm
         } else if (this.plan.pacingMethod === 'np') {
           np = this.plan.pacingTarget
           pace = np * this.course.norm
-          time = pace * this.course.len + delay
+          time = pace * this.course.distance + delay
         }
       }
 
       this.pacing = {
+        scales: this.scales,
         time: time,
         delay: delay,
         factors: factors,
@@ -1002,28 +1018,20 @@ export default {
         }
       })
     },
-    useCache: function (cache) {
+    useCache: function () {
+      let type = (this.planAssigned) ? 'plan' : 'course'
       // if cache data is stored, assign it
       let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
-      if (this.planAssigned) {
-        if (this.plan.cache) {
-          this.$logger('Course|useCache: using cached plan data')
-          cacheFields.forEach(f => {
-            this[f] = this.plan.cache[f]
-          })
-          return true
-        } else {
-          this.$logger('Course|useCache: no cached plan data')
-          return false
-        }
-      } else if (this.course.cache) {
-        this.$logger('Course|useCache: using cached course data')
+      if (
+        this[type].cache &&
+        this[type].cache.pacing.hasOwnProperty('scales')) {
+        this.$logger(`Course|useCache: using cached ${type} data`)
         cacheFields.forEach(f => {
-          this[f] = this.course.cache[f]
+          this[f] = this[type].cache[f]
         })
         return true
       } else {
-        this.$logger('Course|useCache: no cached course data')
+        this.$logger(`Course|useCache: no cached ${type} data`)
         return false
       }
     },

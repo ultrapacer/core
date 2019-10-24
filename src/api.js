@@ -42,21 +42,19 @@ export default {
   getCourses () {
     return this.executeAuth('get', '/api/courses')
   },
-  async getCourse (id, authenticated, key = 'course') {
+  async getCourse (id, key = 'course') {
     let sub = (key === 'plan') ? 'plan/' : ''
-    try {
-      await Vue.prototype.$auth.getAccessToken()
+    if (Vue.prototype.$auth.isAuthenticated()) {
       return this.executeAuth('get', `/api/course/${sub}${id}`)
-    } catch (err) {
+    } else {
       return this.execute('get', `/api-public/course/${sub}${id}`)
     }
   },
-  async getCoursePoints (id, authenticated) {
-    try {
-      await Vue.prototype.$auth.getAccessToken()
-      return this.executeAuth('get', `/api/course/${id}/points`)
-    } catch (err) {
-      return this.execute('get', `/api-public/course/${id}/points`)
+  async getCourseField (id, field) {
+    if (Vue.prototype.$auth.isAuthenticated()) {
+      return this.executeAuth('get', `/api/course/${id}/field/${field}`)
+    } else {
+      return this.execute('get', `/api-public/course/${id}/field/${field}`)
     }
   },
   createCourse (data) {
