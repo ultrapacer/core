@@ -66,11 +66,8 @@ courseRoutes.route('/').get(async function (req, res) {
 // UPDATE
 courseRoutes.route('/:id').put(async function (req, res) {
   try {
-    let [user, course] = await Promise.all([
-      User.findOne({ auth0ID: req.user.sub }).exec(),
-      Course.findById(req.params.id).exec()
-    ])
-    if (course._user.equals(user._id)) {
+    let course = await Course.findById(req.params.id).populate('_user').exec()
+    if (course._user.auth0ID === req.user.sub) {
       let fields = ['name', 'description', 'public', 'eventStart', 'eventTimezone']
       if (req.body.points) {
         fields.push('points', 'raw', 'source', 'distance', 'gain', 'loss')

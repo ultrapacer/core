@@ -60,8 +60,9 @@
     <b-row v-if="!initializing">
       <b-col order="2">
         <b-tabs v-model="tableTabIndex" content-class="mt-3" small>
-          <b-tab title="Segments" v-if="segments.length" active>
+          <b-tab title="Segments" active>
             <segment-table
+                v-if="segments.length"
                 ref="segmentTable"
                 :course="course"
                 :segments="segments"
@@ -73,9 +74,13 @@
                 @show="waypointShow"
                 @hide="waypointHide"
               ></segment-table>
+            <div v-else class="d-flex justify-content-center mt-3 mb-3">
+              <b-spinner label="Loading..." ></b-spinner>
+            </div>
           </b-tab>
-          <b-tab title="Splits" v-if="splits.length">
+          <b-tab title="Splits">
             <segment-table
+                v-if="splits.length"
                 ref="splitTable"
                 :course="course"
                 :segments="splits"
@@ -85,6 +90,9 @@
                 :mode="'splits'"
                 @select="updateFocus"
               ></segment-table>
+            <div v-else class="d-flex justify-content-center mt-3 mb-3">
+              <b-spinner label="Loading..." ></b-spinner>
+            </div>
           </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table
