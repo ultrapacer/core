@@ -467,16 +467,21 @@ export default {
         'points'
       )
       t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
-      this.points = pnts.map((x, i) => {
-        return {
-          loc: x[0],
-          dloc: (i > 0) ? x[0] - pnts[i - 1][0] : 0,
-          lat: x[1],
-          lon: x[2],
-          alt: x[3],
-          grade: x[4]
-        }
-      })
+      if (pnts[0].lat) {
+        this.points = geo.reduce(pnts)
+        t = this.$logger(`Course|getPoints: reduced to (${this.points.length} points)`, t)
+      } else {
+        this.points = pnts.map((x, i) => {
+          return {
+            loc: x[0],
+            dloc: (i > 0) ? x[0] - pnts[i - 1][0] : 0,
+            lat: x[1],
+            lon: x[2],
+            alt: x[3],
+            grade: x[4]
+          }
+        })
+      }
       let stats = geo.calcStats(this.points)
       this.scales = {
         gain: this.course.gain / stats.gain,
@@ -986,28 +991,20 @@ export default {
         }
       })
     },
-    useCache: function (cache) {
+    useCache: function () {
+      let type = (this.planAssigned) ? 'plan' : 'course'
       // if cache data is stored, assign it
       let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
-      if (this.planAssigned) {
-        if (this.plan.cache) {
-          this.$logger('Course|useCache: using cached plan data')
-          cacheFields.forEach(f => {
-            this[f] = this.plan.cache[f]
-          })
-          return true
-        } else {
-          this.$logger('Course|useCache: no cached plan data')
-          return false
-        }
-      } else if (this.course.cache) {
-        this.$logger('Course|useCache: using cached course data')
+      if (
+        this[type].cache &&
+        this[type].cache.pacing.hasOwnProperty('scales')) {
+        this.$logger(`Course|useCache: using cached ${type} data`)
         cacheFields.forEach(f => {
-          this[f] = this.course.cache[f]
+          this[f] = this[type].cache[f]
         })
         return true
       } else {
-        this.$logger('Course|useCache: no cached course data')
+        this.$logger(`Course|useCache: no cached ${type} data`)
         return false
       }
     },

@@ -428,7 +428,7 @@ export function reduce (points) {
   return xs.map((x, i) => {
     return {
       loc: x,
-      dloc: (i > 0) ? x[0] - xs[i - 1] : 0,
+      dloc: (i > 0) ? x - xs[i - 1] : 0,
       lat: round(llas[i].lat, 6),
       lon: round(llas[i].lon, 6),
       alt: round(adj[i].alt, 2),
