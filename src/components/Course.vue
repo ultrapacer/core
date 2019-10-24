@@ -198,6 +198,7 @@
 import api from '@/api'
 import geo from '@/util/geo'
 import nF from '@/util/normFactor'
+import {round} from  '../util/math'
 import {string2sec} from '../util/time'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
@@ -477,6 +478,24 @@ export default {
       t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
       if (pnts[0].lat) {
         this.points = geo.reduce(pnts)
+        if (this.owner) {
+          let update = {
+            raw: pnts.map(x => { 
+              return [x.lat, x.lon, x.alt]
+            }),
+            points: this.points.map(x => {
+              return [
+                x.loc,
+                round(x.lat, 6),
+                round(x.lon, 6),
+                round(x.alt, 2),
+                round(x.grade, 4)
+              ]
+            })
+          }
+          await api.updateCourse(this.course._id, update)
+          this.$logger(`Course|getPoints: uploading reformatted points)`)
+        }
         t = this.$logger(`Course|getPoints: reduced to (${this.points.length} points)`, t)
       } else {
         this.points = pnts.map((x, i) => {
