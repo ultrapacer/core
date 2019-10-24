@@ -15,7 +15,12 @@
         <v-icon name="edit"></v-icon>
         <span class="d-none d-md-inline">Edit</span>
       </b-button>
-      <b-button size="sm" @click="delFn(row.item)" class="mr-1">
+      <b-button
+        v-if="row.item.type !== 'start' && row.item.type !== 'finish'"
+        size="sm"
+        @click="delFn(row.item)"
+        class="mr-1"
+      >
         <v-icon name="trash"></v-icon>
         <span class="d-none d-md-inline">Delete</span>
       </b-button>
