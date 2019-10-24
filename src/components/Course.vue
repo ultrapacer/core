@@ -198,7 +198,7 @@
 import api from '@/api'
 import geo from '@/util/geo'
 import nF from '@/util/normFactor'
-import {round} from  '../util/math'
+import {round} from '../util/math'
 import {string2sec} from '../util/time'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
@@ -480,7 +480,7 @@ export default {
         this.points = geo.reduce(pnts)
         if (this.owner) {
           let update = {
-            raw: pnts.map(x => { 
+            raw: pnts.map(x => {
               return [x.lat, x.lon, x.alt]
             }),
             points: this.points.map(x => {
