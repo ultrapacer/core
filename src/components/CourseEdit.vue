@@ -209,7 +209,7 @@ export default {
           }
         }
         this.model.distance = stats.dist
-        
+
         let reduced = geo.reduce(points)
         // reformat points for upload
         this.model.points = reduced.map(x => {

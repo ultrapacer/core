@@ -1,6 +1,6 @@
 /* eslint new-cap: 0 */
 import nF from './normFactor'
-import { interp, linearRegression } from './math'
+import { interp, linearRegression, round } from './math'
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
 
@@ -406,27 +406,28 @@ export function getLatLonAltFromDistance (points, location, start) {
   }
 }
 
-export function reduce(points) {
+export function reduce (points) {
+  let spacing = 0.025 // meters between points
   if (!points[0].hasOwnProperty('loc')) {
-    addLoc(p)
+    addLoc(points)
   }
   let len = points[points.length - 1].loc
-  let numpoints = Math.floor(len / 0.025) + 1
-  let xs = Array(numpoints).fill(0).map((e, i) => round(i++ * 0.025, 3))
+  let numpoints = Math.floor(len / spacing) + 1
+  let xs = Array(numpoints).fill(0).map((e, i) => round(i++ * spacing, 3))
   if (xs[xs.length - 1] < len) {
     xs.push(len)
   }
-  let adj = geo.pointWLSQ(
+  let adj = pointWLSQ(
     points,
     xs,
-    0.05
+    2 * spacing
   )
-  let llas = geo.getLatLonAltFromDistance(points, xs, 0)
-        
+  let llas = getLatLonAltFromDistance(points, xs, 0)
+
   // reformat
   return xs.map((x, i) => {
     return {
-      loc: x,   
+      loc: x,
       dloc: (i > 0) ? x[0] - xs[i - 1] : 0,
       lat: round(llas[i].lat, 6),
       lon: round(llas[i].lon, 6),
