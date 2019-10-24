@@ -90,6 +90,7 @@
             <waypoint-table
                 ref="waypointTable"
                 :course="course"
+                :points="points"
                 :units="units"
                 :editing="editing"
                 :editFn="editWaypoint"

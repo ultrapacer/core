@@ -48,7 +48,7 @@
 import wputil from '../util/waypoints'
 import api from '@/api'
 export default {
-  props: ['course', 'units', 'editing', 'editFn', 'delFn', 'updFn'],
+  props: ['course', 'points', 'units', 'editing', 'editFn', 'delFn', 'updFn'],
   data () {
     return {
       updatingWaypointTimeout: null,
@@ -152,11 +152,11 @@ export default {
       var loc = waypoint.location + delta / this.units.distScale
       if (loc < 0.01 / this.units.distScale) {
         loc = 0.01
-      } else if (loc >= this.course.len) {
-        loc = this.course.len - (0.01 / this.units.distScale)
+      } else if (loc >= this.course.distance) {
+        loc = this.course.distance - (0.01 / this.units.distScale)
       }
       waypoint.location = loc
-      wputil.updateLLA(waypoint, this.course.points)
+      wputil.updateLLA(waypoint, this.points)
       wputil.sortWaypointsByDistance(this.course.waypoints)
       if (String(waypoint._id) === this.updatingWaypointTimeoutID) {
         clearTimeout(this.updatingWaypointTimeout)

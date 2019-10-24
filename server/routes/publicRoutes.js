@@ -11,7 +11,7 @@ publicRoutes.route('/course/:_id').get(async function (req, res) {
       _id: req.params._id,
       public: true
     }
-    var course = await Course.findOne(q).select(['-points', '-raw']).populate(['_plan']).exec()
+    var course = await Course.findOne(q).select(['-points', '-raw']).exec()
     await course.addData()
     res.json(course)
   } catch (err) {
@@ -23,11 +23,12 @@ publicRoutes.route('/course/:_id').get(async function (req, res) {
 // GET COURSE BY PLAN
 publicRoutes.route('/course/plan/:_id').get(async function (req, res) {
   try {
-    let plan = await Plan.findById(req.params._id).populate(['_user', '_course']).exec()
-    let course = plan._course
-    if (course.public) {
-      await course.addData(plan._user, req.params._id)
-      res.json(course)
+    let plan = await Plan.findById(req.params._id)
+      .populate(['_user', {path: '_course', select: '-points -raw'}])
+      .exec()
+    if (plan._course.public) {
+      await plan._course.addData(plan._user, req.params._id)
+      res.json(plan._course)
     } else {
       res.status(403).send('No permission')
     }
@@ -37,18 +38,17 @@ publicRoutes.route('/course/plan/:_id').get(async function (req, res) {
   }
 })
 
-// GET COURSE POINTS
-publicRoutes.route('/course/:course/points').get(async function (req, res) {
+// GET COURSE FIELD
+publicRoutes.route('/course/:course/field/:field').get(async function (req, res) {
   try {
     let q = {
       _id: req.params.course,
       public: true
     }
-    var course = await Course.findOne(q).select('points').exec()
-    let p = course.points.map(x => {
-      return [x.lat, x.lon, x.alt]
-    })
-    res.json(p)
+    let course = await Course.findOne(q)
+      .select(['_user', req.params.field])
+      .exec()
+    res.json(course[req.params.field])
   } catch (err) {
     console.log(err)
     res.status(400).send(err)

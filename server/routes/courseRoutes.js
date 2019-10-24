@@ -157,10 +157,11 @@ courseRoutes.route('/:_id').get(async function (req, res) {
 courseRoutes.route('/plan/:_id').get(async function (req, res) {
   try {
     let plan = await Plan.findById(req.params._id)
-      .populate(['_user', '_course']).exec()
+      .populate(['_user', {path: '_course', select: '-points -raw'}]).exec()
     let course = plan._course
     if (course.public || plan._user.auth0ID === req.user.sub) {
       await course.addData(plan._user, req.params._id)
+      course._user = course._user._id // don't return all user data, just id
       res.json(course)
     } else {
       res.status(403).send('No permission')
