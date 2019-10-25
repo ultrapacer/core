@@ -176,6 +176,16 @@ export default {
       let i = this.waypoints.findIndex(x => x._id === id)
       this.$refs.table.selectRow(i)
     }
+  },
+  watch: {
+    editing: function (val) {
+      // hide details fields when editing is turned off
+      if (val === false) {
+        this.course.waypoints.forEach(x => {
+          if (x._showDetails) { x._showDetails = false }
+        })
+      }
+    }
   }
 }
 </script>
