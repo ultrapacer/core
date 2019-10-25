@@ -165,7 +165,6 @@
       </b-col>
     </b-row>
     <plan-edit
-      v-if="isAuthenticated"
       ref="planEdit"
       :course="course"
       :event="event"
@@ -444,7 +443,7 @@ export default {
     setTimeout(() => {
       if (!this.isAuthenticated) {
         this.$bvToast.toast(
-          'ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue. To create a pace plan for this course, select the "New Pacing Plan" button on the top right of this page and use the "Sign Up" option (it\'s free). Happy running!',
+          'ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue. To create a pace plan for this course, select the "New Pacing Plan" button on the top right. Happy running!',
           {
             title: 'Welcome to ultraPacer!',
             toaster: 'b-toaster-bottom-right',
@@ -567,38 +566,26 @@ export default {
     },
     async newPlan () {
       this.$ga.event('Plan', 'add', this.publicName)
-      if (this.isAuthenticated) {
-        if (!this.owner) {
-          if (!this.user._courses.find(x => x === this.course._id)) {
-            api.useCourse(this.course._id)
-            this.user._courses.push(this.course._id)
-          }
-        }
-        if (this.planAssigned) {
-          let p = this.plan
-          this.$refs.planEdit.show({
-            heatModel: p.heatModel ? {...p.heatModel} : null,
-            eventStart: p.eventStart,
-            eventTimezone: p.eventTimezone,
-            pacingMethod: p.pacingMethod,
-            waypointDelay: p.waypointDelay,
-            drift: p.drift
-          })
-        } else {
-          this.$refs.planEdit.show()
-        }
-      } else {
-        this.$auth.login({
-          route: {
-            name: 'Course',
-            params: {
-              'course': this.course._id
-            },
-            query: {
-              method: 'newPlan'
-            }
-          }
+      if (
+        this.isAuthenticated &&
+        !this.owner &&
+        !this.user._courses.find(x => x === this.course._id)
+      ) {
+        api.useCourse(this.course._id)
+        this.user._courses.push(this.course._id)
+      }
+      if (this.planAssigned) {
+        let p = this.plan
+        this.$refs.planEdit.show({
+          heatModel: p.heatModel ? {...p.heatModel} : null,
+          eventStart: p.eventStart,
+          eventTimezone: p.eventTimezone,
+          pacingMethod: p.pacingMethod,
+          waypointDelay: p.waypointDelay,
+          drift: p.drift
         })
+      } else {
+        this.$refs.planEdit.show()
       }
     },
     async editPlan () {
@@ -637,9 +624,14 @@ export default {
       )
     },
     async refreshPlans (plan, callback) {
-      this.plans = await api.getPlans(this.course._id, this.user._id)
-      this.syncCache(this.plans)
-      this.plan = this.plans.find(p => p._id === plan._id)
+      if (this.$auth.isAuthenticated()) {
+        this.plans = await api.getPlans(this.course._id, this.user._id)
+        this.syncCache(this.plans)
+        this.plan = this.plans.find(p => p._id === plan._id)
+      } else {
+        this.plan = {...plan}
+        this.plans = [this.plan]
+      }
       delete this.plan.cache
       await this.calcPlan()
       if (typeof callback === 'function') callback()
