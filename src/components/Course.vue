@@ -232,7 +232,7 @@ export default {
       editing: false,
       saving: false,
       course: {},
-      plan: {},
+      plan: null,
       plans: [],
       points: [],
       segments: [],
@@ -314,19 +314,19 @@ export default {
       }
     },
     planAssigned: function () {
-      if (this.plan && this.plan._id) { return true }
-      return false
+      return Boolean(this.plan)
     },
     planOwner: function () {
-      if (
-        this.isAuthenticated &&
+      return
         this.plan &&
-        String(this.user._id) === String(this.plan._user)
-      ) {
-        return true
-      } else {
-        return false
-      }
+        (
+          (
+            plan._id &&
+            this.isAuthenticated &&
+            String(this.user._id) === String(this.plan._user)
+          ) ||
+          !plan._id
+        )
     },
     splits: function () {
       if (this.units.dist === 'km') {
@@ -604,7 +604,7 @@ export default {
               this.plan = this.plans[0]
               await this.calcPlan()
             } else {
-              this.plan = {}
+              this.plan = null
               this.pacing = {}
               this.$router.push({
                 name: 'Course',
