@@ -8,7 +8,7 @@ const client = axios.create({
 
 export default {
   async executeAuth (method, resource, data) {
-    var t = logger()
+    let t = logger(`api|executeAuth|${method}|${resource} initiated`)
     let accessToken = await Vue.prototype.$auth.getAccessToken()
     return client({
       method,
@@ -23,7 +23,7 @@ export default {
     })
   },
   async execute (method, resource, data) {
-    var t = logger()
+    let t = logger(`api|execute|${method}|${resource} initiated`)
     return client({
       method,
       url: resource,

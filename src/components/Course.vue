@@ -20,7 +20,11 @@
             </b-form-group>
           </b-col>
           <b-col cols="4" md="3" lg="3" xl="2" class="pl-n3 pr-n5" style="text-align:left">
-            <b-btn @click="editPlan()" class="ml-n4 mr-1" size="sm" v-if="planOwner">
+            <b-btn @click="editPlan()" class="ml-n4 mr-1" size="sm" v-if="planOwner"
+                v-b-popover.hover.blur.bottomright.d250.v-info="
+                'Edit the selected pacing plan.'
+              "
+            >
               <v-icon name="edit"></v-icon>
             </b-btn>
             <b-btn variant="success" @click.prevent="newPlan()" size="sm"
@@ -254,7 +258,7 @@ export default {
         startTime: null,
         timezone: moment.tz.guess()
       }
-      if (this.plan.eventStart) {
+      if (this.plan && this.plan.eventStart) {
         e.start = this.plan.eventStart
         e.timezone = this.plan.eventTimezone
       } else if (this.course.eventStart) {
@@ -317,16 +321,14 @@ export default {
       return Boolean(this.plan)
     },
     planOwner: function () {
-      return
-        this.plan &&
+      return this.plan && (
         (
-          (
-            plan._id &&
-            this.isAuthenticated &&
-            String(this.user._id) === String(this.plan._user)
-          ) ||
-          !plan._id
-        )
+          this.plan._id &&
+          this.isAuthenticated &&
+          String(this.user._id) === String(this.plan._user)
+        ) ||
+        !this.plan._id
+      )
     },
     splits: function () {
       if (this.units.dist === 'km') {
@@ -639,14 +641,16 @@ export default {
     async calcPlan () {
       let t = this.$logger()
       if (!this.planAssigned) { return }
-      this.$router.push({
-        name: 'Plan',
-        params: {
-          'plan': this.plan._id
+      if (this.plan._id) {
+        this.$router.push({
+          name: 'Plan',
+          params: {
+            'plan': this.plan._id
+          }
+        })
+        if (this.owner) {
+          api.selectCoursePlan(this.course._id, {plan: this.plan._id})
         }
-      })
-      if (this.owner) {
-        api.selectCoursePlan(this.course._id, {plan: this.plan._id})
       }
       this.$ga.event('Plan', 'view', this.publicName)
       if (!this.useCache()) {
@@ -721,35 +725,42 @@ export default {
       }
       this.updateSplits('miles')
       this.updateSegments()
-      let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
-      if (this.planAssigned) {
-        this.plan.cache = {}
-        cacheFields.forEach(f => {
-          this.plan.cache[f] = this[f]
-        })
-        if (this.planOwner) {
-          this.$logger('Course|updatePacing: saving plan cache')
-          api.updatePlanCache(
-            this.plan._id,
-            { cache: this.plan.cache }
-          )
-        }
-      } else {
-        this.course.cache = {}
-        cacheFields.forEach(f => {
-          this.course.cache[f] = this[f]
-        })
-        if (this.owner) {
-          this.$logger('Course|updatePacing: saving course cache')
-          api.updateCourseCache(
-            this.course._id,
-            { cache: this.course.cache }
-          )
+
+      // save cached data:
+      if (this.isAuthenticated) {
+        let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
+        if (this.planAssigned) {
+          this.plan.cache = {}
+          cacheFields.forEach(f => {
+            this.plan.cache[f] = this[f]
+          })
+          if (this.planOwner) {
+            this.$logger('Course|updatePacing: saving plan cache')
+            api.updatePlanCache(
+              this.plan._id,
+              { cache: this.plan.cache }
+            )
+          }
+        } else {
+          this.course.cache = {}
+          cacheFields.forEach(f => {
+            this.course.cache[f] = this[f]
+          })
+          if (this.owner) {
+            this.$logger('Course|updatePacing: saving course cache')
+            api.updateCourseCache(
+              this.course._id,
+              { cache: this.course.cache }
+            )
+          }
         }
       }
+
+      // update profile chart
       if (this.$refs.profile) {
         this.$refs.profile.update()
       }
+
       this.busy = false
       this.$calculating.setCalculating(false)
       this.$logger('Course|updatePacing', t)
