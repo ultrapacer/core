@@ -11,6 +11,7 @@ import LoggerPlugin from './plugins/logger'
 import VueAnalytics from 'vue-analytics'
 import VuePageTitle from 'vue-page-title'
 import VueTheMask from 'vue-the-mask'
+import VueCookies from 'vue-cookies'
 
 import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -74,6 +75,7 @@ Vue.prototype.$calculating = {
   }
 }
 Vue.use(LoggerPlugin)
+Vue.use(VueCookies)
 
 Vue.config.productionTip = false
 
