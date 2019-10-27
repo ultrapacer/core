@@ -422,6 +422,7 @@ export default {
         }
       } else {
         p = {...this.model}
+        this.$cookies.set('temp_plan',JSON.stringify(p),60 * 60 * 12)
         this.$bvToast.toast(`Login or Signup to ultraPacer to save or share your new plan fpr "${this.course.name}".`, {
           title: `New plan for "${this.course.name}!`,
           toaster: 'b-toaster-bottom-right',
