@@ -214,6 +214,7 @@ import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
 import SunCalc from 'suncalc'
 import moment from 'moment-timezone'
+var JSURL = require('@yaska-eu/jsurl2')
 
 export default {
   title: 'Course',
@@ -409,10 +410,11 @@ export default {
     } catch (err) {}
     t = this.$logger('Course|created - auth initiated', t)
     try {
-      this.course = await api.getCourse(
-        this.$route.params.plan ? this.$route.params.plan : this.$route.params.course,
-        this.$route.params.plan ? 'plan' : 'course'
-      )
+      if (this.$route.params.plan && this.$route.params.plan !== 'temp') {
+        this.course = await api.getCourse(this.$route.params.plan, 'plan')
+      } else {
+        this.course = await api.getCourse(this.$route.params.course, 'course')
+      }
       t = this.$logger('Course|api.getCourse', t)
       this.getPoints()
       this.$ga.event('Course', 'view', this.publicName)
@@ -434,12 +436,6 @@ export default {
     this.$title = this.course.name
     this.useCache()
     this.initializing = false
-    setTimeout(() => {
-      if (this.$route.query.method) {
-        this[this.$route.query.method]()
-        this.$router.push({query: {}})
-      }
-    }, 500)
     this.busy = false
     this.$calculating.setCalculating(false)
     setTimeout(() => {
@@ -467,6 +463,15 @@ export default {
         )
       }
     }, 1000)
+    if (this.$route.query.plan) {
+      let p = JSURL.tryParse(this.$route.query.plan, null)
+      if (p) {
+        this.$logger('Course|created: using plan from URL')
+        this.plan = p
+        this.plans = [p]
+        this.pacing = {}
+      }
+    }
     this.$logger('Course|created', t)
   },
   methods: {
@@ -651,6 +656,16 @@ export default {
         if (this.owner) {
           api.selectCoursePlan(this.course._id, {plan: this.plan._id})
         }
+      } else {
+        this.$router.push({
+          name: 'Course',
+          params: {
+            course: this.course._id
+          },
+          query: {
+            plan: JSURL.stringify(this.plan)
+          }
+        })
       }
       this.$ga.event('Plan', 'view', this.publicName)
       if (!this.useCache()) {
