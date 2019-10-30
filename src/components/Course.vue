@@ -27,7 +27,11 @@
             >
               <v-icon name="edit"></v-icon>
             </b-btn>
-            <b-btn variant="success" @click.prevent="newPlan()" size="sm"
+            <b-btn
+                v-if="isAuthenticated"
+                variant="success"
+                @click.prevent="newPlan()"
+                size="sm"
                 v-b-popover.hover.blur.bottomright.d250.v-info="
                 'Create a new pacing plan for this course.'
               "
@@ -466,10 +470,8 @@ export default {
     if (this.$route.query.plan) {
       let p = JSURL.tryParse(this.$route.query.plan, null)
       if (p) {
-        this.$logger('Course|created: using plan from URL')
-        this.plan = p
-        this.plans = [p]
-        this.pacing = {}
+        this.$logger('Course|created: showing plan from URL')
+        this.$refs.planEdit.show(p)
       }
     }
     this.$logger('Course|created', t)

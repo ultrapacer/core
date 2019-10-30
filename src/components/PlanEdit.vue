@@ -422,13 +422,16 @@ export default {
         }
       } else {
         p = {...this.model}
-        this.$bvToast.toast(`Login or Signup to ultraPacer to save or share your new plan fpr "${this.course.name}".`, {
+        this.$bvToast.toast(`Login or Signup to ultraPacer to save or share your new plan for "${this.course.name}".`, {
           title: `New plan for "${this.course.name}!`,
           toaster: 'b-toaster-bottom-right',
           solid: true,
           variant: 'info',
           'auto-hide-delay': 5000
         })
+        this.$ga.event('Plan', 'temporary',
+          this.course.public ? this.course.name : 'private'
+        )
       }
       await this.$emit('refresh', p, () => {
         this.saving = false
@@ -510,6 +513,12 @@ export default {
         this.model.eventStart = null
         this.model.eventTimezone = moment.tz.guess()
       }
+    }
+  },
+  watch: {
+    'course.eventStart': function (v) {
+      // because course.eventStart isn't always ready at form show
+      this.customStart = !v
     }
   },
   filters: {
