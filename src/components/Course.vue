@@ -414,7 +414,7 @@ export default {
     } catch (err) {}
     t = this.$logger('Course|created - auth initiated', t)
     try {
-      if (this.$route.params.plan && this.$route.params.plan !== 'temp') {
+      if (this.$route.params.plan) {
         this.course = await api.getCourse(this.$route.params.plan, 'plan')
       } else {
         this.course = await api.getCourse(this.$route.params.course, 'course')
@@ -580,7 +580,6 @@ export default {
         !this.owner &&
         !this.user._courses.find(x => x === this.course._id)
       ) {
-        api.useCourse(this.course._id)
         this.user._courses.push(this.course._id)
       }
       if (this.planAssigned) {

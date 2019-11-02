@@ -104,7 +104,7 @@ courseRoutes.route('/:id').delete(async function (req, res) {
       if (i >= 0) {
         user._courses.splice(i, 1)
         await user.save()
-        await Plan.remove({_course: this._id, _user: user}).exec()
+        await Plan.deleteMany({_course: course._id, _user: user._id}).exec()
         res.json('Course removed')
       } else {
         res.status(403).send('No permission')
@@ -135,10 +135,13 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 // GET COURSE
 courseRoutes.route('/:_id').get(async function (req, res) {
   try {
-    let course = await Course.findById(req.params._id).populate('_user')
-      .select(['-points', '-raw']).exec()
+    let [course, user] = await Promise.all([
+      Course.findById(req.params._id).populate('_user')
+        .select(['-points', '-raw']).exec(),
+      User.findOne({ auth0ID: req.user.sub }).exec()
+    ])
     if (course.public || course._user.auth0ID === req.user.sub) {
-      await course.addData(course._user, null)
+      await course.addData(user, null)
       course._user = course._user._id // don't return all user data, just id
       res.json(course)
     } else {
@@ -212,29 +215,6 @@ courseRoutes.route('/:course/plans/:user_id').get(async function (req, res) {
         { _course: course, _user: req.params.user_id }
       ).sort('name').exec()
       res.json(plans)
-    } else {
-      res.status(403).send('No permission')
-    }
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
-  }
-})
-
-// ADD COURSE TO USER:
-courseRoutes.route('/:course/use').put(async function (req, res) {
-  console.log(1)
-  try {
-    let [user, course] = await Promise.all([
-      User.findOne({ auth0ID: req.user.sub }).exec(),
-      Course.findById(req.params.course).select(['_user', 'public']).exec()
-    ])
-    if (user.equals(course._user) || course.public) {
-      if (!user._courses.find(x => course.equals(x))) {
-        user._courses.push(course)
-        await user.save()
-      }
-      res.json('Update complete')
     } else {
       res.status(403).send('No permission')
     }

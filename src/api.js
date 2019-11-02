@@ -69,9 +69,6 @@ export default {
   deleteCourse (id) {
     return this.executeAuth('delete', `/api/courses/${id}`)
   },
-  useCourse (id) {
-    return this.executeAuth('put', `/api/courses/${id}/use`)
-  },
   updateCourseCache (id, data) {
     return this.executeAuth('put', `/api/course/${id}/cache`, data)
   },

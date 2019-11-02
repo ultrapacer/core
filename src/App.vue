@@ -90,7 +90,27 @@ export default {
   },
   methods: {
     login () {
-      this.$auth.login()
+      // this is kind of a hack for temp plans to go back to that
+      // location after login:
+      let r = this.$router.currentRoute
+      if (
+        r.name === 'Course' &&
+        Object.keys(r.query)[0] === 'plan'
+      ) {
+        this.$auth.login({
+          route: {
+            name: 'Course',
+            params: {
+              'course': r.params.course
+            },
+            query: {
+              plan: r.query.plan
+            }
+          }
+        })
+      } else {
+        this.$auth.login()
+      }
       this.$ga.event('User', 'login')
     },
     logout () {
