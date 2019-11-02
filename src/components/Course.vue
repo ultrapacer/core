@@ -20,10 +20,18 @@
             </b-form-group>
           </b-col>
           <b-col cols="4" md="3" lg="3" xl="2" class="pl-n3 pr-n5" style="text-align:left">
-            <b-btn @click="editPlan()" class="ml-n4 mr-1" size="sm" v-if="planOwner">
+            <b-btn @click="editPlan()" class="ml-n4 mr-1" size="sm" v-if="planOwner"
+                v-b-popover.hover.blur.bottomright.d250.v-info="
+                'Edit the selected pacing plan.'
+              "
+            >
               <v-icon name="edit"></v-icon>
             </b-btn>
-            <b-btn variant="success" @click.prevent="newPlan()" size="sm"
+            <b-btn
+                v-if="isAuthenticated"
+                variant="success"
+                @click.prevent="newPlan()"
+                size="sm"
                 v-b-popover.hover.blur.bottomright.d250.v-info="
                 'Create a new pacing plan for this course.'
               "
@@ -165,7 +173,6 @@
       </b-col>
     </b-row>
     <plan-edit
-      v-if="isAuthenticated"
       ref="planEdit"
       :course="course"
       :event="event"
@@ -211,6 +218,7 @@ import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
 import SunCalc from 'suncalc'
 import moment from 'moment-timezone'
+var JSURL = require('@yaska-eu/jsurl2')
 
 export default {
   title: 'Course',
@@ -233,7 +241,7 @@ export default {
       editing: false,
       saving: false,
       course: {},
-      plan: {},
+      plan: null,
       plans: [],
       points: [],
       segments: [],
@@ -255,7 +263,7 @@ export default {
         startTime: null,
         timezone: moment.tz.guess()
       }
-      if (this.plan.eventStart) {
+      if (this.plan && this.plan.eventStart) {
         e.start = this.plan.eventStart
         e.timezone = this.plan.eventTimezone
       } else if (this.course.eventStart) {
@@ -315,19 +323,17 @@ export default {
       }
     },
     planAssigned: function () {
-      if (this.plan && this.plan._id) { return true }
-      return false
+      return Boolean(this.plan)
     },
     planOwner: function () {
-      if (
-        this.isAuthenticated &&
-        this.plan &&
-        String(this.user._id) === String(this.plan._user)
-      ) {
-        return true
-      } else {
-        return false
-      }
+      return this.plan && (
+        (
+          this.plan._id &&
+          this.isAuthenticated &&
+          String(this.user._id) === String(this.plan._user)
+        ) ||
+        !this.plan._id
+      )
     },
     splits: function () {
       if (this.units.dist === 'km') {
@@ -408,10 +414,11 @@ export default {
     } catch (err) {}
     t = this.$logger('Course|created - auth initiated', t)
     try {
-      this.course = await api.getCourse(
-        this.$route.params.plan ? this.$route.params.plan : this.$route.params.course,
-        this.$route.params.plan ? 'plan' : 'course'
-      )
+      if (this.$route.params.plan) {
+        this.course = await api.getCourse(this.$route.params.plan, 'plan')
+      } else {
+        this.course = await api.getCourse(this.$route.params.course, 'course')
+      }
       t = this.$logger('Course|api.getCourse', t)
       this.getPoints()
       this.$ga.event('Course', 'view', this.publicName)
@@ -433,18 +440,12 @@ export default {
     this.$title = this.course.name
     this.useCache()
     this.initializing = false
-    setTimeout(() => {
-      if (this.$route.query.method) {
-        this[this.$route.query.method]()
-        this.$router.push({query: {}})
-      }
-    }, 500)
     this.busy = false
     this.$calculating.setCalculating(false)
     setTimeout(() => {
       if (!this.isAuthenticated) {
         this.$bvToast.toast(
-          'ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue. To create a pace plan for this course, select the "New Pacing Plan" button on the top right of this page and use the "Sign Up" option (it\'s free). Happy running!',
+          'ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue. To create a pace plan for this course, select the "New Pacing Plan" button on the top right. Happy running!',
           {
             title: 'Welcome to ultraPacer!',
             toaster: 'b-toaster-bottom-right',
@@ -466,6 +467,13 @@ export default {
         )
       }
     }, 1000)
+    if (this.$route.query.plan) {
+      let p = JSURL.tryParse(this.$route.query.plan, null)
+      if (p) {
+        this.$logger('Course|created: showing plan from URL')
+        this.$refs.planEdit.show(p)
+      }
+    }
     this.$logger('Course|created', t)
   },
   methods: {
@@ -567,38 +575,25 @@ export default {
     },
     async newPlan () {
       this.$ga.event('Plan', 'add', this.publicName)
-      if (this.isAuthenticated) {
-        if (!this.owner) {
-          if (!this.user._courses.find(x => x === this.course._id)) {
-            api.useCourse(this.course._id)
-            this.user._courses.push(this.course._id)
-          }
-        }
-        if (this.planAssigned) {
-          let p = this.plan
-          this.$refs.planEdit.show({
-            heatModel: p.heatModel ? {...p.heatModel} : null,
-            eventStart: p.eventStart,
-            eventTimezone: p.eventTimezone,
-            pacingMethod: p.pacingMethod,
-            waypointDelay: p.waypointDelay,
-            drift: p.drift
-          })
-        } else {
-          this.$refs.planEdit.show()
-        }
-      } else {
-        this.$auth.login({
-          route: {
-            name: 'Course',
-            params: {
-              'course': this.course._id
-            },
-            query: {
-              method: 'newPlan'
-            }
-          }
+      if (
+        this.isAuthenticated &&
+        !this.owner &&
+        !this.user._courses.find(x => x === this.course._id)
+      ) {
+        this.user._courses.push(this.course._id)
+      }
+      if (this.planAssigned) {
+        let p = this.plan
+        this.$refs.planEdit.show({
+          heatModel: p.heatModel ? {...p.heatModel} : null,
+          eventStart: p.eventStart,
+          eventTimezone: p.eventTimezone,
+          pacingMethod: p.pacingMethod,
+          waypointDelay: p.waypointDelay,
+          drift: p.drift
         })
+      } else {
+        this.$refs.planEdit.show()
       }
     },
     async editPlan () {
@@ -617,7 +612,7 @@ export default {
               this.plan = this.plans[0]
               await this.calcPlan()
             } else {
-              this.plan = {}
+              this.plan = null
               this.pacing = {}
               this.$router.push({
                 name: 'Course',
@@ -637,9 +632,14 @@ export default {
       )
     },
     async refreshPlans (plan, callback) {
-      this.plans = await api.getPlans(this.course._id, this.user._id)
-      this.syncCache(this.plans)
-      this.plan = this.plans.find(p => p._id === plan._id)
+      if (this.$auth.isAuthenticated()) {
+        this.plans = await api.getPlans(this.course._id, this.user._id)
+        this.syncCache(this.plans)
+        this.plan = this.plans.find(p => p._id === plan._id)
+      } else {
+        this.plan = {...plan}
+        this.plans = [this.plan]
+      }
       delete this.plan.cache
       await this.calcPlan()
       if (typeof callback === 'function') callback()
@@ -647,14 +647,26 @@ export default {
     async calcPlan () {
       let t = this.$logger()
       if (!this.planAssigned) { return }
-      this.$router.push({
-        name: 'Plan',
-        params: {
-          'plan': this.plan._id
+      if (this.plan._id) {
+        this.$router.push({
+          name: 'Plan',
+          params: {
+            'plan': this.plan._id
+          }
+        })
+        if (this.owner) {
+          api.selectCoursePlan(this.course._id, {plan: this.plan._id})
         }
-      })
-      if (this.owner) {
-        api.selectCoursePlan(this.course._id, {plan: this.plan._id})
+      } else {
+        this.$router.push({
+          name: 'Course',
+          params: {
+            course: this.course._id
+          },
+          query: {
+            plan: JSURL.stringify(this.plan)
+          }
+        })
       }
       this.$ga.event('Plan', 'view', this.publicName)
       if (!this.useCache()) {
@@ -729,35 +741,42 @@ export default {
       }
       this.updateSplits('miles')
       this.updateSegments()
-      let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
-      if (this.planAssigned) {
-        this.plan.cache = {}
-        cacheFields.forEach(f => {
-          this.plan.cache[f] = this[f]
-        })
-        if (this.planOwner) {
-          this.$logger('Course|updatePacing: saving plan cache')
-          api.updatePlanCache(
-            this.plan._id,
-            { cache: this.plan.cache }
-          )
-        }
-      } else {
-        this.course.cache = {}
-        cacheFields.forEach(f => {
-          this.course.cache[f] = this[f]
-        })
-        if (this.owner) {
-          this.$logger('Course|updatePacing: saving course cache')
-          api.updateCourseCache(
-            this.course._id,
-            { cache: this.course.cache }
-          )
+
+      // save cached data:
+      if (this.isAuthenticated) {
+        let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
+        if (this.planAssigned) {
+          this.plan.cache = {}
+          cacheFields.forEach(f => {
+            this.plan.cache[f] = this[f]
+          })
+          if (this.planOwner) {
+            this.$logger('Course|updatePacing: saving plan cache')
+            api.updatePlanCache(
+              this.plan._id,
+              { cache: this.plan.cache }
+            )
+          }
+        } else {
+          this.course.cache = {}
+          cacheFields.forEach(f => {
+            this.course.cache[f] = this[f]
+          })
+          if (this.owner) {
+            this.$logger('Course|updatePacing: saving course cache')
+            api.updateCourseCache(
+              this.course._id,
+              { cache: this.course.cache }
+            )
+          }
         }
       }
+
+      // update profile chart
       if (this.$refs.profile) {
         this.$refs.profile.update()
       }
+
       this.busy = false
       this.$calculating.setCalculating(false)
       this.$logger('Course|updatePacing', t)

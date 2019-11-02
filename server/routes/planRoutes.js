@@ -10,6 +10,10 @@ planRoutes.route('/').post(async function (req, res) {
     var plan = new Plan(req.body)
     plan._user = await User.findOne({ auth0ID: req.user.sub }).exec()
     await plan.save()
+    if (!plan._user._courses.find(x => plan._course.equals(x))) {
+      plan._user._courses.push(plan._course)
+      await plan._user.save()
+    }
     res.json(plan)
   } catch (err) {
     console.log(err)

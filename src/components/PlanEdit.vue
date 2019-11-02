@@ -239,7 +239,7 @@
         </b-button>
         <b-button variant="primary" @click="ok()">
           <b-spinner v-show="saving" small></b-spinner>
-          Save Plan
+          {{ $auth.isAuthenticated() ? 'Save' : 'Generate' }} Plan
         </b-button>
       </template>
     </b-modal>
@@ -398,26 +398,40 @@ export default {
       }
       this.model.waypointDelay = string2sec(this.model.waypointDelayF)
       var p = {}
-      if (this.model._id) {
-        p = await api.updatePlan(this.model._id, this.model)
-        this.$ga.event('Plan', 'edit',
-          this.course.public ? this.course.name : 'private'
-        )
-      } else {
-        this.model._course = this.course._id
-        p = await api.createPlan(this.model)
-        this.$ga.event('Plan', 'create',
-          this.course.public ? this.course.name : 'private'
-        )
-        if (String(p._user._id) !== String(this.course._user)) {
-          this.$bvToast.toast(`View, edit, and add plans for "${this.course.name}" next time you log in by selecting "Courses" in the top menu.`, {
-            title: `New plan for "${this.course.name}!`,
-            toaster: 'b-toaster-bottom-right',
-            solid: true,
-            variant: 'info',
-            'auto-hide-delay': 5000
-          })
+      if (this.$auth.isAuthenticated()) {
+        if (this.model._id) {
+          p = await api.updatePlan(this.model._id, this.model)
+          this.$ga.event('Plan', 'edit',
+            this.course.public ? this.course.name : 'private'
+          )
+        } else {
+          this.model._course = this.course._id
+          p = await api.createPlan(this.model)
+          this.$ga.event('Plan', 'create',
+            this.course.public ? this.course.name : 'private'
+          )
+          if (String(p._user._id) !== String(this.course._user)) {
+            this.$bvToast.toast(`View, edit, and add plans for "${this.course.name}" next time you log in by selecting "Courses" in the top menu.`, {
+              title: `New plan for "${this.course.name}!`,
+              toaster: 'b-toaster-bottom-right',
+              solid: true,
+              variant: 'info',
+              'auto-hide-delay': 5000
+            })
+          }
         }
+      } else {
+        p = {...this.model}
+        this.$bvToast.toast(`Login or Signup to ultraPacer to save or share your new plan for "${this.course.name}".`, {
+          title: `New plan for "${this.course.name}!`,
+          toaster: 'b-toaster-bottom-right',
+          solid: true,
+          variant: 'info',
+          'auto-hide-delay': 5000
+        })
+        this.$ga.event('Plan', 'temporary',
+          this.course.public ? this.course.name : 'private'
+        )
       }
       await this.$emit('refresh', p, () => {
         this.saving = false
@@ -499,6 +513,12 @@ export default {
         this.model.eventStart = null
         this.model.eventTimezone = moment.tz.guess()
       }
+    }
+  },
+  watch: {
+    'course.eventStart': function (v) {
+      // because course.eventStart isn't always ready at form show
+      this.customStart = !v
     }
   },
   filters: {

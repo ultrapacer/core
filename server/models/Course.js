@@ -88,8 +88,8 @@ CourseSchema.methods.clearCache = async function () {
 }
 
 CourseSchema.pre('remove', function () {
-  Plan.remove({_course: this._id}).exec()
-  Waypoint.remove({_course: this._id}).exec()
+  Plan.deleteMany({_course: this._id}).exec()
+  Waypoint.deleteMany({_course: this._id}).exec()
 })
 
 module.exports = mongoose.model('Course', CourseSchema)
