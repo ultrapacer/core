@@ -856,7 +856,7 @@ export default {
         }
       }
       Object.keys(factors).forEach(k => {
-        factors[k] = factors[k] / this.course.distance
+        factors[k] = round(factors[k] / this.course.distance, 4)
       })
       this.course.norm = (tot / this.course.distance)
 
