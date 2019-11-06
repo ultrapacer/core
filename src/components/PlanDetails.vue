@@ -140,7 +140,7 @@
     </p>
     </b-col></b-row>
   </b-list-group-item>
-  <b-list-group-item v-if="pacing.factors.aF > 1">
+  <b-list-group-item v-if="round(pacing.factors.aF, 3) > 1">
     <h5 class="mb-1">Altitude Effects</h5>
     <b-row>
       <b-col cols="1" class="text-right pr-0">
@@ -163,7 +163,7 @@
     </p>
     </b-col></b-row>
   </b-list-group-item>
-  <b-list-group-item v-if="pacing.factors.tF > 1">
+  <b-list-group-item v-if="round(pacing.factors.tF, 3) > 1">
     <h5 class="mb-1">Terrain Effects</h5>
     <b-row>
       <b-col cols="1" class="text-right pr-0">
@@ -186,7 +186,7 @@
     </p>
     </b-col></b-row>
   </b-list-group-item>
-  <b-list-group-item v-if="pacing.factors.hF > 1">
+  <b-list-group-item v-if="round(pacing.factors.hF, 3) > 1">
     <h5 class="mb-1">Heat Effects</h5>
     <b-row>
       <b-col cols="1" class="text-right pr-0">
@@ -205,7 +205,7 @@
     </p>
     </b-col></b-row>
   </b-list-group-item>
-  <b-list-group-item v-if="showPaceInfo && pacing.factors.dark > 1">
+  <b-list-group-item v-if="showPaceInfo && round(pacing.factors.dark, 3) > 1">
     <h5 class="mb-1">Darkness Effects</h5>
     <b-row>
       <b-col cols="4" sm="3" lg="3" xl="2" class="text-right pr-0">
@@ -367,10 +367,18 @@ export default {
     },
     normString: function () {
       let a = ['grade']
-      if (this.pacing.factors.aF > 1) { a.push('altitude') }
-      if (this.pacing.factors.tF > 1) { a.push('terrain') }
-      if (this.showPaceInfo && this.pacing.factors.hF > 1) { a.push('heat') }
-      if (this.showPaceInfo && this.pacing.factors.dark > 1) { a.push('darkness') }
+      if (round(this.pacing.factors.aF, 3) > 1) {
+        a.push('altitude')
+      }
+      if (round(this.pacing.factors.tF, 3) > 1) {
+        a.push('terrain')
+      }
+      if (this.showPaceInfo && round(this.pacing.factors.hF, 3) > 1) {
+        a.push('heat')
+      }
+      if (this.showPaceInfo && round(this.pacing.factors.dark, 3) > 1) {
+        a.push('darkness')
+      }
       if (a.length === 1) {
         return a[0]
       } else if (a.length === 2) {
@@ -409,6 +417,9 @@ export default {
   methods: {
     fPace: function (p) {
       return p / this.units.distScale
+    },
+    round: function (v) {
+      return round(v)
     },
     sec2string: function (s, f) {
       return sec2string(s, f)
