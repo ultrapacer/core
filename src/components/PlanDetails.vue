@@ -418,8 +418,8 @@ export default {
     fPace: function (p) {
       return p / this.units.distScale
     },
-    round: function (v) {
-      return round(v)
+    round: function (v, t) {
+      return round(v, t)
     },
     sec2string: function (s, f) {
       return sec2string(s, f)
