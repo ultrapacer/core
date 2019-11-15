@@ -61,6 +61,11 @@ let router = new Router({
       component: Course
     },
     {
+      path: '/race/:permalink',
+      name: 'Race',
+      component: Course
+    },
+    {
       path: '/course/plan/:plan',
       name: 'Plan',
       component: Course

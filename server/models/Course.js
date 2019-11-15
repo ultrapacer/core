@@ -12,6 +12,9 @@ var CourseSchema = new Schema({
   name: {
     type: String
   },
+  link: {
+    type: String
+  },
   description: {
     type: String
   },

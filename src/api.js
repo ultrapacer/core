@@ -43,7 +43,7 @@ export default {
     return this.executeAuth('get', '/api/courses')
   },
   async getCourse (id, key = 'course') {
-    let sub = (key === 'plan') ? 'plan/' : ''
+    let sub = (key === 'course') ? '' : key + '/'
     if (Vue.prototype.$auth.isAuthenticated()) {
       return this.executeAuth('get', `/api/course/${sub}${id}`)
     } else {
