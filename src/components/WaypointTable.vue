@@ -111,7 +111,7 @@ export default {
           tdClass: 'd-none d-sm-table-cell text-right'
         }
       ]
-      if (this.showTerrain) {
+      if (this.showTerrain && this.editing) {
         f.push({
           key: 'terrainFactor',
           label: 'Terrain',
