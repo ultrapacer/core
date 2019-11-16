@@ -139,6 +139,7 @@ import wputil from '@/util/waypoints'
 import { round } from '@/util/math'
 const gpxParse = require('gpx-parse')
 export default {
+  props: ['user'],
   data () {
     return {
       defaults: {eventTimezone: moment.tz.guess()},
