@@ -5,11 +5,13 @@ var Course = require('../models/Course')
 var Plan = require('../models/Plan')
 
 // GET COURSE
-publicRoutes.route('/course/:_id').get(async function (req, res) {
+publicRoutes.route(['/course/:_id', '/course/permalink/:link']).get(async function (req, res) {
   try {
-    let q = {
-      _id: req.params._id,
-      public: true
+    let q = { public: true }
+    if (req.params._id) {
+      q._id = req.params._id
+    } else {
+      q.link = req.params.link
     }
     var course = await Course.findOne(q).select(['-points', '-raw']).exec()
     await course.addData()

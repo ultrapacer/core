@@ -133,31 +133,13 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 })
 
 // GET COURSE
-courseRoutes.route('/:_id').get(async function (req, res) {
+courseRoutes.route(['/:_id', '/permalink/:link']).get(async function (req, res) {
   try {
+    let q = (req.params._link)
+      ? { link: req.params.link}
+      : { _id: req.params._id }
     let [course, user] = await Promise.all([
-      Course.findById(req.params._id).populate('_user')
-        .select(['-points', '-raw']).exec(),
-      User.findOne({ auth0ID: req.user.sub }).exec()
-    ])
-    if (course.public || course._user.auth0ID === req.user.sub) {
-      await course.addData(user, null)
-      course._user = course._user._id // don't return all user data, just id
-      res.json(course)
-    } else {
-      res.status(403).send('No permission')
-    }
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
-  }
-})
-
-// GET COURSE BY PERMALINK
-courseRoutes.route('/permalink/:_link').get(async function (req, res) {
-  try {
-    let [course, user] = await Promise.all([
-      Course.findById(req.params._id).populate('_user')
+      Course.findById(q).populate('_user')
         .select(['-points', '-raw']).exec(),
       User.findOne({ auth0ID: req.user.sub }).exec()
     ])
