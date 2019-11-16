@@ -133,7 +133,7 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 })
 
 // GET COURSE
-courseRoutes.route(['/:_id', '/permalink/:link']).get(async function (req, res) {
+courseRoutes.route(['/:_id', '/link/:link']).get(async function (req, res) {
   try {
     let q = (req.params.link)
       ? { link: req.params.link }

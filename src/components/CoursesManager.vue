@@ -142,7 +142,21 @@ export default {
       if (typeof callback === 'function') callback()
     },
     async goToCourse (course) {
-      this.$router.push({path: '/course/' + course._id})
+      if (course.link) {
+        this.$router.push({
+          name: 'Race',
+          params: {
+            permalink: course.link
+          }
+        })
+      } else {
+        this.$router.push({
+          name: 'Course',
+          params: {
+            course: course._id
+          }
+        })
+      }
     },
     async newCourse () {
       this.$refs.courseEdit.show({})

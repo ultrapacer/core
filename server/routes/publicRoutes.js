@@ -5,7 +5,7 @@ var Course = require('../models/Course')
 var Plan = require('../models/Plan')
 
 // GET COURSE
-publicRoutes.route(['/course/:_id', '/course/permalink/:link']).get(async function (req, res) {
+publicRoutes.route(['/course/:_id', '/course/link/:link']).get(async function (req, res) {
   try {
     let q = { public: true }
     if (req.params._id) {
