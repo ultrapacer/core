@@ -416,6 +416,8 @@ export default {
     try {
       if (this.$route.params.plan) {
         this.course = await api.getCourse(this.$route.params.plan, 'plan')
+      } else if (this.$route.params.permalink) {
+        this.course = await api.getCourse(this.$route.params.permalink, 'link')
       } else {
         this.course = await api.getCourse(this.$route.params.course, 'course')
       }
@@ -612,14 +614,7 @@ export default {
               this.plan = this.plans[0]
               await this.calcPlan()
             } else {
-              this.plan = null
-              this.pacing = {}
-              this.$router.push({
-                name: 'Course',
-                params: {
-                  'course': this.course._id
-                }
-              })
+              this.clearPlan()
             }
           }
         },
@@ -658,7 +653,7 @@ export default {
           api.selectCoursePlan(this.course._id, {plan: this.plan._id})
         }
       } else {
-        this.$router.push({
+        let route = {
           name: 'Course',
           params: {
             course: this.course._id
@@ -666,7 +661,12 @@ export default {
           query: {
             plan: JSURL.stringify(this.plan)
           }
-        })
+        }
+        if (this.course.link) {
+          route.name = 'Race'
+          route.params.permalink = this.course.link
+        }
+        this.$router.push(route)
       }
       this.$ga.event('Plan', 'view', this.publicName)
       if (!this.useCache()) {
@@ -681,13 +681,26 @@ export default {
     async clearPlan () {
       // deselect the current plan
       if (!this.planAssigned) { return }
-      this.plan = {}
-      this.$router.push({
+      this.plan = null
+      this.pacing = {}
+      let route = {
         name: 'Course',
         params: {
           'course': this.course._id
         }
-      })
+      }
+      if (this.course.link) {
+        route.name = 'Race'
+        route.params.permalink = this.course.link
+      }
+      this.$router.push(route)
+      if (!this.useCache()) {
+        this.busy = true
+        this.$calculating.setCalculating(true)
+        setTimeout(() => { this.updatePacing() }, 10)
+      } else {
+        this.$refs.profile.update()
+      }
       this.$logger('Course|clearPlan')
     },
     async updatePacing () {

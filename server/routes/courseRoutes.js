@@ -68,7 +68,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
   try {
     let course = await Course.findById(req.params.id).populate('_user').exec()
     if (course._user.auth0ID === req.user.sub) {
-      let fields = ['name', 'description', 'public', 'eventStart', 'eventTimezone']
+      let fields = ['name', 'link', 'description', 'public', 'eventStart', 'eventTimezone']
       if (req.body.points) {
         fields.push('points', 'raw', 'source', 'distance', 'gain', 'loss')
       }
@@ -133,10 +133,13 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 })
 
 // GET COURSE
-courseRoutes.route('/:_id').get(async function (req, res) {
+courseRoutes.route(['/:_id', '/link/:link']).get(async function (req, res) {
   try {
+    let q = (req.params.link)
+      ? { link: req.params.link }
+      : { _id: req.params._id }
     let [course, user] = await Promise.all([
-      Course.findById(req.params._id).populate('_user')
+      Course.findOne(q).populate('_user')
         .select(['-points', '-raw']).exec(),
       User.findOne({ auth0ID: req.user.sub }).exec()
     ])
