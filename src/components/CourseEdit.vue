@@ -265,7 +265,7 @@ export default {
     },
     async remove () {
       this.deleting = true
-      this.$emit('delete', this.course, async (err) => {
+      this.$emit('delete', this.model, async (err) => {
         if (!err) {
           this.$ga.event('Course', 'delete')
           this.$bvModal.hide('course-edit-modal')

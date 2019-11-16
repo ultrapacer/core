@@ -694,6 +694,13 @@ export default {
         route.params.permalink = this.course.link
       }
       this.$router.push(route)
+      if (!this.useCache()) {
+        this.busy = true
+        this.$calculating.setCalculating(true)
+        setTimeout(() => { this.updatePacing() }, 10)
+      } else {
+        this.$refs.profile.update()
+      }
       this.$logger('Course|clearPlan')
     },
     async updatePacing () {
