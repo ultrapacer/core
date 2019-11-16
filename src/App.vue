@@ -94,19 +94,24 @@ export default {
       // location after login:
       let r = this.$router.currentRoute
       if (
-        r.name === 'Course' &&
+        (r.name === 'Course' || r.name === 'Race') &&
         Object.keys(r.query)[0] === 'plan'
       ) {
-        this.$auth.login({
-          route: {
-            name: 'Course',
-            params: {
-              'course': r.params.course
-            },
-            query: {
-              plan: r.query.plan
-            }
+        let route = {
+          name: 'Course',
+          params: {
+            'course': r.params.course
+          },
+          query: {
+            plan: r.query.plan
           }
+        }
+        if (r.params.permalink) {
+          route.name = 'Race'
+          route.params.permalink = r.params.permalink
+        }
+        this.$auth.login({
+          route: route
         })
       } else {
         this.$auth.login()
