@@ -86,7 +86,7 @@
           </b-row>
           <b-row v-if="wp.description">
             <b-col cols="4" class="text-right"><b>Notes:</b></b-col>
-            <b-col>{{ wp.description }}</b-col>
+            <b-col style="white-space:pre-wrap">{{ wp.description }}</b-col>
           </b-row>
         </b-list-group-item>
       </b-list-group>
