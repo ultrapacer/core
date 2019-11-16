@@ -49,6 +49,7 @@
     </b-row>
     <course-edit
       ref="courseEdit"
+      :user="user"
       @refresh="refreshCourses"
       @delete="deleteCourse"
     ></course-edit>

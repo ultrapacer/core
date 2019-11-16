@@ -13,7 +13,8 @@ var CourseSchema = new Schema({
     type: String
   },
   link: {
-    type: String
+    type: String,
+    unique: true
   },
   description: {
     type: String

@@ -99,6 +99,18 @@
         >
           Visible to public
         </b-form-checkbox>
+        <b-input-group
+          v-if="model.public && user.admin"
+          prepend="Permalink"
+          class="mb-2"
+          size="sm"
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Permalink: readable link for official races; https://ultrapacer.com/race/(permalink)'
+          "
+        >
+        <b-form-input type="text" v-model="model.link" required>
+        </b-form-input>
+        </b-input-group>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
         <div v-if="model._id" style="text-align: left; flex: auto">
