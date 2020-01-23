@@ -108,7 +108,7 @@
             'Permalink: readable link for official races; https://ultrapacer.com/race/(permalink)'
           "
         >
-        <b-form-input type="text" v-model="model.link" required>
+        <b-form-input type="text" v-model="model.link">
         </b-form-input>
         </b-input-group>
       </form>
