@@ -246,4 +246,40 @@ courseRoutes.route('/:id/cache').put(async function (req, res) {
   }
 })
 
+// COPY COURSE
+courseRoutes.route(['/:_id', '/copy']).put(async function (req, res) {
+  try {
+    let q = (req.params.link)
+      ? { link: req.params.link }
+      : { _id: req.params._id }
+    let [course, user] = await Promise.all([
+      Course.findOne(q).populate('_user')
+        .select(['-points', '-raw']).exec(),
+      User.findOne({ auth0ID: req.user.sub }).exec()
+    ])
+    if (course.public || course._user.auth0ID === req.user.sub) {
+      await course.addData(user, null)
+      delete course._id
+      course._user = user
+      course.name = course.name + ' [copy]'
+      course.link = null
+      await course.save()
+      course.waypoints.forEach(wp=>{
+        delete wp._id
+        wp._course = course
+        await wp.save()
+      })
+      course.waypoints = []
+      course.plans = []
+      await course.save()
+      res.json(1)
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
 module.exports = courseRoutes
