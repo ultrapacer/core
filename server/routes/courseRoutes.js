@@ -1,5 +1,6 @@
 // courseRoutes.js
 var express = require('express')
+var mongoose = require('mongoose')
 var courseRoutes = express.Router()
 var Course = require('../models/Course')
 var User = require('../models/User')
@@ -247,31 +248,29 @@ courseRoutes.route('/:id/cache').put(async function (req, res) {
 })
 
 // COPY COURSE
-courseRoutes.route(['/:_id', '/copy']).put(async function (req, res) {
+courseRoutes.route('/:id/copy').put(async function (req, res) {
   try {
-    let q = (req.params.link)
-      ? { link: req.params.link }
-      : { _id: req.params._id }
-    let [course, user] = await Promise.all([
-      Course.findOne(q).populate('_user')
-        .select(['-points', '-raw']).exec(),
-      User.findOne({ auth0ID: req.user.sub }).exec()
-    ])
-    if (course.public || course._user.auth0ID === req.user.sub) {
-      await course.addData(user, null)
-      delete course._id
-      course._user = user
-      course.name = course.name + ' [copy]'
-      course.link = null
-      await course.save()
-      course.waypoints.forEach(wp=>{
-        delete wp._id
-        wp._course = course
-        await wp.save()
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var course = await Course.findById(req.params.id).exec()
+    if (course._user.equals(user._id) || course.public) {
+      console.log('course1 ' + course._id)
+      var wps = await Waypoint.find({ _course: course }).sort('location').exec()
+      let course2 = new Course(course)
+      course2._id = mongoose.Types.ObjectId()
+      course2.isNew = true
+      course2._user = user
+      course2.name = `${course2.name} [copy]`
+      course2.link = null
+      await course2.save()
+      await course2.clearCache()
+      console.log('course2 ' + course2._id)
+      wps.forEach(async wp => {
+        let wp2 = new Waypoint(wp)
+        wp2._id = mongoose.Types.ObjectId()
+        wp2.isNew = true
+        wp2._course = course2
+        await wp2.save()
       })
-      course.waypoints = []
-      course.plans = []
-      await course.save()
       res.json(1)
     } else {
       res.status(403).send('No permission')
