@@ -1,5 +1,6 @@
 // courseRoutes.js
 var express = require('express')
+var mongoose = require('mongoose')
 var courseRoutes = express.Router()
 var Course = require('../models/Course')
 var User = require('../models/User')
@@ -242,6 +243,40 @@ courseRoutes.route('/:id/cache').put(async function (req, res) {
       res.status(403).send('No permission')
     }
   } catch (err) {
+    res.status(400).send(err)
+  }
+})
+
+// COPY COURSE
+courseRoutes.route('/:id/copy').put(async function (req, res) {
+  try {
+    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    var course = await Course.findById(req.params.id).exec()
+    if (course._user.equals(user._id) || course.public) {
+      console.log('course1 ' + course._id)
+      var wps = await Waypoint.find({ _course: course }).sort('location').exec()
+      let course2 = new Course(course)
+      course2._id = mongoose.Types.ObjectId()
+      course2.isNew = true
+      course2._user = user
+      course2.name = `${course2.name} [copy]`
+      course2.link = null
+      await course2.save()
+      await course2.clearCache()
+      console.log('course2 ' + course2._id)
+      wps.forEach(async wp => {
+        let wp2 = new Waypoint(wp)
+        wp2._id = mongoose.Types.ObjectId()
+        wp2.isNew = true
+        wp2._course = course2
+        await wp2.save()
+      })
+      res.json(1)
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    console.log(err)
     res.status(400).send(err)
   }
 })

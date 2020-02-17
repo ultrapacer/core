@@ -182,6 +182,10 @@ export default {
           }
         }
       )
+    },
+    async copyCourse (id) {
+      await api.copyCourse(id)
+      this.refreshCourses()
     }
   }
 }
