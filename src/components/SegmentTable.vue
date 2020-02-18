@@ -67,7 +67,7 @@
           <b-row
             v-for="f in fields"
             v-bind:key="f.key"
-            v-if="!mobileFields.includes(f.key)"
+            v-if="!mobileFields.includes(f.key) && !(hideOneFields.includes(f.key) && round(f.value, 4) === 1)"
             v-bind:class="detailsFields.includes(f.key) ? 'mb-1' : 'mb-1 d-md-none'"
           >
             <b-col cols="4" class="text-right"><b>{{ f.label }}:</b></b-col>
@@ -102,7 +102,8 @@ export default {
   data () {
     return {
       clearing: false,
-      visibleTrigger: 0
+      visibleTrigger: 0,
+      hideOneFields: ['factors.dark']
     }
   },
   filters: {
@@ -452,6 +453,7 @@ export default {
     },
     hasDetailedInfo: function (s) {
       return (
+        this.factors.dark > 1 ||
         this.showTerrain ||
         this.spannedWaypoints(s).filter(
           wp =>
