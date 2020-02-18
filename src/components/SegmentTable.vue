@@ -121,6 +121,7 @@ export default {
     detailsFields: function () {
       let f = []
       if (this.showTerrain) { f.push('factors.tF') }
+      if (this.showDark) { f.push('factors.dark') }
       return f
     },
     mobileFields: function () {
@@ -196,6 +197,15 @@ export default {
         f.push({
           key: 'factors.tF',
           label: 'Terrain',
+          formatter: (value, key, item) => {
+            return '+' + ((value - 1) * 100).toFixed(1) + '%'
+          }
+        })
+      }
+      if (this.showDark) {
+        f.push({
+          key: 'factors.dark',
+          label: 'Darkness',
           formatter: (value, key, item) => {
             return '+' + ((value - 1) * 100).toFixed(1) + '%'
           }
@@ -279,6 +289,9 @@ export default {
       }
       return false
     },
+    showDark: function () {
+      return this.pacing.factors.dark > 1
+    },
     showClock: function () {
       return this.segments[0].hasOwnProperty('tod') && this.segments[0].tod !== null
     },
@@ -314,6 +327,7 @@ export default {
           factors: {...s.factors}
         }
         seg.factors.tF = this.rollup(subs, s, 'weightedAvg', 'factors.tF')
+        seg.factors.dark = this.rollup(subs, s, 'weightedAvg', 'factors.dark')
         if (s.time) {
           seg.time = this.rollup(subs, s, 'sum', 'time')
           seg.pace = seg.time / seg.len

@@ -52,6 +52,7 @@ function calcSegments (p, breaks, pacing) {
         gF: 0,
         tF: 0,
         hF: 0,
+        dark: 0,
         dF: 0
       }
     })
