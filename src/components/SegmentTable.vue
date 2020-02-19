@@ -194,12 +194,21 @@ export default {
           label: 'End'
         })
       }
+      if (this.segments[0].time) {
+        f.push({
+          key: 'factors.gF',
+          label: 'Grade',
+          formatter: (value, key, item) => {
+            return this.formatPaceTimePercent(value, item)
+          }
+        })
+      }
       if (this.showTerrain) {
         f.push({
           key: 'factors.tF',
           label: 'Terrain',
           formatter: (value, key, item) => {
-            return this.percentWithPace(value, item)
+            return this.formatPaceTimePercent(value, item)
           }
         })
       }
@@ -208,7 +217,7 @@ export default {
           key: 'factors.dark',
           label: 'Darkness',
           formatter: (value, key, item) => {
-            return '+' + ((value - 1) * 100).toFixed(1) + '%'
+            return this.formatPaceTimePercent(value, item)
           }
         })
       }
@@ -327,7 +336,11 @@ export default {
           grade: this.rollup(subs, s, 'weightedAvg', 'grade'),
           factors: {...s.factors}
         }
+        seg.factors.gF = this.rollup(subs, s, 'weightedAvg', 'factors.gF')
         seg.factors.tF = this.rollup(subs, s, 'weightedAvg', 'factors.tF')
+        seg.factors.aF = this.rollup(subs, s, 'weightedAvg', 'factors.aF')
+        seg.factors.hF = this.rollup(subs, s, 'weightedAvg', 'factors.hF')
+        seg.factors.dF = this.rollup(subs, s, 'weightedAvg', 'factors.dF')
         seg.factors.dark = this.rollup(subs, s, 'weightedAvg', 'factors.dark')
         if (s.time) {
           seg.time = this.rollup(subs, s, 'sum', 'time')
@@ -456,7 +469,11 @@ export default {
     },
     hasDetailedInfo: function (s) {
       return (
-        s.factors.dark > 1 ||
+        s.factors.dark !== 1 1 ||
+        s.factors.aF !== 1 ||
+        s.factors.dF !== 1 ||
+        s.factors.hF !== 1 ||
+        (s.hasOwnProperty('pace') && s.factors.gF !== 1) ||
         this.showTerrain ||
         this.spannedWaypoints(s).filter(
           wp =>
@@ -471,15 +488,14 @@ export default {
       )
       return (d) ? d.delay : 0
     },
-    percentWithPace (val, item) {
-      val = val - 1
-      let str = `${(val > 0 ? '+' : '')}${(val * 100).toFixed(1)}%`
-      if (val !== 0 && item.hasOwnProperty('pace')) {
-          let fact = val > 0 ? 1 : -1
-          val = fact * val
-          let dPace = val * item.pace / this.units.distScale
-          let dTime = val * item.time / this.units.distScale
-          str = `${timeUtil.sec2string(dTime, '[h]:m:ss')} | ${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist} [${str}]`
+    formatPaceTimePercent (f, item) {
+      let df = f - 1
+      let sign = df > 0 ? '+' : ''
+      let str = `${sign}${(df * 100).toFixed(1)}%`
+      if (round(f, 4) !== 1 && item.hasOwnProperty('pace')) {
+          let dPace = item.pace / f / this.units.distScale
+          let dTime = item.time / f / this.units.distScale
+          str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} | ${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist} [${str}]`
       }
       return str
     }
