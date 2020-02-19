@@ -62,13 +62,13 @@
         v-bind:class="(hasDetailedInfo(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
       >
         <b-list-group-item
-          v-bind:class="detailsFields.length ? '' : 'd-md-none'"
+          v-bind:class="segments[0].time ? '' : 'd-md-none'"
         >
           <b-row
             v-for="f in fields"
             v-bind:key="f.key"
-            v-if="!mobileFields.includes(f.key) && !(hideOneFields.includes(f.key) && round(parseField(row.item, f.key), 4) === 1)"
-            v-bind:class="detailsFields.includes(f.key) ? 'mb-1' : 'mb-1 d-md-none'"
+            v-if="!mobileFields.includes(f.key) && !(factorFields.includes(f.key) && round(parseField(row.item, f.key), 4) === 1)"
+            v-bind:class="factorFields.includes(f.key) ? 'mb-1' : 'mb-1 d-md-none'"
           >
             <b-col cols="4" class="text-right"><b>{{ f.label }}:</b></b-col>
             <b-col v-if="f.formatter">{{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}</b-col>
@@ -103,7 +103,7 @@ export default {
     return {
       clearing: false,
       visibleTrigger: 0,
-      hideOneFields: ['factors.dark']
+      factorFields: ['factors.gF', 'factors.tF', 'factors.aF', 'factors.hF', 'factors.dF', 'factors.dark']
     }
   },
   filters: {
@@ -119,12 +119,6 @@ export default {
     }
   },
   computed: {
-    detailsFields: function () {
-      let f = []
-      if (this.showTerrain) { f.push('factors.tF') }
-      if (this.showDark) { f.push('factors.dark') }
-      return f
-    },
     mobileFields: function () {
       if (this.mode === 'splits') {
         if (this.pacing.time) {
@@ -194,32 +188,19 @@ export default {
           label: 'End'
         })
       }
+      // add factors
       if (this.segments[0].time) {
-        f.push({
-          key: 'factors.gF',
-          label: 'Grade',
-          formatter: (value, key, item) => {
-            return this.formatPaceTimePercent(value, item)
-          }
-        })
-      }
-      if (this.showTerrain) {
-        f.push({
-          key: 'factors.tF',
-          label: 'Terrain',
-          formatter: (value, key, item) => {
-            return this.formatPaceTimePercent(value, item)
-          }
-        })
-      }
-      if (this.showDark) {
-        f.push({
-          key: 'factors.dark',
-          label: 'Darkness',
-          formatter: (value, key, item) => {
-            return this.formatPaceTimePercent(value, item)
-          }
-        })
+        let fs = ['gF', 'tF', 'aF', 'hF', 'dF', 'dark']
+        let labels = ['Grade', 'Terrain', 'Altitude', 'Heat', 'Drift', 'Darkness']
+        for (let i = 0; i < this.segments.length; i++) {
+          f.push({
+            key: 'factors.' + fs[i],
+            label: labels[i],
+            formatter: (value, key, item) => {
+              return this.formatPaceTimePercent(value, item)
+            }
+          })
+        }
       }
       if (this.segments[0].time) {
         if (this.mode === 'segments') {
@@ -363,7 +344,7 @@ export default {
       if (this.mobileFields.includes(key)) {
         return base
       } else {
-        if (this.detailsFields.includes(key)) {
+        if (this.factorFields.includes(key)) {
           return `d-none`
         } else {
           return `d-none d-md-table-cell ${base}`
