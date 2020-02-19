@@ -57,4 +57,20 @@ publicRoutes.route('/course/:course/field/:field').get(async function (req, res)
   }
 })
 
+// GET RACES
+publicRoutes.route('/races').get(async function (req, res) {
+  try {
+    let q = {
+      public: true,
+      link: { "$nin": [ null, "" ] },
+      eventStart: { "$nin": [ null, "" ] }
+    }
+    var races = await Course.find(q).select(['name', 'distance', 'gain', 'loss', 'link', 'eventStart', 'eventTimezone']).exec()
+    res.json(races)
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
 module.exports = publicRoutes
