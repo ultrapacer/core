@@ -67,7 +67,7 @@
           <b-row
             v-for="f in fields"
             v-bind:key="f.key"
-            v-if="!mobileFields.includes(f.key) && !(hideOneFields.includes(f.key) && round(f.value, 4) === 1)"
+            v-if="!mobileFields.includes(f.key) && !(hideOneFields.includes(f.key) && round(parseField(row.item, f.key), 4) === 1)"
             v-bind:class="detailsFields.includes(f.key) ? 'mb-1' : 'mb-1 d-md-none'"
           >
             <b-col cols="4" class="text-right"><b>{{ f.label }}:</b></b-col>
@@ -199,7 +199,7 @@ export default {
           key: 'factors.tF',
           label: 'Terrain',
           formatter: (value, key, item) => {
-            return '+' + ((value - 1) * 100).toFixed(1) + '%'
+            return this.percentWithPace(value, item)
           }
         })
       }
@@ -444,6 +444,9 @@ export default {
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)
     },
+    round: function (v, t) {
+      return round(v, t)
+    },
     spannedWaypoints: function (s) {
       let wps = this.course.waypoints.filter(wp =>
         round(wp.location, 4) > round(s.start, 4) &&
@@ -453,7 +456,7 @@ export default {
     },
     hasDetailedInfo: function (s) {
       return (
-        this.factors.dark > 1 ||
+        s.factors.dark > 1 ||
         this.showTerrain ||
         this.spannedWaypoints(s).filter(
           wp =>
@@ -467,6 +470,18 @@ export default {
         round(d.loc, 4) === round(wp.location, 4)
       )
       return (d) ? d.delay : 0
+    },
+    percentWithPace (val, item) {
+      val = val - 1
+      let str = `${(val > 0 ? '+' : '')}${(val * 100).toFixed(1)}%`
+      if (val !== 0 && item.hasOwnProperty('pace')) {
+          let fact = val > 0 ? 1 : -1
+          val = fact * val
+          let dPace = val * item.pace / this.units.distScale
+          let dTime = val * item.time / this.units.distScale
+          str = `${timeUtil.sec2string(dTime, '[h]:m:ss')} | ${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist} [${str}]`
+      }
+      return str
     }
   }
 }
