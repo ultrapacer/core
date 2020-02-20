@@ -59,7 +59,7 @@
     </template>
     <template v-slot:row-details="row">
       <b-list-group
-        v-bind:class="(hasDetailedInfo(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
+        v-bind:class="(hasDetailedInfo(row.item) || segments[0].time) ? 'pt-1' : 'd-md-none pt-1'"
       >
         <b-list-group-item
           v-bind:class="segments[0].time ? '' : 'd-md-none'"
@@ -89,6 +89,19 @@
             <b-col style="white-space:pre-wrap">{{ wp.description }}</b-col>
           </b-row>
         </b-list-group-item>
+
+        <b-list-group-item v-if="segments[0].time">
+          <b>Pacing Factors</b><br/>
+          <b-row
+            v-for="key in Object.keys(row.item.factors)"
+            v-if="round(row.item.factors[key], 4) !== 1"
+            class="mb-1"
+          >
+            <b-col cols="4" class="text-right"><b>{{ factorLables[key] }}:</b></b-col>
+            <b-col>{{ formatPaceTimePercent(row.item.factors[key], row.item) }}</b-col>
+          </b-row>
+        </b-list-group-item>
+
       </b-list-group>
     </template>
   </b-table>
@@ -103,7 +116,8 @@ export default {
     return {
       clearing: false,
       visibleTrigger: 0,
-      factorFields: ['factors.gF', 'factors.tF', 'factors.aF', 'factors.hF', 'factors.dF', 'factors.dark']
+      factorFields: ['factors.gF', 'factors.tF', 'factors.aF', 'factors.hF', 'factors.dF', 'factors.dark'],
+      factorLables: { gF: 'Grade', tF: 'Terrain', aF: 'Altitude', hF: 'Heat', dF: 'Drift', dark: 'Darkness' }
     }
   },
   filters: {
@@ -187,20 +201,6 @@ export default {
           key: 'waypoint2.name',
           label: 'End'
         })
-      }
-      // add factors
-      if (this.segments[0].time) {
-        let fs = ['gF', 'tF', 'aF', 'hF', 'dF', 'dark']
-        let labels = ['Grade', 'Terrain', 'Altitude', 'Heat', 'Drift', 'Darkness']
-        for (let i = 0; i < this.segments.length; i++) {
-          f.push({
-            key: 'factors.' + fs[i],
-            label: labels[i],
-            formatter: (value, key, item) => {
-              return this.formatPaceTimePercent(value, item)
-            }
-          })
-        }
       }
       if (this.segments[0].time) {
         if (this.mode === 'segments') {
@@ -450,12 +450,6 @@ export default {
     },
     hasDetailedInfo: function (s) {
       return (
-        s.factors.dark !== 1 1 ||
-        s.factors.aF !== 1 ||
-        s.factors.dF !== 1 ||
-        s.factors.hF !== 1 ||
-        (s.hasOwnProperty('pace') && s.factors.gF !== 1) ||
-        this.showTerrain ||
         this.spannedWaypoints(s).filter(
           wp =>
             wp.description ||
@@ -474,9 +468,9 @@ export default {
       let sign = df > 0 ? '+' : ''
       let str = `${sign}${(df * 100).toFixed(1)}%`
       if (round(f, 4) !== 1 && item.hasOwnProperty('pace')) {
-          let dPace = item.pace / f / this.units.distScale
-          let dTime = item.time / f / this.units.distScale
-          str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} | ${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist} [${str}]`
+        let dPace = item.pace * (1 - 1 / f) / this.units.distScale
+        let dTime = item.time * (1 - 1 / f) / this.units.distScale
+        str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} | ${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist} [${str}]`
       }
       return str
     }
