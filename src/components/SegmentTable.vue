@@ -59,28 +59,28 @@
     </template>
     <template v-slot:row-details="row">
       <b-list-group
-        v-bind:class="(hasDetailedInfo(row.item) || segments[0].time) ? 'pt-1' : 'd-md-none pt-1'"
+        v-bind:class="(hasInterimWaypoints(row.item) || hasFactors(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
       >
         <b-list-group-item
-          v-bind:class="segments[0].time ? '' : 'd-md-none'"
+          class="d-md-none"
         >
           <b-row
             v-for="f in fields"
             v-bind:key="f.key"
-            v-if="!mobileFields.includes(f.key) && !(factorFields.includes(f.key) && round(parseField(row.item, f.key), 4) === 1)"
-            v-bind:class="factorFields.includes(f.key) ? 'mb-1' : 'mb-1 d-md-none'"
+            v-if="!mobileFields.includes(f.key)"
+            class="mb-1 d-md-none"
           >
             <b-col cols="4" class="text-right"><b>{{ f.label }}:</b></b-col>
             <b-col v-if="f.formatter">{{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}</b-col>
           </b-row>
         </b-list-group-item>
+        
         <b-list-group-item
           v-for="wp in spannedWaypoints(row.item)"
           v-bind:key="wp._id"
-          v-if="wp.tier < 3 && (waypointDelay(wp) || wp.description)"
-          class="mb-1">
+          v-if="wp.tier < 3 && (waypointDelay(wp) || wp.description)">
           <b>{{ wp.name }} ({{ $waypointTypes[wp.type] }}), {{ wp.location | formatDist(units.distScale) }} {{ units.dist }}</b><br/>
-          <b-row               v-if="waypointDelay(wp)"            >
+          <b-row v-if="waypointDelay(wp)">
             <b-col cols="4" class="text-sm-right"><b>Delay:</b></b-col>
             <b-col>{{ waypointDelay(wp) / 60 }} minutes</b-col>
           </b-row>
@@ -90,7 +90,7 @@
           </b-row>
         </b-list-group-item>
 
-        <b-list-group-item v-if="segments[0].time">
+        <b-list-group-item v-if="hasFactors(row.item)" class="d-none d-md-block">
           <b>Pacing Factors</b><br/>
           <b-row
             v-for="key in Object.keys(row.item.factors)"
@@ -133,6 +133,9 @@ export default {
     }
   },
   computed: {
+    planAssigned: function () {
+      return this.pacing.hasOwnProperty('time')
+    },
     mobileFields: function () {
       if (this.mode === 'splits') {
         if (this.pacing.time) {
@@ -279,9 +282,6 @@ export default {
         }
       }
       return false
-    },
-    showDark: function () {
-      return this.pacing.factors.dark > 1
     },
     showClock: function () {
       return this.segments[0].hasOwnProperty('tod') && this.segments[0].tod !== null
@@ -448,7 +448,7 @@ export default {
       )
       return wps
     },
-    hasDetailedInfo: function (s) {
+    hasInterimWaypoints: function (s) {
       return (
         this.spannedWaypoints(s).filter(
           wp =>
@@ -473,6 +473,15 @@ export default {
         str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} | ${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist} [${str}]`
       }
       return str
+    },
+    hasFactors (item) {
+      let res = false
+      Object.keys(item.factors).forEach(k=>{
+        if (round(item.factors[k], 4) !== 1) {
+          res = true
+        }
+      })
+      return res
     }
   }
 }
