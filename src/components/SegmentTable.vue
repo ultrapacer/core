@@ -315,14 +315,10 @@ export default {
           gain: this.rollup(subs, s, 'sum', 'gain'),
           loss: this.rollup(subs, s, 'sum', 'loss'),
           grade: this.rollup(subs, s, 'weightedAvg', 'grade'),
-          factors: {...s.factors}
+          factors: {}
         }
-        seg.factors.gF = this.rollup(subs, s, 'weightedAvg', 'factors.gF')
-        seg.factors.tF = this.rollup(subs, s, 'weightedAvg', 'factors.tF')
-        seg.factors.aF = this.rollup(subs, s, 'weightedAvg', 'factors.aF')
-        seg.factors.hF = this.rollup(subs, s, 'weightedAvg', 'factors.hF')
-        seg.factors.dF = this.rollup(subs, s, 'weightedAvg', 'factors.dF')
-        seg.factors.dark = this.rollup(subs, s, 'weightedAvg', 'factors.dark')
+        Object.keys(this.factorLables).forEach(k=>{ seg.factors[k] = 
+          this.rollup(subs, s, 'weightedAvg', `factors.${k}`)
         if (s.time) {
           seg.time = this.rollup(subs, s, 'sum', 'time')
           seg.pace = seg.time / seg.len
