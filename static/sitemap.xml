@@ -6,6 +6,11 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://ultrapacer.com/races</loc>
+    <changefreq>daily</changefreq>
+    <priority>1</priority>
+  </url>
+  <url>
     <loc>https://ultrapacer.com/help</loc>
     <changefreq>daily</changefreq>
     <priority>0.5</priority>
