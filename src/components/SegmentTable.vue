@@ -74,7 +74,7 @@
             <b-col v-if="f.formatter">{{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}</b-col>
           </b-row>
         </b-list-group-item>
-        
+
         <b-list-group-item
           v-for="wp in spannedWaypoints(row.item)"
           v-bind:key="wp._id"
@@ -94,6 +94,7 @@
           <b>Pacing Factors</b><br/>
           <b-row
             v-for="key in Object.keys(row.item.factors)"
+            v-bind:key="key"
             v-if="round(row.item.factors[key], 4) !== 1"
             class="mb-1"
           >
@@ -116,7 +117,6 @@ export default {
     return {
       clearing: false,
       visibleTrigger: 0,
-      factorFields: ['factors.gF', 'factors.tF', 'factors.aF', 'factors.hF', 'factors.dF', 'factors.dark'],
       factorLables: { gF: 'Grade', tF: 'Terrain', aF: 'Altitude', hF: 'Heat', dF: 'Drift', dark: 'Darkness' }
     }
   },
@@ -317,8 +317,9 @@ export default {
           grade: this.rollup(subs, s, 'weightedAvg', 'grade'),
           factors: {}
         }
-        Object.keys(this.factorLables).forEach(k=>{ seg.factors[k] = 
-          this.rollup(subs, s, 'weightedAvg', `factors.${k}`)
+        Object.keys(this.factorLables).forEach(k => {
+          seg.factors[k] = this.rollup(subs, s, 'weightedAvg', `factors.${k}`)
+        })
         if (s.time) {
           seg.time = this.rollup(subs, s, 'sum', 'time')
           seg.pace = seg.time / seg.len
@@ -340,11 +341,7 @@ export default {
       if (this.mobileFields.includes(key)) {
         return base
       } else {
-        if (this.factorFields.includes(key)) {
-          return `d-none`
-        } else {
-          return `d-none d-md-table-cell ${base}`
-        }
+        return `d-none d-md-table-cell ${base}`
       }
     },
     clear: async function () {
@@ -461,18 +458,18 @@ export default {
     },
     formatPaceTimePercent (f, item) {
       let df = f - 1
-      let sign = df > 0 ? '+' : ''
-      let str = `${sign}${(df * 100).toFixed(1)}%`
+      let sign = f - 1 > 0 ? '+' : '-'
+      let str = `${sign}${(Math.abs(df) * 100).toFixed(1)}%`
       if (round(f, 4) !== 1 && item.hasOwnProperty('pace')) {
-        let dPace = item.pace * (1 - 1 / f) / this.units.distScale
-        let dTime = item.time * (1 - 1 / f) / this.units.distScale
-        str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} | ${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist} [${str}]`
+        let dPace = Math.abs(item.pace * (1 - 1 / f) / this.units.distScale)
+        let dTime = Math.abs(item.time * (1 - 1 / f) / this.units.distScale)
+        str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} [${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist}] [${str}]`
       }
       return str
     },
     hasFactors (item) {
       let res = false
-      Object.keys(item.factors).forEach(k=>{
+      Object.keys(item.factors).forEach(k => {
         if (round(item.factors[k], 4) !== 1) {
           res = true
         }

@@ -1056,7 +1056,9 @@ export default {
       let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
       if (
         this[type].cache &&
-        this[type].cache.pacing.hasOwnProperty('scales')) {
+        this[type].cache.pacing.hasOwnProperty('scales') &&
+        this[type].cache.segments[0].factors.dark !== null // ignore caches before 2020-02-21
+      ) {
         this.$logger(`Course|useCache: using cached ${type} data`)
         cacheFields.forEach(f => {
           this[f] = this[type].cache[f]
