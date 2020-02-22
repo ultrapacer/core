@@ -73,4 +73,34 @@ publicRoutes.route('/races').get(async function (req, res) {
   }
 })
 
+// SITEMAP
+publicRoutes.route('/sitemap.xml').get(async function (req, res) {
+  try {
+    let q = {
+      public: true,
+      link: { '$nin': [ null, '' ] },
+      eventStart: { '$nin': [ null, '' ] }
+    }
+    var races = await Course.find(q).select('link').exec()
+    let textarr = [
+      '<?xml version="1.0" encoding="utf-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">'
+    ]
+    races.forEach(r => {
+      textarr.push(`  <url>`)
+      textarr.push(`    <loc>https://ultrapacer.com/race/${r.link}</loc>`)
+      textarr.push(`    <changefreq>daily</changefreq>`)
+      textarr.push('    <priority>1</priority>')
+      textarr.push('  </url>')
+    })
+    textarr.push('</urlset>')
+    var data = textarr.join('\r')
+    res.set({'Content-Disposition': 'attachment; filename="sitemap.xml"'})
+    res.send(data)
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
 module.exports = publicRoutes
