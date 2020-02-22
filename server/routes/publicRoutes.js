@@ -62,10 +62,10 @@ publicRoutes.route('/races').get(async function (req, res) {
   try {
     let q = {
       public: true,
-      link: { "$nin": [ null, "" ] },
-      eventStart: { "$nin": [ null, "" ] }
+      link: { '$nin': [ null, '' ] },
+      eventStart: { '$nin': [ null, '' ] }
     }
-    var races = await Course.find(q).select(['name', 'distance', 'gain', 'loss', 'link', 'eventStart', 'eventTimezone']).exec()
+    var races = await Course.find(q).select(['name', 'distance', 'gain', 'loss', 'link', 'eventStart', 'eventTimezone']).sort('eventStart').exec()
     res.json(races)
   } catch (err) {
     console.log(err)
