@@ -59,28 +59,28 @@
     </template>
     <template v-slot:row-details="row">
       <b-list-group
-        v-bind:class="(hasDetailedInfo(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
+        v-bind:class="(hasInterimWaypoints(row.item) || hasFactors(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
       >
         <b-list-group-item
-          v-bind:class="detailsFields.length ? '' : 'd-md-none'"
+          class="d-md-none"
         >
           <b-row
             v-for="f in fields"
             v-bind:key="f.key"
             v-if="!mobileFields.includes(f.key)"
-            v-bind:class="detailsFields.includes(f.key) ? 'mb-1' : 'mb-1 d-md-none'"
+            class="mb-1 d-md-none"
           >
             <b-col cols="4" class="text-right"><b>{{ f.label }}:</b></b-col>
             <b-col v-if="f.formatter">{{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}</b-col>
           </b-row>
         </b-list-group-item>
+
         <b-list-group-item
           v-for="wp in spannedWaypoints(row.item)"
           v-bind:key="wp._id"
-          v-if="wp.tier < 3 && (waypointDelay(wp) || wp.description)"
-          class="mb-1">
+          v-if="wp.tier < 3 && (waypointDelay(wp) || wp.description)">
           <b>{{ wp.name }} ({{ $waypointTypes[wp.type] }}), {{ wp.location | formatDist(units.distScale) }} {{ units.dist }}</b><br/>
-          <b-row               v-if="waypointDelay(wp)"            >
+          <b-row v-if="waypointDelay(wp)">
             <b-col cols="4" class="text-sm-right"><b>Delay:</b></b-col>
             <b-col>{{ waypointDelay(wp) / 60 }} minutes</b-col>
           </b-row>
@@ -89,6 +89,20 @@
             <b-col style="white-space:pre-wrap">{{ wp.description }}</b-col>
           </b-row>
         </b-list-group-item>
+
+        <b-list-group-item v-if="hasFactors(row.item)" class="d-none d-md-block">
+          <b>Pacing Factors</b><br/>
+          <b-row
+            v-for="key in Object.keys(row.item.factors)"
+            v-bind:key="key"
+            v-if="round(row.item.factors[key], 4) !== 1"
+            class="mb-1"
+          >
+            <b-col cols="4" class="text-right"><b>{{ factorLables[key] }}:</b></b-col>
+            <b-col>{{ formatPaceTimePercent(row.item.factors[key], row.item) }}</b-col>
+          </b-row>
+        </b-list-group-item>
+
       </b-list-group>
     </template>
   </b-table>
@@ -102,7 +116,8 @@ export default {
   data () {
     return {
       clearing: false,
-      visibleTrigger: 0
+      visibleTrigger: 0,
+      factorLables: { gF: 'Grade', tF: 'Terrain', aF: 'Altitude', hF: 'Heat', dF: 'Drift', dark: 'Darkness' }
     }
   },
   filters: {
@@ -118,10 +133,8 @@ export default {
     }
   },
   computed: {
-    detailsFields: function () {
-      let f = []
-      if (this.showTerrain) { f.push('factors.tF') }
-      return f
+    planAssigned: function () {
+      return this.pacing.hasOwnProperty('time')
     },
     mobileFields: function () {
       if (this.mode === 'splits') {
@@ -190,15 +203,6 @@ export default {
         f.unshift({
           key: 'waypoint2.name',
           label: 'End'
-        })
-      }
-      if (this.showTerrain) {
-        f.push({
-          key: 'factors.tF',
-          label: 'Terrain',
-          formatter: (value, key, item) => {
-            return '+' + ((value - 1) * 100).toFixed(1) + '%'
-          }
         })
       }
       if (this.segments[0].time) {
@@ -311,9 +315,11 @@ export default {
           gain: this.rollup(subs, s, 'sum', 'gain'),
           loss: this.rollup(subs, s, 'sum', 'loss'),
           grade: this.rollup(subs, s, 'weightedAvg', 'grade'),
-          factors: {...s.factors}
+          factors: {}
         }
-        seg.factors.tF = this.rollup(subs, s, 'weightedAvg', 'factors.tF')
+        Object.keys(this.factorLables).forEach(k => {
+          seg.factors[k] = this.rollup(subs, s, 'weightedAvg', `factors.${k}`)
+        })
         if (s.time) {
           seg.time = this.rollup(subs, s, 'sum', 'time')
           seg.pace = seg.time / seg.len
@@ -335,11 +341,7 @@ export default {
       if (this.mobileFields.includes(key)) {
         return base
       } else {
-        if (this.detailsFields.includes(key)) {
-          return `d-none`
-        } else {
-          return `d-none d-md-table-cell ${base}`
-        }
+        return `d-none d-md-table-cell ${base}`
       }
     },
     clear: async function () {
@@ -429,6 +431,9 @@ export default {
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)
     },
+    round: function (v, t) {
+      return round(v, t)
+    },
     spannedWaypoints: function (s) {
       let wps = this.course.waypoints.filter(wp =>
         round(wp.location, 4) > round(s.start, 4) &&
@@ -436,9 +441,8 @@ export default {
       )
       return wps
     },
-    hasDetailedInfo: function (s) {
+    hasInterimWaypoints: function (s) {
       return (
-        this.showTerrain ||
         this.spannedWaypoints(s).filter(
           wp =>
             wp.description ||
@@ -451,6 +455,26 @@ export default {
         round(d.loc, 4) === round(wp.location, 4)
       )
       return (d) ? d.delay : 0
+    },
+    formatPaceTimePercent (f, item) {
+      let df = f - 1
+      let sign = f - 1 > 0 ? '+' : '-'
+      let str = `${sign}${(Math.abs(df) * 100).toFixed(1)}%`
+      if (round(f, 4) !== 1 && item.hasOwnProperty('pace')) {
+        let dPace = Math.abs(item.pace * (1 - 1 / f) / this.units.distScale)
+        let dTime = Math.abs(item.time * (1 - 1 / f) / this.units.distScale)
+        str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} [${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist}] [${str}]`
+      }
+      return str
+    },
+    hasFactors (item) {
+      let res = false
+      Object.keys(item.factors).forEach(k => {
+        if (round(item.factors[k], 4) !== 1) {
+          res = true
+        }
+      })
+      return res
     }
   }
 }
