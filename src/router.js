@@ -10,6 +10,7 @@ import Settings from '@/components/Settings'
 import PrivacyPolicy from '@/components/PrivacyPolicy'
 import About from '@/components/About'
 import Help from '@/components/Help'
+import Races from '@/components/Races'
 
 Vue.use(Router)
 
@@ -46,6 +47,11 @@ let router = new Router({
       meta: {
         requiresAuth: true
       }
+    },
+    {
+      path: '/races',
+      name: 'Races',
+      component: Races
     },
     {
       path: '/courses',
