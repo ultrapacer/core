@@ -95,7 +95,7 @@ publicRoutes.route('/sitemap.xml').get(async function (req, res) {
     })
     textarr.push('</urlset>')
     var data = textarr.join('\r')
-    res.set({'Content-Disposition': 'attachment; filename="sitemap.xml"'})
+    res.type('text')
     res.send(data)
   } catch (err) {
     console.log(err)
