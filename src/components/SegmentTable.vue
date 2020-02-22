@@ -134,7 +134,7 @@ export default {
   },
   computed: {
     planAssigned: function () {
-      return this.pacing.hasOwnProperty('time')
+      return this.pacing.hasOwnProperty('time') && this.pacing.time > 0
     },
     mobileFields: function () {
       if (this.mode === 'splits') {
@@ -460,10 +460,14 @@ export default {
       let df = f - 1
       let sign = f - 1 > 0 ? '+' : '-'
       let str = `${sign}${(Math.abs(df) * 100).toFixed(1)}%`
-      if (round(f, 4) !== 1 && item.hasOwnProperty('pace')) {
-        let dPace = Math.abs(item.pace * (1 - 1 / f) / this.units.distScale)
+      if (this.planAssigned) {
         let dTime = Math.abs(item.time * (1 - 1 / f) / this.units.distScale)
-        str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} [${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist}] [${str}]`
+        let paceStr = ''
+        if (item.hasOwnProperty('pace')) {
+          let dPace = Math.abs(item.pace * (1 - 1 / f) / this.units.distScale)
+          paceStr = `[${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist}] `
+        }
+        str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} ${paceStr}[${str}]`
       }
       return str
     },
