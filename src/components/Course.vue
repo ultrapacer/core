@@ -55,7 +55,7 @@
         </b-row>
       </b-col>
       <b-col cols=2 md=1 class="ml-n3" style="text-align:right">
-        <b-btn v-if="!initializing" @click="$refs.download.generateFile()" class="mr-1" size="sm" v-b-popover.hover.blur.bottomright.d250.v-info="
+        <b-btn v-if="!initializing" @click="download()" class="mr-1" size="sm" v-b-popover.hover.blur.bottomright.d250.v-info="
                 'Download GPX file.'
               ">
           <v-icon name="download"></v-icon>
@@ -196,8 +196,6 @@
     ></delete-modal>
     <download-gpx
       ref="download"
-      :course="course"
-      :points="points" 
     ></download-gpx>
   </div>
 </template>
@@ -714,6 +712,7 @@ export default {
       // clear out time data if not applicable to this plan:
       if (!this.planAssigned) {
         this.points.forEach(x => {
+          delete x.elapsed
           delete x.time
           delete x.dtime
           delete x.tod
@@ -812,6 +811,7 @@ export default {
       let fs = {}
       let elapsed = 0
       if (plan && this.pacing.np) {
+        p[0].elapsed = 0
         p[0].time = 0
         p[0].dtime = 0
         if (this.event.startTime !== null) {
@@ -1072,6 +1072,22 @@ export default {
     },
     setUpdateFlag: function () {
       this.updateFlag = true
+    },
+    async download () {
+      if (this.planAssigned && this.event.start) {
+        if (!this.points.hasOwnProperty('elapsed')) {
+          await this.updatePacing()
+        }
+        let data = {
+          course: this.course,
+          points: this.points,
+          start: this.event.start,
+          plan: this.plan
+        }
+        this.$refs.download.writeFile(data)
+      } else {
+        this.$refs.download.rawFromId(this.course._id)
+      }
     }
   },
   watch: {

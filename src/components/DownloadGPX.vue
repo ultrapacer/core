@@ -9,7 +9,9 @@
         Generating file...
       </p>
       <p v-else>
-        <b-link :href="downloadURL" :download="this.course.name +'.gpx'">Download</b-link>
+        <b-link :href="downloadURL" :download="this.filename +'.gpx'">
+          Download "{{ filename }}.gpx"
+        </b-link>
       </p>
     </b-toast>
   </div>
@@ -17,43 +19,56 @@
 
 <script>
 import api from '@/api'
+import moment from 'moment-timezone'
 export default {
-  props: ['id', 'isAuthenticated'],
+  props: ['isAuthenticated'],
   data () {
     return {
-      course: null,
       downloadURL: null,
-      points: null
+      filename: ''
     }
   },
   methods: {
-    async generateFile () {
+    async rawFromId (id) {
       // If we are replacing a previously generated file we need to
       // manually revoke the object URL to avoid memory leaks.
       if (this.downloadURL !== null) {
         window.URL.revokeObjectURL(this.downloadURL)
       }
       this.$bvToast.show('my-toast')
-      this.course = await api.getCourse(this.id)
-      this.points = await api.getCourseField(this.id, 'raw')
-      this.points = this.points.map(x => {
+      let course = await api.getCourse(id)
+      let points = await api.getCourseField(id, 'raw')
+      points = points.map(x => {
         return {lat: x[0], lon: x[1], alt: x[2]}
       })
+      this.writeFile({
+        course: course,
+        points: points
+      })
+    },
+    writeFile (data) {
+      this.$bvToast.show('my-toast')
+      this.filename = data.course.name + (data.hasOwnProperty('plan') ? (' - ' + data.plan.name) : '')
+      let hasTime = data.hasOwnProperty('start') && data.points[0].hasOwnProperty('elapsed')
       let textarr = ['<?xml version="1.0" encoding="UTF-8"?>',
         '<gpx creator="ultraPacer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" version="1.1" xmlns="http://www.topografix.com/GPX/1/1">',
         ' <trk>',
-        '  <name>' + this.course.name + '</name>',
+        '  <name>' + this.filename + '</name>',
         '  <type>9</type>',
         '  <trkseg>']
-      this.points.forEach(p => {
+      data.points.forEach(p => {
         textarr.push(`  <trkpt lat="${p.lat}" lon="${p.lon}">`)
         textarr.push(`   <ele>${p.alt}</ele>`)
+        if (hasTime) {
+          let s = moment(data.start).add(p.elapsed, 'seconds').utc().format()
+          textarr.push(`   <time>${s}</time>`)
+        }
         textarr.push('  </trkpt>')
       })
       textarr.push('  </trkseg>', ' </trk>', '</gpx>')
-      var data = new Blob([textarr.join('\r')], {type: 'text/plain'})
-      this.downloadURL = window.URL.createObjectURL(data)
-      this.$ga.event('Course', 'download', this.course.public ? this.course.name : 'private')
+      var b = new Blob([textarr.join('\r')], {type: 'text/plain'})
+      this.downloadURL = window.URL.createObjectURL(b)
+      this.$ga.event('Course', 'download', data.course.public ? data.course.name : 'private')
     }
   }
 }
