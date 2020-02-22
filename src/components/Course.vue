@@ -196,7 +196,8 @@
     ></delete-modal>
     <download-gpx
       ref="download"
-      :id="course._id"
+      :course="course"
+      :points="points" 
     ></download-gpx>
   </div>
 </template>
