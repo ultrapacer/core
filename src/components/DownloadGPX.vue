@@ -51,7 +51,7 @@ export default {
       let hasTime = data.event.start && data.plan
       if (hasTime) {
         let red = {...data.points} // reduced points array
-        if (!red.hasOwnProperty('elapsed')) {
+        if (!red[0].hasOwnProperty('elapsed')) {
           let result = geo.calcPacing({
             course: data.course,
             plan: data.plan,
@@ -88,7 +88,8 @@ export default {
         course: data.course,
         plan: data.plan,
         points: full,
-        start: data.event.start || null
+        start: data.event.start || null,
+        segments: data.segments
       })
       this.$logger('DownloadGPX|start', t)
     },
@@ -121,9 +122,13 @@ export default {
         '  <Courses>',
         '    <Course>',
         '      <Name>' + this.filename + '</Name>',
-        '      <Lap>',
-        '        <TotalTimeSeconds>' + data.points[data.points.length - 1].elapsed + '</TotalTimeSeconds>',
-        '        <DistanceMeters>' + data.points[data.points.length - 1].loc * 1000 + '</DistanceMeters>',
+        '      <Lap>'
+      ]
+      if (hasTime) { tcxText.push(
+        '        <TotalTimeSeconds>' + data.points[data.points.length - 1].elapsed + '</TotalTimeSeconds>'
+      )}
+      tcxText.push(
+        '        <DistanceMeters>' + round(data.points[data.points.length - 1].loc * 1000, 2) + '</DistanceMeters>',
         '        <BeginPosition>',
         '          <LatitudeDegrees>' + data.points[0].lat + '</LatitudeDegrees>',
         '          <LongitudeDegrees>' + data.points[0].lon + '</LongitudeDegrees>',
@@ -135,7 +140,7 @@ export default {
         '        <Intensity>Active</Intensity>',
         '      </Lap>',
         '      <Track>'
-      ]
+      )
 
       data.points.forEach(p => {
         let timestr = ''
@@ -161,7 +166,7 @@ export default {
           `            <LongitudeDegrees>${round(p.lon, 8)}</LongitudeDegrees>`,
           '          </Position>',
           `          <AltitudeMeters>${round(p.alt, 2)}</AltitudeMeters>`,
-          `          <DistanceMeters>${p.loc * 1000}</DistanceMeters>`,
+          `          <DistanceMeters>${round(p.loc * 1000, 2)}</DistanceMeters>`,
           '        </Trackpoint>'
         )
       })
@@ -170,26 +175,27 @@ export default {
       tcxText.push(
         '      </Track>'
       )
-      /*
       data.segments.forEach(s => {
         let wp = s.waypoint2
-        if (wp.type !== 'start' && wp.type !== 'finish' && wp.tier === 1) {
+        if (wp.tier === 1) {
           tcxText.push(
             '      <CoursePoint>',
             '        <Name>' + wp.name + '</Name>',
-            '        <PointType>Right</PointType>',
-            '        <Time>' + moment(data.start).add(s.elapsed, 'seconds').utc().format() + '</Time>',
+            '        <PointType>Generic</PointType>'
+          )
+          if (hasTime) { tcxText.push(
+            '        <Time>' + moment(data.start).add(s.elapsed, 'seconds').utc().format() + '</Time>'
+          )}
+          tcxText.push(
             '        <Position>',
-            '          <LatitudeDegrees>' + wp.lat + '</LatitudeDegrees>',
-            '          <LongitudeDegrees>' + wp.lon + '</LongitudeDegrees>',
+            '          <LatitudeDegrees>' + round(wp.lat, 8) + '</LatitudeDegrees>',
+            '          <LongitudeDegrees>' + round(wp.lon, 8) + '</LongitudeDegrees>',
             '        </Position>',
-            '        <AltitudeMeters>' + wp.elevation + '</AltitudeMeters>',
+            '        <AltitudeMeters>' + round(wp.elevation, 2) + '</AltitudeMeters>',
             '      </CoursePoint>'
           )
         }
       })
-
-      */
 
       tcxText.push(
         '    </Course>',

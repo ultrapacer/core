@@ -707,7 +707,6 @@ export default {
       this.busy = true
       this.updateFlag = false
       this.$calculating.setCalculating(true)
-      console.log(this.points[1].loc)
       let result = geo.calcPacing({
         course: this.course,
         plan: this.plan,
@@ -877,7 +876,8 @@ export default {
           delays: this.delays,
           heatModel: this.heatModel,
           terrainFactors: this.terrainFactors,
-          pacing: this.pacing
+          pacing: this.pacing,
+          segments: this.segments
         },
         this.updatePacing
       )
