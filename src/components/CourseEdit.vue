@@ -187,7 +187,7 @@ export default {
         }
         let points = this.gpxPoints
         geo.addLoc(points)
-        let stats = geo.calcStats(points)
+        let stats = geo.calcStats(points, true)
         this.model.gain = stats.gain
         this.model.loss = stats.loss
 
@@ -222,7 +222,6 @@ export default {
           }
         }
         this.model.distance = stats.dist
-
         let reduced = geo.reduce(points)
         // reformat points for upload
         this.model.points = reduced.map(x => {
@@ -280,7 +279,13 @@ export default {
           if (error) {
             throw error
           } else {
-            this.gpxPoints = geo.cleanPoints(data.tracks[0].segments[0])
+            this.gpxPoints = data.tracks[0].segments[0].map(p => {
+              return {
+                alt: p.elevation,
+                lat: p.lat,
+                lon: p.lon
+              }
+            })
           }
         })
       }
