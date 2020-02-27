@@ -203,7 +203,6 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
-import nF from '@/util/normFactor'
 import {round} from '../util/math'
 import {string2sec} from '../util/time'
 import CourseMap from './CourseMap'
@@ -518,7 +517,7 @@ export default {
           }
         })
       }
-      let stats = geo.calcStats(this.points)
+      let stats = geo.calcStats(this.points, false)
       this.scales = {
         gain: this.course.gain / stats.gain,
         loss: this.course.loss / stats.loss,
@@ -708,51 +707,33 @@ export default {
       this.busy = true
       this.updateFlag = false
       this.$calculating.setCalculating(true)
+      let result = geo.calcPacing({
+        course: this.course,
+        plan: this.plan,
+        points: this.points,
+        pacing: this.pacing,
+        event: this.event,
+        delays: this.delays,
+        heatModel: this.heatModel,
+        scales: this.scales,
+        terrainFactors: this.terrainFactors
+      })
+      this.points = result.points
+      this.pacing = result.pacing
 
-      // clear out time data if not applicable to this plan:
-      if (!this.planAssigned) {
-        this.points.forEach(x => {
-          delete x.elapsed
-          delete x.time
-          delete x.dtime
-          delete x.tod
-        })
-      } else if (this.event.startTime === null) {
-        this.points.forEach(x => {
-          delete x.tod
-        })
-      }
-
-      await this.iteratePaceCalc()
-      this.updateSplits()
-
-      // iterate solution:
-      if (this.planAssigned && this.event.startTime !== null) {
-        let lastSplits = this.kilometers.map(x => { return x.time })
-        let elapsed = this.kilometers[this.kilometers.length - 1].elapsed
-        let t = this.$logger()
-        for (var i = 0; i < 10; i++) {
-          await this.iteratePaceCalc()
-          this.updateSplits()
-          let hasChanged = false
-          let newSplits = this.kilometers.map(x => { return x.time })
-          for (let j = 0; j < newSplits.length; j++) {
-            if (Math.abs(newSplits[j] - lastSplits[j]) >= 1) {
-              hasChanged = true
-              break
-            }
-          }
-          if (
-            !hasChanged &&
-            Math.abs(elapsed - this.kilometers[this.kilometers.length - 1].elapsed) < 1
-          ) { break }
-          lastSplits = this.kilometers.map(x => { return x.time })
-          elapsed = this.kilometers[this.kilometers.length - 1].elapsed
-        }
-        this.$logger(`iteratePaceCalc: ${i + 2} iterations`, t)
-        this.updateSunTime()
-      }
-      this.updateSplits('miles')
+      // update splits and segments
+      this.kilometers = geo.calcSplits({
+        points: this.points,
+        pacing: this.pacing,
+        event: this.event,
+        unit: 'kilometers'
+      })
+      this.miles = geo.calcSplits({
+        points: this.points,
+        pacing: this.pacing,
+        event: this.event,
+        unit: 'miles'
+      })
       this.updateSegments()
 
       // save cached data:
@@ -794,169 +775,6 @@ export default {
       this.$calculating.setCalculating(false)
       this.$logger('Course|updatePacing', t)
     },
-    async iteratePaceCalc () {
-      let t = this.$logger()
-      var plan = false
-      if (this.planAssigned) { plan = true }
-
-      // calculate course normalizing factor:
-      var tot = 0
-      var factors = {gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0}
-      let fstats = {
-        max: {gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0},
-        min: {gF: 100, aF: 100, tF: 100, hF: 100, dark: 100, dF: 100}
-      }
-      var p = this.points
-      let hasTOD = p[0].hasOwnProperty('tod')
-      let fs = {}
-      let elapsed = 0
-      if (plan && this.pacing.np) {
-        p[0].elapsed = 0
-        p[0].time = 0
-        p[0].dtime = 0
-        if (this.event.startTime !== null) {
-          p[0].tod = this.event.startTime
-        }
-      }
-
-      // variables & function for adding in delays:
-      let delay = 0
-      let delays = [...this.delays]
-      function getDelay (a, b) {
-        if (!delays.length) { return 0 }
-        while (delays.length && delays[0].loc < a) {
-          delays.shift()
-        }
-        if (delays.length && delays[0].loc < b) {
-          return delays[0].delay
-        }
-        return 0
-      }
-
-      for (let j = 1, jl = p.length; j < jl; j++) {
-        // determine pacing factor for point
-        fs = {
-          gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
-          aF: nF.aF([p[j - 1].alt, p[j].alt], this.course.altModel),
-          tF: nF.tF([p[j - 1].loc, p[j].loc], this.terrainFactors),
-          hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], this.heatModel) : 1,
-          dF: nF.dF(
-            [p[j - 1].loc, p[j].loc],
-            plan ? this.plan.drift : 0,
-            this.course.distance
-          ),
-          dark: 1
-        }
-        if (hasTOD) {
-          fs.dark = nF.dark([p[j - 1].tod, p[j].tod], fs.tF, this.event.sun)
-        }
-        let len = p[j].loc - p[j - 1].loc
-        let f = 1 // combined segment factor
-        Object.keys(fs).forEach(k => {
-          factors[k] += fs[k] * len
-          f = f * fs[k]
-          fstats.max[k] = Math.max(fstats.max[k], fs[k])
-          fstats.min[k] = Math.min(fstats.min[k], fs[k])
-        })
-        tot += f * len
-        if (plan && this.pacing.np) {
-          p[j].dtime = this.pacing.np * f * p[j].dloc
-          delay = getDelay(p[j - 1].loc, p[j].loc)
-          elapsed += p[j].dtime + delay
-          p[j].elapsed = elapsed
-          if (this.event.startTime !== null) {
-            p[j].tod = (elapsed + this.event.startTime) % 86400
-          }
-        }
-      }
-      Object.keys(factors).forEach(k => {
-        factors[k] = round(factors[k] / this.course.distance, 4)
-      })
-      this.course.norm = (tot / this.course.distance)
-
-      delay = 0
-      let time = 0
-      let pace = 0
-      let np = 0
-
-      if (plan) {
-        // calculate delay:
-        this.delays.forEach((x, i) => {
-          delay += x.delay
-        })
-
-        // calculate time, pace, and normalized pace:
-        if (this.plan.pacingMethod === 'time') {
-          time = this.plan.pacingTarget
-          pace = (time - delay) / this.course.distance
-          np = pace / this.course.norm
-        } else if (this.plan.pacingMethod === 'pace') {
-          pace = this.plan.pacingTarget
-          time = pace * this.course.distance + delay
-          np = pace / this.course.norm
-        } else if (this.plan.pacingMethod === 'np') {
-          np = this.plan.pacingTarget
-          pace = np * this.course.norm
-          time = pace * this.course.distance + delay
-        }
-      }
-
-      this.pacing = {
-        scales: this.scales,
-        time: time,
-        delay: delay,
-        factors: factors,
-        fstats: fstats,
-        moving: time - delay,
-        pace: pace,
-        nF: this.course.norm,
-        np: np,
-        drift: plan ? this.plan.drift : 0,
-        altModel: this.course.altModel,
-        heatModel: this.heatModel,
-        tFs: this.terrainFactors,
-        delays: this.delays,
-        sun: this.event.sun || null
-      }
-
-      this.$logger('iteratePaceCalc', t)
-    },
-    updateSunTime: function () {
-      // time in sun zones:
-      let sunType0 = ''
-      let sunType = ''
-      this.pacing.sunEventsByLoc = []
-      this.pacing.sunTime = {day: 0, twilight: 0, dark: 0}
-      this.pacing.sunDist = {day: 0, twilight: 0, dark: 0}
-      this.points.forEach((x, i) => {
-        if (
-          x.tod <= this.event.sun.dawn ||
-          x.tod >= this.event.sun.dusk
-        ) {
-          sunType = 'dark'
-          this.pacing.sunTime.dark += x.dtime
-          this.pacing.sunDist.dark += x.dloc
-        } else if (
-          x.tod < this.event.sun.rise ||
-          x.tod > this.event.sun.set
-        ) {
-          sunType = 'twilight'
-          this.pacing.sunTime.twilight += x.dtime
-          this.pacing.sunDist.twilight += x.dloc
-        } else {
-          sunType = 'day'
-          this.pacing.sunTime.day += x.dtime
-          this.pacing.sunDist.day += x.dloc
-        }
-        if (sunType !== sunType0) {
-          this.pacing.sunEventsByLoc.push({
-            'sunType': sunType,
-            loc: x.loc
-          })
-        }
-        sunType0 = sunType
-      })
-    },
     updateSegments: function () {
       let t = this.$logger()
       var breaks = []
@@ -977,31 +795,6 @@ export default {
       })
       this.segments = arr
       this.$logger('Course|updateSegments', t)
-    },
-    updateSplits: function (unit = 'kilometers') {
-      let t = this.$logger()
-      // eslint-disable-next-line
-      this.updateTrigger // hack for force recompute
-      let distScale = (unit === 'kilometers') ? 1 : 0.621371
-      let p = this.points
-      var tot = p[p.length - 1].loc * distScale
-      let breaks = [0]
-      var i = 1
-      while (i < tot) {
-        breaks.push(i / distScale)
-        i++
-      }
-      if (tot / distScale > breaks[breaks.length - 1]) {
-        breaks.push(tot / distScale)
-      }
-      let arr = geo.calcSegments(p, breaks, this.pacing)
-      if (this.planAssigned && this.event.startTime !== null) {
-        arr.forEach((x, i) => {
-          arr[i].tod = (x.elapsed + this.event.startTime)
-        })
-      }
-      this[unit] = arr
-      this.$logger(`Course|updateSplits: ${unit}`, t)
     },
     updateFocus: function (type, focus) {
       if (type === 'segments') this.$refs.splitTable.clear()
@@ -1074,20 +867,20 @@ export default {
       this.updateFlag = true
     },
     async download () {
-      if (this.planAssigned && this.event.start) {
-        if (!this.points.hasOwnProperty('elapsed')) {
-          await this.updatePacing()
-        }
-        let data = {
+      await this.$refs.download.start(
+        {
           course: this.course,
+          plan: this.plan,
           points: this.points,
-          start: this.event.start,
-          plan: this.plan
-        }
-        this.$refs.download.writeFile(data)
-      } else {
-        this.$refs.download.rawFromId(this.course._id)
-      }
+          event: this.event,
+          delays: this.delays,
+          heatModel: this.heatModel,
+          terrainFactors: this.terrainFactors,
+          pacing: this.pacing,
+          segments: this.segments
+        },
+        this.updatePacing
+      )
     }
   },
   watch: {

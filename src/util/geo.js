@@ -1,25 +1,36 @@
 /* eslint new-cap: 0 */
 import nF from './normFactor'
 import { interp, linearRegression, round } from './math'
+import { logger } from '../plugins/logger'
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
 
-function calcStats (points) {
+function calcStats (points, smooth = true) {
+  // return course { gain, loss, dist }
+  let t = logger(`geo|calcStats smooth=${smooth}`)
+  let d = points[points.length - 1].loc
   var gain = 0
   var loss = 0
   var delta = 0
-  for (var i = 0, il = points.length - 1; i < il; i++) {
-    delta = points[i + 1].alt - points[i].alt
+  if (smooth) {
+    let locs = points.map(x => x.loc)
+    points = pointWLSQ(points, locs, 0.05)
+  }
+  let last = points[0].alt
+  points.forEach(p => {
+    delta = p.alt - last
     if (delta < 0) {
       loss += delta
     } else {
       gain += delta
     }
-  }
+    last = p.alt
+  })
+  logger(`geo|calcStats smooth=${smooth}`, t)
   return {
     gain: gain,
     loss: loss,
-    dist: points[points.length - 1].loc
+    dist: d
   }
 }
 
@@ -200,31 +211,8 @@ function calcSegments (p, breaks, pacing) {
   return s
 }
 
-function cleanPoints (p) {
-  // remove points with same lat/lon
-  // p: points array of {lat, lon, elevation}
-  // NOTE: elevation field gets renamed to alt here
-  var p2 = []
-  var avgQty = 1
-  for (var i = 0, il = p.length; i < il; i++) {
-    if (i > 0 && p[i].lat === p[i - 1].lat && p[i].lon === p[i - 1].lon) {
-      p2[p2.length - 1].alt = ((avgQty * p2[p2.length - 1].alt) + p[i].elevation) / (avgQty + 1)
-      avgQty += 1
-    } else {
-      avgQty = 1
-      p2.push({
-        alt: p[i].elevation,
-        lat: p[i].lat,
-        lon: p[i].lon
-      })
-    }
-  }
-  return p2
-}
-
 function addLoc (p) {
-  // add loc, dloc, grade fields
-  // update alt field with smoothed value
+  // add loc & dloc fields
   // p: points array of {lat, lon, alt}
   var d = 0
   var l = 0
@@ -241,14 +229,19 @@ function addLoc (p) {
     p[i].dloc = d
     p[i].loc = l
   }
-
-  var locs = p.map(x => x.loc)
-  var adj = pointWLSQ(p, locs, 0.05)
-  p.forEach((x, i) => {
-    p[i].grade = adj[i].grade
-    p[i].alt = adj[i].alt
-  })
   return p
+}
+
+function addGrades (points) {
+  // add grade field to points array
+  let t = logger(`geo|addGrades`)
+  let locs = points.map(x => x.loc)
+  let lsq = pointWLSQ(points, locs, 0.05)
+  points.forEach((p, i) => {
+    p.grade = round(lsq[i].grade, 4)
+  })
+  logger(`geo|addGrades`, t)
+  return points
 }
 
 export function pointWLSQ (p, locs, gt) {
@@ -438,13 +431,302 @@ export function reduce (points) {
   })
 }
 
+export function calcPacing (data) {
+  let t = logger()
+  // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel, scales }
+  var hasPlan = false
+  if (data.plan) { hasPlan = true }
+
+  // copy points array & clear out time data if not applicable to this plan
+  let points = data.points.map(p => {
+    let x = {...p}
+    if (!hasPlan) {
+      delete x.elapsed
+      delete x.time
+      delete x.dtime
+      delete x.tod
+    } else if (data.event.startTime === null) {
+      delete x.tod
+    }
+    return x
+  })
+
+  let pacing = iteratePaceCalc({
+    course: data.course,
+    plan: data.plan,
+    points: points,
+    pacing: data.pacing || null,
+    event: data.event,
+    delays: data.delays,
+    heatModel: data.heatModel,
+    scales: data.scales,
+    terrainFactors: data.terrainFactors
+  })
+
+  let kSplits = calcSplits({
+    points: points,
+    pacing: pacing,
+    event: data.event,
+    unit: 'kilometers'
+  })
+
+  // iterate solution:
+  if (hasPlan && data.event.startTime !== null) {
+    let lastSplits = kSplits.map(x => { return x.time })
+    let elapsed = kSplits[kSplits.length - 1].elapsed
+    for (var i = 0; i < 10; i++) {
+      pacing = iteratePaceCalc({
+        course: data.course,
+        plan: data.plan,
+        points: points,
+        pacing: pacing,
+        event: data.event,
+        delays: data.delays,
+        heatModel: data.heatModel,
+        scales: data.scales,
+        terrainFactors: data.terrainFactors
+      })
+      kSplits = calcSplits({
+        points: points,
+        pacing: pacing,
+        event: data.event,
+        unit: 'kilometers'
+      })
+      let hasChanged = false
+      let newSplits = kSplits.map(x => { return x.time })
+      for (let j = 0; j < newSplits.length; j++) {
+        if (Math.abs(newSplits[j] - lastSplits[j]) >= 1) {
+          hasChanged = true
+          break
+        }
+      }
+      if (
+        !hasChanged &&
+        Math.abs(elapsed - kSplits[kSplits.length - 1].elapsed) < 1
+      ) { break }
+      lastSplits = kSplits.map(x => { return x.time })
+      elapsed = kSplits[kSplits.length - 1].elapsed
+    }
+    logger(`geo.iteratePaceCalc: ${i + 2} iterations`, t)
+    let s = calcSunTime({
+      points: points,
+      event: data.event
+    })
+    pacing = {...pacing, ...s}
+  }
+
+  logger('geo.calcPacing', t)
+
+  return {
+    points: points,
+    pacing: pacing
+  }
+}
+
+function iteratePaceCalc (data) {
+  let t = logger()
+  // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel, scales }
+  var plan = false
+  if (data.plan) { plan = true }
+
+  // calculate course normalizing factor:
+  var tot = 0
+  var factors = {gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0}
+  let fstats = {
+    max: {gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0},
+    min: {gF: 100, aF: 100, tF: 100, hF: 100, dark: 100, dF: 100}
+  }
+  var p = data.points
+  let hasTOD = p[0].hasOwnProperty('tod')
+  let fs = {}
+  let elapsed = 0
+  let hasPacingData = plan && data.pacing && data.pacing.np
+  if (hasPacingData) {
+    p[0].elapsed = 0
+    p[0].time = 0
+    p[0].dtime = 0
+    if (data.event.startTime !== null) {
+      p[0].tod = data.event.startTime
+    }
+  }
+
+  // variables & function for adding in delays:
+  let delay = 0
+  let delays = [...data.delays]
+  function getDelay (a, b) {
+    if (!delays.length) { return 0 }
+    while (delays.length && delays[0].loc < a) {
+      delays.shift()
+    }
+    if (delays.length && delays[0].loc < b) {
+      return delays[0].delay
+    }
+    return 0
+  }
+
+  for (let j = 1, jl = p.length; j < jl; j++) {
+    // determine pacing factor for point
+    fs = {
+      gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
+      aF: nF.aF([p[j - 1].alt, p[j].alt], data.course.altModel),
+      tF: nF.tF([p[j - 1].loc, p[j].loc], data.terrainFactors),
+      hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], data.heatModel) : 1,
+      dF: nF.dF(
+        [p[j - 1].loc, p[j].loc],
+        plan ? data.plan.drift : 0,
+        data.course.distance
+      ),
+      dark: 1
+    }
+    if (hasTOD) {
+      fs.dark = nF.dark([p[j - 1].tod, p[j].tod], fs.tF, data.event.sun)
+    }
+    let len = p[j].loc - p[j - 1].loc
+    let f = 1 // combined segment factor
+    Object.keys(fs).forEach(k => {
+      factors[k] += fs[k] * len
+      f = f * fs[k]
+      fstats.max[k] = Math.max(fstats.max[k], fs[k])
+      fstats.min[k] = Math.min(fstats.min[k], fs[k])
+    })
+    tot += f * len
+    if (hasPacingData) {
+      p[j].dtime = data.pacing.np * f * p[j].dloc
+      delay = getDelay(p[j - 1].loc, p[j].loc)
+      elapsed += p[j].dtime + delay
+      p[j].elapsed = elapsed
+      if (data.event.startTime !== null) {
+        p[j].tod = (elapsed + data.event.startTime) % 86400
+      }
+    }
+  }
+  Object.keys(factors).forEach(k => {
+    factors[k] = round(factors[k] / data.course.distance, 4)
+  })
+  let normFactor = (tot / data.course.distance)
+
+  delay = 0
+  let time = 0
+  let pace = 0
+  let np = 0
+
+  if (plan) {
+    // calculate delay:
+    data.delays.forEach((x, i) => {
+      delay += x.delay
+    })
+
+    // calculate time, pace, and normalized pace:
+    if (data.plan.pacingMethod === 'time') {
+      time = data.plan.pacingTarget
+      pace = (time - delay) / data.course.distance
+      np = pace / normFactor
+    } else if (data.plan.pacingMethod === 'pace') {
+      pace = data.plan.pacingTarget
+      time = pace * data.course.distance + delay
+      np = pace / normFactor
+    } else if (data.plan.pacingMethod === 'np') {
+      np = data.plan.pacingTarget
+      pace = np * normFactor
+      time = pace * data.course.distance + delay
+    }
+  }
+
+  let pacing = {
+    scales: data.scales,
+    time: time,
+    delay: delay,
+    factors: factors,
+    fstats: fstats,
+    moving: time - delay,
+    pace: pace,
+    nF: nF,
+    np: np,
+    drift: plan ? data.plan.drift : 0,
+    altModel: data.course.altModel,
+    heatModel: data.heatModel,
+    tFs: data.terrainFactors,
+    delays: data.delays,
+    sun: data.event.sun || null
+  }
+
+  logger('geo.iteratePaceCalc', t)
+  return pacing
+}
+
+export function calcSplits (data) {
+  // data = {points, event, pacing, unit}
+  let distScale = (data.unit === 'kilometers') ? 1 : 0.621371
+  let tot = data.points[data.points.length - 1].loc * distScale
+  let breaks = [0]
+  let i = 1
+  while (i < tot) {
+    breaks.push(i / distScale)
+    i++
+  }
+  if (tot / distScale > breaks[breaks.length - 1]) {
+    breaks.push(tot / distScale)
+  }
+  let arr = calcSegments(data.points, breaks, data.pacing)
+  if (data.event.startTime !== null && data.points[0].hasOwnProperty('elapsed')) {
+    arr.forEach((x, i) => {
+      arr[i].tod = (x.elapsed + data.event.startTime)
+    })
+  }
+  return arr
+}
+
+function calcSunTime (data) {
+  // data = {points, event}
+
+  // time in sun zones:
+  let sunType0 = ''
+  let sunType = ''
+  let s = {
+    sunEventsByLoc: [],
+    sunTime: {day: 0, twilight: 0, dark: 0},
+    sunDist: {day: 0, twilight: 0, dark: 0}
+  }
+  data.points.forEach((x, i) => {
+    if (
+      x.tod <= data.event.sun.dawn ||
+      x.tod >= data.event.sun.dusk
+    ) {
+      sunType = 'dark'
+      s.sunTime.dark += x.dtime
+      s.sunDist.dark += x.dloc
+    } else if (
+      x.tod < data.event.sun.rise ||
+      x.tod > data.event.sun.set
+    ) {
+      sunType = 'twilight'
+      s.sunTime.twilight += x.dtime
+      s.sunDist.twilight += x.dloc
+    } else {
+      sunType = 'day'
+      s.sunTime.day += x.dtime
+      s.sunDist.day += x.dloc
+    }
+    if (sunType !== sunType0) {
+      s.sunEventsByLoc.push({
+        'sunType': sunType,
+        loc: x.loc
+      })
+    }
+    sunType0 = sunType
+  })
+  return s
+}
+
 export default {
   addLoc: addLoc,
+  addGrades: addGrades,
   calcStats: calcStats,
-  cleanPoints: cleanPoints,
   calcSegments: calcSegments,
   getElevation: getElevation,
   getLatLonAltFromDistance: getLatLonAltFromDistance,
   pointWLSQ: pointWLSQ,
-  reduce: reduce
+  reduce: reduce,
+  calcPacing: calcPacing,
+  calcSplits: calcSplits
 }
