@@ -40,6 +40,8 @@ export default {
       if (this.gpxURL !== null) {
         window.URL.revokeObjectURL(this.gpxURL)
         window.URL.revokeObjectURL(this.tcxURL)
+        this.gpxURL = null
+        this.tcxURL = null
       }
       this.$bvToast.show('my-toast')
       let full = await api.getCourseField(data.course._id, 'raw')
@@ -158,8 +160,7 @@ export default {
         gpxText.push(`  <trkpt lat="${round(p.lat, 8)}" lon="${round(p.lon, 8)}">`)
         gpxText.push(`   <ele>${round(p.alt, 2)}</ele>`)
         if (hasTime) {
-          let m = moment(data.start).add(p.elapsed, 'seconds').utc()
-          timestr = m.format() + '.' + m.format('SSS')
+          timestr = moment(data.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
           gpxText.push(`   <time>${timestr}</time>`)
         }
         gpxText.push('  </trkpt>')
@@ -196,8 +197,7 @@ export default {
             '        <PointType>Generic</PointType>'
           )
           if (hasTime) {
-            let m = moment(data.start).add(s.elapsed, 'seconds').utc()
-            let timestr = m.format() + '.' + m.format('SSS')
+            let timestr = moment(data.start).add(s.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
             tcxText.push(
               '        <Time>' + timestr + '</Time>'
             )
