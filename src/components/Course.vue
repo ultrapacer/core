@@ -199,7 +199,7 @@
     ></download-gpx>
     <vue-headful v-if="this.course.name"
       :description="description"
-      :title="description"
+      :title="title"
     />
   </div>
 </template>
@@ -262,7 +262,7 @@ export default {
       return `The ${this.$title} covers ${round(this.course.distance * 0.621371, 1)} miles with  ${round(this.course.gain * 3.28084, 0)} feet of climbing. Ready to run?`
     },
     title: function () {
-      return this.$title
+      return this.$title + ' - ultraPacer'
     },
     event: function () {
       let t = this.$logger()

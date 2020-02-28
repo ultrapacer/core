@@ -56,6 +56,10 @@
     <delete-modal
       ref="delModal"
     ></delete-modal>
+    <vue-headful
+      description="ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue."
+      title="My Courses - ultraPacer"
+    />
   </div>
 </template>
 
@@ -64,7 +68,7 @@ import api from '@/api'
 import CourseEdit from './CourseEdit'
 import DeleteModal from './DeleteModal'
 export default {
-  title: 'Courses',
+  title: 'My Courses',
   props: ['user'],
   components: {
     CourseEdit,

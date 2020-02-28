@@ -77,6 +77,10 @@
       </b-col>
     </b-row>
   </b-card>
+  <vue-headful
+    description="ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue."
+    title="ultraPacer: pacing your ultramarathon and trail running adventures"
+  />
 
 </div>
 </template>

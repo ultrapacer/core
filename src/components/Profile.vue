@@ -15,6 +15,10 @@
     <div>
       <pre>{{ JSON.stringify(profile, null, 2) }}</pre>
     </div>
+    <vue-headful
+      description="My ultraPacer profile."
+      title="Privacy - ultraPacer"
+    />
   </div>
 </template>
 

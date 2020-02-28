@@ -61,6 +61,10 @@
         </b-col>
       </b-row>
     </b-card>
+    <vue-headful
+      description="ultraPacer help documentation on the terrain, altitude, heat, nighttime, and fatigue models."
+      title="Help - ultraPacer"
+    />
   </div>
 </template>
 
