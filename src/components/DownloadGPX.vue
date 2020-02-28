@@ -50,7 +50,7 @@ export default {
 
       let hasTime = data.event.start && data.plan
       if (hasTime) {
-        let red = {...data.points} // reduced points array
+        let red = [...data.points] // reduced points array
         if (!red[0].hasOwnProperty('elapsed')) {
           let result = geo.calcPacing({
             course: data.course,
