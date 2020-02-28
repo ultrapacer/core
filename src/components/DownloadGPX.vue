@@ -46,7 +46,10 @@ export default {
       full = full.map(x => {
         return {lat: x[0], lon: x[1], alt: x[2]}
       })
+      // add locations:
       full = geo.addLoc(full)
+      // remove any points that have zero change in location:
+      full = full.filter((p, i) => i === 0 || p.dloc > 0)
 
       let hasTime = data.event.start && data.plan
       if (hasTime) {
@@ -66,6 +69,7 @@ export default {
           red = result.points
         }
         // interpolate times from distances in full
+        let lastelapsed = 0
         full.forEach(p => {
           while (red.length > 1 && red[1].loc <= p.loc) {
             red.shift()
@@ -81,7 +85,12 @@ export default {
               p.loc
             )
           }
+          p.elapsed = round(p.elapsed, 3)
+          p.delapsed = p.elapsed - lastelapsed
+          lastelapsed = p.elapsed
         })
+        // remove any points with zero change in time:
+        full = full.filter((p, i) => i === 0 || p.delapsed > 0)
       }
 
       this.writeFile({
@@ -126,7 +135,7 @@ export default {
       ]
       if (hasTime) {
         tcxText.push(
-          '        <TotalTimeSeconds>' + data.points[data.points.length - 1].elapsed + '</TotalTimeSeconds>'
+          '        <TotalTimeSeconds>' + round(data.points[data.points.length - 1].elapsed, 3) + '</TotalTimeSeconds>'
         )
       }
       tcxText.push(
@@ -149,7 +158,8 @@ export default {
         gpxText.push(`  <trkpt lat="${round(p.lat, 8)}" lon="${round(p.lon, 8)}">`)
         gpxText.push(`   <ele>${round(p.alt, 2)}</ele>`)
         if (hasTime) {
-          timestr = moment(data.start).add(p.elapsed, 'seconds').utc().format()
+          let m = moment(data.start).add(p.elapsed, 'seconds').utc()
+          timestr = m.format() + '.' + m.format('SSS')
           gpxText.push(`   <time>${timestr}</time>`)
         }
         gpxText.push('  </trkpt>')
@@ -186,8 +196,10 @@ export default {
             '        <PointType>Generic</PointType>'
           )
           if (hasTime) {
+            let m = moment(data.start).add(s.elapsed, 'seconds').utc()
+            let timestr = m.format() + '.' + m.format('SSS')
             tcxText.push(
-              '        <Time>' + moment(data.start).add(s.elapsed, 'seconds').utc().format() + '</Time>'
+              '        <Time>' + timestr + '</Time>'
             )
           }
           tcxText.push(
