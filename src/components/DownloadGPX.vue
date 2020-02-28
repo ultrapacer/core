@@ -124,9 +124,11 @@ export default {
         '      <Name>' + this.filename + '</Name>',
         '      <Lap>'
       ]
-      if (hasTime) { tcxText.push(
-        '        <TotalTimeSeconds>' + data.points[data.points.length - 1].elapsed + '</TotalTimeSeconds>'
-      )}
+      if (hasTime) {
+        tcxText.push(
+          '        <TotalTimeSeconds>' + data.points[data.points.length - 1].elapsed + '</TotalTimeSeconds>'
+        )
+      }
       tcxText.push(
         '        <DistanceMeters>' + round(data.points[data.points.length - 1].loc * 1000, 2) + '</DistanceMeters>',
         '        <BeginPosition>',
@@ -183,9 +185,11 @@ export default {
             '        <Name>' + wp.name + '</Name>',
             '        <PointType>Generic</PointType>'
           )
-          if (hasTime) { tcxText.push(
-            '        <Time>' + moment(data.start).add(s.elapsed, 'seconds').utc().format() + '</Time>'
-          )}
+          if (hasTime) {
+            tcxText.push(
+              '        <Time>' + moment(data.start).add(s.elapsed, 'seconds').utc().format() + '</Time>'
+            )
+          }
           tcxText.push(
             '        <Position>',
             '          <LatitudeDegrees>' + round(wp.lat, 8) + '</LatitudeDegrees>',
