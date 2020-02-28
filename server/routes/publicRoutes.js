@@ -57,6 +57,23 @@ publicRoutes.route('/course/:course/field/:field').get(async function (req, res)
   }
 })
 
+// GET COURSE FIELDS
+publicRoutes.route(['/course/:_id/fields', '/course/link/:link/fields']).put(async function (req, res) {
+  try {
+    let q = { public: true }
+    if (req.params._id) {
+      q._id = req.params._id
+    } else {
+      q.link = req.params.link
+    }
+    var course = await Course.findOne(q).select(req.body).exec()
+    res.json(course)
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
 // GET RACES
 publicRoutes.route('/races').get(async function (req, res) {
   try {

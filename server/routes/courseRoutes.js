@@ -192,6 +192,26 @@ courseRoutes.route('/:course/field/:field').get(async function (req, res) {
   }
 })
 
+// GET COURSE FIELDS
+courseRoutes.route(['/:_id/fields', '/link/:link/fields']).put(async function (req, res) {
+  try {
+    let q = (req.params.link)
+      ? { link: req.params.link }
+      : { _id: req.params._id }
+    let course = await Course.findOne(q).populate('_user')
+      .select(['_user', ...req.body]).exec()
+    if (course.public || course._user.auth0ID === req.user.sub) {
+      course._user = course._user._id // don't return all user data, just id
+      res.json(course)
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
 // GET WAYPOINT LIST
 courseRoutes.route('/:course/waypoints').get(async function (req, res) {
   try {
