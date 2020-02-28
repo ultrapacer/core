@@ -11,6 +11,7 @@ import LoggerPlugin from './plugins/logger'
 import VueAnalytics from 'vue-analytics'
 import VuePageTitle from 'vue-page-title'
 import VueTheMask from 'vue-the-mask'
+import vueHeadful from 'vue-headful'
 
 import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -34,6 +35,7 @@ Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png')
 })
 Vue.component('v-icon', VIcon)
+Vue.component('vue-headful', vueHeadful)
 
 Vue.use(BootstrapVue)
 Vue.use(AuthPlugin)

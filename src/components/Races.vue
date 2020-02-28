@@ -16,6 +16,10 @@
         <race-table :races="pastRaces" :units="units"></race-table>
       </b-col>
     </b-row>
+    <vue-headful
+      description="ultraPacer's race database; find your race strategy to tackle that grade, terrain, altitude, heat, nighttime, and fatigue."
+      title="Races - ultraPacer"
+    />
   </div>
 </template>
 

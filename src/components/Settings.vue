@@ -50,6 +50,10 @@
         </div>
       </form>
     </b-card>
+    <vue-headful
+      description="My ultraPacer settings."
+      title="Settings - ultraPacer"
+    />
   </div>
 </template>
 
