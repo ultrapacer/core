@@ -10,10 +10,13 @@
       </p>
       <p v-else>
         <b-link :href="gpxURL" :download="this.filename +'.gpx'">
-          Download "{{ filename }}.gpx"
+          Full resolution: "{{ filename }}.gpx"
+        </b-link><br/>
+        <b-link :href="gpx2URL" :download="'uP-' + this.filename + '.gpx'">
+          Downsized (for watch): "uP-{{ filename }}.gpx"
         </b-link><br/>
         <b-link :href="tcxURL" :download="this.filename +'.tcx'">
-          Download "{{ filename }}.tcx"
+          Full resolution "{{ filename }}.tcx"
         </b-link>
       </p>
     </b-toast>
@@ -21,15 +24,18 @@
 </template>
 
 <script>
+/* eslint new-cap: 0 */
 import moment from 'moment-timezone'
 import api from '@/api'
 import geo from '@/util/geo'
 import { round, interp } from '@/util/math'
+const sgeo = require('sgeo')
 export default {
   props: ['isAuthenticated'],
   data () {
     return {
       gpxURL: null,
+      gpx2URL: null,
       tcxURL: null,
       filename: ''
     }
@@ -39,8 +45,10 @@ export default {
       let t = this.$logger('DownloadGPX|start')
       if (this.gpxURL !== null) {
         window.URL.revokeObjectURL(this.gpxURL)
+        window.URL.revokeObjectURL(this.gpx2URL)
         window.URL.revokeObjectURL(this.tcxURL)
         this.gpxURL = null
+        this.gpx2URL = null
         this.tcxURL = null
       }
       this.$bvToast.show('my-toast')
@@ -50,10 +58,8 @@ export default {
       })
       // add locations:
       full = geo.addLoc(full)
-      // remove any points that have zero change in location:
-      full = full.filter((p, i) => i === 0 || p.dloc > 0)
-
       let hasTime = data.event.start && data.plan
+      let red2 = [...data.points] // reduced points array
       if (hasTime) {
         let red = [...data.points] // reduced points array
         if (!red[0].hasOwnProperty('elapsed')) {
@@ -68,7 +74,8 @@ export default {
             scales: data.scales,
             terrainFactors: data.terrainFactors
           })
-          red = result.points
+          red = [...result.points]
+          red2 = [...result.points]
         }
         // interpolate times from distances in full
         let lastelapsed = 0
@@ -95,29 +102,68 @@ export default {
         full = full.filter((p, i) => i === 0 || p.delapsed > 0)
       }
 
-      this.writeFile({
-        course: data.course,
-        plan: data.plan,
-        points: full,
-        start: data.event.start || null,
-        segments: data.segments
+      // adjust odd points of red2 lat/lon to make length work
+      let red3 = red2.map(p => { return {...p} }) // clone red2
+      let p0 = new sgeo.latlon(0, 0)
+      red3[0].lat = Number(p0.lat)
+      red3[0].lon = Number(p0.lng)
+      red3.forEach((p, i) => {
+        if (i > 0) {
+          let ll1 = new sgeo.latlon(red3[i - 1].lat, red3[i - 1].lon)
+          let ll2 = ll1.destinationPoint(0, p.dloc)
+          p.lat = Number(ll2.lat)
+          p.lon = Number(ll2.lng)
+        }
       })
-      this.$logger('DownloadGPX|start', t)
-    },
-    writeFile (data) {
-      this.$bvToast.show('my-toast')
 
       this.filename = data.course.name + (data.plan ? (' - ' + data.plan.name) : '')
+      let gpxText = this.writeGPXText({
+        start: data.event.start || null,
+        points: full
+      })
+      let gpxText2 = this.writeGPXText({
+        start: data.event.start || null,
+        points: red3
+      })
+      let tcxText = this.writeTCXText({
+        start: data.event.start || null,
+        segments: data.segments,
+        points: full
+      })
+      var gpx = new Blob([gpxText.join('\r')], {type: 'text/plain'})
+      var gpx2 = new Blob([gpxText2.join('\r')], {type: 'text/plain'})
+      var tcx = new Blob([tcxText.join('\r')], {type: 'text/plain'})
+      this.gpxURL = window.URL.createObjectURL(gpx)
+      this.gpx2URL = window.URL.createObjectURL(gpx2)
+      this.tcxURL = window.URL.createObjectURL(tcx)
 
+      this.$ga.event('Course', 'download', data.course.public ? data.course.name : 'private')
+      this.$logger('DownloadGPX|start', t)
+    },
+    writeGPXText (data) {
       let hasTime = data.start && data.points[0].hasOwnProperty('elapsed')
-
       let gpxText = ['<?xml version="1.0" encoding="UTF-8"?>',
         '<gpx creator="ultraPacer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" version="1.1" xmlns="http://www.topografix.com/GPX/1/1">',
-        ' <trk>',
-        '  <name>' + this.filename + '</name>',
-        '  <type>9</type>',
-        '  <trkseg>']
+        '  <trk>',
+        '    <name>' + this.filename + '</name>',
+        '    <type>9</type>',
+        '    <trkseg>']
+      data.points.forEach(p => {
+        let timestr = ''
+        gpxText.push(`    <trkpt lat="${round(p.lat, 8)}" lon="${round(p.lon, 8)}">`)
+        gpxText.push('      <ele>' + round(p.alt, 2) + '</ele>')
+        if (hasTime) {
+          timestr = moment(data.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
+          gpxText.push('      <time>' + timestr + '</time>')
+        }
+        gpxText.push('    </trkpt>')
+      })
 
+      gpxText.push('    </trkseg>', '   </trk>', '</gpx>')
+      return gpxText
+    },
+    writeTCXText (data) {
+      let hasTime = data.start && data.points[0].hasOwnProperty('elapsed')
       let tcxText = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd">',
@@ -154,24 +200,13 @@ export default {
         '      </Lap>',
         '      <Track>'
       )
-
       data.points.forEach(p => {
-        let timestr = ''
-        gpxText.push(`  <trkpt lat="${round(p.lat, 8)}" lon="${round(p.lon, 8)}">`)
-        gpxText.push(`   <ele>${round(p.alt, 2)}</ele>`)
-        if (hasTime) {
-          timestr = moment(data.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
-          gpxText.push(`   <time>${timestr}</time>`)
-        }
-        gpxText.push('  </trkpt>')
-
         tcxText.push(
           '        <Trackpoint>'
         )
         if (hasTime) {
-          tcxText.push(
-            `          <Time>${timestr}</Time>`
-          )
+          let timestr = moment(data.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
+          tcxText.push('          <Time>' + timestr + '</Time>')
         }
         tcxText.push(
           '          <Position>',
@@ -184,7 +219,6 @@ export default {
         )
       })
 
-      gpxText.push('  </trkseg>', ' </trk>', '</gpx>')
       tcxText.push(
         '      </Track>'
       )
@@ -212,20 +246,12 @@ export default {
           )
         }
       })
-
       tcxText.push(
         '    </Course>',
         '  </Courses>',
         '</TrainingCenterDatabase>'
       )
-
-      var gpx = new Blob([gpxText.join('\r')], {type: 'text/plain'})
-      var tcx = new Blob([tcxText.join('\r')], {type: 'text/plain'})
-
-      this.gpxURL = window.URL.createObjectURL(gpx)
-      this.tcxURL = window.URL.createObjectURL(tcx)
-
-      this.$ga.event('Course', 'download', data.course.public ? data.course.name : 'private')
+      return tcxText
     }
   }
 }
