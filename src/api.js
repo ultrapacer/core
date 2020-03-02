@@ -53,11 +53,19 @@ export default {
       return this.execute('get', `/api-public/course/${sub}${id}`)
     }
   },
-  async getCourseField (id, field) {
-    if (Vue.prototype.$auth.isAuthenticated()) {
+  async getCourseField (id, field, tryAuth = true) {
+    if (tryAuth && Vue.prototype.$auth.isAuthenticated()) {
       return this.executeAuth('get', `/api/course/${id}/field/${field}`)
     } else {
       return this.execute('get', `/api-public/course/${id}/field/${field}`)
+    }
+  },
+  async getCourseFields (id, key = 'course', fields, tryAuth = true) {
+    let sub = (key === 'course') ? '' : key + '/'
+    if (tryAuth && Vue.prototype.$auth.isAuthenticated()) {
+      return this.executeAuth('put', `/api/course/${sub}${id}/fields`, fields)
+    } else {
+      return this.execute('put', `/api-public/course/${sub}${id}/fields`, fields)
     }
   },
   createCourse (data) {

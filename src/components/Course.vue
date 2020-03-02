@@ -430,6 +430,13 @@ export default {
       if (this.$route.params.plan) {
         this.course = await api.getCourse(this.$route.params.plan, 'plan')
       } else if (this.$route.params.permalink) {
+        this.course = await api.getCourseFields(
+          this.$route.params.permalink,
+          'link',
+          ['name', 'distance', 'gain'],
+          false
+        )
+        this.$title = this.course.name
         this.course = await api.getCourse(this.$route.params.permalink, 'link')
       } else {
         this.course = await api.getCourse(this.$route.params.course, 'course')
