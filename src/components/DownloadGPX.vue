@@ -30,6 +30,19 @@ import api from '@/api'
 import geo from '@/util/geo'
 import { round, interp } from '@/util/math'
 const sgeo = require('sgeo')
+
+function lawOfCosines (a, b, c) {
+  let val = Math.acos((a ** 2 + b ** 2 - c ** 2) / (2 * a * b)) * 180 / Math.PI
+  if (!val) {
+    console.log({
+      a: a,
+      b: b,
+      c: c
+    })
+  }
+  return val
+}
+
 export default {
   props: ['isAuthenticated'],
   data () {
@@ -102,7 +115,7 @@ export default {
         full = full.filter((p, i) => i === 0 || p.delapsed > 0)
       }
 
-      // adjust odd points of red2 lat/lon to make length work
+      // create straight line option:
       let red3 = red2.map(p => { return {...p} }) // clone red2
       let p0 = new sgeo.latlon(0, 0)
       red3[0].lat = Number(p0.lat)
@@ -116,6 +129,37 @@ export default {
         }
       })
 
+      // adjust odd points of red2 lat/lon to make length work
+      let red4 = red2.map(p => { return {...p} }) // deep copy red2
+      red4 = geo.addLoc(red4)
+      red4.forEach((p, i) => {
+        if (
+          i % 2 === 0 &&
+          i < red4.length - 2 &&
+          (red4[i + 1].dloc + red4[i + 2].dloc < red2[i + 1].dloc + red2[i + 2].dloc)
+        ) {
+          let A = new sgeo.latlon(p.lat, p.lon)
+          let B = new sgeo.latlon(red4[i + 1].lat, red4[i + 1].lon)
+          let C = new sgeo.latlon(red4[i + 2].lat, red4[i + 2].lon)
+          let bAB = A.bearingTo(B)
+          let bAC = A.bearingTo(C)
+          let dAC = A.distanceTo(C)
+          if (dAC < red2[i + 1].dloc + red2[i + 2].dloc) {
+            let alpha = lawOfCosines(dAC, red2[i + 1].dloc, red2[i + 2].dloc)
+            let bAB2 = 0
+            if (bAC < bAB || (bAC > 270 && bAB < 90)) {
+              bAB2 = bAC + alpha
+            } else {
+              bAB2 = bAC - alpha
+            }
+            let B2 = A.destinationPoint(bAB2, red2[i + 1].dloc)
+            red4[i + 1].lat = Number(B2.lat)
+            red4[i + 1].lon = Number(B2.lng)
+          }
+        }
+      })
+      red4 = geo.addLoc(red4)
+
       this.filename = data.course.name + (data.plan ? (' - ' + data.plan.name) : '')
       let gpxText = this.writeGPXText({
         start: data.event.start || null,
@@ -123,7 +167,7 @@ export default {
       })
       let gpxText2 = this.writeGPXText({
         start: data.event.start || null,
-        points: red3
+        points: red4
       })
       let tcxText = this.writeTCXText({
         start: data.event.start || null,

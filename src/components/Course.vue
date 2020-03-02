@@ -196,6 +196,7 @@
     ></delete-modal>
     <download-gpx
       ref="download"
+      :points="points"
     ></download-gpx>
     <vue-headful v-if="this.course.name"
       :description="description"
