@@ -196,6 +196,11 @@
     ></delete-modal>
     <download-gpx
       ref="download"
+      :course="course"
+      :plan="plan"
+      :event="event"
+      :points="points"
+      :segments="segments"
     ></download-gpx>
     <vue-headful v-if="this.course.name"
       :description="description"
@@ -878,17 +883,6 @@ export default {
     },
     async download () {
       await this.$refs.download.start(
-        {
-          course: this.course,
-          plan: this.plan,
-          points: this.points,
-          event: this.event,
-          delays: this.delays,
-          heatModel: this.heatModel,
-          terrainFactors: this.terrainFactors,
-          pacing: this.pacing,
-          segments: this.segments
-        },
         this.updatePacing
       )
     }

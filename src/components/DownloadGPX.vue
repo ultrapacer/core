@@ -8,71 +8,92 @@
         <b-spinner small></b-spinner>
         Generating file...
       </p>
-      <p v-else>
-        <b-link :href="gpxURL" :download="this.filename +'.gpx'">
-          Download "{{ filename }}.gpx"
-        </b-link><br/>
-        <b-link :href="tcxURL" :download="this.filename +'.tcx'">
-          Download "{{ filename }}.tcx"
-        </b-link>
-      </p>
+      <div v-else>
+        <p>
+          <b>Original resolution</b><br/>
+          <b-link :href="gpxURL" :download="this.filename +'-orig.gpx'">
+            "{{ filename }}-orig.gpx"
+          </b-link>
+        </p>
+        <p>
+          <b>Low resolution (for watch/pacing)</b><br/>
+          <b-link :href="gpx2URL" :download="this.filename + '-low.gpx'">
+            "{{ filename }}-low.gpx"
+          </b-link>
+        </p>
+      </div>
     </b-toast>
   </div>
 </template>
 
 <script>
+/* eslint new-cap: 0 */
 import moment from 'moment-timezone'
 import api from '@/api'
 import geo from '@/util/geo'
 import { round, interp } from '@/util/math'
+const sgeo = require('sgeo')
+
+function lawOfCosines (a, b, c) {
+  let val = Math.acos((a ** 2 + b ** 2 - c ** 2) / (2 * a * b)) * 180 / Math.PI
+  if (!val) {
+    console.log({
+      a: a,
+      b: b,
+      c: c
+    })
+  }
+  return val
+}
+
 export default {
-  props: ['isAuthenticated'],
+  props: ['isAuthenticated', 'course', 'plan', 'event', 'points', 'segments'],
   data () {
     return {
       gpxURL: null,
+      gpx2URL: null,
       tcxURL: null,
-      filename: ''
+      filename: '',
+      raw: []
+    }
+  },
+  computed: {
+    hasTime () {
+      return this.event.start && this.plan
     }
   },
   methods: {
-    async start (data, updateFn) {
+    async start (updateFn) {
       let t = this.$logger('DownloadGPX|start')
+
       if (this.gpxURL !== null) {
         window.URL.revokeObjectURL(this.gpxURL)
+        window.URL.revokeObjectURL(this.gpx2URL)
         window.URL.revokeObjectURL(this.tcxURL)
         this.gpxURL = null
+        this.gpx2URL = null
         this.tcxURL = null
       }
+
       this.$bvToast.show('my-toast')
-      let full = await api.getCourseField(data.course._id, 'raw')
-      full = full.map(x => {
+      await new Promise(resolve => setTimeout(resolve, 250)) // sleep a bit
+
+      if (this.hasTime && !this.points[0].hasOwnProperty('elapsed')) {
+        await updateFn()
+      }
+
+      // ORIGINAL RESOLUTION
+      if (!this.raw.length) { // download raw data:
+        this.raw = await api.getCourseField(this.course._id, 'raw')
+      }
+      let orig = this.raw.map(x => {
         return {lat: x[0], lon: x[1], alt: x[2]}
       })
-      // add locations:
-      full = geo.addLoc(full)
-      // remove any points that have zero change in location:
-      full = full.filter((p, i) => i === 0 || p.dloc > 0)
-
-      let hasTime = data.event.start && data.plan
-      if (hasTime) {
-        let red = [...data.points] // reduced points array
-        if (!red[0].hasOwnProperty('elapsed')) {
-          let result = geo.calcPacing({
-            course: data.course,
-            plan: data.plan,
-            points: data.points,
-            pacing: data.pacing,
-            event: data.event,
-            delays: data.delays,
-            heatModel: data.heatModel,
-            scales: data.scales,
-            terrainFactors: data.terrainFactors
-          })
-          red = result.points
-        }
-        // interpolate times from distances in full
+      orig = geo.addLoc(orig)
+      if (this.hasTime) { // interpolate times from distances in orig
+        let red = this.points.map(p => { return {...p} })
         let lastelapsed = 0
-        full.forEach(p => {
+        orig.forEach(p => {
           while (red.length > 1 && red[1].loc <= p.loc) {
             red.shift()
           }
@@ -92,32 +113,77 @@ export default {
           lastelapsed = p.elapsed
         })
         // remove any points with zero change in time:
-        full = full.filter((p, i) => i === 0 || p.delapsed > 0)
+        orig = orig.filter((p, i) => i === 0 || p.delapsed > 0)
       }
 
-      this.writeFile({
-        course: data.course,
-        plan: data.plan,
-        points: full,
-        start: data.event.start || null,
-        segments: data.segments
+      // LOW RESOLUTION (adjust odd points lat/lon to correct distance)
+      let low = this.points.map(p => { return {...p} })
+      low = geo.addLoc(low) // update locations
+      low.forEach((p, i) => {
+        if (
+          i % 2 === 0 &&
+          i < low.length - 2 &&
+          (low[i + 1].dloc + low[i + 2].dloc < this.points[i + 1].dloc + this.points[i + 2].dloc)
+        ) {
+          let A = new sgeo.latlon(p.lat, p.lon)
+          let B = new sgeo.latlon(low[i + 1].lat, low[i + 1].lon)
+          let C = new sgeo.latlon(low[i + 2].lat, low[i + 2].lon)
+          let bAB = A.bearingTo(B)
+          let bAC = A.bearingTo(C)
+          let dAC = A.distanceTo(C)
+          if (dAC < this.points[i + 1].dloc + this.points[i + 2].dloc) {
+            let alpha = lawOfCosines(dAC, this.points[i + 1].dloc, this.points[i + 2].dloc)
+            let bAB2 = 0
+            if ((bAB - bAC < 180 && bAC < bAB) || (bAC > 270 && bAB < 90)) {
+              bAB2 = bAC + alpha
+            } else {
+              bAB2 = bAC - alpha
+            }
+            let B2 = A.destinationPoint(bAB2, this.points[i + 1].dloc)
+            low[i + 1].lat = Number(B2.lat)
+            low[i + 1].lon = Number(B2.lng)
+          }
+        }
       })
+      low = geo.addLoc(low)
+
+      this.filename = 'uP-' + this.course.name + (this.plan ? ('-' + this.plan.name) : '')
+      this.filename = this.filename.replace(/ /g, '_')
+      let gpxText = this.writeGPXText(orig, this.filename + '-orig')
+      let gpxText2 = this.writeGPXText(low, this.filename + '-low')
+      // let tcxText = this.writeTCXText(orig, this.filename + '-orig')
+      var gpx = new Blob([gpxText.join('\r')], {type: 'text/plain'})
+      var gpx2 = new Blob([gpxText2.join('\r')], {type: 'text/plain'})
+      // var tcx = new Blob([tcxText.join('\r')], {type: 'text/plain'})
+      this.gpxURL = window.URL.createObjectURL(gpx)
+      this.gpx2URL = window.URL.createObjectURL(gpx2)
+      // this.tcxURL = window.URL.createObjectURL(tcx)
+
+      this.$ga.event('Course', 'download', this.course.public ? this.course.name : 'private')
       this.$logger('DownloadGPX|start', t)
     },
-    writeFile (data) {
-      this.$bvToast.show('my-toast')
-
-      this.filename = data.course.name + (data.plan ? (' - ' + data.plan.name) : '')
-
-      let hasTime = data.start && data.points[0].hasOwnProperty('elapsed')
-
+    writeGPXText (pnts, name) {
       let gpxText = ['<?xml version="1.0" encoding="UTF-8"?>',
         '<gpx creator="ultraPacer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" version="1.1" xmlns="http://www.topografix.com/GPX/1/1">',
-        ' <trk>',
-        '  <name>' + this.filename + '</name>',
-        '  <type>9</type>',
-        '  <trkseg>']
+        '  <trk>',
+        '    <name>' + name + '</name>',
+        '    <type>9</type>',
+        '    <trkseg>']
+      pnts.forEach(p => {
+        let timestr = ''
+        gpxText.push(`    <trkpt lat="${round(p.lat, 8)}" lon="${round(p.lon, 8)}">`)
+        gpxText.push('      <ele>' + round(p.alt, 2) + '</ele>')
+        if (this.hasTime) {
+          timestr = moment(this.event.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
+          gpxText.push('      <time>' + timestr + '</time>')
+        }
+        gpxText.push('    </trkpt>')
+      })
 
+      gpxText.push('    </trkseg>', '   </trk>', '</gpx>')
+      return gpxText
+    },
+    writeTCXText (pnts, name) {
       let tcxText = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd">',
@@ -125,53 +191,42 @@ export default {
         '    <Courses>',
         '      <CourseFolder Name="ultraPacer">',
         '        <CourseNameRef>',
-        '          <Id>' + this.filename + '</Id>',
+        '          <Id>' + name + '</Id>',
         '        </CourseNameRef>',
         '      </CourseFolder>',
         '    </Courses>',
         '  </Folders>',
         '  <Courses>',
         '    <Course>',
-        '      <Name>' + this.filename + '</Name>',
+        '      <Name>' + name + '</Name>',
         '      <Lap>'
       ]
-      if (hasTime) {
+      if (this.hasTime) {
         tcxText.push(
-          '        <TotalTimeSeconds>' + round(data.points[data.points.length - 1].elapsed, 3) + '</TotalTimeSeconds>'
+          '        <TotalTimeSeconds>' + round(pnts[pnts.length - 1].elapsed, 3) + '</TotalTimeSeconds>'
         )
       }
       tcxText.push(
-        '        <DistanceMeters>' + round(data.points[data.points.length - 1].loc * 1000, 2) + '</DistanceMeters>',
+        '        <DistanceMeters>' + round(pnts[pnts.length - 1].loc * 1000, 2) + '</DistanceMeters>',
         '        <BeginPosition>',
-        '          <LatitudeDegrees>' + data.points[0].lat + '</LatitudeDegrees>',
-        '          <LongitudeDegrees>' + data.points[0].lon + '</LongitudeDegrees>',
+        '          <LatitudeDegrees>' + pnts[0].lat + '</LatitudeDegrees>',
+        '          <LongitudeDegrees>' + pnts[0].lon + '</LongitudeDegrees>',
         '        </BeginPosition>',
         '        <EndPosition>',
-        '          <LatitudeDegrees>' + data.points[data.points.length - 1].lat + '</LatitudeDegrees>',
-        '          <LongitudeDegrees>' + data.points[data.points.length - 1].lon + '</LongitudeDegrees>',
+        '          <LatitudeDegrees>' + pnts[pnts.length - 1].lat + '</LatitudeDegrees>',
+        '          <LongitudeDegrees>' + pnts[pnts.length - 1].lon + '</LongitudeDegrees>',
         '        </EndPosition>',
         '        <Intensity>Active</Intensity>',
         '      </Lap>',
         '      <Track>'
       )
-
-      data.points.forEach(p => {
-        let timestr = ''
-        gpxText.push(`  <trkpt lat="${round(p.lat, 8)}" lon="${round(p.lon, 8)}">`)
-        gpxText.push(`   <ele>${round(p.alt, 2)}</ele>`)
-        if (hasTime) {
-          timestr = moment(data.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
-          gpxText.push(`   <time>${timestr}</time>`)
-        }
-        gpxText.push('  </trkpt>')
-
+      pnts.forEach(p => {
         tcxText.push(
           '        <Trackpoint>'
         )
-        if (hasTime) {
-          tcxText.push(
-            `          <Time>${timestr}</Time>`
-          )
+        if (this.hasTime) {
+          let timestr = moment(this.event.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
+          tcxText.push('          <Time>' + timestr + '</Time>')
         }
         tcxText.push(
           '          <Position>',
@@ -184,11 +239,10 @@ export default {
         )
       })
 
-      gpxText.push('  </trkseg>', ' </trk>', '</gpx>')
       tcxText.push(
         '      </Track>'
       )
-      data.segments.forEach(s => {
+      this.segments.forEach(s => {
         let wp = s.waypoint2
         if (wp.tier === 1) {
           tcxText.push(
@@ -196,8 +250,8 @@ export default {
             '        <Name>' + wp.name + '</Name>',
             '        <PointType>Generic</PointType>'
           )
-          if (hasTime) {
-            let timestr = moment(data.start).add(s.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
+          if (this.hasTime) {
+            let timestr = moment(this.event.start).add(s.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
             tcxText.push(
               '        <Time>' + timestr + '</Time>'
             )
@@ -212,20 +266,12 @@ export default {
           )
         }
       })
-
       tcxText.push(
         '    </Course>',
         '  </Courses>',
         '</TrainingCenterDatabase>'
       )
-
-      var gpx = new Blob([gpxText.join('\r')], {type: 'text/plain'})
-      var tcx = new Blob([tcxText.join('\r')], {type: 'text/plain'})
-
-      this.gpxURL = window.URL.createObjectURL(gpx)
-      this.tcxURL = window.URL.createObjectURL(tcx)
-
-      this.$ga.event('Course', 'download', data.course.public ? data.course.name : 'private')
+      return tcxText
     }
   }
 }
