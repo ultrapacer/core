@@ -50,6 +50,14 @@ app.use('/api/plan', checkJwt, planRoutes)
 // unauthenticated api routes:
 app.use('/api-public', publicRoutes)
 
+// redirect static files:
+app.get('/robots.txt', (req, res) => {
+  res.sendFile(STATIC_FOLDER + '/robots.txt')
+})
+app.get('/robots.txt', (req, res) => {
+  res.sendFile(STATIC_FOLDER + '/sitemap.xml')
+})
+
 app.get('/*', (req, res) => {
   res.sendFile(HTML_FILE)
 })
