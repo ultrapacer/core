@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid mt-4">
     <h1 class="h1 d-none d-md-block">Race Database</h1>
-    <p>Select your race below.<br/>Not seeing your race? Contact me and let me know!</p>
+    <p>Click on your race below to make a game plan.<br/>Not seeing your race? Contact me and let me know!</p>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
       <b-spinner label="Loading..." ></b-spinner>
     </div>
