@@ -13,9 +13,10 @@
           prepend="Name"
           class="mb-2"
           size="sm"
-          v-b-popover.click.blur.bottomright.d250.v-info="
-            'Name: title for this plan; for example \'A goal\' or \'Qualify\' or \'24-hour finish\'.'
-          "
+          v-b-popover.right.click.blur.topright.d250.v-info="{
+            customClass: isMobile ? 'd-none' : '',
+            content: 'Name: title for this plan; for example \'A goal\' or \'Qualify\' or \'24-hour finish\'.'
+          }"
         >
           <b-form-input type="text" v-model="model.name" size="sm" required>
           </b-form-input>
@@ -24,9 +25,10 @@
           prepend="Pacing method"
           class="mb-2"
           size="sm"
-          v-b-popover.click.blur.bottomright.d250.v-info="
-            'Pacing methods:\n - Elapsed time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'
-          "
+          v-b-popover.click.blur.topright.d250.v-info="{
+            customClass: isMobile ? 'd-none' : '',
+            content: 'Pacing methods:\n - Elapsed time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'
+          }"
         >
           <b-form-select
             type="number"
@@ -42,7 +44,10 @@
           v-bind:append="targetAppend"
           class="mb-2"
           size="sm"
-          v-b-popover.click.blur.bottomright.d250.v-info="targetPopover"
+          v-b-popover.click.blur.topright.d250.v-info="{
+            customClass: isMobile ? 'd-none' : '',
+            content: targetPopover
+          }"
         >
           <b-form-input
               ref="planformtimeinput"
@@ -102,9 +107,10 @@
           prepend="Aid station delay"
           class="mb-2"
           size="sm"
-          v-b-popover.click.blur.bottomright.d250.v-info="
-            'Aid station delay: time spent at each aid station.'
-          "
+          v-b-popover.click.blur.topright.d250.v-info="{
+            customClass: isMobile ? 'd-none' : '',
+            content: 'Aid station delay: time spent at each aid station.'
+          }"
         >
           <b-form-input
             type="text"
@@ -123,9 +129,10 @@
             append=" %"
             class="mb-2"
             size="sm"
-            v-b-popover.click.blur.bottomright.d250.v-info="
-              'Pace drift: linear decrease in speed throughout race. For example, 10% means you begin the race 10% faster than you finish.'
-            "
+            v-b-popover.click.blur.topright.d250.v-info="{
+              customClass: isMobile ? 'd-none' : '',
+              content: 'Pace drift: linear decrease in speed throughout race. For example, 10% means you begin the race 10% faster than you finish.'
+            }"
           >
           <b-form-input type="text" v-model="model.drift" size="sm" required>
           </b-form-input>
@@ -136,25 +143,28 @@
           size="sm"
           class="mb-2"
           :unchecked-value="false"
-          v-b-popover.click.blur.bottomright.d250.v-info="
-            'Heat factor: pace modifier for heat and sun exposure.\nNOTE: Using a heat factor slows down the calculation time of this tool.'
-          "
+          v-b-popover.click.blur.topright.d250.v-info="{
+            customClass: isMobile ? 'd-none' : '',
+            content: 'Heat factor: pace modifier for heat and sun exposure.\nNOTE: Using a heat factor slows down the calculation time of this tool.'
+          }"
         >
           Apply heat factor
         </b-form-checkbox>
         <b-form-group v-if="hF.enabled" class="mb-0" style="padding-left: 1em">
           <b-input-group prepend="Baseline" append=" %" class="mb-2" size="sm"
-            v-b-popover.click.blur.bottomright.d250.v-info="
-              'Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event.'
-            "
+            v-b-popover.click.blur.topright.d250.v-info="{
+              customClass: isMobile ? 'd-none' : '',
+              content: 'Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event.'
+            }"
           >
             <b-form-input v-model="hF.baseline" class="mb-n2">
             </b-form-input>
           </b-input-group>
           <b-input-group prepend="Maximum" append="%" class="mb-2" size="sm"
-            v-b-popover.click.blur.bottomright.d250.v-info="
-              'Maximum heat factor: pace modifier for heat; maximum heat factor at the hottest part of the day, increasing from baseline 30 minutes after sunrise and returning to baseline 2 hours after sunset.'
-            "
+            v-b-popover.click.blur.topright.d250.v-info="{
+              customClass: isMobile ? 'd-none' : '',
+              content: 'Maximum heat factor: pace modifier for heat; maximum heat factor at the hottest part of the day, increasing from baseline 30 minutes after sunrise and returning to baseline 2 hours after sunset.'
+            }"
           >
             <b-form-input v-model="hF.max" class="mb-n2">
             </b-form-input>
@@ -283,6 +293,9 @@ export default {
     }
   },
   computed: {
+    isMobile: function () {
+      return screen.width < 992
+    },
     targetLabel: function () {
       for (var i = 0; i < this.pacingMethods.length; i++) {
         if (this.pacingMethods[i].value === this.model.pacingMethod) {
