@@ -50,6 +50,14 @@ app.use('/api/plan', checkJwt, planRoutes)
 // unauthenticated api routes:
 app.use('/api-public', publicRoutes)
 
+// redirect static files:
+app.get('/robots.txt', function (req, res) {
+  res.sendFile(path.join(__dirname, '/public/robots.txt'))
+})
+app.get('/sitemap.xml', function (req, res) {
+  res.sendFile(path.join(__dirname, '/public/sitemap.xml'))
+})
+
 app.get('/*', (req, res) => {
   res.sendFile(HTML_FILE)
 })

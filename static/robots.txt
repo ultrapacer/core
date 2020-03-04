@@ -4,3 +4,4 @@ Disallow: /assets/
 Disallow: /js/
 Disallow: /privacy
 Sitemap: https://ultrapacer.com/sitemap.xml
+Sitemap: https://ultrapacer.com/api-public/sitemap.xml
