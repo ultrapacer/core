@@ -13,7 +13,7 @@
           prepend="Name"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="
+          v-b-popover.click.blur.bottomright.d250.v-info="
             'Name: title for this plan; for example \'A goal\' or \'Qualify\' or \'24-hour finish\'.'
           "
         >
@@ -24,7 +24,7 @@
           prepend="Pacing method"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="
+          v-b-popover.click.blur.bottomright.d250.v-info="
             'Pacing methods:\n - Elapsed time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'
           "
         >
@@ -42,7 +42,7 @@
           v-bind:append="targetAppend"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="targetPopover"
+          v-b-popover.click.blur.bottomright.d250.v-info="targetPopover"
         >
           <b-form-input
               ref="planformtimeinput"
@@ -102,7 +102,7 @@
           prepend="Aid station delay"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="
+          v-b-popover.click.blur.bottomright.d250.v-info="
             'Aid station delay: time spent at each aid station.'
           "
         >
@@ -123,7 +123,7 @@
             append=" %"
             class="mb-2"
             size="sm"
-            v-b-popover.hover.bottomright.d250.v-info="
+            v-b-popover.click.blur.bottomright.d250.v-info="
               'Pace drift: linear decrease in speed throughout race. For example, 10% means you begin the race 10% faster than you finish.'
             "
           >
@@ -136,7 +136,7 @@
           size="sm"
           class="mb-2"
           :unchecked-value="false"
-          v-b-popover.hover.bottomright.d250.v-info="
+          v-b-popover.click.blur.bottomright.d250.v-info="
             'Heat factor: pace modifier for heat and sun exposure.\nNOTE: Using a heat factor slows down the calculation time of this tool.'
           "
         >
@@ -144,7 +144,7 @@
         </b-form-checkbox>
         <b-form-group v-if="hF.enabled" class="mb-0" style="padding-left: 1em">
           <b-input-group prepend="Baseline" append=" %" class="mb-2" size="sm"
-            v-b-popover.hover.bottomright.d250.v-info="
+            v-b-popover.click.blur.bottomright.d250.v-info="
               'Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event.'
             "
           >
@@ -152,7 +152,7 @@
             </b-form-input>
           </b-input-group>
           <b-input-group prepend="Maximum" append="%" class="mb-2" size="sm"
-            v-b-popover.hover.bottomright.d250.v-info="
+            v-b-popover.click.blur.bottomright.d250.v-info="
               'Maximum heat factor: pace modifier for heat; maximum heat factor at the hottest part of the day, increasing from baseline 30 minutes after sunrise and returning to baseline 2 hours after sunset.'
             "
           >
