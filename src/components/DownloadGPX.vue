@@ -177,8 +177,6 @@ export default {
         }
         return o
       })
-      console.log(trkpts)
-
       let obj = {
         gpx: {
           $: {
