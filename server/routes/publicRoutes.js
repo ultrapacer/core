@@ -102,28 +102,23 @@ publicRoutes.route('/sitemap.xml').get(async function (req, res) {
     var races = await Course.find(q).select('link').exec()
     var arr = races.map(r => {
       return {
-        url: {
-          loc: `https://ultrapacer.com/race/${r.link}`,
-          changefreq: 'daily',
-          priority: 1
-        }
+        loc: `https://ultrapacer.com/race/${r.link}`,
+        changefreq: 'daily',
+        priority: 1
       }
     })
     let obj = {
       urlset: {
         $: {
-          xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9",
-          'xmlns:xsi': "http://www.w3.org/2001/XMLSchema-instance",
-          'xsi:schemaLocation': "http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"
+          xmlns: 'http://www.sitemaps.org/schemas/sitemap/0.9',
+          'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+          'xsi:schemaLocation': 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd'
         },
-        _: arr
+        url: arr
       }
     }
-    var builder = new xml2js.Builder()
+    var builder = new xml2js.Builder({charkey: '#'})
     var xml = builder.buildObject(obj)
-    xml=xml.replace(/\[object Object\],/g,'')
-    xml=xml.replace(/\[object Object\]/g,'')
-    
     res.type('text/plain')
     res.send(xml)
   } catch (err) {
