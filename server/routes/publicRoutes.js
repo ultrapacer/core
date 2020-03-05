@@ -117,7 +117,9 @@ publicRoutes.route('/sitemap.xml').get(async function (req, res) {
         url: arr
       }
     }
-    var builder = new xml2js.Builder({charkey: '#'})
+    var builder = new xml2js.Builder({
+      xmldec: { version: '1.0', encoding: 'UTF-8', standalone: null }
+    })
     var xml = builder.buildObject(obj)
     res.type('text/plain')
     res.send(xml)
