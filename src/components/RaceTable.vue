@@ -3,8 +3,8 @@
     :items="races"
     :fields="fields"
     primary-key="_id"
+    @row-clicked="goToRace"
     hover
-    small
     >
     <template slot="HEAD_distance">
       Dist. [{{ units.dist }}]
@@ -103,6 +103,14 @@ export default {
     async refreshRaces (callback) {
       this.courses = await api.getRaces()
       if (typeof callback === 'function') callback()
+    },
+    async goToRace (course) {
+      this.$router.push({
+        name: 'Race',
+        params: {
+          permalink: course.link
+        }
+      })
     }
   }
 }

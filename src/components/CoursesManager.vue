@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid mt-4">
+  <div class="container-fluid mt-4" style="max-width:60rem">
     <h1 class="h1 d-none d-md-block">My Courses</h1>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
       <b-spinner label="Loading..." ></b-spinner>
@@ -14,10 +14,13 @@
           hover
           >
           <template slot="HEAD_distance">
-            Distance [{{ user.distUnits }}]
+            Dist. [{{ user.distUnits }}]
           </template>
-          <template slot="HEAD_elevation">
-            Elevation [{{ user.elevUnits }}]
+          <template slot="HEAD_gain">
+            Gain [{{ user.elevUnits }}]
+          </template>
+          <template slot="HEAD_loss">
+            Loss [{{ user.elevUnits }}]
           </template>
           <template slot="HEAD_actions">&nbsp;</template>
           <template slot="actions" slot-scope="row">
@@ -33,10 +36,32 @@
             <b-button size="sm" @click="deleteCourse(row.item)" class="mr-1">
               <v-icon name="trash"></v-icon>
               <span class="d-none d-md-inline" v-if="user._id==row.item._user">
-                Delete
+                Del.
               </span>
               <span class="d-none d-md-inline" v-else>Remove</span>
             </b-button>
+            <router-link
+                :to="row.item.link ? {
+                  name: 'Race',
+                  params: {
+                    permalink: row.item.link
+                  }
+                } : {
+                  name: 'Course',
+                  params: {
+                    course: row.item._id
+                  }
+                }"
+              >
+              <b-button
+                  size="sm"
+                  class="mr-1"
+                  variant="success"
+                >
+                <v-icon name="arrow-right"></v-icon>
+                <span class="d-none d-md-inline">Go!</span>
+              </b-button>
+            </router-link>
           </template>
         </b-table>
         <div>
