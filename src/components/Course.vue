@@ -892,6 +892,10 @@ export default {
       await this.$refs.download.start(
         this.updatePacing
       )
+    },
+    async changeOwner (_user) {
+      if (!this.user.admin) { return }
+      await api.updateCourse(this.course._id, {_user: _user})
     }
   },
   watch: {

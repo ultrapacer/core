@@ -73,6 +73,9 @@ courseRoutes.route('/:id').put(async function (req, res) {
       if (req.body.points) {
         fields.push('points', 'raw', 'source', 'distance', 'gain', 'loss')
       }
+      if (course._user.admin) {
+        fields.push('_user') // allow only admins to change a user
+      }
       fields.forEach(f => {
         if (req.body.hasOwnProperty(f)) {
           course[f] = req.body[f]
