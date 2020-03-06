@@ -13,20 +13,17 @@
           prepend="Name"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Name: title for this plan; for example \'A goal\' or \'Qualify\' or \'24-hour finish\'.'
-          "
         >
           <b-form-input type="text" v-model="model.name" size="sm" required>
           </b-form-input>
+          <help-button
+              message="Name: title for this plan; for example 'A goal' or 'Qualify' or '24-hour finish'.'"
+            ></help-button>
         </b-input-group>
         <b-input-group
           prepend="Pacing method"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Pacing methods:\n - Elapsed time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'
-          "
         >
           <b-form-select
             type="number"
@@ -36,13 +33,14 @@
             required
            >
           </b-form-select>
+          <help-button
+              :message="'Pacing methods:\n - Elapsed time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'"
+            ></help-button>
         </b-input-group>
         <b-input-group
           v-bind:prepend="targetLabel"
-          v-bind:append="targetAppend"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="targetPopover"
         >
           <b-form-input
               ref="planformtimeinput"
@@ -55,6 +53,7 @@
               required
               @change="checkTargetFormat"
             ></b-form-input>
+          <help-button :message="targetPopover"></help-button>
         </b-input-group>
 
         <div v-if="!Boolean(course.eventStart)">
@@ -102,9 +101,6 @@
           prepend="Aid station delay"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Aid station delay: time spent at each aid station.'
-          "
         >
           <b-form-input
             type="text"
@@ -117,18 +113,20 @@
             size="sm"
             required
           ></b-form-input>
+          <help-button
+              message="Aid station delay: time spent at each aid station."
+            ></help-button>
         </b-input-group>
         <b-input-group
-            prepend="Pace drift"
-            append=" %"
+            prepend="Pace drift [%]"
             class="mb-2"
             size="sm"
-            v-b-popover.hover.bottomright.d250.v-info="
-              'Pace drift: linear decrease in speed throughout race. For example, 10% means you begin the race 10% faster than you finish.'
-            "
           >
           <b-form-input type="text" v-model="model.drift" size="sm" required>
           </b-form-input>
+          <help-button
+              message="Pace drift: linear decrease in speed throughout race. For example, 10% means you begin the race 10% faster than you finish."
+            ></help-button>
         </b-input-group>
         <b-form-checkbox
           v-model="hF.enabled"
@@ -136,28 +134,27 @@
           size="sm"
           class="mb-2"
           :unchecked-value="false"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Heat factor: pace modifier for heat and sun exposure.\nNOTE: Using a heat factor slows down the calculation time of this tool.'
-          "
+          v-b-popover.hover.bottomright.d250.v-info="{
+            customClass: isMobile ? 'd-none' : '',
+            content: 'Heat factor: pace modifier for heat and sun exposure.'
+          }"
         >
           Apply heat factor
         </b-form-checkbox>
         <b-form-group v-if="hF.enabled" class="mb-0" style="padding-left: 1em">
-          <b-input-group prepend="Baseline" append=" %" class="mb-2" size="sm"
-            v-b-popover.hover.bottomright.d250.v-info="
-              'Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event.'
-            "
-          >
+          <b-input-group prepend="Baseline [%]" class="mb-2" size="sm">
             <b-form-input v-model="hF.baseline" class="mb-n2">
             </b-form-input>
+            <help-button
+                message="Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event."
+              ></help-button>
           </b-input-group>
-          <b-input-group prepend="Maximum" append="%" class="mb-2" size="sm"
-            v-b-popover.hover.bottomright.d250.v-info="
-              'Maximum heat factor: pace modifier for heat; maximum heat factor at the hottest part of the day, increasing from baseline 30 minutes after sunrise and returning to baseline 2 hours after sunset.'
-            "
-          >
+          <b-input-group prepend="Maximum [%]" class="mb-2" size="sm">
             <b-form-input v-model="hF.max" class="mb-n2">
             </b-form-input>
+            <help-button
+                message="Maximum heat factor: pace modifier for heat; maximum heat factor at the hottest part of the day, increasing from baseline 30 minutes after sunrise and returning to baseline 2 hours after sunset."
+              ></help-button>
           </b-input-group>
         </b-form-group>
         <b-input-group prepend="Notes" class="mb-2" size="sm">
@@ -250,8 +247,12 @@
 import api from '@/api'
 import moment from 'moment-timezone'
 import {sec2string, string2sec} from '../util/time'
+import HelpButton from './HelpButton'
 export default {
   props: ['course', 'units'],
+  components: {
+    HelpButton
+  },
   data () {
     return {
       defaults: {
@@ -283,22 +284,19 @@ export default {
     }
   },
   computed: {
+    isMobile: function () {
+      return screen.width < 992
+    },
     targetLabel: function () {
       for (var i = 0; i < this.pacingMethods.length; i++) {
         if (this.pacingMethods[i].value === this.model.pacingMethod) {
-          return this.pacingMethods[i].text
+          let str = this.pacingMethods[i].text
+          if (this.model.pacingMethod === 'pace' || this.model.pacingMethod === 'np') {
+            str = `${str} [/${this.units.dist}]`
+          }
+          return str
         }
       }
-    },
-    targetAppend: function () {
-      var str = 'elapsed'
-      if (
-        this.model.pacingMethod === 'pace' ||
-        this.model.pacingMethod === 'np'
-      ) {
-        str = `/${this.units.dist}`
-      }
-      return str
     },
     targetPlaceholder: function () {
       if (
