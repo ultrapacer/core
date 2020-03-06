@@ -1,5 +1,5 @@
 <template>
-<div class="container-fluid mt-4">
+<div class="container-fluid mt-4" style="max-width:50rem">
   <h1 class="h1 d-none d-md-block">About ultraPacer</h1>
   <about-content>
   </about-content>

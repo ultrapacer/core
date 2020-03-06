@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid mt-4">
+  <div class="container-fluid mt-4" style="max-width:50rem">
     <h1 class="h1 d-none d-md-block">Settings{{ user.admin ? ' [Admin]' : '' }}</h1>
     <b-alert :show="loading" variant="info">Loading...</b-alert>
     <b-card>
