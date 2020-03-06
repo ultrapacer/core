@@ -247,7 +247,28 @@ export default {
       }
 
       if (this.model._id) {
-        await api.updateCourse(this.model._id, this.model)
+        let updateModel = {}
+        let fields = [
+          'name',
+          'link',
+          'description',
+          'public',
+          'eventStart',
+          'eventTimezone',
+          'points',
+          'raw',
+          'source',
+          'distance',
+          'gain',
+          'loss'
+        ]
+        fields.forEach(f => {
+          if (this.model.hasOwnProperty(f)) {
+            updateModel[f] = this.model[f]
+          }
+        })
+        if (!updateModel.public) { updateModel.link = null }
+        await api.updateCourse(this.model._id, updateModel)
         this.$ga.event('Course', 'edit')
       } else {
         await api.createCourse(this.model)

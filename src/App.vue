@@ -22,7 +22,7 @@
       <menu-social v-else class="d-none d-md-block navbar-nav "></menu-social>
     </b-navbar>
     <!-- routes will be rendered here -->
-    <router-view :isAuthenticated="isAuthenticated" :user="user" />
+    <router-view ref="routerView" :isAuthenticated="isAuthenticated" :user="user" />
   </div>
 </template>
 <style>
