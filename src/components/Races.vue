@@ -59,9 +59,28 @@ export default {
       moment(r.eventStart).isAfter(moment(), 'day') ||
       moment(r.eventStart).isSame(moment(), 'day')
     )
+    // sort by day, name
+    this.upcomingRaces = this.upcomingRaces.sort((a, b) =>
+      b.distance - a.distance
+    )
+    this.upcomingRaces = this.upcomingRaces.sort((a, b) =>
+      (a.name.substring(0, 6) < b.name.substring(0, 6)) ? -1 : 1
+    )
+    this.upcomingRaces = this.upcomingRaces.sort((a, b) =>
+      moment(a.eventStart).format('YYYYMMDD') - moment(b.eventStart).format('YYYYMMDD')
+    )
     this.pastRaces = this.races.filter(r =>
       moment(r.eventStart).isBefore(moment(), 'day')
-    ).reverse()
+    )
+    this.pastRaces = this.pastRaces.sort((a, b) =>
+      b.distance - a.distance
+    )
+    this.pastRaces = this.pastRaces.sort((a, b) =>
+      (a.name.substring(0, 6) < b.name.substring(0, 6)) ? -1 : 1
+    )
+    this.pastRaces = this.pastRaces.sort((a, b) =>
+      moment(b.eventStart).format('YYYYMMDD') - moment(a.eventStart).format('YYYYMMDD')
+    )
     this.initializing = false
   },
   methods: {
