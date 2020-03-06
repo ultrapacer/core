@@ -3,12 +3,11 @@
     :items="races"
     :fields="fields"
     primary-key="_id"
-    @row-clicked="goToCourse"
     hover
     small
     >
     <template slot="HEAD_distance">
-      Distance [{{ units.dist }}]
+      Dist. [{{ units.dist }}]
     </template>
     <template slot="HEAD_gain">
       Gain [{{ units.alt }}]
@@ -16,6 +15,26 @@
     <template slot="HEAD_loss">
       Loss [{{ units.alt }}]
     </template>
+    <template slot="HEAD_actions">&nbsp;</template>
+      <template slot="actions" slot-scope="row">
+        <router-link
+          :to="{
+            name: 'Race',
+            params: {
+              permalink: row.item.link
+            }
+          }"
+        >
+        <b-button
+            size="sm"
+            class="mr-1"
+            variant="success"
+          >
+          <v-icon name="arrow-right"></v-icon>
+          <span class="d-none d-md-inline">Go!</span>
+        </b-button>
+        </router-link>
+      </template>
   </b-table>
 </template>
 
@@ -71,6 +90,11 @@ export default {
           },
           thClass: 'd-none d-sm-table-cell',
           tdClass: 'd-none d-sm-table-cell'
+        },
+        {
+          key: 'actions',
+          label: 'Actions',
+          tdClass: 'actionButtonColumn'
         }
       ]
     }
@@ -79,14 +103,6 @@ export default {
     async refreshRaces (callback) {
       this.courses = await api.getRaces()
       if (typeof callback === 'function') callback()
-    },
-    async goToCourse (course) {
-      this.$router.push({
-        name: 'Race',
-        params: {
-          permalink: course.link
-        }
-      })
     }
   }
 }
