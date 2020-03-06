@@ -33,6 +33,7 @@ import api from '@/api'
 import geo from '@/util/geo'
 import { round, interp } from '@/util/math'
 const sgeo = require('sgeo')
+var xml2js = require('xml2js')
 
 function lawOfCosines (a, b, c) {
   let val = Math.acos((a ** 2 + b ** 2 - c ** 2) / (2 * a * b)) * 180 / Math.PI
@@ -152,8 +153,8 @@ export default {
       let gpxText = this.writeGPXText(orig, this.filename + '-orig')
       let gpxText2 = this.writeGPXText(low, this.filename + '-low')
       // let tcxText = this.writeTCXText(orig, this.filename + '-orig')
-      var gpx = new Blob([gpxText.join('\r')], {type: 'text/plain'})
-      var gpx2 = new Blob([gpxText2.join('\r')], {type: 'text/plain'})
+      var gpx = new Blob([gpxText], {type: 'text/plain'})
+      var gpx2 = new Blob([gpxText2], {type: 'text/plain'})
       // var tcx = new Blob([tcxText.join('\r')], {type: 'text/plain'})
       this.gpxURL = window.URL.createObjectURL(gpx)
       this.gpx2URL = window.URL.createObjectURL(gpx2)
@@ -163,25 +164,42 @@ export default {
       this.$logger('DownloadGPX|start', t)
     },
     writeGPXText (pnts, name) {
-      let gpxText = ['<?xml version="1.0" encoding="UTF-8"?>',
-        '<gpx creator="ultraPacer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" version="1.1" xmlns="http://www.topografix.com/GPX/1/1">',
-        '  <trk>',
-        '    <name>' + name + '</name>',
-        '    <type>9</type>',
-        '    <trkseg>']
-      pnts.forEach(p => {
-        let timestr = ''
-        gpxText.push(`    <trkpt lat="${round(p.lat, 8)}" lon="${round(p.lon, 8)}">`)
-        gpxText.push('      <ele>' + round(p.alt, 2) + '</ele>')
-        if (this.hasTime) {
-          timestr = moment(this.event.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
-          gpxText.push('      <time>' + timestr + '</time>')
+      let trkpts = pnts.map(p => {
+        let o = {
+          $: {
+            lat: round(p.lat, 8),
+            lon: round(p.lon, 8)
+          },
+          ele: round(p.alt, 2)
         }
-        gpxText.push('    </trkpt>')
+        if (this.hasTime) {
+          o.time = moment(this.event.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
+        }
+        return o
       })
-
-      gpxText.push('    </trkseg>', '   </trk>', '</gpx>')
-      return gpxText
+      let obj = {
+        gpx: {
+          $: {
+            creator: 'ultraPacer',
+            'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+            'xsi:schemaLocation': 'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd',
+            version: '1.1',
+            xmlns: 'http://www.topografix.com/GPX/1/1'
+          },
+          trk: {
+            name: name,
+            type: 9,
+            trkseg: {
+              trkpt: trkpts
+            }
+          }
+        }
+      }
+      var builder = new xml2js.Builder({
+        xmldec: { version: '1.0', encoding: 'UTF-8', standalone: null }
+      })
+      var xml = builder.buildObject(obj)
+      return xml
     },
     writeTCXText (pnts, name) {
       let tcxText = [

@@ -20,7 +20,8 @@
     "mongoose": "^5.5.2",
     "sgeo": "0.0.5",
     "vue": "^2.5.2",
-    "vue-router": "^3.0.1"
+    "vue-router": "^3.0.1",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "@yaska-eu/jsurl2": "^2.1.0",

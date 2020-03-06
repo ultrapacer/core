@@ -3,6 +3,7 @@ var express = require('express')
 var publicRoutes = express.Router()
 var Course = require('../models/Course')
 var Plan = require('../models/Plan')
+var xml2js = require('xml2js')
 
 // GET COURSE
 publicRoutes.route(['/course/:_id', '/course/link/:link']).get(async function (req, res) {
@@ -99,21 +100,29 @@ publicRoutes.route('/sitemap.xml').get(async function (req, res) {
       eventStart: { '$nin': [ null, '' ] }
     }
     var races = await Course.find(q).select('link').exec()
-    let textarr = [
-      '<?xml version="1.0" encoding="utf-8"?>',
-      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">'
-    ]
-    races.forEach(r => {
-      textarr.push(`  <url>`)
-      textarr.push(`    <loc>https://ultrapacer.com/race/${r.link}</loc>`)
-      textarr.push(`    <changefreq>daily</changefreq>`)
-      textarr.push('    <priority>1</priority>')
-      textarr.push('  </url>')
+    var arr = races.map(r => {
+      return {
+        loc: `https://ultrapacer.com/race/${r.link}`,
+        changefreq: 'daily',
+        priority: 1
+      }
     })
-    textarr.push('</urlset>')
-    var data = textarr.join('\r')
-    res.type('text')
-    res.send(data)
+    let obj = {
+      urlset: {
+        $: {
+          xmlns: 'http://www.sitemaps.org/schemas/sitemap/0.9',
+          'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+          'xsi:schemaLocation': 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd'
+        },
+        url: arr
+      }
+    }
+    var builder = new xml2js.Builder({
+      xmldec: { version: '1.0', encoding: 'UTF-8', standalone: null }
+    })
+    var xml = builder.buildObject(obj)
+    res.type('text/plain')
+    res.send(xml)
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
