@@ -46,8 +46,40 @@ function linearRegression (xyr) {
   return [a, b]
 }
 
+function wlslr (x1s, y1s, x2s, th) {
+  // weighted least squares linear regression routine
+  // x1s: source x array
+  // y1s: source y array
+  // x2s: destination x array
+  //  th: smoothing (points included)
+  let a = 0 // lower index x1s/y1s included
+  let b = 0 // upper index x1s/y1s included
+  let mbs = []
+  x2s.forEach(x2 => {
+    while (x1s[a] < x2 - th) { a++ }
+    if (a > 0 && x1s[a] >= x2) { a-- }
+    while (b < x1s.length - 1 && x1s[b + 1] <= x2 + th) { b++ }
+    if (b < x1s.length - 1 && x1s[b] <= x2) { b++ }
+
+    let ith = Math.max(
+      th,
+      Math.abs(x2 - x1s[a]) + 0.001,
+      Math.abs(x2 - x1s[b]) + 0.001
+    )
+    let xyr = []
+    let w = 0
+    for (let i = a; i <= b; i++) {
+      w = (1 - ((Math.abs(x2 - x1s[i]) / ith) ** 3)) ** 3
+      xyr.push([x1s[i], y1s[i], w])
+    }
+    mbs.push(linearRegression(xyr))
+  })
+  return mbs
+}
+
 module.exports = {
   linearRegression: linearRegression,
   round: round,
-  interp: interp
+  interp: interp,
+  wlslr: wlslr
 }

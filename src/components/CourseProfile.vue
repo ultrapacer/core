@@ -4,8 +4,9 @@
 </template>
 
 <script>
-import { pointWLSQ } from '@/util/geo'
+import { wlslr } from '@/util/math'
 import LineChart from './LineChart.js'
+import timeUtil from '../util/time'
 
 export default {
   props: ['course', 'points', 'sunEvents', 'units', 'waypointShowMode'],
@@ -47,6 +48,7 @@ export default {
           finish: 'black'
         }
       },
+      pmax: 500,
       updateTrigger: 0
     }
   },
@@ -90,9 +92,27 @@ export default {
             id: 'y-axis-1'
           }, {
             type: 'linear',
-            display: true,
+            display: !this.comparePoints.length,
             position: 'right',
             id: 'y-axis-2'
+          }, {
+            type: 'linear',
+            display: Boolean(this.comparePoints.length),
+            position: 'right',
+            id: 'y-axis-3',
+            scaleLabel: {
+              display: true,
+              labelString: 'Ahead/Behind',
+              padding: 0
+            },
+            ticks: {
+              callback: function (value, index, values) {
+                let sign = value >= 0 ? '' : '-'
+                return sign + timeUtil.sec2string(Math.abs(value), '[h]:m:ss')
+              },
+              stepSize: 60,
+              maxTicksLimit: 12
+            }
           }]
         },
         tooltips: {
@@ -123,32 +143,78 @@ export default {
       }
     },
     chartData: function () {
+      this.$logger('CourseProfile|chartData')
+      let datasets = [
+        this.chartPoints,
+        { data: this.chartProfile,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderColor: this.chartColors.blue,
+          borderWidth: 1,
+          backgroundColor: this.transparentize(this.chartColors.blue),
+          yAxisID: 'y-axis-1'
+        },
+        { data: this.chartGrade,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          backgroundColor: this.transparentize(this.chartColors.red, 0.75),
+          showLine: true,
+          yAxisID: 'y-axis-2'
+        },
+        { data: this.chartFocus,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderColor: this.chartColors.red,
+          borderWidth: 5,
+          backgroundColor: this.chartColors.red,
+          yAxisID: 'y-axis-1'
+        }
+      ]
+      if (this.comparePoints.length) {
+        datasets[2] = {
+          data: this.comparePoints,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderColor: 'rgb(40, 167, 69)',
+          borderWidth: 1,
+          backgroundColor: this.transparentize('rgb(40, 167, 69)', 0.65),
+          showLine: true,
+          yAxisID: 'y-axis-3'
+        }
+      }
       return {
-        datasets: [
-          this.chartPoints,
-          { data: this.chartProfile,
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            backgroundColor: this.transparentize(this.chartColors.blue),
-            yAxisID: 'y-axis-1'
-          },
-          { data: this.chartGrade,
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            backgroundColor: this.transparentize(this.chartColors.red, 0.75),
-            showLine: true,
-            yAxisID: 'y-axis-2'
-          },
-          { data: this.chartFocus,
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            backgroundColor: this.chartColors.red,
-            yAxisID: 'y-axis-1'
-          }
-        ]
+        datasets: datasets
+      }
+    },
+    xs: function () {
+      return Array(this.pmax + 1).fill(0).map((e, i) => i++ * this.course.distance / this.pmax)
+    },
+    comparePoints: function () {
+      // eslint-disable-next-line
+      this.updateTrigger // hack for force recompute
+      if (this.points[0].hasOwnProperty('elapsed') && this.points[0].hasOwnProperty('actual')) {
+        let mbs = wlslr(
+          this.points.map(p => { return p.loc }),
+          this.points.map(p => { return p.elapsed - p.actual.elapsed }),
+          this.xs,
+          2 * this.course.distance / this.pmax
+        )
+        let arr = []
+        this.xs.forEach((x, i) => {
+          arr.push({
+            x: x * this.units.distScale,
+            y: mbs[i][0] * this.xs[i] + mbs[i][1]
+          })
+        })
+        this.$logger('CourseProfile|comparePoints updated')
+        return arr
+      } else {
+        this.$logger('CourseProfile|comparePoints updated (empty)')
+        return []
       }
     },
     chartPoints: function () {
+      this.$logger('CourseProfile|chartPoints')
       // eslint-disable-next-line
       this.updateTrigger // hack for force recompute
       if (!this.course.waypoints.length) { return [] }
@@ -218,36 +284,37 @@ export default {
       this.chartFocus = cF
     },
     updateChartProfile: function () {
-      var pmax = 500 // number of points (+1)
-      var xs = [] // x's array
-      var ysa = [] // y's array for altitude
-      var ysg = [] // y's array for grade
       var chartProfile = []
-      var chartGrade = []
-      xs = Array(pmax + 1).fill(0).map((e, i) => i++ * this.course.distance / pmax)
-      ysa = pointWLSQ(
-        this.points,
-        xs,
-        this.course.distance / pmax / 5
+      let mbs = wlslr(
+        this.points.map(p => { return p.loc }),
+        this.points.map(p => { return p.alt }),
+        this.xs,
+        this.course.distance / this.pmax / 5
       )
-      ysg = pointWLSQ(
-        this.points,
-        xs,
-        5 * this.course.distance / pmax
-      )
-      xs.forEach((x, i) => {
+      this.xs.forEach((x, i) => {
         chartProfile.push({
           x: x * this.units.distScale,
-          y: ysa[i].alt * this.units.altScale
-        })
-        chartGrade.push({
-          x: x * this.units.distScale,
-          y: ysg[i].grade
+          y: (mbs[i][0] * this.xs[i] + mbs[i][1]) * this.units.altScale
         })
       })
+
+      var chartGrade = []
+      mbs = wlslr(
+        this.points.map(p => { return p.loc }),
+        this.points.map(p => { return p.alt }),
+        this.xs,
+        5 * this.course.distance / this.pmax
+      )
+      this.xs.forEach((x, i) => {
+        chartGrade.push({
+          x: x * this.units.distScale,
+          y: mbs[i][0] * 10
+        })
+      })
+
       // this is a hack to make the finish waypoint show up:
       this.chartOptions.scales.xAxes[0].ticks.max = (
-        (xs[xs.length - 1] * this.units.distScale) + 0.01
+        (this.xs[this.xs.length - 1] * this.units.distScale) + 0.01
       )
       this.chartProfile = chartProfile
       this.chartGrade = chartGrade
