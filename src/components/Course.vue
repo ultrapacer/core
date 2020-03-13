@@ -1,15 +1,15 @@
 <template>
   <div class="container-fluid mt-4">
     <b-row>
-      <b-col class="d-none d-md-block">
+      <b-col class="d-none d-md-block" md="12">
         <h1 class="h1">{{ course.name }}</h1>
 <!--         <p v-if="event.start">{{ event.start }}</p>
         <p v-if="course.description">{{ course.description }}</p> -->
       </b-col>
-      <b-col v-if="!initializing" style="text-align:right">
+      <b-col v-if="!initializing" style="text-align:right" cols="11" sm="11" md="11" lg="10">
         <b-row v-if="plansSelect.length">
           <b-col v-if="plansSelect.length" >
-            <b-form-group label-size="sm" label="Plan" label-cols="4"  label-cols-lg="2">
+            <b-form-group label-size="sm" label="Plan" label-cols="4" label-cols-lg="2">
               <b-form-select
                   type="number"
                   v-model="plan"
