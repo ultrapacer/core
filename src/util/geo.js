@@ -1,6 +1,6 @@
 /* eslint new-cap: 0 */
 import nF from './normFactor'
-import { interp, linearRegression, round } from './math'
+import { interp, round, wlslr } from './math'
 import { logger } from '../plugins/logger'
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
@@ -44,6 +44,7 @@ function calcSegments (p, breaks, pacing) {
   var len = 0
   var i
   var il
+  let hasActuals = p[0].hasOwnProperty('actual')
   for (i = 1, il = breaks.length; i < il; i++) {
     len = breaks[i] - breaks[i - 1]
     s.push({
@@ -208,6 +209,21 @@ function calcSegments (p, breaks, pacing) {
     elapsed += x.time + x.delay
     s[i].elapsed = elapsed
   })
+  if (hasActuals) {
+    delays = (pacing) ? [...pacing.delays] : []
+    delays.forEach(d => {
+
+    })
+    s.forEach((seg, i) => {
+      let i1 = p.findIndex(point => point.loc >= seg.start)
+      let i2 = p.findIndex(point => point.loc >= seg.end)
+      let p1 = p[i1]
+      let p2 = p[i2]
+      seg.actualTime = p2.actual.elapsed - p1.actual.elapsed
+      seg.actualElapsed = p2.actual.elapsed
+    })
+  }
+
   return s
 }
 
@@ -244,37 +260,21 @@ function addGrades (points) {
   return points
 }
 
-export function pointWLSQ (p, locs, gt) {
+export function pointWLSQ (points, locs, gt) {
   // p: points array of {loc, lat, lon, alt}
   // locs: array of locations (km)
   // gt: grade smoothing threshold
+  let mbs = wlslr(
+    points.map(p => { return p.loc }),
+    points.map(p => { return p.alt }),
+    locs,
+    gt
+  )
   var ga = []
-  var a = 0 // lower limit of p array
-  var b = 0 // upper limit of p array
-  locs.forEach(x => {
-    while (p[a].loc < x - gt) { a++ }
-    if (a > 0 && p[a].loc >= x) { a-- }
-    while (b < p.length - 1 && p[b + 1].loc <= x + gt) { b++ }
-    if (b < p.length - 1 && p[b].loc <= x) { b++ }
-
-    // if necessary, increase threshold to include the point on either side:
-    var igt = Math.max(
-      gt,
-      Math.abs(x - p[a].loc) + 0.001,
-      Math.abs(x - p[b].loc) + 0.001
-    )
-
-    var xyr = []
-    var w = 0
-    for (var i = a; i <= b; i++) {
-      w = (1 - ((Math.abs(x - p[i].loc) / igt) ** 3)) ** 3
-      xyr.push([p[i].loc, p[i].alt, w])
-    }
-
-    var ab = linearRegression(xyr)
-    var grade = ab[0] / 10
+  locs.forEach((x, i) => {
+    var grade = mbs[i][0] / 10
     if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
-    var alt = (x * ab[0]) + ab[1]
+    var alt = (x * mbs[i][0]) + mbs[i][1]
     ga.push({
       grade: grade,
       alt: alt
@@ -718,6 +718,74 @@ function calcSunTime (data) {
   return s
 }
 
+export function addActuals (points, actual) {
+  // interpolate actual array to points lat/lon and add actual elapsed & loc
+  let t = logger()
+  actual = actual.map(p => {
+    let x = {...p}
+    x.ll = new sgeo.latlon(p.lat, p.lon)
+    return x
+  })
+  let MatchFailure = {}
+  try {
+    points.forEach(p => {
+      let ll = new sgeo.latlon(p.lat, p.lon)
+      // pick all points within the next "th"
+      let j = 0
+      let darr = []
+      while (darr.length === 0 || j > darr.length / 3) {
+        if (j !== 0) { actual.shift() }
+        let ths = [0.050, 0.075, 0.100, 0.15, 0.2]
+        for (let ith = 0; ith < ths.length; ith++) {
+          darr = actual.filter(
+            (a, i) => a.loc - actual[0].loc <= ths[ith] || i < 3
+          ).map(a => {
+            return Number(ll.distanceTo(a.ll))
+          })
+          j = darr.findIndex(d => d === Math.min(...darr))
+          if (darr[j] < ths[ith]) { break }
+        }
+      }
+      if (darr[j] === 0) {
+        p.actual = {
+          loc: actual[0].loc,
+          elapsed: actual[0].elapsed
+        }
+      } else {
+        let a1 = actual[j]
+        let a2 = darr[j + 1] >= darr[j - 1] ? actual[j + 1] : actual[j - 1]
+        let d1 = darr[j]
+        let d2 = darr[j + 1] >= darr[j - 1] ? darr[j + 1] : darr[j - 1]
+        if (d1 > 0.25) {
+          MatchFailure = {
+            match: false,
+            point: p
+          }
+          throw MatchFailure
+        }
+        if (a2) {
+          p.actual = {
+            loc: interp(0, 1, a1.loc, a2.loc, d1 / (d1 + d2)),
+            elapsed: interp(0, 1, a1.elapsed, a2.elapsed, d1 / (d1 + d2))
+          }
+        } else {
+          p.actual = {
+            loc: a1.loc,
+            elapsed: a1.elapsed
+          }
+        }
+      }
+    })
+    logger(`geo|addActuals MATCH`, t)
+    return {
+      match: true
+    }
+  } catch (e) {
+    logger(`geo|addActuals FAIL`, t)
+    return MatchFailure
+  }
+}
+
 export default {
   addLoc: addLoc,
   addGrades: addGrades,
@@ -728,5 +796,6 @@ export default {
   pointWLSQ: pointWLSQ,
   reduce: reduce,
   calcPacing: calcPacing,
-  calcSplits: calcSplits
+  calcSplits: calcSplits,
+  addActuals: addActuals
 }

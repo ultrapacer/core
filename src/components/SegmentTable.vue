@@ -30,6 +30,9 @@
     <template slot="FOOT_elapsed">
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
+    <template slot="FOOT_actualElapsed">
+      {{ segments[segments.length - 1].actualElapsed | formatTime }}
+    </template>
     <template slot="FOOT_tod">
       {{ sec2string(segments[segments.length - 1].tod, 'am/pm') }}
     </template>
@@ -133,6 +136,9 @@ export default {
     }
   },
   computed: {
+    hasActuals: function () {
+      return this.segments[0].hasOwnProperty('actualElapsed')
+    },
     planAssigned: function () {
       return this.pacing.hasOwnProperty('time') && this.pacing.time > 0
     },
@@ -230,6 +236,15 @@ export default {
             return timeUtil.sec2string(value, '[h]:m:ss')
           }
         })
+        if (this.hasActuals) {
+          f.push({
+            key: 'actualElapsed',
+            label: 'Actual',
+            formatter: (value, key, item) => {
+              return timeUtil.sec2string(value, '[h]:m:ss')
+            }
+          })
+        }
         if (this.showClock) {
           f.push({
             key: 'tod',
@@ -272,6 +287,14 @@ export default {
     time: function () {
       let t = this.segments.reduce((t, x) => { return t + x.time }, 0)
       return timeUtil.sec2string(t, '[h]:m:ss')
+    },
+    actualMovingTime: function () {
+      if (this.hasActuals) {
+        let t = this.segments.reduce((t, x) => { return t + x.actualElapsed }, 0)
+        return timeUtil.sec2string(t, '[h]:m:ss')
+      } else {
+        return 0
+      }
     },
     showTerrain: function () {
       for (let i = 0; i < this.segments.length; i++) {
@@ -324,6 +347,9 @@ export default {
           seg.time = this.rollup(subs, s, 'sum', 'time')
           seg.pace = seg.time / seg.len
           seg.elapsed = this.rollup(subs, s, 'last', 'elapsed')
+        }
+        if (s.actualElapsed) {
+          seg.actualElapsed = this.rollup(subs, s, 'last', 'actualElapsed')
         }
         if (this.showClock) {
           seg.tod = this.rollup(subs, s, 'last', 'tod')

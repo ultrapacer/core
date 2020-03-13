@@ -54,12 +54,39 @@
           </b-col>
         </b-row>
       </b-col>
-      <b-col cols=2 md=1 class="ml-n3" style="text-align:right">
-        <b-btn v-if="!initializing" @click="download()" class="mr-1" size="sm" v-b-popover.hover.blur.bottomright.d250.v-info="
-                'Download GPX file.'
-              ">
-          <v-icon name="download"></v-icon>
-        </b-btn>
+      <b-col v-if="!initializing" cols=1 sm=1 md=1 lg=2 xl=2 class="ml-n3" style="text-align:right">
+        <b-button
+          id="menu-button"
+          variant="primary"
+          @click="showMenu = !showMenu"
+          class="mr-1"
+          size="sm"
+        >
+          <v-icon name="caret-square-down"></v-icon>
+          <span class="d-none d-lg-inline">
+            Options
+          </span>
+        </b-button >
+
+        <b-popover
+          :show.sync="showMenu"
+          target="menu-button"
+          title="More options"
+          placement="bottomleft"
+          :triggers="['click','blur']"
+          variant="primary"
+        >
+          <b-button-group vertical>
+            <b-button @click="download()" variant="outline-primary">
+              <v-icon name="download"></v-icon>
+              Download .GPX File
+            </b-button>
+            <b-button v-if="planAssigned" @click="loadCompare()" variant="outline-primary">
+              <v-icon name="running"></v-icon>
+              Compare to Activity (Beta)
+            </b-button>
+          </b-button-group>
+        </b-popover>
       </b-col>
     </b-row>
     <div v-if="initializing" class="d-flex justify-content-center mb-3">
@@ -202,6 +229,7 @@
       :points="points"
       :segments="segments"
     ></download-gpx>
+    <course-compare ref="courseCompare"></course-compare>
     <vue-headful v-if="this.course.name"
       :description="description"
       :title="title"
@@ -214,6 +242,7 @@ import api from '@/api'
 import geo from '@/util/geo'
 import {round} from '../util/math'
 import {string2sec} from '../util/time'
+import CourseCompare from './CourseCompare'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
@@ -231,6 +260,7 @@ export default {
   title: 'Course',
   props: ['isAuthenticated', 'user'],
   components: {
+    CourseCompare,
     CourseMap,
     CourseProfile,
     DeleteModal,
@@ -259,7 +289,8 @@ export default {
       pacing: {},
       mapFocus: [],
       tableTabIndex: 0,
-      updateFlag: false
+      updateFlag: false,
+      showMenu: false
     }
   },
   computed: {
@@ -694,6 +725,9 @@ export default {
         this.$calculating.setCalculating(true)
         setTimeout(() => { this.updatePacing() }, 10)
       } else {
+        if (this.points[0].hasOwnProperty('actual')) {
+          await this.updatePacing()
+        }
         this.$refs.profile.update()
       }
       this.$logger('Course|calcPlan', t)
@@ -896,6 +930,46 @@ export default {
     async changeOwner (_user) {
       if (!this.user.admin) { return }
       await api.updateCourse(this.course._id, {_user: _user})
+    },
+    async loadCompare () {
+      this.$refs.courseCompare.show(
+        async (actual) => {
+          await new Promise(resolve => setTimeout(resolve, 100)) // sleep a bit
+          if (!this.points[0].hasOwnProperty('elapsed')) {
+            await this.updatePacing()
+          }
+          this.$calculating.setCalculating(true)
+          let res = geo.addActuals(this.points, actual)
+          if (res.match) {
+            this.kilometers = geo.calcSplits({
+              points: this.points,
+              pacing: this.pacing,
+              event: this.event,
+              unit: 'kilometers'
+            })
+            this.miles = geo.calcSplits({
+              points: this.points,
+              pacing: this.pacing,
+              event: this.event,
+              unit: 'miles'
+            })
+            this.updateSegments()
+            this.$refs.profile.forceWaypointsUpdate()
+          } else {
+            this.$bvToast.toast(
+              `Activity diverged from Course at ${round(res.point.loc * this.units.distScale, 2)} ${this.units.dist}.`,
+              {
+                title: 'Matching Error',
+                toaster: 'b-toaster-bottom-right',
+                solid: true,
+                variant: 'danger',
+                autoHideDelay: 5000
+              }
+            )
+          }
+          this.$calculating.setCalculating(false)
+        }
+      )
     }
   },
   watch: {
