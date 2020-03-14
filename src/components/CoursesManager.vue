@@ -195,8 +195,11 @@ export default {
     },
     async deleteCourse (course, cb) {
       this.$refs.delModal.show(
-        'Course',
-        course,
+        {
+          type: 'course',
+          object: course,
+          verb: this.user._id === course._user ? 'delete' : 'remove'
+        },
         async () => {
           await api.deleteCourse(course._id)
           var index = this.courses.findIndex(x => x._id === course._id)

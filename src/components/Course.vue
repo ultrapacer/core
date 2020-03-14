@@ -592,8 +592,10 @@ export default {
     },
     async deleteWaypoint (waypoint, cb) {
       this.$refs.delModal.show(
-        'Waypoint',
-        waypoint,
+        {
+          type: 'waypoint',
+          object: waypoint
+        },
         async () => {
           // if we are editing a waypoint we deleted, remove it from the form
           if (this.waypoint._id === waypoint._id) {

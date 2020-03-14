@@ -4,16 +4,18 @@
       id="delete-modal"
       centered
       :static="true"
-      v-bind:title="'Delete ' + type + '?'"
       @hidden="clear"
       @cancel="clear"
       @ok="handleOk"
     >
-      <p>Are you sure you want to delete the following {{ type }}?</p>
+      <template v-slot:modal-title>
+        {{ verb | capitalize }} {{ type | capitalize }}?
+      </template>
+      <p>Are you sure you want to {{ verb }} the following {{ type }}?</p>
       <p><b>{{ object.name }}</b></p>
       <template slot="modal-ok" slot-scope="{ ok }">
         <b-spinner v-show="deleting" small></b-spinner>
-        Delete {{ type }}
+        {{ verb | capitalize }} {{ type }}
       </template>
     </b-modal>
   </div>
@@ -27,7 +29,8 @@ export default {
       delFun: null,
       model: {},
       object: {},
-      type: ''
+      type: '',
+      verb: 'delete'
     }
   },
   methods: {
@@ -46,12 +49,20 @@ export default {
       this.deleting = false
       if (typeof (this.cb) === 'function') this.cb()
     },
-    async show (type, object, delFun, cb) {
-      this.type = type
-      this.object = object
+    async show (data, delFun, cb) {
+      this.type = data.type
+      this.object = data.object
+      this.verb = data.verb || 'delete'
       this.delFun = delFun
       this.cb = cb
       this.$bvModal.show('delete-modal')
+    }
+  },
+  filters: {
+    capitalize: function (value) {
+      if (!value) return ''
+      value = value.toString()
+      return value.charAt(0).toUpperCase() + value.slice(1)
     }
   }
 }
