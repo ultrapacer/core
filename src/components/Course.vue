@@ -943,6 +943,7 @@ export default {
           this.$calculating.setCalculating(true)
           let res = geo.addActuals(this.points, actual)
           if (res.match) {
+            this.$ga.event('Course', 'compare', this.publicName, 1)
             this.kilometers = geo.calcSplits({
               points: this.points,
               pacing: this.pacing,
@@ -958,6 +959,7 @@ export default {
             this.updateSegments()
             this.$refs.profile.forceWaypointsUpdate()
           } else {
+            this.$ga.event('Course', 'compare', this.publicName, 0)
             this.$bvToast.toast(
               `Activity diverged from Course at ${round(res.point.loc * this.units.distScale, 2)} ${this.units.dist}.`,
               {
