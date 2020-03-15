@@ -6,7 +6,7 @@
 <!--         <p v-if="event.start">{{ event.start }}</p>
         <p v-if="course.description">{{ course.description }}</p> -->
       </b-col>
-      <b-col v-if="!initializing" style="text-align:right" cols="11" sm="11" md="11" lg="10">
+      <b-col v-if="!initializing" style="text-align:right" cols="11" sm="11" md="11" lg="10" data-nosnippet>
         <b-row v-if="plansSelect.length">
           <b-col v-if="plansSelect.length" >
             <b-form-group label-size="sm" label="Plan" label-cols="4" label-cols-lg="2">
@@ -89,10 +89,10 @@
         </b-popover>
       </b-col>
     </b-row>
-    <div v-if="initializing" class="d-flex justify-content-center mb-3">
+    <div v-if="initializing" class="d-flex justify-content-center mb-3" data-nosnippet>
       <b-spinner label="Loading..." ></b-spinner>
     </div>
-    <b-row v-if="!initializing">
+    <b-row v-if="!initializing" data-nosnippet>
       <b-col order="2">
         <b-tabs v-model="tableTabIndex" content-class="mt-3" small>
           <b-tab title="Segments" active>
@@ -295,7 +295,7 @@ export default {
   },
   computed: {
     description: function () {
-      return `The ${this.$title} covers ${round(this.course.distance * 0.621371, 1)} miles with  ${round(this.course.gain * 3.28084, 0)} feet of climbing. Ready to run?`
+      return `The ${this.$title} covers ${round(this.course.distance * 0.621371, 1)} miles with ${round(this.course.gain * 3.28084, 0)} feet of climbing. Ready to run?`
     },
     title: function () {
       return this.$title + ' - ultraPacer'
@@ -943,6 +943,7 @@ export default {
           this.$calculating.setCalculating(true)
           let res = geo.addActuals(this.points, actual)
           if (res.match) {
+            this.$ga.event('Course', 'compare', this.publicName, 1)
             this.kilometers = geo.calcSplits({
               points: this.points,
               pacing: this.pacing,
@@ -958,6 +959,7 @@ export default {
             this.updateSegments()
             this.$refs.profile.forceWaypointsUpdate()
           } else {
+            this.$ga.event('Course', 'compare', this.publicName, 0)
             this.$bvToast.toast(
               `Activity diverged from Course at ${round(res.point.loc * this.units.distScale, 2)} ${this.units.dist}.`,
               {
