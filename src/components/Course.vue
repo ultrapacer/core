@@ -295,7 +295,7 @@ export default {
   },
   computed: {
     description: function () {
-      return `The ${this.$title} covers ${round(this.course.distance * 0.621371, 1)} miles with  ${round(this.course.gain * 3.28084, 0)} feet of climbing. Ready to run?`
+      return `The ${this.$title} covers ${round(this.course.distance * 0.621371, 1)} miles with ${round(this.course.gain * 3.28084, 0)} feet of climbing. Ready to run?`
     },
     title: function () {
       return this.$title + ' - ultraPacer'
