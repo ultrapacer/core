@@ -6,7 +6,7 @@
 <!--         <p v-if="event.start">{{ event.start }}</p>
         <p v-if="course.description">{{ course.description }}</p> -->
       </b-col>
-      <b-col v-if="!initializing" style="text-align:right" cols="11" sm="11" md="11" lg="10">
+      <b-col v-if="!initializing" style="text-align:right" cols="11" sm="11" md="11" lg="10" data-nosnippet>
         <b-row v-if="plansSelect.length">
           <b-col v-if="plansSelect.length" >
             <b-form-group label-size="sm" label="Plan" label-cols="4" label-cols-lg="2">
@@ -89,10 +89,10 @@
         </b-popover>
       </b-col>
     </b-row>
-    <div v-if="initializing" class="d-flex justify-content-center mb-3">
+    <div v-if="initializing" class="d-flex justify-content-center mb-3" data-nosnippet>
       <b-spinner label="Loading..." ></b-spinner>
     </div>
-    <b-row v-if="!initializing">
+    <b-row v-if="!initializing" data-nosnippet>
       <b-col order="2">
         <b-tabs v-model="tableTabIndex" content-class="mt-3" small>
           <b-tab title="Segments" active>
