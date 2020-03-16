@@ -215,10 +215,13 @@ function calcSegments (p, breaks, pacing) {
 
     })
     s.forEach((seg, i) => {
-      let i1 = p.findIndex(point => point.loc >= seg.start)
-      let i2 = p.findIndex(point => point.loc >= seg.end)
-      let p1 = p[i1]
-      let p2 = p[i2]
+      let p1 = p.find(point => point.loc >= seg.start)
+      let p2 = {}
+      if (i === s.length - 1) {
+        p2 = p[p.length - 1]
+      } else {
+        p2 = p.find(point => point.loc >= seg.end)
+      }
       seg.actualTime = p2.actual.elapsed - p1.actual.elapsed
       seg.actualElapsed = p2.actual.elapsed
     })
