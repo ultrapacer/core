@@ -656,8 +656,10 @@ export default {
     },
     async deletePlan (plan, cb) {
       this.$refs.delModal.show(
-        'Plan',
-        plan,
+        {
+          type: 'plan',
+          object: plan
+        },
         async () => {
           await api.deletePlan(plan._id)
           this.$ga.event('Plan', 'delete', this.publicName)
