@@ -606,6 +606,7 @@ export default {
           object: waypoint
         },
         async () => {
+          this.$ga.event('Waypoint', 'delete', this.publicName)
           // if we are editing a waypoint we deleted, remove it from the form
           if (this.waypoint._id === waypoint._id) {
             this.waypoint = {}
