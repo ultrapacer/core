@@ -105,6 +105,7 @@
                 :pacing="pacing"
                 :busy="busy"
                 :mode="'segments'"
+                :showActual="comparing"
                 @select="updateFocus"
                 @show="waypointShow"
                 @hide="waypointHide"
@@ -123,6 +124,7 @@
                 :pacing="pacing"
                 :busy="busy"
                 :mode="'splits'"
+                :showActual="comparing"
                 @select="updateFocus"
               ></segment-table>
             <div v-else class="d-flex justify-content-center mt-3 mb-3">
@@ -182,6 +184,7 @@
               :points="points"
               :sunEvents="pacing.sunEventsByLoc"
               :units="units"
+              :showActual="comparing"
               :waypointShowMode="waypointShowMode"
               @waypointClick="waypointClick"
             ></course-profile>
@@ -229,7 +232,12 @@
       :points="points"
       :segments="segments"
     ></download-gpx>
-    <course-compare ref="courseCompare"></course-compare>
+    <course-compare
+      ref="courseCompare"
+      :comparing="comparing"
+      @stop="stopCompare"
+    >
+    </course-compare>
     <vue-headful v-if="this.course.name"
       :description="description"
       :title="title"
@@ -277,6 +285,7 @@ export default {
       busy: true,
       editing: false,
       saving: false,
+      comparing: false,
       course: {},
       plan: null,
       plans: [],
@@ -935,6 +944,10 @@ export default {
       if (!this.user.admin) { return }
       await api.updateCourse(this.course._id, {_user: _user})
     },
+    async stopCompare (cb) {
+      this.comparing = false
+      if (typeof cb === 'function') cb()
+    },
     async loadCompare () {
       this.$refs.courseCompare.show(
         async (actual) => {
@@ -946,6 +959,7 @@ export default {
           let res = geo.addActuals(this.points, actual)
           if (res.match) {
             this.$ga.event('Course', 'compare', this.publicName, 1)
+            this.comparing = true
             this.kilometers = geo.calcSplits({
               points: this.points,
               pacing: this.pacing,
@@ -962,6 +976,7 @@ export default {
             this.$refs.profile.forceWaypointsUpdate()
           } else {
             this.$ga.event('Course', 'compare', this.publicName, 0)
+            this.comparing = false
             this.$bvToast.toast(
               `Activity diverged from Course at ${round(res.point.loc * this.units.distScale, 2)} ${this.units.dist}.`,
               {

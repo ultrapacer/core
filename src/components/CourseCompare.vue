@@ -29,6 +29,13 @@
         </b-input-group>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
+        <div
+          v-if="comparing"
+          style="text-align: left; flex: auto">
+          <b-button size="sm" variant="warning" @click="stop()">
+            Stop Comparison
+          </b-button>
+        </div>
         <b-button variant="secondary" @click="cancel()">
           Cancel
         </b-button>
@@ -46,7 +53,7 @@ import geo from '@/util/geo'
 import moment from 'moment-timezone'
 const gpxParse = require('gpx-parse')
 export default {
-  props: ['user'],
+  props: ['user', 'comparing'],
   data () {
     return {
       gpxFile: null,
@@ -96,6 +103,11 @@ export default {
         })
       }
       reader.readAsText(f.target.files[0])
+    },
+    async stop () {
+      this.$emit('stop', () => {
+        this.$bvModal.hide('course-compare-modal')
+      })
     }
   }
 }

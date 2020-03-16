@@ -9,7 +9,7 @@ import LineChart from './LineChart.js'
 import timeUtil from '../util/time'
 
 export default {
-  props: ['course', 'points', 'sunEvents', 'units', 'waypointShowMode'],
+  props: ['course', 'points', 'sunEvents', 'units', 'waypointShowMode', 'showActual'],
   components: {
     LineChart
   },
@@ -170,7 +170,7 @@ export default {
           yAxisID: 'y-axis-1'
         }
       ]
-      if (this.comparePoints.length) {
+      if (this.showActual) {
         datasets[2] = {
           data: this.comparePoints,
           pointRadius: 0,
@@ -192,7 +192,7 @@ export default {
     comparePoints: function () {
       // eslint-disable-next-line
       this.updateTrigger // hack for force recompute
-      if (this.points[0].hasOwnProperty('elapsed') && this.points[0].hasOwnProperty('actual')) {
+      if (this.showActual) {
         let mbs = wlslr(
           this.points.map(p => { return p.loc }),
           this.points.map(p => { return p.elapsed - p.actual.elapsed }),
