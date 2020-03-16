@@ -115,7 +115,7 @@
 import { round } from '../util/math'
 import timeUtil from '../util/time'
 export default {
-  props: ['course', 'segments', 'units', 'pacing', 'busy', 'mode'],
+  props: ['course', 'segments', 'units', 'pacing', 'busy', 'mode', 'showActual'],
   data () {
     return {
       clearing: false,
@@ -136,9 +136,6 @@ export default {
     }
   },
   computed: {
-    hasActuals: function () {
-      return this.segments[0].hasOwnProperty('actualElapsed')
-    },
     planAssigned: function () {
       return this.pacing.hasOwnProperty('time') && this.pacing.time > 0
     },
@@ -236,7 +233,7 @@ export default {
             return timeUtil.sec2string(value, '[h]:m:ss')
           }
         })
-        if (this.hasActuals) {
+        if (this.showActual) {
           f.push({
             key: 'actualElapsed',
             label: 'Actual',
@@ -289,7 +286,7 @@ export default {
       return timeUtil.sec2string(t, '[h]:m:ss')
     },
     actualMovingTime: function () {
-      if (this.hasActuals) {
+      if (this.showActual) {
         let t = this.segments.reduce((t, x) => { return t + x.actualElapsed }, 0)
         return timeUtil.sec2string(t, '[h]:m:ss')
       } else {
