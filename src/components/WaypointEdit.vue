@@ -209,9 +209,11 @@ export default {
       }
       wputil.updateLLA(this.model, this.points)
       if (this.model._id) {
+        this.$ga.event('Waypoint', 'edit', this.course.public ? this.course.name : 'private')
         await api.updateWaypoint(this.model._id, this.model)
       } else {
         this.model._course = this.course._id
+        this.$ga.event('Waypoint', 'delete', this.course.public ? this.course.name : 'private')
         await api.createWaypoint(this.model)
       }
       this.$emit('refresh', () => {
