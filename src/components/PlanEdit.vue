@@ -362,6 +362,8 @@ export default {
         this.hF.max = this.model.heatModel.max
         this.hF.baseline = this.model.heatModel.baseline || 0
         this.hF.enabled = true
+      } else {
+        this.hF.enabled = false
       }
       this.$bvModal.show('plan-edit-modal')
     },
