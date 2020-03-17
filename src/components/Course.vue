@@ -1,15 +1,24 @@
 <template>
   <div class="container-fluid mt-4">
     <b-row>
-      <b-col class="d-none d-md-block" md="12">
+      <b-col class="d-none d-md-block" md="12" lg="6">
         <h1 class="h1">{{ course.name }}</h1>
-<!--         <p v-if="event.start">{{ event.start }}</p>
-        <p v-if="course.description">{{ course.description }}</p> -->
       </b-col>
-      <b-col v-if="!initializing" style="text-align:right" cols="11" sm="11" md="11" lg="10" data-nosnippet>
-        <b-row v-if="plansSelect.length">
-          <b-col v-if="plansSelect.length" >
-            <b-form-group label-size="sm" label="Plan" label-cols="4" label-cols-lg="2">
+      <b-col v-if="!initializing" cols="12" lg="6" data-nosnippet>
+        <b-row no-gutters>
+          <b-col
+            v-if="plansSelect.length"
+            cols="7"
+            sm="9"
+            md="7"
+            style="text-align:right"
+          >
+            <b-form-group
+              label-size="sm"
+              label="Plan"
+              label-cols="3"
+              label-cols-lg="2"
+            >
               <b-form-select
                   type="number"
                   v-model="plan"
@@ -19,74 +28,75 @@
                 ></b-form-select>
             </b-form-group>
           </b-col>
-          <b-col cols="4" md="3" lg="3" xl="2" class="pl-n3 pr-n5" style="text-align:left">
-            <b-btn @click="editPlan()" class="ml-n4 mr-1" size="sm" v-if="planOwner"
-                v-b-popover.hover.blur.bottomright.d250.v-info="
+          <b-col
+            :cols="plansSelect.length ? '3': '10'"
+            :sm="plansSelect.length ? '2': '11'"
+            :md="plansSelect.length ? '2': '9'"
+            class="pl-2"
+          >
+            <b-btn
+              v-if="plansSelect.length && planOwner"
+              @click="editPlan()"
+
+              size="sm"
+              v-b-popover.hover.blur.bottomright.d250.v-info="
                 'Edit the selected pacing plan.'
               "
             >
               <v-icon name="edit"></v-icon>
             </b-btn>
             <b-btn
-                v-if="isAuthenticated"
                 variant="success"
                 @click.prevent="newPlan()"
                 size="sm"
+                class="mr-n2"
                 v-b-popover.hover.blur.bottomright.d250.v-info="
                 'Create a new pacing plan for this course.'
               "
             >
               <v-icon name="plus"></v-icon>
-              <span v-if="!plansSelect.length" >New Plan</span>
+              <span v-if="!plansSelect.length" >New Pacing Plan</span>
             </b-btn>
           </b-col>
-        </b-row>
-        <b-row v-if="!plansSelect.length">
-          <b-col>
-            <b-btn variant="success" @click.prevent="newPlan()" size="sm"
-                v-b-popover.hover.blur.bottomright.d250.v-info="
-                'Create a new pacing plan for this course.'
-              "
+          <b-col
+            cols="2"
+            sm="1"
+            md="3"
+            style="text-align:right"
+          >
+            <b-button
+              id="menu-button"
+              variant="primary"
+              @click="showMenu = !showMenu"
+              class="mr-1"
+              size="sm"
             >
-              <v-icon name="plus"></v-icon>
-              New Pacing Plan
-            </b-btn>
+              <v-icon name="caret-square-down"></v-icon>
+              <span class="d-none d-md-inline">
+                Options
+              </span>
+            </b-button >
+            <b-popover
+              :show.sync="showMenu"
+              target="menu-button"
+              title="More options"
+              placement="bottomleft"
+              :triggers="['click','blur']"
+              variant="primary"
+            >
+              <b-button-group vertical>
+                <b-button @click="download()" variant="outline-primary">
+                  <v-icon name="download"></v-icon>
+                  Download .GPX File
+                </b-button>
+                <b-button v-if="planAssigned" @click="loadCompare()" variant="outline-primary">
+                  <v-icon name="running"></v-icon>
+                  Compare to Activity (Beta)
+                </b-button>
+              </b-button-group>
+            </b-popover>
           </b-col>
         </b-row>
-      </b-col>
-      <b-col v-if="!initializing" cols=1 sm=1 md=1 lg=2 xl=2 class="ml-n3" style="text-align:right">
-        <b-button
-          id="menu-button"
-          variant="primary"
-          @click="showMenu = !showMenu"
-          class="mr-1"
-          size="sm"
-        >
-          <v-icon name="caret-square-down"></v-icon>
-          <span class="d-none d-lg-inline">
-            Options
-          </span>
-        </b-button >
-
-        <b-popover
-          :show.sync="showMenu"
-          target="menu-button"
-          title="More options"
-          placement="bottomleft"
-          :triggers="['click','blur']"
-          variant="primary"
-        >
-          <b-button-group vertical>
-            <b-button @click="download()" variant="outline-primary">
-              <v-icon name="download"></v-icon>
-              Download .GPX File
-            </b-button>
-            <b-button v-if="planAssigned" @click="loadCompare()" variant="outline-primary">
-              <v-icon name="running"></v-icon>
-              Compare to Activity (Beta)
-            </b-button>
-          </b-button-group>
-        </b-popover>
       </b-col>
     </b-row>
     <div v-if="initializing" class="d-flex justify-content-center mb-3" data-nosnippet>
