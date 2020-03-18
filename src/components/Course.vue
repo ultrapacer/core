@@ -85,6 +85,10 @@
               variant="primary"
             >
               <b-button-group vertical>
+                <b-button v-if="owner" @click="editCourse()" variant="outline-primary">
+                  <v-icon name="edit"></v-icon>
+                  Modify Course
+                </b-button>
                 <b-button @click="download()" variant="outline-primary">
                   <v-icon name="download"></v-icon>
                   Download GPX/TCX Files
@@ -212,6 +216,12 @@
         </div>
       </b-col>
     </b-row>
+    <course-edit
+      ref="courseEdit"
+      :user="user"
+      @refresh="reloadCourse"
+      @delete="deleteCourse"
+    ></course-edit>
     <plan-edit
       ref="planEdit"
       :course="course"
@@ -261,6 +271,7 @@ import api from '@/api'
 import geo from '@/util/geo'
 import {round} from '../util/math'
 import {string2sec} from '../util/time'
+import CourseEdit from './CourseEdit'
 import CourseCompare from './CourseCompare'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
@@ -279,6 +290,7 @@ export default {
   title: 'Course',
   props: ['isAuthenticated', 'user'],
   components: {
+    CourseEdit,
     CourseCompare,
     CourseMap,
     CourseProfile,
@@ -603,6 +615,31 @@ export default {
         await this.updatePacing()
       }
       this.$logger('Course|getPoints: complete', t)
+    },
+    async editCourse () {
+      this.$refs.courseEdit.show(this.course)
+    },
+    async reloadCourse () {
+      location.reload()
+    },
+    async deleteCourse (course, cb) {
+      this.$refs.delModal.show(
+        {
+          type: 'course',
+          object: course,
+          verb: 'delete'
+        },
+        async () => {
+          await api.deleteCourse(course._id)
+          this.$router.push({ name: 'CoursesManager' })
+        },
+        (err) => {
+          if (typeof (cb) === 'function') {
+            if (err) cb(err)
+            else cb()
+          }
+        }
+      )
     },
     async newWaypoint () {
       this.$refs.wpEdit.show({})
