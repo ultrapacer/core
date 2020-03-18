@@ -87,7 +87,7 @@
               <b-button-group vertical>
                 <b-button @click="download()" variant="outline-primary">
                   <v-icon name="download"></v-icon>
-                  Download .GPX File
+                  Download GPX/TCX Files
                 </b-button>
                 <b-button v-if="planAssigned" @click="loadCompare()" variant="outline-primary">
                   <v-icon name="running"></v-icon>
@@ -234,14 +234,15 @@
     <delete-modal
       ref="delModal"
     ></delete-modal>
-    <download-gpx
+    <download-track
       ref="download"
       :course="course"
       :plan="plan"
       :event="event"
       :points="points"
       :segments="segments"
-    ></download-gpx>
+      :updateFn="updatePacing"
+    ></download-track>
     <course-compare
       ref="courseCompare"
       :comparing="comparing"
@@ -264,7 +265,7 @@ import CourseCompare from './CourseCompare'
 import CourseMap from './CourseMap'
 import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
-import DownloadGpx from './DownloadGPX'
+import DownloadTrack from './DownloadTrack'
 import SegmentTable from './SegmentTable'
 import WaypointTable from './WaypointTable'
 import PlanDetails from './PlanDetails'
@@ -282,7 +283,7 @@ export default {
     CourseMap,
     CourseProfile,
     DeleteModal,
-    DownloadGpx,
+    DownloadTrack,
     SegmentTable,
     WaypointTable,
     PlanDetails,
@@ -947,9 +948,7 @@ export default {
       this.updateFlag = true
     },
     async download () {
-      await this.$refs.download.start(
-        this.updatePacing
-      )
+      await this.$refs.download.show()
     },
     async changeOwner (_user) {
       if (!this.user.admin) { return }
