@@ -308,7 +308,7 @@ export default {
       this.xs.forEach((x, i) => {
         chartGrade.push({
           x: x * this.units.distScale,
-          y: mbs[i][0] * 10
+          y: mbs[i][0] / 10
         })
       })
 
