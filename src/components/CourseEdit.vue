@@ -87,6 +87,94 @@
           >
           </b-form-select>
         </b-input-group>
+
+        <div v-if="courseLoaded">
+          <b-form-checkbox
+            v-model="model.override.enabled"
+            size="sm"
+            class="mb-2"
+            :unchecked-value="false"
+            @change="setDistGainLoss"
+          >
+            Override distance/gain/loss from GPX file
+          </b-form-checkbox>
+
+          <b-form-group
+            class="mb-0 pl-3"
+            v-if="model.override.enabled"
+          >
+            <b-input-group
+              prepend="Distance"
+              class="mb-2"
+              size="sm"
+            >
+              <b-form-input
+                type="number"
+                v-model="distancef"
+                required
+                step="0.01"
+                @change="updateDistance"
+                :min="round(stats.dist * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 0.9, 2)"
+                :max="round(stats.dist * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 1.1, 2)"
+              >
+              </b-form-input>
+              <b-form-select
+                :options="distUnits"
+                v-model="model.override.distUnit"
+                required
+                @change="updateDistanceUnit"
+                >
+              </b-form-select>
+            </b-input-group>
+            <b-input-group
+              prepend="Elevation Gain"
+              class="mb-2"
+              size="sm"
+            >
+              <b-form-input
+                type="number"
+                v-model="gainf"
+                required
+                step="0"
+                :min="round(stats.gain * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
+                :max="round(stats.gain * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
+                @change="updateGain"
+              >
+              </b-form-input>
+              <b-form-select
+                :options="elevUnits"
+                v-model="model.override.elevUnit"
+                required
+                @change="updateElevUnit"
+                >
+              </b-form-select>
+            </b-input-group>
+            <b-input-group
+              prepend="Elevation Loss"
+              class="mb-2"
+              size="sm"
+            >
+              <b-form-input
+                type="number"
+                v-model="lossf"
+                required
+                step="0"
+                :min="round(-stats.loss * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
+                :max="round(-stats.loss * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
+                @change="updateLoss"
+              >
+              </b-form-input>
+              <b-form-select
+                :options="elevUnits"
+                v-model="model.override.elevUnit"
+                required
+                @change="updateElevUnit"
+                >
+              </b-form-select>
+            </b-input-group>
+          </b-form-group>
+        </div>
+
         <b-form-checkbox
           v-model="model.public"
           :value="true"
@@ -142,7 +230,22 @@ export default {
   props: ['user'],
   data () {
     return {
-      defaults: {eventTimezone: moment.tz.guess()},
+      courseLoaded: false,
+      defaults: {
+        override: {
+          enabled: false,
+          distUnit: 'mi',
+          elevUnit: 'ft'
+        }
+      },
+      distUnits: [
+        { value: 'mi', text: 'mi' },
+        { value: 'km', text: 'km' }
+      ],
+      elevUnits: [
+        { value: 'ft', text: 'ft' },
+        { value: 'm', text: 'm' }
+      ],
       gpxFile: null,
       gpxPoints: [],
       model: {},
@@ -150,11 +253,26 @@ export default {
       deleting: false,
       eventDate: null,
       eventTime: null,
-      timezones: moment.tz.names()
+      stats: null,
+      timezones: moment.tz.names(),
+      distancef: null,
+      gainf: null,
+      lossf: null
+    }
+  },
+  computed: {
+    units: function () {
+      var u = {
+        dist: (this.isAuthenticated) ? this.user.distUnits : 'mi',
+        alt: (this.isAuthenticated) ? this.user.elevUnits : 'ft'
+      }
+      u.distScale = (u.dist === 'mi') ? 0.621371 : 1
+      u.altScale = (u.alt === 'ft') ? 3.28084 : 1
+      return u
     }
   },
   methods: {
-    async show (course) {
+    async show (course, raw = null) {
       if (course._id) {
         this.model = Object.assign({}, course)
         if (!this.model.eventTimezone) { this.model.eventTimezone = moment.tz.guess() }
@@ -166,6 +284,10 @@ export default {
           this.eventDate = null
           this.eventTime = null
         }
+        this.model.override = {...course.override}
+        this.$calculating.setCalculating(true)
+        await this.reloadRaw()
+        this.$calculating.setCalculating(false)
       } else {
         this.model = Object.assign({}, this.defaults)
       }
@@ -177,52 +299,24 @@ export default {
         this.save()
       }
     },
+    async reloadRaw () {
+      let raw = await api.getCourseField(this.model._id, 'raw')
+      this.gpxPoints = raw.map(p => {
+        return { lat: p[0], lon: p[1], alt: p[2] }
+      })
+      geo.addLoc(this.gpxPoints)
+      this.stats = geo.calcStats(this.gpxPoints, true)
+      this.updateDistanceUnit(this.model.override.distUnit)
+      this.updateElevUnit(this.model.override.elevUnit)
+      this.courseLoaded = true
+    },
     async save () {
       if (this.saving) { return }
       this.saving = true
       if (this.gpxPoints.length) {
-        this.model.source = {
-          type: 'gpx',
-          name: this.gpxFile.name
-        }
         let points = this.gpxPoints
-        geo.addLoc(points)
-        let stats = geo.calcStats(points, true)
-        this.model.gain = stats.gain
-        this.model.loss = stats.loss
 
-        if (this.model._id) {
-          // update all waypoints to fit updated course:
-          let waypoints = await api.getWaypoints(this.model._id)
-          if (waypoints.length) {
-            await Promise.all(waypoints.map(async wp => {
-              let t = this.$logger()
-              var wpold = wp.location
-              // scale waypoint location for new course distance:
-              if (wp.type === 'finish') {
-                wp.location = stats.dist
-              } else {
-                wp.location = wp.location * stats.dist / this.model.distance
-              }
-              if (wp.type !== 'start' && wp.type !== 'finish') {
-                try {
-                  var wpdelta = Math.abs(wpold - wp.location)
-                  // iteration threshold th:
-                  var th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
-                  // resolve closest distance for waypoint LLA
-                  wp.location = wputil.nearestLoc(wp, points, th)
-                } catch (err) {
-                  console.log(err)
-                }
-              }
-              wputil.updateLLA(wp, points)
-              await api.updateWaypoint(wp._id, wp)
-              this.$logger(`CourseEdit|save|adjustWaypoint: ${wp.name}`, t)
-            }))
-          }
-        }
-        this.model.distance = stats.dist
-        let reduced = geo.reduce(points)
+        let reduced = geo.reduce(points, this.model.distance)
         // reformat points for upload
         this.model.points = reduced.map(x => {
           return [
@@ -233,9 +327,47 @@ export default {
             round(x.grade, 4)
           ]
         })
+
         this.model.raw = points.map(x => {
           return [x.lat, x.lon, x.alt]
         })
+
+        if (this.model._id) {
+          // update all waypoints to fit updated course:
+          let waypoints = await api.getWaypoints(this.model._id)
+          let finish = waypoints.find(wp => wp.type === 'finish')
+          let olddist = finish.location
+          if (round(finish.location, 4) !== round(this.model.distance, 4)) {
+            console.log('Scaling waypoints')
+            await Promise.all(waypoints.map(async wp => {
+              let t = this.$logger()
+              var wpold = wp.location
+              // scale waypoint location for new course distance:
+              if (wp.type === 'finish') {
+                wp.location = this.model.distance
+              } else if (wp.type !== 'start') {
+                wp.location = wp.location * this.model.distance / olddist
+              }
+              // if there is a new source file, try to find nearest location:
+              if (this.model.source) {
+                if (wp.type !== 'start' && wp.type !== 'finish') {
+                  try {
+                    var wpdelta = Math.abs(wpold - wp.location)
+                    // iteration threshold th:
+                    var th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
+                    // resolve closest distance for waypoint LLA
+                    wp.location = wputil.nearestLoc(wp, reduced, th)
+                  } catch (err) {
+                    console.log(err)
+                  }
+                }
+                wputil.updateLLA(wp, reduced)
+              }
+              await api.updateWaypoint(wp._id, wp)
+              this.$logger(`CourseEdit|save|adjustWaypoint: ${wp.name}`, t)
+            }))
+          }
+        }
       }
 
       if (this.eventTime && this.eventDate) {
@@ -258,6 +390,10 @@ export default {
           'points',
           'raw',
           'source',
+          'distance',
+          'gain',
+          'loss',
+          'override',
           'distance',
           'gain',
           'loss'
@@ -307,10 +443,57 @@ export default {
                 lon: p.lon
               }
             })
+            geo.addLoc(this.gpxPoints)
+            this.stats = geo.calcStats(this.gpxPoints, true)
+            this.model.gain = this.stats.gain
+            this.model.loss = this.stats.loss
+            this.model.distance = this.stats.dist
+            this.setDistGainLoss()
+
+            this.model.source = {
+              type: 'gpx',
+              name: this.gpxFile.name
+            }
+
+            this.courseLoaded = true
           }
         })
       }
       reader.readAsText(f.target.files[0])
+    },
+    setDistGainLoss: async function (val = false) {
+      this.model.override.distUnit = this.user.distUnits
+      this.model.override.elevUnit = this.user.elevUnits
+      if (!val) {
+        this.model.gain = this.stats.gain
+        this.model.loss = this.stats.loss
+        this.model.distance = this.stats.dist
+        this.updateDistanceUnit(this.model.override.distUnit)
+        this.updateElevUnit(this.model.override.elevUnit)
+      } else {
+        this.updateDistanceUnit(this.user.distUnits)
+        this.updateElevUnit(this.user.elevUnits)
+      }
+      this.$set(this.model.override, 'enabled', val)
+    },
+    updateDistance: function (val) {
+      this.model.distance = val / ((this.model.override.distUnit === 'mi') ? 0.621371 : 1)
+    },
+    async updateDistanceUnit (val) {
+      this.distancef = round(this.model.distance * ((val === 'mi') ? 0.621371 : 1), 2)
+    },
+    updateGain: function (val) {
+      this.model.gain = val / ((this.model.override.elevUnit === 'ft') ? 3.28084 : 1)
+    },
+    updateLoss: function (val) {
+      this.model.loss = -val / ((this.model.override.elevUnit === 'ft') ? 3.28084 : 1)
+    },
+    async updateElevUnit (val) {
+      this.gainf = round(this.model.gain * ((val === 'ft') ? 3.28084 : 1), 0)
+      this.lossf = -round(this.model.loss * ((val === 'ft') ? 3.28084 : 1), 0)
+    },
+    round: function (val, dec) {
+      return round(val, dec)
     }
   }
 }
