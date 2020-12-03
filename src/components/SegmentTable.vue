@@ -191,7 +191,10 @@ export default {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
-            return (value).toFixed(1) + '%'
+            let gs = this.pacing.scales ? this.pacing.scales.gain : 1
+            let ls = this.pacing.scales ? this.pacing.scales.loss : 1
+            let g = (item.gain * gs + item.loss * ls) / item.len / 10
+            return (g).toFixed(1) + '%'
           }
         }
       ]

@@ -230,7 +230,7 @@ function calcSegments (p, breaks, pacing) {
   return s
 }
 
-function addLoc (p) {
+function addLoc (p, distance = null) {
   // add loc & dloc fields
   // p: points array of {lat, lon, alt}
   var d = 0
@@ -248,6 +248,18 @@ function addLoc (p) {
     p[i].dloc = d
     p[i].loc = l
   }
+
+  // if specifying other distance, scale distances:
+  if (distance) {
+    if (round(p[p.length - 1].loc, 4) !== round(distance, 4)) {
+      let scale = distance / p[p.length - 1].loc
+      p.forEach((x, i) => {
+        x.dloc = x.dloc * scale
+        x.loc = x.loc * scale
+      })
+    }
+  }
+
   return p
 }
 
@@ -403,11 +415,18 @@ export function getLatLonAltFromDistance (points, location, start) {
   }
 }
 
-export function reduce (points) {
+export function reduce (points, distance = null) {
+  // reduce density of points for processing
+  // correct distance
+
   let spacing = 0.025 // meters between points
-  if (!points[0].hasOwnProperty('loc')) {
-    addLoc(points)
+  if (
+    !points[0].hasOwnProperty('loc') ||
+    (distance && (round(points[points.length - 1].loc, 4) !== round(distance, 4)))
+  ) {
+    addLoc(points, distance)
   }
+
   let len = points[points.length - 1].loc
   let numpoints = Math.floor(len / spacing) + 1
   let xs = Array(numpoints).fill(0).map((e, i) => round(i++ * spacing, 3))
@@ -670,6 +689,15 @@ export function calcSplits (data) {
   if (tot / distScale > breaks[breaks.length - 1]) {
     breaks.push(tot / distScale)
   }
+
+  // remove last break if it's negligible
+  if (
+    breaks.length > 1 &&
+    breaks[breaks.length - 1] - breaks[breaks.length - 2] < 0.0001
+  ) {
+    breaks.pop()
+  }
+
   let arr = calcSegments(data.points, breaks, data.pacing)
   if (data.event.startTime !== null && data.points[0].hasOwnProperty('elapsed')) {
     arr.forEach((x, i) => {

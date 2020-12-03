@@ -69,7 +69,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
   try {
     let course = await Course.findById(req.params.id).populate('_user').exec()
     if (course._user.auth0ID === req.user.sub) {
-      let fields = ['name', 'link', 'description', 'public', 'eventStart', 'eventTimezone']
+      let fields = ['name', 'link', 'description', 'public', 'eventStart', 'eventTimezone', 'override']
       if (req.body.points) {
         fields.push('points', 'raw', 'source', 'distance', 'gain', 'loss')
       }

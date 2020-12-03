@@ -28,6 +28,21 @@ var CourseSchema = new Schema({
   loss: {
     type: Number
   },
+  override: {
+    enabled: {
+      type: Boolean,
+      default: false
+    },
+    distUnit: {
+      type: String
+    },
+    elevUnit: {
+      type: String
+    },
+    default: {
+      enabled: false
+    }
+  },
   public: {
     type: Boolean,
     default: false
@@ -52,9 +67,6 @@ var CourseSchema = new Schema({
   raw: [],
   source: {},
   altModel: {},
-  gradeAdjustment: {
-    type: Number
-  },
   waypoints: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Waypoint'
