@@ -10,6 +10,7 @@ yarn-error.log*
 selenium-debug.log
 config/auth_config.json
 config/DB.js
+config/prod.env.js
 /uploads/
 
 # Editor directories and files
