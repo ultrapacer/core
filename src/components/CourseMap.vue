@@ -4,44 +4,53 @@
     style="height: 350px"
     :bounds="bounds"
     :max-zoom="16">
-  <l-tile-layer :url="mapLayerURL"></l-tile-layer>
-  <l-polyline
-      :lat-lngs="courseLL"
-      color="blue">
-  </l-polyline>
-  <l-polyline
-      :if="focusLL.length"
-      :lat-lngs="focusLL"
-      :weight="5"
-      color="red">
-  </l-polyline>
-  <l-circle-marker
-      v-for="waypoint in course.waypoints"
-      :key="waypoint._id"
-      :lat-lng="[waypoint.lat, waypoint.lon]"
-      :radius="6"
-      :fill=true
-      :color="markerColors[waypoint.type] || 'black'"
-      :visible="isVisible(waypoint)"
-      :fillColor="markerColors[waypoint.type] || 'white'"
-      :fillOpacity="0.5"
-    >
-    <l-popup>
-      <b>{{ $waypointTypes[waypoint.type] }}</b><br />
-      {{ waypoint.name }}
-      [{{(waypoint.location*units.distScale).toFixed(1)}} {{units.dist}}]
-    </l-popup>
+    <l-control-layers position="topright"  ></l-control-layers>
+    <l-tile-layer
+      v-for="tileProvider in tileProviders"
+      :key="tileProvider.name"
+      :name="tileProvider.name"
+      :visible="tileProvider.visible"
+      :url="tileProvider.url"
+      :attribution="tileProvider.attribution"
+      layer-type="base"/>
+    <l-polyline
+        :lat-lngs="courseLL"
+        color="blue">
+    </l-polyline>
+    <l-polyline
+        :if="focusLL.length"
+        :lat-lngs="focusLL"
+        :weight="5"
+        color="red">
+    </l-polyline>
+    <l-circle-marker
+        v-for="waypoint in course.waypoints"
+        :key="waypoint._id"
+        :lat-lng="[waypoint.lat, waypoint.lon]"
+        :radius="6"
+        :fill=true
+        :color="markerColors[waypoint.type] || 'black'"
+        :visible="isVisible(waypoint)"
+        :fillColor="markerColors[waypoint.type] || 'white'"
+        :fillOpacity="0.5"
+      >
+      <l-popup>
+        <b>{{ $waypointTypes[waypoint.type] }}</b><br />
+        {{ waypoint.name }}
+        [{{(waypoint.location*units.distScale).toFixed(1)}} {{units.dist}}]
+      </l-popup>
     </l-circle-marker>
   </l-map>
 </template>
 
 <script>
-import {LMap, LTileLayer, LPolyline, LCircleMarker, LPopup} from 'vue2-leaflet'
+import {LMap, LControlLayers, LTileLayer, LPolyline, LCircleMarker, LPopup} from 'vue2-leaflet'
 export default {
   props: ['course', 'points', 'focus', 'waypointShowMode', 'units'],
   components: {
     LMap,
     LTileLayer,
+    LControlLayers,
     LPolyline,
     LCircleMarker,
     LPopup
@@ -55,14 +64,45 @@ export default {
       focusCenter: [],
       focusLL: [],
       initializing: true,
-      mapLayerURL: 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
       markerColors: {
         start: 'black',
         finish: 'black',
         aid: 'red',
         landmark: 'green',
         water: 'blue'
-      }
+      },
+      tileProviders: [
+        {
+          name: 'TF Outdoors',
+          visible: true,
+          url: 'https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png' +
+            (process.env.THUNDERFOREST_API_KEY
+              ? ('?apikey=' + process.env.THUNDERFOREST_API_KEY) : ''),
+          attribution:
+            'Maps: &copy; <a href="https://www.thunderforest.com/">Thunderforest</a>, Data &copy <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+        },
+        {
+          name: 'OpenTopoMap',
+          visible: false,
+          url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+          attribution:
+            'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+        },
+        {
+          name: 'OpenStreetMap',
+          visible: false,
+          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          attribution:
+            '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        },
+        {
+          name: 'ESRI Satellite',
+          visible: false,
+          url: 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          attribution:
+            'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        }
+      ]
     }
   },
   async created () {
