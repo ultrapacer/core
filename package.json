@@ -15,6 +15,7 @@
     "cors": "^2.8.5",
     "express": "^4.16.4",
     "express-jwt": "^5.3.1",
+    "geo-tz": "*",
     "gpx-parse": "^0.10.4",
     "jwks-rsa": "^1.4.0",
     "mongoose": "^5.5.2",

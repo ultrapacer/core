@@ -45,50 +45,51 @@
             :required="!Boolean(model.source)"
           ></b-form-file>
         </b-input-group>
-        <b-input-group
-          prepend="Event Date"
-          class="mb-2"
-          size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Date [optional]: use for races, etc.'
-          "
-        >
-          <b-form-input
-            type="date"
-            v-model="eventDate"
-            :required="Boolean(eventDate)"
-          >
-          </b-form-input>
-        </b-input-group>
-        <b-input-group
-          prepend="Start Time"
-          class="mb-2"
-          size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Start Time [optional]: time of day event begins'
-          "
-        >
-          <b-form-input
-            type="time"
-            v-model="eventTime"
-            :required="Boolean(eventDate)"
-          >
-          </b-form-input>
-        </b-input-group>
-        <b-input-group
-          prepend="Timezone"
-          class="mb-2"
-          size="sm"
-        >
-          <b-form-select
-            :options="timezones"
-            v-model="model.eventTimezone"
-            :required="Boolean(eventTime)"
-          >
-          </b-form-select>
-        </b-input-group>
 
         <div v-if="courseLoaded">
+          <b-input-group
+            prepend="Event Date"
+            class="mb-2"
+            size="sm"
+            v-b-popover.hover.bottomright.d250.v-info="
+              'Date [optional]: use for races, etc.'
+            "
+          >
+            <b-form-input
+              type="date"
+              v-model="eventDate"
+              :required="Boolean(eventDate)"
+            >
+            </b-form-input>
+          </b-input-group>
+          <b-input-group
+            prepend="Start Time"
+            class="mb-2"
+            size="sm"
+            v-b-popover.hover.bottomright.d250.v-info="
+              'Start Time [optional]: time of day event begins'
+            "
+          >
+            <b-form-input
+              type="time"
+              v-model="eventTime"
+              :required="Boolean(eventDate)"
+            >
+            </b-form-input>
+          </b-input-group>
+          <b-input-group
+            prepend="Timezone"
+            class="mb-2"
+            size="sm"
+          >
+            <b-form-select
+              :options="timezones"
+              v-model="model.eventTimezone"
+              :required="Boolean(eventTime)"
+            >
+            </b-form-select>
+          </b-input-group>
+
           <b-form-checkbox
             v-model="model.override.enabled"
             size="sm"
@@ -173,32 +174,31 @@
               </b-form-select>
             </b-input-group>
           </b-form-group>
-        </div>
 
-        <b-form-checkbox
-          v-model="model.public"
-          :value="true"
-            size="sm"
+          <b-form-checkbox
+            v-model="model.public"
+            :value="true"
+              size="sm"
+              class="mb-2"
+            :unchecked-value="false"
+            v-b-popover.hover.bottomright.d250.v-info="
+              'Visibility: if public, anybody with the link can view and make plans for the course.'
+            "
+          >
+            Visible to public
+          </b-form-checkbox>
+          <b-input-group
+            v-if="model.public && user.admin"
+            prepend="Permalink"
             class="mb-2"
-          :unchecked-value="false"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Visibility: if public, anybody with the link can view and make plans for the course.'
-          "
-        >
-          Visible to public
-        </b-form-checkbox>
-        <b-input-group
-          v-if="model.public && user.admin"
-          prepend="Permalink"
-          class="mb-2"
-          size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Permalink: readable link for official races; https://ultrapacer.com/race/(permalink)'
-          "
-        >
-        <b-form-input type="text" v-model="model.link">
-        </b-form-input>
-        </b-input-group>
+            size="sm"
+            v-b-popover.hover.bottomright.d250.v-info="
+              'Permalink: readable link for official races; https://ultrapacer.com/race/(permalink)'
+            "
+          >
+            <b-form-input type="text" v-model="model.link" />
+          </b-input-group>
+        </div>
       </form>
       <template slot="modal-footer" slot-scope="{ ok, cancel }">
         <div v-if="model._id" style="text-align: left; flex: auto">
@@ -210,7 +210,7 @@
         <b-button variant="secondary" @click="cancel()">
           Cancel
         </b-button>
-        <b-button variant="primary" @click="ok()">
+        <b-button variant="primary" @click="ok()" :disabled="!courseLoaded">
           <b-spinner v-show="saving" small></b-spinner>
           Save Course
         </b-button>
@@ -449,12 +449,11 @@ export default {
             this.model.loss = this.stats.loss
             this.model.distance = this.stats.dist
             this.setDistGainLoss()
-
             this.model.source = {
               type: 'gpx',
               name: this.gpxFile.name
             }
-
+            this.defaultTimezone(this.gpxPoints[0].lat, this.gpxPoints[0].lon)
             this.courseLoaded = true
           }
         })
@@ -491,6 +490,15 @@ export default {
     async updateElevUnit (val) {
       this.gainf = round(this.model.gain * ((val === 'ft') ? 3.28084 : 1), 0)
       this.lossf = -round(this.model.loss * ((val === 'ft') ? 3.28084 : 1), 0)
+    },
+    async defaultTimezone (lat, lon) {
+      // if empty, populate the eventTimezone from the GPX file
+      if (!this.model.eventTimezone) {
+        let tz = await api.getTimeZone(lat, lon)
+        if (!this.model.eventTimezone) {
+          this.$set(this.model, 'eventTimezone', tz)
+        }
+      }
     },
     round: function (val, dec) {
       return round(val, dec)

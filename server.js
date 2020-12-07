@@ -13,6 +13,7 @@ const publicRoutes = require('./server/routes/publicRoutes')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
 const authConfig = require('./config/auth_config.json')
+const geoTz = require('geo-tz')
 
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
@@ -56,6 +57,13 @@ app.get('/robots.txt', function (req, res) {
 })
 app.get('/sitemap.xml', function (req, res) {
   res.sendFile(path.join(__dirname, '/public/sitemap.xml'))
+})
+
+// get timezone
+app.get('/api/timezone', function (req, res) {
+  console.log(req)
+  let tz = geoTz(req.query.lat, req.query.lon)
+  res.send(tz[0])
 })
 
 app.get('/*', (req, res) => {
