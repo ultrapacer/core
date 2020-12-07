@@ -112,5 +112,8 @@ export default {
   },
   updatePlanCache (id, data) {
     return this.executeAuth('put', `/api/plan/${id}/cache`, data)
+  },
+  getTimeZone (lat, lon) {
+    return this.execute('get', `/api/timezone?lat=${lat}&lon=${lon}`)
   }
 }

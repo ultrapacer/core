@@ -1,6 +1,6 @@
 <template>
   <div v-if="isAuthenticated">
-    <courses-manager :user="user">
+    <courses-manager ref="coursesManager" :user="user">
     </courses-manager>
   </div>
   <div v-else>
