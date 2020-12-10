@@ -139,7 +139,7 @@ export default {
         pnts = this.raw.map(x => {
           return {lat: x[0], lon: x[1], alt: x[2]}
         })
-        pnts = geo.addLoc(pnts)
+        pnts = geo.addLoc(pnts, this.course.distance)
         if (this.hasTime) { // interpolate times from distances in pnts
           let red = this.points.map(p => { return {...p} })
           let lastelapsed = 0
@@ -168,7 +168,7 @@ export default {
       } else {
         // LOW RESOLUTION (adjust odd points lat/lon to correct distance)
         pnts = this.points.map(p => { return {...p} })
-        pnts = geo.addLoc(pnts) // update locations
+        pnts = geo.addLoc(pnts, this.course.distance) // update locations
         pnts.forEach((p, i) => {
           if (
             i % 2 === 0 &&
@@ -195,7 +195,7 @@ export default {
             }
           }
         })
-        pnts = geo.addLoc(pnts)
+        pnts = geo.addLoc(pnts, this.course.distance)
       }
 
       let name = `uP-${this.course.name}${(this.plan ? ('-' + this.plan.name) : '')}-${resolution}`
