@@ -1,7 +1,11 @@
 <template>
+<div
+  ref="courseMapContainer"
+  v-bind:style="'height: ' + mapHeight + 'px'"
+>
   <l-map
     ref="courseMap"
-    style="height: 350px"
+    style="height:100%"
     :bounds="bounds"
     :max-zoom="16">
     <l-control-layers position="topright"  ></l-control-layers>
@@ -41,6 +45,7 @@
       </l-popup>
     </l-circle-marker>
   </l-map>
+</div>
 </template>
 
 <script>
@@ -102,7 +107,9 @@ export default {
           attribution:
             'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
         }
-      ]
+      ],
+      mapHeight: 350,
+      mapHeightDefault: 350
     }
   },
   async created () {
@@ -157,6 +164,23 @@ export default {
         (this.waypointShowMode === 2 && wp.tier <= 2) ||
         (this.waypointShowMode === null && wp.show)
       )
+    },
+    resized: function () {
+      let hm = this.mapHeightDefault
+      if (window.innerWidth >= 992) {
+        let hw = window.innerHeight
+        let t = this.$refs.courseMapContainer.getBoundingClientRect().top
+        if (hw - t > hm) {
+          hm = hw - t
+        }
+      }
+      if (hm !== this.mapHeight) {
+        this.$logger('CourseMap|resized')
+        this.mapHeight = hm
+        this.$nextTick(function () {
+          this.$refs.courseMap.mapObject.invalidateSize()
+        })
+      }
     }
   },
   watch: {
@@ -173,6 +197,15 @@ export default {
         this.focusLL = []
       }
     }
+  },
+  mounted () {
+    this.$nextTick(function () {
+      window.addEventListener('resize', this.resized)
+      this.resized()
+    })
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.resized)
   }
 }
 </script>
