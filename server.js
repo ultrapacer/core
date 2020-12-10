@@ -67,6 +67,9 @@ app.get('/api/timezone', function (req, res) {
 })
 
 app.get('/*', (req, res) => {
+  res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+  res.header('Expires', '-1')
+  res.header('Pragma', 'no-cache')
   res.sendFile(HTML_FILE)
 })
 
