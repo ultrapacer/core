@@ -12,6 +12,7 @@ config/auth_config.json
 config/DB.js
 config/prod.env.js
 /uploads/
+package-lock.json
 
 # Editor directories and files
 .idea
