@@ -6,17 +6,17 @@
     @row-clicked="goToRace"
     hover
     >
-    <template slot="HEAD_distance">
+    <template #head(distance)>
       Dist. [{{ units.dist }}]
     </template>
-    <template slot="HEAD_gain">
+    <template #head(gain)>
       Gain [{{ units.alt }}]
     </template>
-    <template slot="HEAD_loss">
+    <template #head(loss)>
       Loss [{{ units.alt }}]
     </template>
-    <template slot="HEAD_actions">&nbsp;</template>
-      <template slot="actions" slot-scope="row">
+    <template #head(actions)>&nbsp;</template>
+      <template #cell(actions)="row">
         <router-link
           :to="{
             name: 'Race',

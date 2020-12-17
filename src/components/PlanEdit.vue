@@ -224,7 +224,7 @@
         </div>
 
       </form>
-      <template slot="modal-footer" slot-scope="{ ok, cancel }">
+      <template #modal-footer="{ ok, cancel }">
         <div v-if="model._id" style="text-align: left; flex: auto">
           <b-button size="sm" variant="danger" @click="remove">
             <b-spinner v-show="deleting" small></b-spinner>

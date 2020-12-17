@@ -28,7 +28,7 @@
           ></b-form-file>
         </b-input-group>
       </form>
-      <template slot="modal-footer" slot-scope="{ ok, cancel }">
+      <template #modal-footer="{ ok, cancel }">
         <div
           v-if="comparing"
           style="text-align: left; flex: auto">

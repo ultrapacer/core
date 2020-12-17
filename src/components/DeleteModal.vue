@@ -8,12 +8,12 @@
       @cancel="clear"
       @ok="handleOk"
     >
-      <template v-slot:modal-title>
+      <template #modal-title>
         {{ verb | capitalize }} {{ type | capitalize }}?
       </template>
       <p>Are you sure you want to {{ verb }} the following {{ type }}?</p>
       <p><b>{{ object.name }}</b></p>
-      <template slot="modal-ok" slot-scope="{ ok }">
+      <template #modal-ok="{ ok }">
         <b-spinner v-show="deleting" small></b-spinner>
         {{ verb | capitalize }} {{ type }}
       </template>

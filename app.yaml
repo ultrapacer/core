@@ -3,7 +3,7 @@ env: standard
 
 handlers:
   - url: /public
-    static_dir: public
+    static_dir: dist/public
 
   - url: /.*
     secure: always

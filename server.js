@@ -1,7 +1,7 @@
 'use strict'
 const express = require('express')
 const path = require('path')
-const dbconfig = require('./config/DB')
+const dbconfig = require('./config/db')
 const mongoose = require('mongoose')
 const bodyParser = require('body-parser')
 const cors = require('cors')

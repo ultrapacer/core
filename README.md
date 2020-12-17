@@ -7,7 +7,7 @@ Go to [https://ultrapacer.com](https://ultrapacer.com)
 
 ## Config Files
 ``` bash
-# add a file /config/DB.js with:
+# add a file /config/db.js with:
 module.exports = {
   DB: 'path_to_your_mongodb'
 }
@@ -18,6 +18,11 @@ module.exports = {
   "clientId": "XXXXXXXXXXXX",
   "audience": "XXXXXXXXXXXX"
 }
+
+# add a file /config/keys.js:
+{
+  // THUNDERFOREST_API_KEY: "XXXXXXXXXX",
+}
 ```
   
 ## Build Setup
@@ -27,7 +32,8 @@ module.exports = {
 npm install
 
 # serve with hot reload at localhost:3000
-npm run dev
+start nodemon server
+start npm run dev
 ```
 
   

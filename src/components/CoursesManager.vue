@@ -13,17 +13,17 @@
           @row-clicked="goToCourse"
           hover
           >
-          <template slot="HEAD_distance">
+          <template #head(distance)>
             Dist. [{{ user.distUnits }}]
           </template>
-          <template slot="HEAD_gain">
+          <template #head(gain)>
             Gain [{{ user.elevUnits }}]
           </template>
-          <template slot="HEAD_loss">
+          <template #head(loss)>
             Loss [{{ user.elevUnits }}]
           </template>
-          <template slot="HEAD_actions">&nbsp;</template>
-          <template slot="actions" slot-scope="row">
+          <template #head(actions)>&nbsp;</template>
+          <template #cell(actions)="row">
             <b-button
                 v-if="user._id==row.item._user"
                 size="sm"

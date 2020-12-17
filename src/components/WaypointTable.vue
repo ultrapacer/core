@@ -10,7 +10,7 @@
     select-mode="single"
     small
   >
-    <template slot="actions" slot-scope="row">
+    <template #cell(actions)="row">
       <b-button size="sm" @click="editFn(row.item)" class="mr-1">
         <v-icon name="edit"></v-icon>
         <span class="d-none d-md-inline">Edit</span>
@@ -25,7 +25,7 @@
         <span class="d-none d-md-inline">Delete</span>
       </b-button>
     </template>
-    <template slot="row-details" slot-scope="row">
+    <template #row-details="row">
       <b-card>
         <b-row class="mb-2">
           <b-col sm="4">

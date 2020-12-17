@@ -12,6 +12,12 @@
 # below:
 .git
 .gitignore
+.github
+.editorconfig
+.eslintignore
+.eslintrc
+.postcssrc
+babel.config
 
 # Node.js dependencies:
 build/

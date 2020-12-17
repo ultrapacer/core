@@ -99,7 +99,7 @@
           </b-form-textarea>
         </b-input-group>
       </form>
-      <template slot="modal-footer" slot-scope="{ ok, cancel }">
+      <template #modal-footer="{ ok, cancel }">
         <div
           v-if="model._id && model.type !== 'start' && model.type !== 'finish'"
           style="text-align: left; flex: auto">

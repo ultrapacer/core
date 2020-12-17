@@ -13,33 +13,33 @@
     small
     class="segment-table"
   >
-    <template slot="FOOT_waypoint2.name">&nbsp;</template>
-    <template slot="FOOT_len">
+    <template #foot(waypoint2.name)>&nbsp;</template>
+    <template #foot(len)>
       {{ course.distance | formatDist(units.distScale) }}
     </template>
-    <template slot="FOOT_end">
+    <template #foot(end)>
       {{ segments[segments.length - 1].end | formatDist(units.distScale) }}
     </template>
-    <template slot="FOOT_gain">{{ gain | formatAlt(units.altScale) }}</template>
-    <template slot="FOOT_loss">{{ loss | formatAlt(units.altScale) }}</template>
-    <template slot="FOOT_grade">&nbsp;</template>
-    <template slot="FOOT_factors.tF" v-if="pacing.factors">
+    <template #foot(gain)>{{ gain | formatAlt(units.altScale) }}</template>
+    <template #foot(loss)>{{ loss | formatAlt(units.altScale) }}</template>
+    <template #foot(grade)>&nbsp;</template>
+    <template #foot(factors.tF) v-if="pacing.factors">
       +{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }}%
     </template>
-    <template slot="FOOT_time">{{ time }}</template>
-    <template slot="FOOT_elapsed">
+    <template #foot(time)>{{ time }}</template>
+    <template #foot(elapsed)>
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
-    <template slot="FOOT_actualElapsed">
+    <template #foot(actualElapsed)>
       {{ segments[segments.length - 1].actualElapsed | formatTime }}
     </template>
-    <template slot="FOOT_tod">
+    <template #foot(tod)>
       {{ sec2string(segments[segments.length - 1].tod, 'am/pm') }}
     </template>
-    <template slot="FOOT_pace">
+    <template #foot(pace)>
       {{ pacing.pace / units.distScale | formatTime }}
     </template>
-    <template slot="collapse" slot-scope="row">
+    <template #cell(collapse)="row">
       <b-button
         v-if="row.item.collapsed"
         size="sm"
@@ -60,7 +60,7 @@
         &#8944;
       </div>
     </template>
-    <template v-slot:row-details="row">
+    <template #row-details="row">
       <b-list-group
         v-bind:class="(hasInterimWaypoints(row.item) || hasFactors(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
       >
