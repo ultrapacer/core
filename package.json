@@ -6,8 +6,8 @@
   "private": true,
   "scripts": {
     "dev": "webpack-dev-server --mode development --hot --config build/webpack.config.js",
-    "lint": "eslint --ext .js,.vue server.js src shared server config build",
-    "lintfix": "eslint --ext .js,.vue --fix server.js src shared server config build",
+    "lint": "eslint --ext .js,.vue server.js src server config build",
+    "lintfix": "eslint --ext .js,.vue --fix server.js src server config build",
     "build": "webpack --mode production --config build/webpack.config.js"
   },
   "dependencies": {
