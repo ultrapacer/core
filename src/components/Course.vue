@@ -536,7 +536,7 @@ export default {
     }
   },
   async created () {
-    this.$calculating.setCalculating(true)
+    this.$status.calculating = true
     let t = this.$logger()
     try {
       await this.$auth.getAccessToken()
@@ -579,7 +579,7 @@ export default {
     this.useCache()
     this.initializing = false
     this.busy = false
-    this.$calculating.setCalculating(false)
+    this.$status.calculating = false
     setTimeout(() => {
       if (!this.$user.isAuthenticated) {
         this.$bvToast.toast(
@@ -844,7 +844,7 @@ export default {
       this.$ga.event('Plan', 'view', this.publicName)
       if (!this.useCache()) {
         this.busy = true
-        this.$calculating.setCalculating(true)
+        this.$status.calculating = true
         setTimeout(() => { this.updatePacing() }, 10)
       } else {
         if (this.points[0].actual !== undefined) {
@@ -872,7 +872,7 @@ export default {
       this.$router.push(route)
       if (!this.useCache()) {
         this.busy = true
-        this.$calculating.setCalculating(true)
+        this.$status.calculating = true
         setTimeout(() => { this.updatePacing() }, 10)
       } else {
         this.$refs.profile.update()
@@ -884,7 +884,7 @@ export default {
       // update splits, segments, and pacing
       this.busy = true
       this.updateFlag = false
-      this.$calculating.setCalculating(true)
+      this.$status.calculating = true
       const result = geo.calcPacing({
         course: this.course,
         plan: this.plan,
@@ -950,7 +950,7 @@ export default {
       }
 
       this.busy = false
-      this.$calculating.setCalculating(false)
+      this.$status.calculating = false
       this.$logger('Course|updatePacing', t)
     },
     updateSegments: function () {
@@ -1062,7 +1062,7 @@ export default {
           if (this.points[0].elapsed === undefined) {
             await this.updatePacing()
           }
-          this.$calculating.setCalculating(true)
+          this.$status.calculating = true
           const res = geo.addActuals(this.points, actual)
           if (res.match) {
             this.$ga.event('Course', 'compare', this.publicName, 1)
@@ -1095,7 +1095,7 @@ export default {
               }
             )
           }
-          this.$calculating.setCalculating(false)
+          this.$status.calculating = false
         }
       )
     }

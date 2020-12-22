@@ -73,24 +73,9 @@ Vue.prototype.$waypointTypes = {
   junction: 'Junction',
   other: 'Other'
 }
-Vue.prototype.$calculating = {
-  _vm: new Vue({
-    data: {
-      calculating: false
-    }
-  }),
-  setCalculating (calculating) {
-    this._vm.$data.calculating = calculating
-  },
-  isCalculating () {
-    return this._vm.$data.calculating
-  }
-}
-Vue.prototype.$defaults = {
-  _id: null,
-  distUnits: 'mi',
-  elevUnits: 'ft'
-}
+Vue.prototype.$status = Vue.observable({
+  calculating: false
+})
 Vue.prototype.$units = {
   dist: 'mi',
   alt: 'ft',

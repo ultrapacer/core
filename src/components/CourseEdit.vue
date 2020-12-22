@@ -296,9 +296,9 @@ export default {
           this.eventTime = null
         }
         this.model.override = { ...course.override }
-        this.$calculating.setCalculating(true)
+        this.$status.calculating = true
         await this.reloadRaw()
-        this.$calculating.setCalculating(false)
+        this.$status.calculating = false
       } else {
         this.model = Object.assign({}, this.defaults)
       }

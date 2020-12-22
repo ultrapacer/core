@@ -9,7 +9,7 @@
       <b-navbar-brand>
         <span class="d-none d-md-block">ultraPacer</span>
         <span
-          v-if="!$calculating.isCalculating()"
+          v-if="!$status.calculating"
           class="d-block d-md-none"
         >{{ $title }} | uP</span>
       </b-navbar-brand>
@@ -56,7 +56,7 @@
           <menu-social class="d-block d-md-none " />
         </b-navbar-nav>
       </b-collapse>
-      <span v-if="$calculating.isCalculating()"><b-spinner
+      <span v-if="$status.calculating"><b-spinner
         variant="primary"
         label="Spinning"
       /></span>
