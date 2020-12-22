@@ -1,57 +1,58 @@
 <template>
-<div
-  ref="courseMapContainer"
-  v-bind:style="'height: ' + mapHeight + 'px'"
->
-  <l-map
-    ref="courseMap"
-    style="height:100%"
-    :bounds="bounds"
-    :max-zoom="16">
-    <l-control-layers position="topright"  ></l-control-layers>
-    <l-tile-layer
-      v-for="tileProvider in tileProviders"
-      :key="tileProvider.name"
-      :name="tileProvider.name"
-      :visible="tileProvider.visible"
-      :url="tileProvider.url"
-      :attribution="tileProvider.attribution"
-      layer-type="base"/>
-    <l-polyline
+  <div
+    ref="courseMapContainer"
+    :style="'height: ' + mapHeight + 'px'"
+  >
+    <l-map
+      ref="courseMap"
+      style="height:100%"
+      :bounds="bounds"
+      :max-zoom="16"
+    >
+      <l-control-layers position="topright" />
+      <l-tile-layer
+        v-for="tileProvider in tileProviders"
+        :key="tileProvider.name"
+        :name="tileProvider.name"
+        :visible="tileProvider.visible"
+        :url="tileProvider.url"
+        :attribution="tileProvider.attribution"
+        layer-type="base"
+      />
+      <l-polyline
         :lat-lngs="courseLL"
-        color="blue">
-    </l-polyline>
-    <l-polyline
+        color="blue"
+      />
+      <l-polyline
         :if="focusLL.length"
         :lat-lngs="focusLL"
         :weight="5"
-        color="red">
-    </l-polyline>
-    <l-circle-marker
+        color="red"
+      />
+      <l-circle-marker
         v-for="waypoint in course.waypoints"
         :key="waypoint._id"
         :lat-lng="[waypoint.lat, waypoint.lon]"
         :radius="6"
-        :fill=true
+        :fill="true"
         :color="markerColors[waypoint.type] || 'black'"
         :visible="isVisible(waypoint)"
-        :fillColor="markerColors[waypoint.type] || 'white'"
-        :fillOpacity="0.5"
+        :fill-color="markerColors[waypoint.type] || 'white'"
+        :fill-opacity="0.5"
       >
-      <l-popup>
-        <b>{{ $waypointTypes[waypoint.type] }}</b><br />
-        {{ waypoint.name }}
-        [{{(waypoint.location*units.distScale).toFixed(1)}} {{units.dist}}]
-      </l-popup>
-    </l-circle-marker>
-  </l-map>
-</div>
+        <l-popup>
+          <b>{{ $waypointTypes[waypoint.type] }}</b><br>
+          {{ waypoint.name }}
+          [{{ $units.distf(waypoint.location, 1) }} {{ $units.dist }}]
+        </l-popup>
+      </l-circle-marker>
+    </l-map>
+  </div>
 </template>
 
 <script>
-import {LMap, LControlLayers, LTileLayer, LPolyline, LCircleMarker, LPopup} from 'vue2-leaflet'
+import { LMap, LControlLayers, LTileLayer, LPolyline, LCircleMarker, LPopup } from 'vue2-leaflet'
 export default {
-  props: ['course', 'points', 'focus', 'waypointShowMode', 'units'],
   components: {
     LMap,
     LTileLayer,
@@ -59,6 +60,24 @@ export default {
     LPolyline,
     LCircleMarker,
     LPopup
+  },
+  props: {
+    course: {
+      type: Object,
+      required: true
+    },
+    points: {
+      type: Array,
+      required: true
+    },
+    focus: {
+      type: Array,
+      default () { return [] }
+    },
+    waypointShowMode: {
+      type: Number,
+      default: null
+    }
   },
   data () {
     return {
@@ -80,9 +99,7 @@ export default {
         {
           name: 'TF Outdoors',
           visible: true,
-          url: 'https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png' +
-            (process.env.THUNDERFOREST_API_KEY
-              ? ('?apikey=' + process.env.THUNDERFOREST_API_KEY) : ''),
+          url: `https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png${process.env.THUNDERFOREST_API_KEY ? '?apikey=' + process.env.THUNDERFOREST_API_KEY : ''}`,
           attribution:
             'Maps: &copy; <a href="https://www.thunderforest.com/">Thunderforest</a>, Data &copy <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
         },
@@ -112,11 +129,6 @@ export default {
       mapHeightDefault: 350
     }
   },
-  async created () {
-    this.initializing = true
-    this.updateMapLatLon()
-    this.initializing = false
-  },
   computed: {
     bounds: function () {
       if (this.focusLL.length) {
@@ -126,19 +138,48 @@ export default {
       }
     }
   },
+  watch: {
+    focus: function (val) {
+      if (val.length) {
+        const points = this.points.filter(p =>
+          p.loc >= val[0] && p.loc <= val[1]
+        )
+        const res = this.getLLs(points)
+        this.focusLL = res.ll
+        this.focusCenter = res.center
+        this.focusBounds = res.bounds
+      } else {
+        this.focusLL = []
+      }
+    }
+  },
+  async created () {
+    this.initializing = true
+    this.updateMapLatLon()
+    this.initializing = false
+  },
+  mounted () {
+    this.$nextTick(function () {
+      window.addEventListener('resize', this.resized)
+      this.resized()
+    })
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.resized)
+  },
   methods: {
     updateMapLatLon: function () {
-      var res = this.getLLs(this.points)
+      const res = this.getLLs(this.points)
       this.courseLL = res.ll
       this.courseCenter = res.center
       this.courseBounds = res.bounds
     },
     getLLs: function (points) {
-      var arr = []
-      var xmin = points[0].lat
-      var xmax = xmin
-      var ymin = points[0].lon
-      var ymax = ymin
+      const arr = []
+      let xmin = points[0].lat
+      let xmax = xmin
+      let ymin = points[0].lon
+      let ymax = ymin
       points.forEach(p => {
         if (p.lat < xmin) xmin = p.lat
         else if (p.lat > xmax) xmax = p.lat
@@ -168,8 +209,8 @@ export default {
     resized: function () {
       let hm = this.mapHeightDefault
       if (window.innerWidth >= 992) {
-        let hw = window.innerHeight
-        let t = this.$refs.courseMapContainer.getBoundingClientRect().top
+        const hw = window.innerHeight
+        const t = this.$refs.courseMapContainer.getBoundingClientRect().top
         if (hw - t > hm) {
           hm = hw - t
         }
@@ -182,30 +223,6 @@ export default {
         })
       }
     }
-  },
-  watch: {
-    focus: function (val) {
-      if (val.length) {
-        var points = this.points.filter(p =>
-          p.loc >= val[0] && p.loc <= val[1]
-        )
-        var res = this.getLLs(points)
-        this.focusLL = res.ll
-        this.focusCenter = res.center
-        this.focusBounds = res.bounds
-      } else {
-        this.focusLL = []
-      }
-    }
-  },
-  mounted () {
-    this.$nextTick(function () {
-      window.addEventListener('resize', this.resized)
-      this.resized()
-    })
-  },
-  beforeDestroy () {
-    window.removeEventListener('resize', this.resized)
   }
 }
 </script>

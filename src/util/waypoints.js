@@ -12,7 +12,7 @@ function updateLLA (waypoint, points) {
     waypoint.lat = points[points.length - 1].lat
     waypoint.lon = points[points.length - 1].lon
   } else {
-    var lla = getLatLonAltFromDistance(points, waypoint.location, waypoint.pointsIndex)
+    const lla = getLatLonAltFromDistance(points, waypoint.location, waypoint.pointsIndex)
     waypoint.lat = lla.lat
     waypoint.lon = lla.lon
     waypoint.elevation = lla.alt
@@ -36,25 +36,25 @@ function sortWaypointsByDistance (waypoints) {
 
 function nearestLoc (waypoint, p, th) {
   // iterate to new location based on waypoint lat/lon
-  var steps = 5
-  var loc = Math.min(p[p.length - 1].loc, waypoint.location)
-  var LLA1 = new sgeo.latlon(waypoint.lat, waypoint.lon)
+  const steps = 5
+  let loc = Math.min(p[p.length - 1].loc, waypoint.location)
+  const LLA1 = new sgeo.latlon(waypoint.lat, waypoint.lon)
   while (th > 0.025) {
-    var size = th / steps
-    var locs = []
-    for (var i = -steps; i <= steps; i++) {
-      var l = loc + (size * i)
+    const size = th / steps
+    const locs = []
+    for (let i = -steps; i <= steps; i++) {
+      const l = loc + (size * i)
       if (l > 0 && l <= p[p.length - 1].loc) {
         locs.push(l)
       }
     }
-    var llas = getLatLonAltFromDistance(p, locs)
+    const llas = getLatLonAltFromDistance(p, locs)
     llas.forEach(lla => {
-      var LLA2 = new sgeo.latlon(lla.lat, lla.lon)
+      const LLA2 = new sgeo.latlon(lla.lat, lla.lon)
       lla.dist = Number(LLA1.distanceTo(LLA2))
     })
-    var min = llas.reduce((min, b) => Math.min(min, b.dist), llas[0].dist)
-    var j = llas.findIndex(x => x.dist === min)
+    const min = llas.reduce((min, b) => Math.min(min, b.dist), llas[0].dist)
+    const j = llas.findIndex(x => x.dist === min)
     loc = locs[j]
     th = th / steps // downsize iteration
   }

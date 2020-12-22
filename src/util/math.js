@@ -7,17 +7,15 @@ function interp (x0, x1, y0, y1, x) {
 }
 
 function linearRegression (xyr) {
-  var i
-  var x
-  var y
-  var r
-  var sumx = 0
-  var sumy = 0
-  var sumx2 = 0
-  var sumxy = 0
-  var sumr = 0
-  var a
-  var b
+  let i
+  let x
+  let y
+  let r
+  let sumx = 0
+  let sumy = 0
+  let sumx2 = 0
+  let sumxy = 0
+  let sumr = 0
 
   for (i = 0; i < xyr.length; i++) {
     // this is our data pair
@@ -40,8 +38,8 @@ function linearRegression (xyr) {
 
   // note: the denominator is the variance of the random variable X
   // the only case when it is 0 is the degenerate case X==constant
-  b = (sumy * sumx2 - sumx * sumxy) / (sumr * sumx2 - sumx * sumx)
-  a = (sumr * sumxy - sumx * sumy) / (sumr * sumx2 - sumx * sumx)
+  const b = (sumy * sumx2 - sumx * sumxy) / (sumr * sumx2 - sumx * sumx)
+  const a = (sumr * sumxy - sumx * sumy) / (sumr * sumx2 - sumx * sumx)
 
   return [a, b]
 }
@@ -54,19 +52,19 @@ function wlslr (x1s, y1s, x2s, th) {
   //  th: smoothing (points included)
   let a = 0 // lower index x1s/y1s included
   let b = 0 // upper index x1s/y1s included
-  let mbs = []
+  const mbs = []
   x2s.forEach(x2 => {
     while (x1s[a] < x2 - th) { a++ }
     if (a > 0 && x1s[a] >= x2) { a-- }
     while (b < x1s.length - 1 && x1s[b + 1] <= x2 + th) { b++ }
     if (b < x1s.length - 1 && x1s[b] <= x2) { b++ }
 
-    let ith = Math.max(
+    const ith = Math.max(
       th,
       Math.abs(x2 - x1s[a]) + 0.001,
       Math.abs(x2 - x1s[b]) + 0.001
     )
-    let xyr = []
+    const xyr = []
     let w = 0
     for (let i = a; i <= b; i++) {
       w = (1 - ((Math.abs(x2 - x1s[i]) / ith) ** 3)) ** 3

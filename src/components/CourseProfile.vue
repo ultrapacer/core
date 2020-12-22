@@ -1,6 +1,11 @@
 <template>
-  <line-chart ref="profile" :chart-data="chartData" :options="chartOptions" :width="350" :height="300">
-  </line-chart>
+  <line-chart
+    ref="profile"
+    :chart-data="chartData"
+    :options="chartOptions"
+    :width="350"
+    :height="300"
+  />
 </template>
 
 <script>
@@ -9,9 +14,30 @@ import LineChart from './LineChart.js'
 import timeUtil from '../util/time'
 
 export default {
-  props: ['course', 'points', 'sunEvents', 'units', 'waypointShowMode', 'showActual'],
   components: {
     LineChart
+  },
+  props: {
+    course: {
+      type: Object,
+      required: true
+    },
+    points: {
+      type: Array,
+      required: true
+    },
+    sunEvents: {
+      type: Array,
+      default () { return [] }
+    },
+    waypointShowMode: {
+      type: Number,
+      default: null
+    },
+    showActual: {
+      type: Boolean,
+      default: false
+    }
   },
   data () {
     return {
@@ -55,10 +81,10 @@ export default {
   computed: {
     backgroundRules: function () {
       if (!this.sunEvents) { return [] }
-      let br = [...this.sunEvents]
+      const br = [...this.sunEvents]
       br.forEach((s, i) => {
-        br[i] = {...br[i]}
-        br[i].loc = br[i].loc * this.units.distScale
+        br[i] = { ...br[i] }
+        br[i].loc = this.$units.distf(br[i].loc)
       })
       return br
     },
@@ -83,7 +109,7 @@ export default {
                   return ''
                 }
               },
-              max: (this.course.distance * this.units.distScale) + 0.01
+              max: this.$units.distf(this.course.distance) + 0.01
             }
           }],
           yAxes: [{
@@ -107,7 +133,7 @@ export default {
             },
             ticks: {
               callback: function (value, index, values) {
-                let sign = value >= 0 ? '' : '-'
+                const sign = value >= 0 ? '' : '-'
                 return sign + timeUtil.sec2string(Math.abs(value), '[h]:m:ss')
               },
               stepSize: 60,
@@ -123,13 +149,13 @@ export default {
           },
           callbacks: {
             label: function (tooltipItem, data) {
-              var label = data.datasets[tooltipItem.datasetIndex]
+              const label = data.datasets[tooltipItem.datasetIndex]
                 .data[tooltipItem.index].label
               return label
             },
             title: function (tooltipItem, data) {
               if (!tooltipItem.length) { return '' }
-              var title = data.datasets[tooltipItem[0].datasetIndex]
+              const title = data.datasets[tooltipItem[0].datasetIndex]
                 .data[tooltipItem[0].index].title
               return title
             }
@@ -144,9 +170,10 @@ export default {
     },
     chartData: function () {
       this.$logger('CourseProfile|chartData')
-      let datasets = [
+      const datasets = [
         this.chartPoints,
-        { data: this.chartProfile,
+        {
+          data: this.chartProfile,
           pointRadius: 0,
           pointHoverRadius: 0,
           borderColor: this.chartColors.blue,
@@ -154,14 +181,16 @@ export default {
           backgroundColor: this.transparentize(this.chartColors.blue),
           yAxisID: 'y-axis-1'
         },
-        { data: this.chartGrade,
+        {
+          data: this.chartGrade,
           pointRadius: 0,
           pointHoverRadius: 0,
           backgroundColor: this.transparentize(this.chartColors.red, 0.75),
           showLine: true,
           yAxisID: 'y-axis-2'
         },
-        { data: this.chartFocus,
+        {
+          data: this.chartFocus,
           pointRadius: 0,
           pointHoverRadius: 0,
           borderColor: this.chartColors.red,
@@ -193,16 +222,16 @@ export default {
       // eslint-disable-next-line
       this.updateTrigger // hack for force recompute
       if (this.showActual) {
-        let mbs = wlslr(
+        const mbs = wlslr(
           this.points.map(p => { return p.loc }),
           this.points.map(p => { return p.elapsed - p.actual.elapsed }),
           this.xs,
           2 * this.course.distance / this.pmax
         )
-        let arr = []
+        const arr = []
         this.xs.forEach((x, i) => {
           arr.push({
-            x: x * this.units.distScale,
+            x: this.$units.distf(x),
             y: mbs[i][0] * this.xs[i] + mbs[i][1]
           })
         })
@@ -218,7 +247,7 @@ export default {
       // eslint-disable-next-line
       this.updateTrigger // hack for force recompute
       if (!this.course.waypoints.length) { return [] }
-      var d = {
+      const d = {
         data: [],
         backgroundColor: [],
         borderColor: [],
@@ -229,20 +258,20 @@ export default {
         pointHoverRadius: 10,
         showLine: false
       }
-      let wps = this.course.waypoints
-      for (var i = 0, il = wps.length; i < il; i++) {
+      const wps = this.course.waypoints
+      for (let i = 0, il = wps.length; i < il; i++) {
         if (!(
           (this.waypointShowMode === 3) ||
           (this.waypointShowMode === 2 && wps[i].tier <= 2) ||
           (this.waypointShowMode === null && wps[i].show)
         )) { continue }
         d.data.push({
-          x: wps[i].location * this.units.distScale,
-          y: wps[i].elevation * this.units.altScale,
+          x: this.$units.distf(wps[i].location),
+          y: this.$units.altf(wps[i].elevation),
           label:
             wps[i].name + ' [' +
-            (wps[i].location * this.units.distScale).toFixed(1) +
-            this.units.dist + ']',
+            this.$units.distf(wps[i].location, 1) +
+            this.$units.dist + ']',
           title: this.$waypointTypes[wps[i].type],
           _id: wps[i]._id
         })
@@ -268,15 +297,15 @@ export default {
     click: function (point, event) {
       if (!event.length) { return }
       const item = event[0]
-      let id = this.chartPoints.data[item._index]._id
+      const id = this.chartPoints.data[item._index]._id
       this.$emit('waypointClick', id)
     },
     focus: function (focus) {
-      var cF = []
+      const cF = []
       this.chartProfile.forEach(xy => {
         if (
-          xy.x >= focus[0] * this.units.distScale &&
-          xy.x <= focus[1] * this.units.distScale
+          xy.x >= this.$units.distf(focus[0]) &&
+          xy.x <= this.$units.distf(focus[1])
         ) {
           cF.push(xy)
         }
@@ -284,7 +313,7 @@ export default {
       this.chartFocus = cF
     },
     updateChartProfile: function () {
-      var chartProfile = []
+      const chartProfile = []
       let mbs = wlslr(
         this.points.map(p => { return p.loc }),
         this.points.map(p => { return p.alt }),
@@ -293,12 +322,12 @@ export default {
       )
       this.xs.forEach((x, i) => {
         chartProfile.push({
-          x: x * this.units.distScale,
-          y: (mbs[i][0] * this.xs[i] + mbs[i][1]) * this.units.altScale
+          x: this.$units.distf(x),
+          y: this.$units.altf(mbs[i][0] * this.xs[i] + mbs[i][1])
         })
       })
 
-      var chartGrade = []
+      const chartGrade = []
       mbs = wlslr(
         this.points.map(p => { return p.loc }),
         this.points.map(p => { return p.alt }),
@@ -307,20 +336,20 @@ export default {
       )
       this.xs.forEach((x, i) => {
         chartGrade.push({
-          x: x * this.units.distScale,
+          x: this.$units.distf(x),
           y: mbs[i][0] / 10
         })
       })
 
       // this is a hack to make the finish waypoint show up:
       this.chartOptions.scales.xAxes[0].ticks.max = (
-        (this.xs[this.xs.length - 1] * this.units.distScale) + 0.01
+        this.$units.distf(this.xs[this.xs.length - 1]) + 0.01
       )
       this.chartProfile = chartProfile
       this.chartGrade = chartGrade
     },
     transparentize: function (color, opacity) {
-      var alpha = opacity === undefined ? 0.5 : 1 - opacity
+      const alpha = opacity === undefined ? 0.5 : 1 - opacity
       return window.Color(color).alpha(alpha).rgbString()
     },
     forceWaypointsUpdate: function () {

@@ -3,79 +3,86 @@
     <b-modal
       id="course-edit-modal"
       centered
-      v-bind:title="(model._id ? 'Edit' : 'New') + ' Course'"
+      :title="(model._id ? 'Edit' : 'New') + ' Course'"
       @hidden="clear"
       @cancel="clear"
       @ok="handleOk"
     >
-      <form ref="courseform" @submit.prevent="">
+      <form
+        ref="courseform"
+        @submit.prevent=""
+      >
         <b-input-group
-          prepend="Name"
-          class="mb-2"
-          size="sm"
           v-b-popover.hover.bottomright.d250.v-info="
             'Name: name for the course, for example \'\'Western States 100\'\''
           "
-        >
-        <b-form-input type="text" v-model="model.name" required>
-        </b-form-input>
-        </b-input-group>
-        <b-input-group prepend="Description"
+          prepend="Name"
           class="mb-2"
           size="sm"
         >
-          <b-form-textarea rows="2" v-model="model.description">
-          </b-form-textarea>
+          <b-form-input
+            v-model="model.name"
+            type="text"
+            required
+          />
         </b-input-group>
         <b-input-group
-          prepend="File"
+          prepend="Description"
           class="mb-2"
           size="sm"
+        >
+          <b-form-textarea
+            v-model="model.description"
+            rows="2"
+          />
+        </b-input-group>
+        <b-input-group
           v-b-popover.hover.bottomright.d250.v-info="
             'File: GPX format file exported from a GPS track or route builder.'
           "
+          prepend="File"
+          class="mb-2"
+          size="sm"
         >
           <b-form-file
-            size="sm"
             v-model="gpxFile"
+            size="sm"
             :placeholder="(model.source) ? model.source.name : 'Choose a GPX file...'"
             accept=".gpx"
-            @change="loadGPX"
             no-drop
             :required="!Boolean(model.source)"
-          ></b-form-file>
+            @change="loadGPX"
+          />
         </b-input-group>
 
         <div v-if="courseLoaded">
           <b-input-group
-            prepend="Event Date"
-            class="mb-2"
-            size="sm"
             v-b-popover.hover.bottomright.d250.v-info="
               'Date [optional]: use for races, etc.'
             "
-          >
-            <b-form-input
-              type="date"
-              v-model="eventDate"
-              :required="Boolean(eventDate)"
-            >
-            </b-form-input>
-          </b-input-group>
-          <b-input-group
-            prepend="Start Time"
+            prepend="Event Date"
             class="mb-2"
             size="sm"
+          >
+            <b-form-input
+              v-model="eventDate"
+              type="date"
+              :required="Boolean(eventDate)"
+            />
+          </b-input-group>
+          <b-input-group
             v-b-popover.hover.bottomright.d250.v-info="
               'Start Time [optional]: time of day event begins'
             "
+            prepend="Start Time"
+            class="mb-2"
+            size="sm"
           >
             <b-form-input
-              type="time"
               v-model="eventTime"
+              type="time"
               :required="Boolean(eventDate)"
-            >
-            </b-form-input>
+            />
           </b-input-group>
           <b-input-group
             prepend="Timezone"
@@ -83,11 +90,10 @@
             size="sm"
           >
             <b-form-select
-              :options="timezones"
               v-model="model.eventTimezone"
+              :options="timezones"
               :required="Boolean(eventTime)"
-            >
-            </b-form-select>
+            />
           </b-input-group>
 
           <b-form-checkbox
@@ -101,8 +107,8 @@
           </b-form-checkbox>
 
           <b-form-group
-            class="mb-0 pl-3"
             v-if="model.override.enabled"
+            class="mb-0 pl-3"
           >
             <b-input-group
               prepend="Distance"
@@ -110,22 +116,20 @@
               size="sm"
             >
               <b-form-input
-                type="number"
                 v-model="distancef"
+                type="number"
                 required
                 step="0.01"
-                @change="updateDistance"
                 :min="round(stats.dist * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 0.9, 2)"
                 :max="round(stats.dist * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 1.1, 2)"
-              >
-              </b-form-input>
+                @change="updateDistance"
+              />
               <b-form-select
-                :options="distUnits"
                 v-model="model.override.distUnit"
+                :options="distUnits"
                 required
                 @change="updateDistanceUnit"
-                >
-              </b-form-select>
+              />
             </b-input-group>
             <b-input-group
               prepend="Elevation Gain"
@@ -133,22 +137,20 @@
               size="sm"
             >
               <b-form-input
-                type="number"
                 v-model="gainf"
+                type="number"
                 required
                 step="0"
                 :min="round(stats.gain * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
                 :max="round(stats.gain * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
                 @change="updateGain"
-              >
-              </b-form-input>
+              />
               <b-form-select
-                :options="elevUnits"
                 v-model="model.override.elevUnit"
+                :options="elevUnits"
                 required
                 @change="updateElevUnit"
-                >
-              </b-form-select>
+              />
             </b-input-group>
             <b-input-group
               prepend="Elevation Loss"
@@ -156,62 +158,83 @@
               size="sm"
             >
               <b-form-input
-                type="number"
                 v-model="lossf"
+                type="number"
                 required
                 step="0"
                 :min="round(-stats.loss * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
                 :max="round(-stats.loss * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
                 @change="updateLoss"
-              >
-              </b-form-input>
+              />
               <b-form-select
-                :options="elevUnits"
                 v-model="model.override.elevUnit"
+                :options="elevUnits"
                 required
                 @change="updateElevUnit"
-                >
-              </b-form-select>
+              />
             </b-input-group>
           </b-form-group>
 
           <b-form-checkbox
             v-model="model.public"
-            :value="true"
-              size="sm"
-              class="mb-2"
-            :unchecked-value="false"
             v-b-popover.hover.bottomright.d250.v-info="
               'Visibility: if public, anybody with the link can view and make plans for the course.'
             "
+            :value="true"
+            size="sm"
+            class="mb-2"
+            :unchecked-value="false"
           >
             Visible to public
           </b-form-checkbox>
           <b-input-group
-            v-if="model.public && user.admin"
-            prepend="Permalink"
-            class="mb-2"
-            size="sm"
+            v-if="model.public && $user.admin"
             v-b-popover.hover.bottomright.d250.v-info="
               'Permalink: readable link for official races; https://ultrapacer.com/race/(permalink)'
             "
+            prepend="Permalink"
+            class="mb-2"
+            size="sm"
           >
-            <b-form-input type="text" v-model="model.link" />
+            <b-form-input
+              v-model="model.link"
+              type="text"
+            />
           </b-input-group>
         </div>
       </form>
       <template #modal-footer="{ ok, cancel }">
-        <div v-if="model._id" style="text-align: left; flex: auto">
-          <b-button size="sm" variant="danger" @click="remove">
-            <b-spinner v-show="deleting" small></b-spinner>
+        <div
+          v-if="model._id"
+          style="text-align: left; flex: auto"
+        >
+          <b-button
+            size="sm"
+            variant="danger"
+            @click="remove"
+          >
+            <b-spinner
+              v-show="deleting"
+              small
+            />
             Delete
           </b-button>
         </div>
-        <b-button variant="secondary" @click="cancel()">
+        <b-button
+          variant="secondary"
+          @click="cancel()"
+        >
           Cancel
         </b-button>
-        <b-button variant="primary" @click="ok()" :disabled="!courseLoaded">
-          <b-spinner v-show="saving" small></b-spinner>
+        <b-button
+          variant="primary"
+          :disabled="!courseLoaded"
+          @click="ok()"
+        >
+          <b-spinner
+            v-show="saving"
+            small
+          />
           Save Course
         </b-button>
       </template>
@@ -227,7 +250,6 @@ import wputil from '@/util/waypoints'
 import { round } from '@/util/math'
 const gpxParse = require('gpx-parse')
 export default {
-  props: ['user'],
   data () {
     return {
       courseLoaded: false,
@@ -260,31 +282,20 @@ export default {
       lossf: null
     }
   },
-  computed: {
-    units: function () {
-      var u = {
-        dist: (this.isAuthenticated) ? this.user.distUnits : 'mi',
-        alt: (this.isAuthenticated) ? this.user.elevUnits : 'ft'
-      }
-      u.distScale = (u.dist === 'mi') ? 0.621371 : 1
-      u.altScale = (u.alt === 'ft') ? 3.28084 : 1
-      return u
-    }
-  },
   methods: {
     async show (course, raw = null) {
       if (course._id) {
         this.model = Object.assign({}, course)
         if (!this.model.eventTimezone) { this.model.eventTimezone = moment.tz.guess() }
         if (this.model.eventStart) {
-          let m = moment(this.model.eventStart).tz(this.model.eventTimezone)
+          const m = moment(this.model.eventStart).tz(this.model.eventTimezone)
           this.eventDate = m.format('YYYY-MM-DD')
           this.eventTime = m.format('kk:mm')
         } else {
           this.eventDate = null
           this.eventTime = null
         }
-        this.model.override = {...course.override}
+        this.model.override = { ...course.override }
         this.$calculating.setCalculating(true)
         await this.reloadRaw()
         this.$calculating.setCalculating(false)
@@ -300,7 +311,7 @@ export default {
       }
     },
     async reloadRaw () {
-      let raw = await api.getCourseField(this.model._id, 'raw')
+      const raw = await api.getCourseField(this.model._id, 'raw')
       this.gpxPoints = raw.map(p => {
         return { lat: p[0], lon: p[1], alt: p[2] }
       })
@@ -314,9 +325,9 @@ export default {
       if (this.saving) { return }
       this.saving = true
       if (this.gpxPoints.length) {
-        let points = this.gpxPoints
+        const points = this.gpxPoints
 
-        let reduced = geo.reduce(points, this.model.distance)
+        const reduced = geo.reduce(points, this.model.distance)
         // reformat points for upload
         this.model.points = reduced.map(x => {
           return [
@@ -334,14 +345,14 @@ export default {
 
         if (this.model._id) {
           // update all waypoints to fit updated course:
-          let waypoints = await api.getWaypoints(this.model._id)
-          let finish = waypoints.find(wp => wp.type === 'finish')
-          let olddist = finish.location
+          const waypoints = await api.getWaypoints(this.model._id)
+          const finish = waypoints.find(wp => wp.type === 'finish')
+          const olddist = finish.location
           if (round(finish.location, 4) !== round(this.model.distance, 4)) {
             console.log('Scaling waypoints')
             await Promise.all(waypoints.map(async wp => {
-              let t = this.$logger()
-              var wpold = wp.location
+              const t = this.$logger()
+              const wpold = wp.location
               // scale waypoint location for new course distance:
               if (wp.type === 'finish') {
                 wp.location = this.model.distance
@@ -352,9 +363,9 @@ export default {
               if (this.model.source) {
                 if (wp.type !== 'start' && wp.type !== 'finish') {
                   try {
-                    var wpdelta = Math.abs(wpold - wp.location)
+                    const wpdelta = Math.abs(wpold - wp.location)
                     // iteration threshold th:
-                    var th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
+                    const th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
                     // resolve closest distance for waypoint LLA
                     wp.location = wputil.nearestLoc(wp, reduced, th)
                   } catch (err) {
@@ -379,8 +390,8 @@ export default {
       }
 
       if (this.model._id) {
-        let updateModel = {}
-        let fields = [
+        const updateModel = {}
+        const fields = [
           'name',
           'link',
           'description',
@@ -399,7 +410,7 @@ export default {
           'loss'
         ]
         fields.forEach(f => {
-          if (this.model.hasOwnProperty(f)) {
+          if (this.model[f] !== undefined) {
             updateModel[f] = this.model[f]
           }
         })
@@ -461,8 +472,8 @@ export default {
       reader.readAsText(f.target.files[0])
     },
     setDistGainLoss: async function (val = false) {
-      this.model.override.distUnit = this.user.distUnits
-      this.model.override.elevUnit = this.user.elevUnits
+      this.model.override.distUnit = this.$units.dist
+      this.model.override.elevUnit = this.$units.alt
       if (!val) {
         this.model.gain = this.stats.gain
         this.model.loss = this.stats.loss
@@ -470,8 +481,8 @@ export default {
         this.updateDistanceUnit(this.model.override.distUnit)
         this.updateElevUnit(this.model.override.elevUnit)
       } else {
-        this.updateDistanceUnit(this.user.distUnits)
-        this.updateElevUnit(this.user.elevUnits)
+        this.updateDistanceUnit(this.$units.dist)
+        this.updateElevUnit(this.$units.alt)
       }
       this.$set(this.model.override, 'enabled', val)
     },
@@ -494,7 +505,7 @@ export default {
     async defaultTimezone (lat, lon) {
       // if empty, populate the eventTimezone from the GPX file
       if (!this.model.eventTimezone) {
-        let tz = await api.getTimeZone(lat, lon)
+        const tz = await api.getTimeZone(lat, lon)
         if (!this.model.eventTimezone) {
           this.$set(this.model, 'eventTimezone', tz)
         }

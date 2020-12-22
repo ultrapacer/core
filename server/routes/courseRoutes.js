@@ -1,22 +1,22 @@
 // courseRoutes.js
-var express = require('express')
-var mongoose = require('mongoose')
-var courseRoutes = express.Router()
-var Course = require('../models/Course')
-var User = require('../models/User')
-var Plan = require('../models/Plan')
-var Waypoint = require('../models/Waypoint')
+const express = require('express')
+const mongoose = require('mongoose')
+const courseRoutes = express.Router()
+const Course = require('../models/Course')
+const User = require('../models/User')
+const Plan = require('../models/Plan')
+const Waypoint = require('../models/Waypoint')
 
 // SAVE NEW
 courseRoutes.route('/').post(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = new Course(req.body)
+    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const course = new Course(req.body)
     course._user = user
     await course.save()
 
     // create start and finish waypoints:
-    var ws = new Waypoint({
+    const ws = new Waypoint({
       name: 'Start',
       type: 'start',
       location: 0,
@@ -26,7 +26,7 @@ courseRoutes.route('/').post(async function (req, res) {
       elevation: course.raw[0][2]
     })
     await ws.save()
-    var wf = new Waypoint({
+    const wf = new Waypoint({
       name: 'Finish',
       type: 'finish',
       location: course.distance,
@@ -37,7 +37,7 @@ courseRoutes.route('/').post(async function (req, res) {
     })
     await wf.save()
 
-    res.status(200).json({'post': 'Course added successfully'})
+    res.status(200).json({ post: 'Course added successfully' })
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
@@ -46,8 +46,8 @@ courseRoutes.route('/').post(async function (req, res) {
 
 // GET COURSES
 courseRoutes.route('/').get(async function (req, res) {
-  var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-  let q = {
+  const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+  const q = {
     $or: [
       {
         _user: user
@@ -59,17 +59,17 @@ courseRoutes.route('/').get(async function (req, res) {
       }
     ]
   }
-  var courses = await Course.find(q).select(['-points', '-raw'])
-    .collation({'locale': 'en'}).sort('name').exec()
+  const courses = await Course.find(q).select(['-points', '-raw'])
+    .collation({ locale: 'en' }).sort('name').exec()
   res.json(courses)
 })
 
 // UPDATE
 courseRoutes.route('/:id').put(async function (req, res) {
   try {
-    let course = await Course.findById(req.params.id).populate('_user').exec()
+    const course = await Course.findById(req.params.id).populate('_user').exec()
     if (course._user.auth0ID === req.user.sub) {
-      let fields = ['name', 'link', 'description', 'public', 'eventStart', 'eventTimezone', 'override']
+      const fields = ['name', 'link', 'description', 'public', 'eventStart', 'eventTimezone', 'override']
       if (req.body.points) {
         fields.push('points', 'raw', 'source', 'distance', 'gain', 'loss')
       }
@@ -77,7 +77,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
         fields.push('_user') // allow only admins to change a user
       }
       fields.forEach(f => {
-        if (req.body.hasOwnProperty(f)) {
+        if (req.body[f] !== undefined) {
           course[f] = req.body[f]
         }
       })
@@ -96,19 +96,19 @@ courseRoutes.route('/:id').put(async function (req, res) {
 // DELETE COURSE OR REMOVE COURSE FROM USER
 courseRoutes.route('/:id').delete(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.id).exec()
+    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const course = await Course.findById(req.params.id).exec()
     if (user.equals(course._user)) {
       // if owner, delete course
       await course.remove()
       res.json('Course removed')
     } else {
       // if not owner, remove course from course list
-      let i = user._courses.findIndex(x => course.equals(x))
+      const i = user._courses.findIndex(x => course.equals(x))
       if (i >= 0) {
         user._courses.splice(i, 1)
         await user.save()
-        await Plan.deleteMany({_course: course._id, _user: user._id}).exec()
+        await Plan.deleteMany({ _course: course._id, _user: user._id }).exec()
         res.json('Course removed')
       } else {
         res.status(403).send('No permission')
@@ -122,8 +122,8 @@ courseRoutes.route('/:id').delete(async function (req, res) {
 //  UPDATE SELECTED PLAN
 courseRoutes.route('/:courseid/plan').put(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.courseid).select('_user').exec()
+    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const course = await Course.findById(req.params.courseid).select('_user').exec()
     if (user.equals(course._user)) {
       course._plan = await Plan.findById(req.body.plan).exec()
       await course.save()
@@ -139,10 +139,10 @@ courseRoutes.route('/:courseid/plan').put(async function (req, res) {
 // GET COURSE
 courseRoutes.route(['/:_id', '/link/:link']).get(async function (req, res) {
   try {
-    let q = (req.params.link)
+    const q = (req.params.link)
       ? { link: req.params.link }
       : { _id: req.params._id }
-    let [course, user] = await Promise.all([
+    const [course, user] = await Promise.all([
       Course.findOne(q).populate('_user')
         .select(['-points', '-raw']).exec(),
       User.findOne({ auth0ID: req.user.sub }).exec()
@@ -163,9 +163,9 @@ courseRoutes.route(['/:_id', '/link/:link']).get(async function (req, res) {
 // GET COURSE BY PLAN
 courseRoutes.route('/plan/:_id').get(async function (req, res) {
   try {
-    let plan = await Plan.findById(req.params._id)
-      .populate(['_user', {path: '_course', select: '-points -raw'}]).exec()
-    let course = plan._course
+    const plan = await Plan.findById(req.params._id)
+      .populate(['_user', { path: '_course', select: '-points -raw' }]).exec()
+    const course = plan._course
     if (course.public || plan._user.auth0ID === req.user.sub) {
       await course.addData(plan._user, req.params._id)
       course._user = course._user._id // don't return all user data, just id
@@ -182,7 +182,7 @@ courseRoutes.route('/plan/:_id').get(async function (req, res) {
 // GET COURSE FIELD
 courseRoutes.route('/:course/field/:field').get(async function (req, res) {
   try {
-    let course = await Course.findById(req.params.course).populate('_user')
+    const course = await Course.findById(req.params.course).populate('_user')
       .select(['public', '_user', req.params.field]).exec()
     if (course.public || course._user.auth0ID === req.user.sub) {
       res.json(course[req.params.field])
@@ -198,10 +198,10 @@ courseRoutes.route('/:course/field/:field').get(async function (req, res) {
 // GET COURSE FIELDS
 courseRoutes.route(['/:_id/fields', '/link/:link/fields']).put(async function (req, res) {
   try {
-    let q = (req.params.link)
+    const q = (req.params.link)
       ? { link: req.params.link }
       : { _id: req.params._id }
-    let course = await Course.findOne(q).populate('_user')
+    const course = await Course.findOne(q).populate('_user')
       .select(['_user', ...req.body]).exec()
     if (course.public || course._user.auth0ID === req.user.sub) {
       course._user = course._user._id // don't return all user data, just id
@@ -218,10 +218,10 @@ courseRoutes.route(['/:_id/fields', '/link/:link/fields']).put(async function (r
 // GET WAYPOINT LIST
 courseRoutes.route('/:course/waypoints').get(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.course).select(['_user', 'public']).exec()
+    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const course = await Course.findById(req.params.course).select(['_user', 'public']).exec()
     if (course._user.equals(user._id) || course.public) {
-      var waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
+      const waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
       res.json(waypoints)
     } else {
       res.status(403).send('No permission')
@@ -235,10 +235,10 @@ courseRoutes.route('/:course/waypoints').get(async function (req, res) {
 // GET PLAN LIST
 courseRoutes.route('/:course/plans/:user_id').get(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.course).select(['_user', 'public']).exec()
+    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const course = await Course.findById(req.params.course).select(['_user', 'public']).exec()
     if (user.equals(course._user) || course.public) {
-      var plans = await Plan.find(
+      const plans = await Plan.find(
         { _course: course, _user: req.params.user_id }
       ).sort('name').exec()
       res.json(plans)
@@ -254,7 +254,7 @@ courseRoutes.route('/:course/plans/:user_id').get(async function (req, res) {
 //  UPDATE CACHE
 courseRoutes.route('/:id/cache').put(async function (req, res) {
   try {
-    let [user, course] = await Promise.all([
+    const [user, course] = await Promise.all([
       User.findOne({ auth0ID: req.user.sub }).exec(),
       Course.findById(req.params.id).select('_user').exec()
     ])
@@ -273,12 +273,12 @@ courseRoutes.route('/:id/cache').put(async function (req, res) {
 // COPY COURSE
 courseRoutes.route('/:id/copy').put(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var course = await Course.findById(req.params.id).exec()
+    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const course = await Course.findById(req.params.id).exec()
     if (course._user.equals(user._id) || course.public) {
       console.log('course1 ' + course._id)
-      var wps = await Waypoint.find({ _course: course }).sort('location').exec()
-      let course2 = new Course(course)
+      const wps = await Waypoint.find({ _course: course }).sort('location').exec()
+      const course2 = new Course(course)
       course2._id = mongoose.Types.ObjectId()
       course2.isNew = true
       course2._user = user
@@ -288,7 +288,7 @@ courseRoutes.route('/:id/copy').put(async function (req, res) {
       await course2.clearCache()
       console.log('course2 ' + course2._id)
       wps.forEach(async wp => {
-        let wp2 = new Waypoint(wp)
+        const wp2 = new Waypoint(wp)
         wp2._id = mongoose.Types.ObjectId()
         wp2.isNew = true
         wp2._course = course2

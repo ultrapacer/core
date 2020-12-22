@@ -1,10 +1,10 @@
-var mongoose = require('mongoose')
-var Schema = mongoose.Schema
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
 const Waypoint = require('./Waypoint')
 const Plan = require('./Plan')
 
 // Define collection and schema for Posts
-var CourseSchema = new Schema({
+const CourseSchema = new Schema({
   _user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
@@ -104,8 +104,8 @@ CourseSchema.methods.clearCache = async function () {
 }
 
 CourseSchema.pre('remove', function () {
-  Plan.deleteMany({_course: this._id}).exec()
-  Waypoint.deleteMany({_course: this._id}).exec()
+  Plan.deleteMany({ _course: this._id }).exec()
+  Waypoint.deleteMany({ _course: this._id }).exec()
 })
 
 module.exports = mongoose.model('Course', CourseSchema)

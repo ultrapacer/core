@@ -1,8 +1,16 @@
 <template>
-  <div class="container-fluid mt-4" style="max-width:60rem">
-    <h1 class="h1 d-none d-md-block">My Courses</h1>
-    <div v-if="initializing" class="d-flex justify-content-center mb-3">
-      <b-spinner label="Loading..." ></b-spinner>
+  <div
+    class="container-fluid mt-4"
+    style="max-width:60rem"
+  >
+    <h1 class="h1 d-none d-md-block">
+      My Courses
+    </h1>
+    <div
+      v-if="initializing"
+      class="d-flex justify-content-center mb-3"
+    >
+      <b-spinner label="Loading..." />
     </div>
     <b-row v-if="!initializing">
       <b-col>
@@ -10,63 +18,78 @@
           :items="courses"
           :fields="fields"
           primary-key="_id"
-          @row-clicked="goToCourse"
           hover
-          >
+          @row-clicked="goToCourse"
+        >
           <template #head(distance)>
-            Dist. [{{ user.distUnits }}]
+            Dist. [{{ $units.dist }}]
           </template>
           <template #head(gain)>
-            Gain [{{ user.elevUnits }}]
+            Gain [{{ $units.alt }}]
           </template>
           <template #head(loss)>
-            Loss [{{ user.elevUnits }}]
+            Loss [{{ $units.alt }}]
           </template>
-          <template #head(actions)>&nbsp;</template>
+          <template #head(actions)>
+            &nbsp;
+          </template>
           <template #cell(actions)="row">
             <b-button
-                v-if="user._id==row.item._user"
-                size="sm"
-                @click="editCourse(row.item)"
-                class="mr-1"
-              >
-              <v-icon name="edit"></v-icon>
+              v-if="$user._id==row.item._user"
+              size="sm"
+              class="mr-1"
+              @click="editCourse(row.item)"
+            >
+              <v-icon name="edit" />
               <span class="d-none d-md-inline">Edit</span>
             </b-button>
-            <b-button size="sm" @click="deleteCourse(row.item)" class="mr-1">
-              <v-icon name="trash"></v-icon>
-              <span class="d-none d-md-inline" v-if="user._id==row.item._user">
+            <b-button
+              size="sm"
+              class="mr-1"
+              @click="deleteCourse(row.item)"
+            >
+              <v-icon name="trash" />
+              <span
+                v-if="$user._id==row.item._user"
+                class="d-none d-md-inline"
+              >
                 Del.
               </span>
-              <span class="d-none d-md-inline" v-else>Remove</span>
+              <span
+                v-else
+                class="d-none d-md-inline"
+              >Remove</span>
             </b-button>
             <router-link
-                :to="row.item.link ? {
-                  name: 'Race',
-                  params: {
-                    permalink: row.item.link
-                  }
-                } : {
-                  name: 'Course',
-                  params: {
-                    course: row.item._id
-                  }
-                }"
-              >
+              :to="row.item.link ? {
+                name: 'Race',
+                params: {
+                  permalink: row.item.link
+                }
+              } : {
+                name: 'Course',
+                params: {
+                  course: row.item._id
+                }
+              }"
+            >
               <b-button
-                  size="sm"
-                  class="mr-1"
-                  variant="success"
-                >
-                <v-icon name="arrow-right"></v-icon>
+                size="sm"
+                class="mr-1"
+                variant="success"
+              >
+                <v-icon name="arrow-right" />
                 <span class="d-none d-md-inline">Go!</span>
               </b-button>
             </router-link>
           </template>
         </b-table>
         <div>
-          <b-btn variant="success" @click.prevent="newCourse()">
-            <v-icon name="plus"></v-icon>
+          <b-btn
+            variant="success"
+            @click.prevent="newCourse()"
+          >
+            <v-icon name="plus" />
             <span>New Course</span>
           </b-btn>
         </div>
@@ -74,13 +97,12 @@
     </b-row>
     <course-edit
       ref="courseEdit"
-      :user="user"
       @refresh="refreshCourses"
       @delete="deleteCourse"
-    ></course-edit>
+    />
     <delete-modal
       ref="delModal"
-    ></delete-modal>
+    />
     <vue-headful
       description="ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue."
       title="My Courses - ultraPacer"
@@ -94,7 +116,6 @@ import CourseEdit from './CourseEdit'
 import DeleteModal from './DeleteModal'
 export default {
   title: 'My Courses',
-  props: ['user'],
   components: {
     CourseEdit,
     DeleteModal
@@ -114,15 +135,14 @@ export default {
           key: 'distance',
           sortable: true,
           formatter: (value, key, item) => {
-            return (value * this.distScale).toFixed(2)
+            return this.$units.distf(value, 2)
           }
         },
         {
           key: 'gain',
           sortable: true,
           formatter: (value, key, item) => {
-            return (value * this.altScale).toFixed(0)
-              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(value, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-sm-table-cell',
           tdClass: 'd-none d-sm-table-cell'
@@ -131,8 +151,7 @@ export default {
           key: 'loss',
           sortable: true,
           formatter: (value, key, item) => {
-            return (value * this.altScale).toFixed(0)
-              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(value, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-sm-table-cell',
           tdClass: 'd-none d-sm-table-cell'
@@ -143,22 +162,6 @@ export default {
           tdClass: 'actionButtonColumn'
         }
       ]
-    }
-  },
-  computed: {
-    distScale: function () {
-      if (this.user.distUnits === 'mi') {
-        return 0.621371
-      } else {
-        return 1
-      }
-    },
-    altScale: function () {
-      if (this.user.elevUnits === 'ft') {
-        return 3.28084
-      } else {
-        return 1
-      }
     }
   },
   async created () {
@@ -198,11 +201,11 @@ export default {
         {
           type: 'course',
           object: course,
-          verb: this.user._id === course._user ? 'delete' : 'remove'
+          verb: this.$user._id === course._user ? 'delete' : 'remove'
         },
         async () => {
           await api.deleteCourse(course._id)
-          var index = this.courses.findIndex(x => x._id === course._id)
+          const index = this.courses.findIndex(x => x._id === course._id)
           if (index > -1) {
             this.courses.splice(index, 1)
           }

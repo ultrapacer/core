@@ -4,115 +4,140 @@
       id="waypoint-edit-modal"
       centered
       :static="true"
-      v-bind:title="(model._id ? 'Edit' : 'New') + ' Waypoint'"
+      :title="(model._id ? 'Edit' : 'New') + ' Waypoint'"
       @hidden="clear"
       @cancel="clear"
       @ok="handleOk"
     >
-      <form ref="waypointform" @submit.prevent="">
+      <form
+        ref="waypointform"
+        @submit.prevent=""
+      >
         <b-input-group
-          prepend="Name"
-          class="mb-2"
-          size="sm"
           v-b-popover.hover.bottomright.d250.v-info="
             'Name: name for the waypoint, such as aid station name or landmark description'
           "
+          prepend="Name"
+          class="mb-2"
+          size="sm"
         >
-          <b-form-input type="text" v-model="model.name" required>
-          </b-form-input>
+          <b-form-input
+            v-model="model.name"
+            type="text"
+            required
+          />
         </b-input-group>
         <b-input-group
           v-if="model.type != 'start' && model.type != 'finish'"
-          prepend="Location"
-          v-bind:append="units.dist"
-          class="mb-2"
-          size="sm"
           v-b-popover.hover.bottomright.d250.v-info="
             'Location: distance along course for this waypoint'
           "
-        >
-          <b-form-input
-            type="number"
-            step="0.01"
-            v-model="model.locUserUnit"
-            min="0.01"
-            v-bind:max="locationMax"
-            required>
-          </b-form-input>
-        </b-input-group>
-        <b-input-group
-          prepend="Type"
+          prepend="Location"
+          :append="$units.dist"
           class="mb-2"
           size="sm"
+        >
+          <b-form-input
+            v-model="model.locUserUnit"
+            type="number"
+            step="0.01"
+            min="0.01"
+            :max="locationMax"
+            required
+          />
+        </b-input-group>
+        <b-input-group
           v-b-popover.hover.bottomright.d250.v-info="
             'Type: type of waypoint.\nNote that \'Aid Station\' and \'Water Source\' both include delay for plans.'
           "
-        >
-          <b-form-select
-            type="text"
-            v-model="model.type"
-            :options="waypointTypeOptions"
-            required>
-          </b-form-select>
-        </b-input-group>
-        <b-input-group
-          prepend="Priority"
+          prepend="Type"
           class="mb-2"
           size="sm"
+        >
+          <b-form-select
+            v-model="model.type"
+            type="text"
+            :options="waypointTypeOptions"
+            required
+          />
+        </b-input-group>
+        <b-input-group
           v-b-popover.hover.bottomright.d250.v-info="
             'Priority: how important the waypoint is, as follows:\n - Major: always appears on segment breakdown, map, and profile\n - Minor: only appears in tables, map, and profile when its major segment is expanded\n - Minor: never appears in tables, map, or profile (used for terrain factor only)'
           "
+          prepend="Priority"
+          class="mb-2"
+          size="sm"
         >
           <b-form-select
-            type="text"
             v-model="model.tier"
+            type="text"
             :options="waypointTiers"
-            required>
-          </b-form-select>
+            required
+          />
         </b-input-group>
         <b-input-group
+          v-b-popover.hover.bottomright.d250.v-info="
+            'Terrain factor: terrain-based pace adjustment, basically anything that is too small to appear in elevation data. Requires course knowledge. Guidelines:\n - Paved surface: 0%\n - Smooth fire road: 2-4%\n - Smooth singletrack: 5-10%\n - Rocky singletrack: 10-20%\n - Technical trail: 20%+'
+          "
           prepend="Terrain factor"
           append="% (increase)"
           class="mb-2"
           size="sm"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Terrain factor: terrain-based pace adjustment, basically anything that is too small to appear in elevation data. Requires course knowledge. Guidelines:\n - Paved surface: 0%\n - Smooth fire road: 2-4%\n - Smooth singletrack: 5-10%\n - Rocky singletrack: 10-20%\n - Technical trail: 20%+'
-          "
         >
           <b-form-input
-            type="number"
             v-model="model.terrainFactor"
+            type="number"
             :placeholder="terrainFactorPlaceholder"
             min="0"
-            step="0">
-          </b-form-input>
+            step="0"
+          />
         </b-input-group>
         <b-input-group
-          prepend="Notes"
-          class="mb-2"
-          size="sm"
           v-b-popover.hover.bottomright.d250.v-info="
             'Notes: description of waypoint, crew access, supplies, etc.'
           "
+          prepend="Notes"
+          class="mb-2"
+          size="sm"
         >
-          <b-form-textarea rows="4" v-model="model.description">
-          </b-form-textarea>
+          <b-form-textarea
+            v-model="model.description"
+            rows="4"
+          />
         </b-input-group>
       </form>
       <template #modal-footer="{ ok, cancel }">
         <div
           v-if="model._id && model.type !== 'start' && model.type !== 'finish'"
-          style="text-align: left; flex: auto">
-          <b-button size="sm" variant="danger" @click="remove">
-            <b-spinner v-show="deleting" small></b-spinner>
+          style="text-align: left; flex: auto"
+        >
+          <b-button
+            size="sm"
+            variant="danger"
+            @click="remove"
+          >
+            <b-spinner
+              v-show="deleting"
+              small
+            />
             Delete
           </b-button>
         </div>
-        <b-button variant="secondary" @click="cancel()">
+        <b-button
+          variant="secondary"
+          @click="cancel()"
+        >
           Cancel
         </b-button>
-        <b-button variant="primary" @click="ok()">
-          <b-spinner v-show="saving" small></b-spinner>
+        <b-button
+          variant="primary"
+          @click="ok()"
+        >
+          <b-spinner
+            v-show="saving"
+            small
+          />
           Save Waypoint
         </b-button>
       </template>
@@ -123,9 +148,22 @@
 <script>
 import api from '@/api'
 import wputil from '../util/waypoints'
-import {tF} from '../util/normFactor'
+import { tF } from '../util/normFactor'
 export default {
-  props: ['course', 'points', 'units', 'terrainFactors'],
+  props: {
+    course: {
+      type: Object,
+      required: true
+    },
+    points: {
+      type: Array,
+      required: true
+    },
+    terrainFactors: {
+      type: Array,
+      required: true
+    }
+  },
   data () {
     return {
       deleting: false,
@@ -139,7 +177,7 @@ export default {
   },
   computed: {
     locationMax: function () {
-      return Number((this.course.distance * this.units.distScale).toFixed(2)) -
+      return Number(this.$units.distf(this.course.distance, 2)) -
         0.01
     },
     waypointTypeOptions: function () {
@@ -149,7 +187,7 @@ export default {
           text: this.$waypointTypes[this.model.type]
         }]
       } else {
-        let arr = []
+        const arr = []
         Object.keys(this.$waypointTypes).forEach(key => {
           if (key !== 'start' && key !== 'finish') {
             arr.push({
@@ -175,7 +213,7 @@ export default {
       }
     },
     terrainFactorPlaceholder: function () {
-      var tFP = ''
+      let tFP = ''
       if (!this.model._id) return tFP
       tFP = tF(this.model.location, this.terrainFactors)
       tFP = ((tFP - 1) * 100).toFixed(0)
@@ -191,7 +229,7 @@ export default {
       }
       if (this.model.location) {
         this.model.locUserUnit =
-          (this.model.location * this.units.distScale).toFixed(2)
+          this.$units.distf(this.model.location, 2)
       }
       this.$bvModal.show('waypoint-edit-modal')
     },
@@ -205,7 +243,7 @@ export default {
       if (this.saving) { return }
       this.saving = true
       if (this.model.type !== 'start' && this.model.type !== 'finish') {
-        this.model.location = this.model.locUserUnit / this.units.distScale
+        this.model.location = this.model.locUserUnit / this.$units.distScale
       }
       wputil.updateLLA(this.model, this.points)
       if (this.model._id) {

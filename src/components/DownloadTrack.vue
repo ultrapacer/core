@@ -6,8 +6,10 @@
       title="Download GPS/TCX Files"
       hide-footer
     >
-    <p>Select your download type below. Use the "Low Resolution" files if loading onto your watch{{ hasTime ? 'for real-time pacing' : '' }}.</p>
-    <p v-show="!hasTime">Create/select a plan for this course to download with time & pacing data.</p>
+      <p>Select your download type below. Use the "Low Resolution" files if loading onto your watch{{ hasTime ? 'for real-time pacing' : '' }}.</p>
+      <p v-show="!hasTime">
+        Create/select a plan for this course to download with time & pacing data.
+      </p>
       <div class="text-center">
         <b-button-group vertical>
           <download-track-button
@@ -19,7 +21,7 @@
             :filename="filenames.gpx"
             :disabled="disableButtons"
             @generate="generate('gpx','orig','gpx')"
-          ></download-track-button>
+          />
           <download-track-button
             type="TCX"
             resolution="Original"
@@ -29,7 +31,7 @@
             :filename="filenames.tcx"
             :disabled="disableButtons"
             @generate="generate('tcx','orig','tcx')"
-          ></download-track-button>
+          />
           <download-track-button
             type="GPX"
             resolution="Low"
@@ -39,7 +41,7 @@
             :filename="filenames.gpx2"
             :disabled="disableButtons"
             @generate="generate('gpx','low','gpx2')"
-          ></download-track-button>
+          />
           <download-track-button
             type="TCX"
             resolution="Low"
@@ -49,7 +51,7 @@
             :filename="filenames.tcx2"
             :disabled="disableButtons"
             @generate="generate('tcx','low','tcx2')"
-          ></download-track-button>
+          />
         </b-button-group>
       </div>
     </b-modal>
@@ -64,10 +66,10 @@ import geo from '@/util/geo'
 import { round, interp } from '@/util/math'
 import DownloadTrackButton from './DownloadTrackButton'
 const sgeo = require('sgeo')
-var xml2js = require('xml2js')
+const xml2js = require('xml2js')
 
 function lawOfCosines (a, b, c) {
-  let val = Math.acos((a ** 2 + b ** 2 - c ** 2) / (2 * a * b)) * 180 / Math.PI
+  const val = Math.acos((a ** 2 + b ** 2 - c ** 2) / (2 * a * b)) * 180 / Math.PI
   if (!val) {
     console.log({
       a: a,
@@ -79,9 +81,34 @@ function lawOfCosines (a, b, c) {
 }
 
 export default {
-  props: ['isAuthenticated', 'course', 'plan', 'event', 'points', 'segments', 'updateFn'],
   components: {
     DownloadTrackButton
+  },
+  props: {
+    course: {
+      type: Object,
+      required: true
+    },
+    plan: {
+      type: Object,
+      required: true
+    },
+    event: {
+      type: Object,
+      required: true
+    },
+    points: {
+      type: Array,
+      required: true
+    },
+    segments: {
+      type: Array,
+      required: true
+    },
+    updateFn: {
+      type: Function,
+      required: true
+    }
   },
   data () {
     return {
@@ -114,7 +141,7 @@ export default {
       this.$bvModal.show('download-modal')
     },
     async generate (type, resolution, target) {
-      let t = this.$logger(`DownloadGPX|generate ${type} ${resolution}`)
+      const t = this.$logger(`DownloadGPX|generate ${type} ${resolution}`)
 
       this.working[target] = true
       this.ready[target] = false
@@ -126,7 +153,7 @@ export default {
         this.urls[target] = null
       }
 
-      if (this.hasTime && !this.points[0].hasOwnProperty('elapsed')) {
+      if (this.hasTime && this.points[0].elapsed === undefined) {
         await this.updateFn()
       }
 
@@ -137,11 +164,11 @@ export default {
           this.raw = await api.getCourseField(this.course._id, 'raw')
         }
         pnts = this.raw.map(x => {
-          return {lat: x[0], lon: x[1], alt: x[2]}
+          return { lat: x[0], lon: x[1], alt: x[2] }
         })
         pnts = geo.addLoc(pnts, this.course.distance)
         if (this.hasTime) { // interpolate times from distances in pnts
-          let red = this.points.map(p => { return {...p} })
+          const red = this.points.map(p => { return { ...p } })
           let lastelapsed = 0
           pnts.forEach(p => {
             while (red.length > 1 && red[1].loc <= p.loc) {
@@ -167,7 +194,7 @@ export default {
         }
       } else {
         // LOW RESOLUTION (adjust odd points lat/lon to correct distance)
-        pnts = this.points.map(p => { return {...p} })
+        pnts = this.points.map(p => { return { ...p } })
         pnts = geo.addLoc(pnts, this.course.distance) // update locations
         pnts.forEach((p, i) => {
           if (
@@ -175,21 +202,21 @@ export default {
             i < pnts.length - 2 &&
             (pnts[i + 1].dloc + pnts[i + 2].dloc < this.points[i + 1].dloc + this.points[i + 2].dloc)
           ) {
-            let A = new sgeo.latlon(p.lat, p.lon)
-            let B = new sgeo.latlon(pnts[i + 1].lat, pnts[i + 1].lon)
-            let C = new sgeo.latlon(pnts[i + 2].lat, pnts[i + 2].lon)
-            let bAB = A.bearingTo(B)
-            let bAC = A.bearingTo(C)
-            let dAC = A.distanceTo(C)
+            const A = new sgeo.latlon(p.lat, p.lon)
+            const B = new sgeo.latlon(pnts[i + 1].lat, pnts[i + 1].lon)
+            const C = new sgeo.latlon(pnts[i + 2].lat, pnts[i + 2].lon)
+            const bAB = A.bearingTo(B)
+            const bAC = A.bearingTo(C)
+            const dAC = A.distanceTo(C)
             if (dAC < this.points[i + 1].dloc + this.points[i + 2].dloc) {
-              let alpha = lawOfCosines(dAC, this.points[i + 1].dloc, this.points[i + 2].dloc)
+              const alpha = lawOfCosines(dAC, this.points[i + 1].dloc, this.points[i + 2].dloc)
               let bAB2 = 0
               if ((bAB - bAC < 180 && bAC < bAB) || (bAC > 270 && bAB < 90)) {
                 bAB2 = bAC + alpha
               } else {
                 bAB2 = bAC - alpha
               }
-              let B2 = A.destinationPoint(bAB2, this.points[i + 1].dloc)
+              const B2 = A.destinationPoint(bAB2, this.points[i + 1].dloc)
               pnts[i + 1].lat = Number(B2.lat)
               pnts[i + 1].lon = Number(B2.lng)
             }
@@ -201,9 +228,9 @@ export default {
       let name = `uP-${this.course.name}${(this.plan ? ('-' + this.plan.name) : '')}-${resolution}`
       name = name.replace(/ /g, '_')
       this.filenames[target] = `${name}.${type}`
-      let fn = (type === 'gpx') ? this.writeGPXText : this.writeTCXText
-      let text = fn(pnts, name)
-      var file = new Blob([text], {type: 'text/plain'})
+      const fn = (type === 'gpx') ? this.writeGPXText : this.writeTCXText
+      const text = fn(pnts, name)
+      const file = new Blob([text], { type: 'text/plain' })
       this.urls[target] = window.URL.createObjectURL(file)
       this.working[target] = false
       this.ready[target] = true
@@ -212,8 +239,8 @@ export default {
       this.$logger('DownloadGPX|generate', t)
     },
     writeGPXText (pnts, name) {
-      let trkpts = pnts.map(p => {
-        let o = {
+      const trkpts = pnts.map(p => {
+        const o = {
           $: {
             lat: round(p.lat, 8),
             lon: round(p.lon, 8)
@@ -225,7 +252,7 @@ export default {
         }
         return o
       })
-      let obj = {
+      const obj = {
         gpx: {
           $: {
             creator: 'ultraPacer',
@@ -243,15 +270,15 @@ export default {
           }
         }
       }
-      var builder = new xml2js.Builder({
+      const builder = new xml2js.Builder({
         xmldec: { version: '1.0', encoding: 'UTF-8', standalone: null }
       })
-      var xml = builder.buildObject(obj)
+      const xml = builder.buildObject(obj)
       return xml
     },
     writeTCXText (pnts, name) {
-      let trackpoints = pnts.map(p => {
-        let o = {
+      const trackpoints = pnts.map(p => {
+        const o = {
           Position: {
             LatitudeDegrees: round(p.lat, 8),
             LongitudeDegrees: round(p.lon, 8)
@@ -264,15 +291,15 @@ export default {
         }
         return o
       })
-      let lap = {
+      const lap = {
         DistanceMeters: round(pnts[pnts.length - 1].loc * 1000, 2),
         Intensity: 'Active'
       }
       if (this.hasTime) {
         lap.TotalTimeSeconds = round(pnts[pnts.length - 1].elapsed, 3)
       }
-      let coursepoints = this.segments.filter(s => s.waypoint2.tier < 3).map(s => {
-        let o = {
+      const coursepoints = this.segments.filter(s => s.waypoint2.tier < 3).map(s => {
+        const o = {
           Name: s.waypoint2.name,
           PointType: 'Generic',
           Position: {
@@ -286,7 +313,7 @@ export default {
         }
         return o
       })
-      let obj = {
+      const obj = {
         TrainingCenterDatabase: {
           $: {
             creator: 'ultraPacer',
@@ -309,10 +336,10 @@ export default {
           }
         }
       }
-      var builder = new xml2js.Builder({
+      const builder = new xml2js.Builder({
         xmldec: { version: '1.0', encoding: 'UTF-8', standalone: null }
       })
-      var xml = builder.buildObject(obj)
+      const xml = builder.buildObject(obj)
       return xml
     }
   }

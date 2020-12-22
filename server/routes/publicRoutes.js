@@ -1,20 +1,20 @@
 // publicRoutes.js
-var express = require('express')
-var publicRoutes = express.Router()
-var Course = require('../models/Course')
-var Plan = require('../models/Plan')
-var xml2js = require('xml2js')
+const express = require('express')
+const publicRoutes = express.Router()
+const Course = require('../models/Course')
+const Plan = require('../models/Plan')
+const xml2js = require('xml2js')
 
 // GET COURSE
 publicRoutes.route(['/course/:_id', '/course/link/:link']).get(async function (req, res) {
   try {
-    let q = { public: true }
+    const q = { public: true }
     if (req.params._id) {
       q._id = req.params._id
     } else {
       q.link = req.params.link
     }
-    var course = await Course.findOne(q).select(['-points', '-raw']).exec()
+    const course = await Course.findOne(q).select(['-points', '-raw']).exec()
     await course.addData()
     res.json(course)
   } catch (err) {
@@ -26,8 +26,8 @@ publicRoutes.route(['/course/:_id', '/course/link/:link']).get(async function (r
 // GET COURSE BY PLAN
 publicRoutes.route('/course/plan/:_id').get(async function (req, res) {
   try {
-    let plan = await Plan.findById(req.params._id)
-      .populate(['_user', {path: '_course', select: '-points -raw'}])
+    const plan = await Plan.findById(req.params._id)
+      .populate(['_user', { path: '_course', select: '-points -raw' }])
       .exec()
     if (plan._course.public) {
       await plan._course.addData(plan._user, req.params._id)
@@ -44,11 +44,11 @@ publicRoutes.route('/course/plan/:_id').get(async function (req, res) {
 // GET COURSE FIELD
 publicRoutes.route('/course/:course/field/:field').get(async function (req, res) {
   try {
-    let q = {
+    const q = {
       _id: req.params.course,
       public: true
     }
-    let course = await Course.findOne(q)
+    const course = await Course.findOne(q)
       .select(['_user', req.params.field])
       .exec()
     res.json(course[req.params.field])
@@ -61,13 +61,13 @@ publicRoutes.route('/course/:course/field/:field').get(async function (req, res)
 // GET COURSE FIELDS
 publicRoutes.route(['/course/:_id/fields', '/course/link/:link/fields']).put(async function (req, res) {
   try {
-    let q = { public: true }
+    const q = { public: true }
     if (req.params._id) {
       q._id = req.params._id
     } else {
       q.link = req.params.link
     }
-    var course = await Course.findOne(q).select(req.body).exec()
+    const course = await Course.findOne(q).select(req.body).exec()
     res.json(course)
   } catch (err) {
     console.log(err)
@@ -78,12 +78,12 @@ publicRoutes.route(['/course/:_id/fields', '/course/link/:link/fields']).put(asy
 // GET RACES
 publicRoutes.route('/races').get(async function (req, res) {
   try {
-    let q = {
+    const q = {
       public: true,
-      link: { '$nin': [ null, '' ] },
-      eventStart: { '$nin': [ null, '' ] }
+      link: { $nin: [null, ''] },
+      eventStart: { $nin: [null, ''] }
     }
-    var races = await Course.find(q).select(['name', 'distance', 'gain', 'loss', 'link', 'eventStart', 'eventTimezone']).sort('eventStart').exec()
+    const races = await Course.find(q).select(['name', 'distance', 'gain', 'loss', 'link', 'eventStart', 'eventTimezone']).sort('eventStart').exec()
     res.json(races)
   } catch (err) {
     console.log(err)
@@ -94,20 +94,20 @@ publicRoutes.route('/races').get(async function (req, res) {
 // SITEMAP
 publicRoutes.route('/sitemap.xml').get(async function (req, res) {
   try {
-    let q = {
+    const q = {
       public: true,
-      link: { '$nin': [ null, '' ] },
-      eventStart: { '$nin': [ null, '' ] }
+      link: { $nin: [null, ''] },
+      eventStart: { $nin: [null, ''] }
     }
-    var races = await Course.find(q).select('link').exec()
-    var arr = races.map(r => {
+    const races = await Course.find(q).select('link').exec()
+    const arr = races.map(r => {
       return {
         loc: `https://ultrapacer.com/race/${r.link}`,
         changefreq: 'daily',
         priority: 1
       }
     })
-    let obj = {
+    const obj = {
       urlset: {
         $: {
           xmlns: 'http://www.sitemaps.org/schemas/sitemap/0.9',
@@ -117,10 +117,10 @@ publicRoutes.route('/sitemap.xml').get(async function (req, res) {
         url: arr
       }
     }
-    var builder = new xml2js.Builder({
+    const builder = new xml2js.Builder({
       xmldec: { version: '1.0', encoding: 'UTF-8', standalone: null }
     })
-    var xml = builder.buildObject(obj)
+    const xml = builder.buildObject(obj)
     res.type('text/plain')
     res.send(xml)
   } catch (err) {

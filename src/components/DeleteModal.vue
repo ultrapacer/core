@@ -13,8 +13,11 @@
       </template>
       <p>Are you sure you want to {{ verb }} the following {{ type }}?</p>
       <p><b>{{ object.name }}</b></p>
-      <template #modal-ok="{ ok }">
-        <b-spinner v-show="deleting" small></b-spinner>
+      <template #modal-ok>
+        <b-spinner
+          v-show="deleting"
+          small
+        />
         {{ verb | capitalize }} {{ type }}
       </template>
     </b-modal>
@@ -23,6 +26,13 @@
 
 <script>
 export default {
+  filters: {
+    capitalize: function (value) {
+      if (!value) return ''
+      value = value.toString()
+      return value.charAt(0).toUpperCase() + value.slice(1)
+    }
+  },
   data () {
     return {
       deleting: false,
@@ -56,13 +66,6 @@ export default {
       this.delFun = delFun
       this.cb = cb
       this.$bvModal.show('delete-modal')
-    }
-  },
-  filters: {
-    capitalize: function (value) {
-      if (!value) return ''
-      value = value.toString()
-      return value.charAt(0).toUpperCase() + value.slice(1)
     }
   }
 }

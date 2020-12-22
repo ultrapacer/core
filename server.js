@@ -62,7 +62,7 @@ app.get('/sitemap.xml', function (req, res) {
 // get timezone
 app.get('/api/timezone', function (req, res) {
   console.log(req)
-  let tz = geoTz(req.query.lat, req.query.lon)
+  const tz = geoTz(req.query.lat, req.query.lon)
   res.send(tz[0])
 })
 

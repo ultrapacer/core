@@ -7,13 +7,13 @@ const gpxParse = require('gpx-parse')
 
 function calcStats (points, smooth = true) {
   // return course { gain, loss, dist }
-  let t = logger(`geo|calcStats smooth=${smooth}`)
-  let d = points[points.length - 1].loc
-  var gain = 0
-  var loss = 0
-  var delta = 0
+  const t = logger(`geo|calcStats smooth=${smooth}`)
+  const d = points[points.length - 1].loc
+  let gain = 0
+  let loss = 0
+  let delta = 0
   if (smooth) {
-    let locs = points.map(x => x.loc)
+    const locs = points.map(x => x.loc)
     points = pointWLSQ(points, locs, 0.05)
   }
   let last = points[0].alt
@@ -38,13 +38,13 @@ function calcSegments (p, breaks, pacing) {
   // p: points array of {loc, lat, lon, alt}
   // breaks: array of [loc,loc,...] to break on
   // pacing: pacing object with np and drift fields
-  var cLen = p[p.length - 1].loc
-  var s = [] // segments array
-  var alts = getElevation(p, breaks)
-  var len = 0
-  var i
-  var il
-  let hasActuals = p[0].hasOwnProperty('actual')
+  const cLen = p[p.length - 1].loc
+  const s = [] // segments array
+  const alts = getElevation(p, breaks)
+  let len = 0
+  let i
+  let il
+  const hasActuals = (p[0].actual !== undefined)
   for (i = 1, il = breaks.length; i < il; i++) {
     len = breaks[i] - breaks[i - 1]
     s.push({
@@ -69,11 +69,11 @@ function calcSegments (p, breaks, pacing) {
       }
     })
   }
-  var delta = 0
-  var j = 0
-  var j0 = 0
-  var delta0 = 0
-  var grade = 0
+  let delta = 0
+  let j = 0
+  let j0 = 0
+  let delta0 = 0
+  let grade = 0
   let delays = (pacing) ? [...pacing.delays] : []
   function getDelay (a, b) {
     if (!delays.length) { return 0 }
@@ -85,7 +85,7 @@ function calcSegments (p, breaks, pacing) {
     }
     return 0
   }
-  let factors = {
+  const factors = {
     aF: 0, // altitude factor
     gF: 0, // grade factor
     tF: 0, // terrain factor
@@ -93,8 +93,8 @@ function calcSegments (p, breaks, pacing) {
     dark: 0, // dark factor
     dF: 0 // drift factor
   }
-  let fk = Object.keys(factors)
-  let hasTOD = p[0].hasOwnProperty('tod')
+  const fk = Object.keys(factors)
+  const hasTOD = (p[0].tod !== undefined)
   for (i = 1, il = p.length; i < il; i++) {
     j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
     if (j > j0) {
@@ -127,7 +127,7 @@ function calcSegments (p, breaks, pacing) {
           factors.aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
           factors.tF = nF.tF([p[i - 1].loc, s[j].start], pacing.tFs)
           if (hasTOD) {
-            let startTod = interp(
+            const startTod = interp(
               p[i - 1].loc,
               p[i].loc,
               p[i - 1].tod,
@@ -154,14 +154,14 @@ function calcSegments (p, breaks, pacing) {
         factors.aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
         factors.tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
         if (hasTOD) {
-          let startTod = (i < p.length - 1)
+          const startTod = (i < p.length - 1)
             ? interp(
-              p[i].loc,
-              p[i + 1].loc,
-              p[i].tod,
-              p[i + 1].tod,
-              s[j].start
-            )
+                p[i].loc,
+                p[i + 1].loc,
+                p[i].tod,
+                p[i + 1].tod,
+                s[j].start
+              )
             : p[i].tod
           factors.hF = nF.hF([p[i].tod, startTod], pacing.heatModel)
           factors.dark = nF.dark([p[i].tod, startTod], factors.tF, pacing.sun)
@@ -215,7 +215,7 @@ function calcSegments (p, breaks, pacing) {
 
     })
     s.forEach((seg, i) => {
-      let p1 = p.find(point => point.loc >= seg.start)
+      const p1 = p.find(point => point.loc >= seg.start)
       let p2 = {}
       if (i === s.length - 1) {
         p2 = p[p.length - 1]
@@ -233,11 +233,11 @@ function calcSegments (p, breaks, pacing) {
 function addLoc (p, distance = null) {
   // add loc & dloc fields
   // p: points array of {lat, lon, alt}
-  var d = 0
-  var l = 0
+  let d = 0
+  let l = 0
   p[0].loc = 0
   p[0].dloc = 0
-  for (var i = 1, il = p.length; i < il; i++) {
+  for (let i = 1, il = p.length; i < il; i++) {
     d = gpxParse.utils.calculateDistance(
       p[i - 1].lat,
       p[i - 1].lon,
@@ -252,7 +252,7 @@ function addLoc (p, distance = null) {
   // if specifying other distance, scale distances:
   if (distance) {
     if (round(p[p.length - 1].loc, 4) !== round(distance, 4)) {
-      let scale = distance / p[p.length - 1].loc
+      const scale = distance / p[p.length - 1].loc
       p.forEach((x, i) => {
         x.dloc = x.dloc * scale
         x.loc = x.loc * scale
@@ -265,13 +265,13 @@ function addLoc (p, distance = null) {
 
 function addGrades (points) {
   // add grade field to points array
-  let t = logger(`geo|addGrades`)
-  let locs = points.map(x => x.loc)
-  let lsq = pointWLSQ(points, locs, 0.05)
+  const t = logger('geo|addGrades')
+  const locs = points.map(x => x.loc)
+  const lsq = pointWLSQ(points, locs, 0.05)
   points.forEach((p, i) => {
     p.grade = round(lsq[i].grade, 4)
   })
-  logger(`geo|addGrades`, t)
+  logger('geo|addGrades', t)
   return points
 }
 
@@ -279,17 +279,17 @@ export function pointWLSQ (points, locs, gt) {
   // p: points array of {loc, lat, lon, alt}
   // locs: array of locations (km)
   // gt: grade smoothing threshold
-  let mbs = wlslr(
+  const mbs = wlslr(
     points.map(p => { return p.loc }),
     points.map(p => { return p.alt }),
     locs,
     gt
   )
-  var ga = []
+  const ga = []
   locs.forEach((x, i) => {
-    var grade = mbs[i][0] / 10
+    let grade = mbs[i][0] / 10
     if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
-    var alt = (x * mbs[i][0]) + mbs[i][1]
+    const alt = (x * mbs[i][0]) + mbs[i][1]
     ga.push({
       grade: grade,
       alt: alt
@@ -299,16 +299,16 @@ export function pointWLSQ (points, locs, gt) {
 }
 
 function getElevation (points, location) {
-  var locs = []
-  var elevs = []
-  var num = 0
+  let locs = []
+  const elevs = []
+  let num = 0
   if (Array.isArray(location)) {
     locs = [...location]
   } else {
     locs = [location]
   }
   location = locs.shift()
-  for (var i = 0, il = points.length; i < il; i++) {
+  for (let i = 0, il = points.length; i < il; i++) {
     if (points[i].loc >= location || i === il - 1) {
       if (points[i].loc === location || i === il - 1) {
         elevs.push(points[i].alt)
@@ -335,17 +335,17 @@ function getElevation (points, location) {
 
 export function getLatLonAltFromDistance (points, location, start) {
   // if the start index is passed, make sure you go the right direction:
-  var i0 = Math.min(start, points.length - 1) || 0
+  let i0 = Math.min(start, points.length - 1) || 0
   if (i0 > 0 && (points[i0].loc > location)) {
-    for (var j = i0; j >= 0; j--) {
+    for (let j = i0; j >= 0; j--) {
       if (points[j].loc <= location) {
         i0 = j
         break
       }
     }
   }
-  var locs = []
-  var llas = []
+  let locs = []
+  const llas = []
   if (Array.isArray(location)) {
     locs = [...location]
   } else {
@@ -353,7 +353,7 @@ export function getLatLonAltFromDistance (points, location, start) {
   }
   location = locs.shift()
 
-  var i = 0
+  let i = 0
   while (i < points.length) {
     if (points[i].loc >= location || i === points.length - 1) {
       if (points[i].loc === location || i === points.length - 1) {
@@ -374,11 +374,11 @@ export function getLatLonAltFromDistance (points, location, start) {
             ind: i
           })
         } else {
-          var p1 = new sgeo.latlon(points[i - 1].lat, points[i - 1].lon)
-          var p2 = new sgeo.latlon(points[i].lat, points[i].lon)
-          var dist = location - points[i - 1].loc
-          var brng = p1.bearingTo(p2)
-          var p3 = p1.destinationPoint(brng, dist)
+          const p1 = new sgeo.latlon(points[i - 1].lat, points[i - 1].lon)
+          const p2 = new sgeo.latlon(points[i].lat, points[i].lon)
+          const dist = location - points[i - 1].loc
+          const brng = p1.bearingTo(p2)
+          const p3 = p1.destinationPoint(brng, dist)
           llas.push({
             lat: Number(p3.lat),
             lon: Number(p3.lng),
@@ -419,26 +419,26 @@ export function reduce (points, distance = null) {
   // reduce density of points for processing
   // correct distance
 
-  let spacing = 0.025 // meters between points
+  const spacing = 0.025 // meters between points
   if (
-    !points[0].hasOwnProperty('loc') ||
+    points[0].loc === undefined ||
     (distance && (round(points[points.length - 1].loc, 4) !== round(distance, 4)))
   ) {
     addLoc(points, distance)
   }
 
-  let len = points[points.length - 1].loc
-  let numpoints = Math.floor(len / spacing) + 1
-  let xs = Array(numpoints).fill(0).map((e, i) => round(i++ * spacing, 3))
+  const len = points[points.length - 1].loc
+  const numpoints = Math.floor(len / spacing) + 1
+  const xs = Array(numpoints).fill(0).map((e, i) => round(i++ * spacing, 3))
   if (xs[xs.length - 1] < len) {
     xs.push(len)
   }
-  let adj = pointWLSQ(
+  const adj = pointWLSQ(
     points,
     xs,
     2 * spacing
   )
-  let llas = getLatLonAltFromDistance(points, xs, 0)
+  const llas = getLatLonAltFromDistance(points, xs, 0)
 
   // reformat
   return xs.map((x, i) => {
@@ -454,14 +454,14 @@ export function reduce (points, distance = null) {
 }
 
 export function calcPacing (data) {
-  let t = logger()
+  const t = logger()
   // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel, scales }
-  var hasPlan = false
+  let hasPlan = false
   if (data.plan) { hasPlan = true }
 
   // copy points array & clear out time data if not applicable to this plan
-  let points = data.points.map(p => {
-    let x = {...p}
+  const points = data.points.map(p => {
+    const x = { ...p }
     if (!hasPlan) {
       delete x.elapsed
       delete x.time
@@ -496,7 +496,8 @@ export function calcPacing (data) {
   if (hasPlan && data.event.startTime !== null) {
     let lastSplits = kSplits.map(x => { return x.time })
     let elapsed = kSplits[kSplits.length - 1].elapsed
-    for (var i = 0; i < 10; i++) {
+    let i
+    for (i = 0; i < 10; i++) {
       pacing = iteratePaceCalc({
         course: data.course,
         plan: data.plan,
@@ -515,7 +516,7 @@ export function calcPacing (data) {
         unit: 'kilometers'
       })
       let hasChanged = false
-      let newSplits = kSplits.map(x => { return x.time })
+      const newSplits = kSplits.map(x => { return x.time })
       for (let j = 0; j < newSplits.length; j++) {
         if (Math.abs(newSplits[j] - lastSplits[j]) >= 1) {
           hasChanged = true
@@ -530,11 +531,11 @@ export function calcPacing (data) {
       elapsed = kSplits[kSplits.length - 1].elapsed
     }
     logger(`geo.iteratePaceCalc: ${i + 2} iterations`, t)
-    let s = calcSunTime({
+    const s = calcSunTime({
       points: points,
       event: data.event
     })
-    pacing = {...pacing, ...s}
+    pacing = { ...pacing, ...s }
   }
 
   logger('geo.calcPacing', t)
@@ -546,23 +547,23 @@ export function calcPacing (data) {
 }
 
 function iteratePaceCalc (data) {
-  let t = logger()
+  const t = logger()
   // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel, scales }
-  var plan = false
+  let plan = false
   if (data.plan) { plan = true }
 
   // calculate course normalizing factor:
-  var tot = 0
-  var factors = {gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0}
-  let fstats = {
-    max: {gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0},
-    min: {gF: 100, aF: 100, tF: 100, hF: 100, dark: 100, dF: 100}
+  let tot = 0
+  const factors = { gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0 }
+  const fstats = {
+    max: { gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0 },
+    min: { gF: 100, aF: 100, tF: 100, hF: 100, dark: 100, dF: 100 }
   }
-  var p = data.points
-  let hasTOD = p[0].hasOwnProperty('tod')
+  const p = data.points
+  const hasTOD = (p[0].tod !== undefined)
   let fs = {}
   let elapsed = 0
-  let hasPacingData = plan && data.pacing && data.pacing.np
+  const hasPacingData = plan && data.pacing && data.pacing.np
   if (hasPacingData) {
     p[0].elapsed = 0
     p[0].time = 0
@@ -574,7 +575,7 @@ function iteratePaceCalc (data) {
 
   // variables & function for adding in delays:
   let delay = 0
-  let delays = [...data.delays]
+  const delays = [...data.delays]
   function getDelay (a, b) {
     if (!delays.length) { return 0 }
     while (delays.length && delays[0].loc < a) {
@@ -603,7 +604,7 @@ function iteratePaceCalc (data) {
     if (hasTOD) {
       fs.dark = nF.dark([p[j - 1].tod, p[j].tod], fs.tF, data.event.sun)
     }
-    let len = p[j].loc - p[j - 1].loc
+    const len = p[j].loc - p[j - 1].loc
     let f = 1 // combined segment factor
     Object.keys(fs).forEach(k => {
       factors[k] += fs[k] * len
@@ -625,7 +626,7 @@ function iteratePaceCalc (data) {
   Object.keys(factors).forEach(k => {
     factors[k] = round(factors[k] / data.course.distance, 4)
   })
-  let normFactor = (tot / data.course.distance)
+  const normFactor = (tot / data.course.distance)
 
   delay = 0
   let time = 0
@@ -654,7 +655,7 @@ function iteratePaceCalc (data) {
     }
   }
 
-  let pacing = {
+  const pacing = {
     scales: data.scales,
     time: time,
     delay: delay,
@@ -678,9 +679,9 @@ function iteratePaceCalc (data) {
 
 export function calcSplits (data) {
   // data = {points, event, pacing, unit}
-  let distScale = (data.unit === 'kilometers') ? 1 : 0.621371
-  let tot = data.points[data.points.length - 1].loc * distScale
-  let breaks = [0]
+  const distScale = (data.unit === 'kilometers') ? 1 : 0.621371
+  const tot = data.points[data.points.length - 1].loc * distScale
+  const breaks = [0]
   let i = 1
   while (i < tot) {
     breaks.push(i / distScale)
@@ -698,8 +699,8 @@ export function calcSplits (data) {
     breaks.pop()
   }
 
-  let arr = calcSegments(data.points, breaks, data.pacing)
-  if (data.event.startTime !== null && data.points[0].hasOwnProperty('elapsed')) {
+  const arr = calcSegments(data.points, breaks, data.pacing)
+  if (data.event.startTime !== null && data.points[0].elapsed !== undefined) {
     arr.forEach((x, i) => {
       arr[i].tod = (x.elapsed + data.event.startTime)
     })
@@ -713,10 +714,10 @@ function calcSunTime (data) {
   // time in sun zones:
   let sunType0 = ''
   let sunType = ''
-  let s = {
+  const s = {
     sunEventsByLoc: [],
-    sunTime: {day: 0, twilight: 0, dark: 0},
-    sunDist: {day: 0, twilight: 0, dark: 0}
+    sunTime: { day: 0, twilight: 0, dark: 0 },
+    sunDist: { day: 0, twilight: 0, dark: 0 }
   }
   data.points.forEach((x, i) => {
     if (
@@ -740,7 +741,7 @@ function calcSunTime (data) {
     }
     if (sunType !== sunType0) {
       s.sunEventsByLoc.push({
-        'sunType': sunType,
+        sunType: sunType,
         loc: x.loc
       })
     }
@@ -751,22 +752,22 @@ function calcSunTime (data) {
 
 export function addActuals (points, actual) {
   // interpolate actual array to points lat/lon and add actual elapsed & loc
-  let t = logger()
+  const t = logger()
   actual = actual.map(p => {
-    let x = {...p}
+    const x = { ...p }
     x.ll = new sgeo.latlon(p.lat, p.lon)
     return x
   })
   let MatchFailure = {}
   try {
     points.forEach(p => {
-      let ll = new sgeo.latlon(p.lat, p.lon)
+      const ll = new sgeo.latlon(p.lat, p.lon)
       // pick all points within the next "th"
       let j = 0
       let darr = []
       while (darr.length === 0 || j > darr.length / 3) {
         if (j !== 0) { actual.shift() }
-        let ths = [0.050, 0.075, 0.100, 0.15, 0.2]
+        const ths = [0.050, 0.075, 0.100, 0.15, 0.2]
         for (let ith = 0; ith < ths.length; ith++) {
           darr = actual.filter(
             (a, i) => a.loc - actual[0].loc <= ths[ith] || i < 3
@@ -783,10 +784,10 @@ export function addActuals (points, actual) {
           elapsed: actual[0].elapsed
         }
       } else {
-        let a1 = actual[j]
-        let a2 = darr[j + 1] >= darr[j - 1] ? actual[j + 1] : actual[j - 1]
-        let d1 = darr[j]
-        let d2 = darr[j + 1] >= darr[j - 1] ? darr[j + 1] : darr[j - 1]
+        const a1 = actual[j]
+        const a2 = darr[j + 1] >= darr[j - 1] ? actual[j + 1] : actual[j - 1]
+        const d1 = darr[j]
+        const d2 = darr[j + 1] >= darr[j - 1] ? darr[j + 1] : darr[j - 1]
         if (d1 > 0.25) {
           MatchFailure = {
             match: false,
@@ -807,12 +808,12 @@ export function addActuals (points, actual) {
         }
       }
     })
-    logger(`geo|addActuals MATCH`, t)
+    logger('geo|addActuals MATCH', t)
     return {
       match: true
     }
   } catch (e) {
-    logger(`geo|addActuals FAIL`, t)
+    logger('geo|addActuals FAIL', t)
     return MatchFailure
   }
 }

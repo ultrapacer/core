@@ -1,13 +1,13 @@
 // planRoutes.js
-var express = require('express')
-var planRoutes = express.Router()
-var User = require('../models/User')
-var Plan = require('../models/Plan')
+const express = require('express')
+const planRoutes = express.Router()
+const User = require('../models/User')
+const Plan = require('../models/Plan')
 
 // SAVE NEW
 planRoutes.route('/').post(async function (req, res) {
   try {
-    var plan = new Plan(req.body)
+    const plan = new Plan(req.body)
     plan._user = await User.findOne({ auth0ID: req.user.sub }).exec()
     await plan.save()
     if (!plan._user._courses.find(x => plan._course.equals(x))) {
@@ -24,10 +24,10 @@ planRoutes.route('/').post(async function (req, res) {
 //  UPDATE
 planRoutes.route('/:id').put(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var plan = await Plan.findById(req.params.id).exec()
+    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const plan = await Plan.findById(req.params.id).exec()
     if (user.equals(plan._user)) {
-      let fields = ['name', 'description', 'pacingMethod', 'pacingTarget',
+      const fields = ['name', 'description', 'pacingMethod', 'pacingTarget',
         'drift', 'heatModel', 'waypointDelay', 'eventStart', 'eventTimezone']
       fields.forEach(f => {
         plan[f] = req.body[f]
@@ -46,8 +46,8 @@ planRoutes.route('/:id').put(async function (req, res) {
 //  UPDATE CACHE
 planRoutes.route('/:id/cache').put(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var plan = await Plan.findById(req.params.id).exec()
+    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const plan = await Plan.findById(req.params.id).exec()
     if (user.equals(plan._user)) {
       plan.cache = req.body.cache
       await plan.save()
@@ -63,8 +63,8 @@ planRoutes.route('/:id/cache').put(async function (req, res) {
 // DELETE
 planRoutes.route('/:id').delete(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    var plan = await Plan.findById(req.params.id).select('_user').exec()
+    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const plan = await Plan.findById(req.params.id).select('_user').exec()
     if (user.equals(plan._user)) {
       await plan.remove()
       res.json('Successfully removed')

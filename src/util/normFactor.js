@@ -1,7 +1,7 @@
 // normFactor.js
-var mathUtil = require('./math')
+const mathUtil = require('./math')
 
-var defaults = {
+const defaults = {
   alt: {
     rate: 6, // %
     span: 1000, // m
@@ -53,7 +53,7 @@ function altFactor (alt, model) {
   if (model === null || typeof (model) === 'undefined') {
     model = defaults.alt
   }
-  var a = 0
+  let a = 0
   if (Array.isArray(alt)) {
     a = (alt[0] + alt[1]) / 2
   } else {
@@ -62,7 +62,7 @@ function altFactor (alt, model) {
   if (a <= model.th) {
     return 1
   } else {
-    let r = model.rate / model.span / 100
+    const r = model.rate / model.span / 100
     return (1 + r) ** (a - model.th)
   }
 }
@@ -73,13 +73,13 @@ function driftFactor (loc, drift, length) {
   // drift: in %
   // length: total course length [km]
   if (drift) {
-    var mid = 0
+    let mid = 0
     if (Array.isArray(loc)) {
       mid = (loc[0] + loc[1]) / 2
     } else {
       mid = loc
     }
-    var dF = ((-drift / 2) + (mid / length * drift)) / 100
+    const dF = ((-drift / 2) + (mid / length * drift)) / 100
     return dF + 1
   } else {
     return 1
@@ -105,7 +105,7 @@ function heatFactor (time, model = null) {
   }
   let hF = 1
   if (t > model.start && t < model.stop) {
-    let theta = (t - model.start) / (model.stop - model.start) * Math.PI
+    const theta = (t - model.start) / (model.stop - model.start) * Math.PI
     hF += ((model.max - model.baseline) * Math.sin(theta)) / 100
   }
   hF += model.baseline / 100
@@ -116,7 +116,7 @@ function terrainFactor (loc, tFs) {
   // returns a segment-based terrain factor
   // loc: loc [km] or array [start, end] [km]
   // tFs: array of terrainFactors [loc, tF] with terrainFactor
-  var tF = tFs[0].tF
+  let tF = tFs[0].tF
 
   if (!Array.isArray(loc)) {
     loc = [loc, loc]
@@ -129,7 +129,7 @@ function terrainFactor (loc, tFs) {
   } else {
     let wtF = 0
     tFs.forEach(x => {
-      let l = Math.min(loc[1], x.end) -
+      const l = Math.min(loc[1], x.end) -
         Math.max(loc[0], x.start)
       wtF += l * x.tF
     })
@@ -157,7 +157,7 @@ function darkFactor (tod, tF, sun, model) {
   if (model === null || typeof (model) === 'undefined') {
     model = defaults.dark
   }
-  let fdark = model.scale * (tF - 1) + 1
+  const fdark = model.scale * (tF - 1) + 1
   if (t <= sun.dawn || t >= sun.dusk) {
     return fdark
   } else {

@@ -9,28 +9,28 @@ export default {
     this.addPlugin({
       id: 'background-color-plugin',
       beforeDraw: function (chart) {
-        var ctx = chart.chart.ctx
-        var rules = chart.chart.options.backgroundRules
+        const ctx = chart.chart.ctx
+        const rules = chart.chart.options.backgroundRules
         if (!rules || rules.length <= 1) { return }
-        var yaxis = chart.chart.scales['y-axis-2']
-        var xaxis = chart.chart.scales['x-axis-0']
+        const yaxis = chart.chart.scales['y-axis-2']
+        const xaxis = chart.chart.scales['x-axis-0']
         function distToPixels (d) {
           return d / (xaxis.max) * xaxis.width + xaxis.left
         }
         function transparentize (color, opacity) {
-          var alpha = opacity === undefined ? 0.5 : 1 - opacity
+          const alpha = opacity === undefined ? 0.5 : 1 - opacity
           return window.Color(color).alpha(alpha).rgbString()
         }
-        let colors = {
+        const colors = {
           day: transparentize('rgb(255, 255, 255)', 1),
           twilight: transparentize('rgb(0, 0, 0)', 0.85),
           dark: transparentize('rgb(0, 0, 0)', 0.7)
         }
         rules.forEach((r, i) => {
-          let x1 = distToPixels(r.loc)
-          let x2 = distToPixels(i < rules.length - 1 ? rules[i + 1].loc : xaxis.max)
+          const x1 = distToPixels(r.loc)
+          const x2 = distToPixels(i < rules.length - 1 ? rules[i + 1].loc : xaxis.max)
           if (r.sunType === 'twilight') {
-            let grd = ctx.createLinearGradient(x1, 0, x2, 0)
+            const grd = ctx.createLinearGradient(x1, 0, x2, 0)
             if (
               (i > 0 && rules[i - 1].sunType === 'day') ||
               (i < rules.length - 1 && rules[i + 1].sunType === 'dark')

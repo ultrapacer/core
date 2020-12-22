@@ -1,10 +1,21 @@
 <template>
   <div class="container-fluid mt-4">
     <b-row>
-      <b-col class="d-none d-md-block" md="12" lg="6">
-        <h1 class="h1">{{ course.name }}</h1>
+      <b-col
+        class="d-none d-md-block"
+        md="12"
+        lg="6"
+      >
+        <h1 class="h1">
+          {{ course.name }}
+        </h1>
       </b-col>
-      <b-col v-if="!initializing" cols="12" lg="6" data-nosnippet>
+      <b-col
+        v-if="!initializing"
+        cols="12"
+        lg="6"
+        data-nosnippet
+      >
         <b-row no-gutters>
           <b-col
             v-if="plansSelect.length"
@@ -20,12 +31,12 @@
               label-cols-lg="2"
             >
               <b-form-select
-                  type="number"
-                  v-model="plan"
-                  :options="plansSelect"
-                  @change="calcPlan"
-                  size="sm"
-                ></b-form-select>
+                v-model="plan"
+                type="number"
+                :options="plansSelect"
+                size="sm"
+                @change="calcPlan"
+              />
             </b-form-group>
           </b-col>
           <b-col
@@ -36,26 +47,26 @@
           >
             <b-btn
               v-if="plansSelect.length && planOwner"
-              @click="editPlan()"
-
-              size="sm"
               v-b-popover.hover.blur.bottomright.d250.v-info="
                 'Edit the selected pacing plan.'
               "
+
+              size="sm"
+              @click="editPlan()"
             >
-              <v-icon name="edit"></v-icon>
+              <v-icon name="edit" />
             </b-btn>
             <b-btn
-                variant="success"
-                @click.prevent="newPlan()"
-                size="sm"
-                class="mr-n2"
-                v-b-popover.hover.blur.bottomright.d250.v-info="
+              v-b-popover.hover.blur.bottomright.d250.v-info="
                 'Create a new pacing plan for this course.'
               "
+              variant="success"
+              size="sm"
+              class="mr-n2"
+              @click.prevent="newPlan()"
             >
-              <v-icon name="plus"></v-icon>
-              <span v-if="!plansSelect.length" >New Pacing Plan</span>
+              <v-icon name="plus" />
+              <span v-if="!plansSelect.length">New Pacing Plan</span>
             </b-btn>
           </b-col>
           <b-col
@@ -67,15 +78,15 @@
             <b-button
               id="menu-button"
               variant="primary"
-              @click="showMenu = !showMenu"
               class="mr-1"
               size="sm"
+              @click="showMenu = !showMenu"
             >
-              <v-icon name="caret-square-down"></v-icon>
+              <v-icon name="caret-square-down" />
               <span class="d-none d-md-inline">
                 Options
               </span>
-            </b-button >
+            </b-button>
             <b-popover
               :show.sync="showMenu"
               target="menu-button"
@@ -85,16 +96,27 @@
               variant="primary"
             >
               <b-button-group vertical>
-                <b-button v-if="owner" @click="editCourse()" variant="outline-primary">
-                  <v-icon name="edit"></v-icon>
+                <b-button
+                  v-if="owner"
+                  variant="outline-primary"
+                  @click="editCourse()"
+                >
+                  <v-icon name="edit" />
                   Modify Course
                 </b-button>
-                <b-button @click="download()" variant="outline-primary">
-                  <v-icon name="download"></v-icon>
+                <b-button
+                  variant="outline-primary"
+                  @click="download()"
+                >
+                  <v-icon name="download" />
                   Download GPX/TCX Files
                 </b-button>
-                <b-button v-if="planAssigned" @click="loadCompare()" variant="outline-primary">
-                  <v-icon name="running"></v-icon>
+                <b-button
+                  v-if="planAssigned"
+                  variant="outline-primary"
+                  @click="loadCompare()"
+                >
+                  <v-icon name="running" />
                   Compare to Activity (Beta)
                 </b-button>
               </b-button-group>
@@ -103,147 +125,172 @@
         </b-row>
       </b-col>
     </b-row>
-    <div v-if="initializing" class="d-flex justify-content-center mb-3" data-nosnippet>
-      <b-spinner label="Loading..." ></b-spinner>
+    <div
+      v-if="initializing"
+      class="d-flex justify-content-center mb-3"
+      data-nosnippet
+    >
+      <b-spinner label="Loading..." />
     </div>
-    <b-row v-if="!initializing" data-nosnippet>
+    <b-row
+      v-if="!initializing"
+      data-nosnippet
+    >
       <b-col order="2">
-        <b-tabs v-model="tableTabIndex" content-class="mt-3" small>
-          <b-tab title="Segments" active>
+        <b-tabs
+          v-model="tableTabIndex"
+          content-class="mt-3"
+          small
+        >
+          <b-tab
+            title="Segments"
+            active
+          >
             <segment-table
-                v-if="segments.length"
-                ref="segmentTable"
-                :course="course"
-                :segments="segments"
-                :units="units"
-                :pacing="pacing"
-                :busy="busy"
-                :mode="'segments'"
-                :showActual="comparing"
-                @select="updateFocus"
-                @show="waypointShow"
-                @hide="waypointHide"
-              ></segment-table>
-            <div v-else class="d-flex justify-content-center mt-3 mb-3">
-              <b-spinner label="Loading..." ></b-spinner>
+              v-if="segments.length"
+              ref="segmentTable"
+              :course="course"
+              :segments="segments"
+              :pacing="pacing"
+              :busy="busy"
+              :mode="'segments'"
+              :show-actual="comparing"
+              @select="updateFocus"
+              @show="waypointShow"
+              @hide="waypointHide"
+            />
+            <div
+              v-else
+              class="d-flex justify-content-center mt-3 mb-3"
+            >
+              <b-spinner label="Loading..." />
             </div>
           </b-tab>
           <b-tab title="Splits">
             <segment-table
-                v-if="splits.length"
-                ref="splitTable"
-                :course="course"
-                :segments="splits"
-                :units="units"
-                :pacing="pacing"
-                :busy="busy"
-                :mode="'splits'"
-                :showActual="comparing"
-                @select="updateFocus"
-              ></segment-table>
-            <div v-else class="d-flex justify-content-center mt-3 mb-3">
-              <b-spinner label="Loading..." ></b-spinner>
+              v-if="splits.length"
+              ref="splitTable"
+              :course="course"
+              :segments="splits"
+              :pacing="pacing"
+              :busy="busy"
+              :mode="'splits'"
+              :show-actual="comparing"
+              @select="updateFocus"
+            />
+            <div
+              v-else
+              class="d-flex justify-content-center mt-3 mb-3"
+            >
+              <b-spinner label="Loading..." />
             </div>
           </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table
-                ref="waypointTable"
-                :course="course"
-                :points="points"
-                :units="units"
-                :editing="editing"
-                :editFn="editWaypoint"
-                :delFn="deleteWaypoint"
-                @setUpdateFlag="setUpdateFlag"
-              ></waypoint-table>
+              ref="waypointTable"
+              :course="course"
+              :editing="editing"
+              :edit-fn="editWaypoint"
+              :del-fn="deleteWaypoint"
+              @updateWaypointLocation="updateWaypointLocation"
+            />
             <div v-if="editing">
-              <b-btn variant="success" @click.prevent="newWaypoint()">
-                <v-icon name="plus"></v-icon><span>New Waypoint</span>
+              <b-btn
+                variant="success"
+                @click.prevent="newWaypoint()"
+              >
+                <v-icon name="plus" /><span>New Waypoint</span>
               </b-btn>
               <b-btn
-                  variant="outline-primary"
-                  @click.prevent="editing=false"
-                  style="float:right"
-                >
-                <v-icon name="edit"></v-icon><span>editing: on</span>
+                variant="outline-primary"
+                style="float:right"
+                @click.prevent="editing=false"
+              >
+                <v-icon name="edit" /><span>editing: on</span>
               </b-btn>
             </div>
             <div v-if="owner && !editing">
               <b-btn
-                  @click.prevent="editing=true"
-                  style="float:right"
-                >
-                <v-icon name="lock"></v-icon><span>editing: off</span>
+                style="float:right"
+                @click.prevent="editing=true"
+              >
+                <v-icon name="lock" /><span>editing: off</span>
               </b-btn>
             </div>
           </b-tab>
-          <b-tab v-if="pacing.factors" title="Details">
+          <b-tab
+            v-if="pacing.factors"
+            title="Details"
+          >
             <plan-details
-                :course="course"
-                :points="points"
-                :event="event"
-                :plan="plan"
-                :pacing="pacing"
-                :units="units"
-                :busy="busy"
-              ></plan-details>
+              :course="course"
+              :points="points"
+              :event="event"
+              :plan="plan"
+              :pacing="pacing"
+              :busy="busy"
+            />
           </b-tab>
         </b-tabs>
       </b-col>
-      <b-col lg="5" order="1">
-        <div v-if="this.points.length" class="sticky-top mt-1">
+      <b-col
+        lg="5"
+        order="1"
+      >
+        <div
+          v-if="points.length"
+          class="sticky-top mt-1"
+        >
           <course-profile
-              ref="profile"
-              :course="course"
-              :points="points"
-              :sunEvents="pacing.sunEventsByLoc"
-              :units="units"
-              :showActual="comparing"
-              :waypointShowMode="waypointShowMode"
-              @waypointClick="waypointClick"
-            ></course-profile>
+            ref="profile"
+            :course="course"
+            :points="points"
+            :sun-events="pacing.sunEventsByLoc"
+            :show-actual="comparing"
+            :waypoint-show-mode="waypointShowMode"
+            @waypointClick="waypointClick"
+          />
           <course-map
-              ref="map"
-              :course="course"
-              :points="points"
-              :focus="mapFocus"
-              :units="units"
-              :waypointShowMode="waypointShowMode"
-            ></course-map>
+            ref="map"
+            :course="course"
+            :points="points"
+            :focus="mapFocus"
+            :waypoint-show-mode="waypointShowMode"
+          />
         </div>
-        <div v-else class="d-flex justify-content-center mt-3 mb-3">
-          <b-spinner label="Loading..." ></b-spinner>
+        <div
+          v-else
+          class="d-flex justify-content-center mt-3 mb-3"
+        >
+          <b-spinner label="Loading..." />
         </div>
       </b-col>
     </b-row>
     <course-edit
       ref="courseEdit"
-      :user="user"
       @refresh="reloadCourse"
       @delete="deleteCourse"
-    ></course-edit>
+    />
     <plan-edit
       ref="planEdit"
       :course="course"
       :event="event"
-      :units="units"
       @refresh="refreshPlans"
       @delete="deletePlan"
-    ></plan-edit>
+    />
     <waypoint-edit
       v-if="editing"
       ref="wpEdit"
       :course="course"
       :points="points"
-      :units="units"
-      :terrainFactors="terrainFactors"
+      :terrain-factors="terrainFactors"
       @refresh="refreshWaypoints"
       @delete="deleteWaypoint"
       @setUpdateFlag="setUpdateFlag"
-    ></waypoint-edit>
+    />
     <delete-modal
       ref="delModal"
-    ></delete-modal>
+    />
     <download-track
       ref="download"
       :course="course"
@@ -251,15 +298,15 @@
       :event="event"
       :points="points"
       :segments="segments"
-      :updateFn="updatePacing"
-    ></download-track>
+      :update-fn="updatePacing"
+    />
     <course-compare
       ref="courseCompare"
       :comparing="comparing"
       @stop="stopCompare"
-    >
-    </course-compare>
-    <vue-headful v-if="this.course.name"
+    />
+    <vue-headful
+      v-if="course.name"
       :description="description"
       :title="title"
     />
@@ -269,8 +316,9 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
-import {round} from '../util/math'
-import {string2sec} from '../util/time'
+import { round } from '../util/math'
+import { string2sec } from '../util/time'
+import wputil from '../util/waypoints'
 import CourseEdit from './CourseEdit'
 import CourseCompare from './CourseCompare'
 import CourseMap from './CourseMap'
@@ -284,11 +332,10 @@ import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
 import SunCalc from 'suncalc'
 import moment from 'moment-timezone'
-var JSURL = require('@yaska-eu/jsurl2')
+const JSURL = require('@yaska-eu/jsurl2')
 
 export default {
   title: 'Course',
-  props: ['isAuthenticated', 'user'],
   components: {
     CourseEdit,
     CourseCompare,
@@ -310,7 +357,7 @@ export default {
       saving: false,
       comparing: false,
       course: {},
-      plan: null,
+      plan: {},
       plans: [],
       points: [],
       segments: [],
@@ -322,19 +369,21 @@ export default {
       mapFocus: [],
       tableTabIndex: 0,
       updateFlag: false,
-      showMenu: false
+      showMenu: false,
+      updatingWaypointTimeout: null,
+      updatingWaypointTimeoutID: null
     }
   },
   computed: {
     description: function () {
-      return `The ${this.$title} covers ${round(this.course.distance * 0.621371, 1)} miles with ${round(this.course.gain * 3.28084, 0)} feet of climbing. Ready to run?`
+      return `The ${this.$title} covers ${this.$units.distf(this.course.distance, 1)} ${this.$units.dist} with ${this.$units.altf(this.course.gain, 0)} ${this.$units.alt} of climbing. Ready to run?`
     },
     title: function () {
       return this.$title + ' - ultraPacer'
     },
     event: function () {
-      let t = this.$logger()
-      let e = {
+      const t = this.$logger()
+      const e = {
         start: null,
         startTime: null,
         timezone: moment.tz.guess()
@@ -348,11 +397,11 @@ export default {
       } else {
         return e
       }
-      let m = moment(e.start).tz(e.timezone)
+      const m = moment(e.start).tz(e.timezone)
       e.timeString = m.format('kk:mm')
       e.startTime = string2sec(`${e.timeString}:00`)
       if (this.points.length) {
-        let times = SunCalc.getTimes(
+        const times = SunCalc.getTimes(
           m.toDate(),
           this.points[0].lat,
           this.points[0].lon
@@ -373,14 +422,14 @@ export default {
         !this.planAssigned ||
         !this.plan.heatModel
       ) { return null }
-      let hM = {...this.plan.heatModel}
+      const hM = { ...this.plan.heatModel }
       hM.start = this.event.sun.rise + 1800
       hM.stop = this.event.sun.set + 3600
       return hM
     },
     plansSelect: function () {
-      var p = []
-      for (var i = 0, il = this.plans.length; i < il; i++) {
+      const p = []
+      for (let i = 0, il = this.plans.length; i < il; i++) {
         p.push({
           value: this.plans[i],
           text: this.plans[i].name
@@ -389,63 +438,56 @@ export default {
       return p
     },
     owner: function () {
-      if (
-        this.isAuthenticated &&
-        String(this.user._id) === String(this.course._user)
-      ) {
-        return true
-      } else {
-        return false
-      }
+      return (
+        this.$user.isAuthenticated &&
+        String(this.$user._id) === String(this.course._user)
+      )
     },
     planAssigned: function () {
-      return Boolean(this.plan)
+      return Boolean(Object.entries(this.plan).length)
     },
     planOwner: function () {
-      return this.plan && (
+      return this.planAssigned && (
         (
           this.plan._id &&
-          this.isAuthenticated &&
-          String(this.user._id) === String(this.plan._user)
+          this.$user.isAuthenticated &&
+          String(this.$user._id) === String(this.plan._user)
         ) ||
         !this.plan._id
       )
     },
     splits: function () {
-      if (this.units.dist === 'km') {
+      if (this.$units.dist === 'km') {
         return this.kilometers
       } else {
         return this.miles
       }
     },
     terrainFactors: function () {
-      let l = this.$logger()
+      const l = this.$logger()
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
-      let wps = this.course.waypoints
+      const wps = this.course.waypoints
       let tF = wps[0].terrainFactor
-      let tFs = wps.map((x, i) => {
-        if (i < wps.length - 1) {
-          if (x.terrainFactor !== null) { tF = x.terrainFactor }
-          return {
-            start: x.location,
-            end: wps[i + 1].location,
-            tF: tF
-          }
+      const tFs = wps.filter((x, i) => i < wps.length - 1).map((x, i) => {
+        if (x.terrainFactor !== null) { tF = x.terrainFactor }
+        return {
+          start: x.location,
+          end: wps[i + 1].location,
+          tF: tF
         }
       })
-      tFs.pop()
       this.$logger('terrainFactors', l)
       return tFs
     },
     delays: function () {
-      let t = this.$logger()
+      const t = this.$logger()
       if (!this.course.waypoints) { return [] }
       if (!this.course.waypoints.length) { return [] }
       if (!this.planAssigned) { return [] }
-      let wps = this.course.waypoints
-      let wpdelay = (this.planAssigned) ? this.plan.waypointDelay : 0
-      let d = []
+      const wps = this.course.waypoints
+      const wpdelay = (this.planAssigned) ? this.plan.waypointDelay : 0
+      const d = []
       wps.forEach((x, i) => {
         if (x.type === 'aid' || x.type === 'water') {
           wps[i].delay = wpdelay
@@ -463,15 +505,6 @@ export default {
     publicName: function () {
       return this.course.public ? this.course.name : 'private'
     },
-    units: function () {
-      var u = {
-        dist: (this.isAuthenticated) ? this.user.distUnits : 'mi',
-        alt: (this.isAuthenticated) ? this.user.elevUnits : 'ft'
-      }
-      u.distScale = (u.dist === 'mi') ? 0.621371 : 1
-      u.altScale = (u.alt === 'ft') ? 3.28084 : 1
-      return u
-    },
     waypointShowMode: function () {
       if (this.editing && this.tableTabIndex === 2) {
         return 3
@@ -479,6 +512,26 @@ export default {
         return 2
       } else {
         return null
+      }
+    }
+  },
+  watch: {
+    editing: function (val) {
+      // update after disabling editing
+      if (!val && this.updateFlag) {
+        this.updatePacing()
+      }
+    },
+    tableTabIndex: function (val) {
+      // if editing and navigating away from waypoint table, recalc
+      if (this.updateFlag && this.tableTabIndex !== 2) {
+        this.updatePacing()
+      }
+    },
+    updateFlag: function (val) {
+      // when update flag transitions to true, clear cached data
+      if (val) {
+        this.clearCache()
       }
     }
   },
@@ -519,7 +572,7 @@ export default {
       }
     } catch (err) {
       console.log(err)
-      this.$router.push({path: '/'})
+      this.$router.push({ path: '/' })
       return
     }
     this.$title = this.course.name
@@ -528,7 +581,7 @@ export default {
     this.busy = false
     this.$calculating.setCalculating(false)
     setTimeout(() => {
-      if (!this.isAuthenticated) {
+      if (!this.$user.isAuthenticated) {
         this.$bvToast.toast(
           'ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue. To create a pace plan for this course, select the "New Pacing Plan" button on the top right. Happy running!',
           {
@@ -553,7 +606,7 @@ export default {
       }
     }, 1000)
     if (this.$route.query.plan) {
-      let p = JSURL.tryParse(this.$route.query.plan, null)
+      const p = JSURL.tryParse(this.$route.query.plan, null)
       if (p) {
         this.$logger('Course|created: showing plan from URL')
         this.$refs.planEdit.show(p)
@@ -564,7 +617,7 @@ export default {
   methods: {
     async getPoints () {
       let t = this.$logger()
-      let pnts = await api.getCourseField(
+      const pnts = await api.getCourseField(
         this.course._id,
         'points'
       )
@@ -572,7 +625,7 @@ export default {
       if (pnts[0].lat) {
         this.points = geo.reduce(pnts)
         if (this.owner) {
-          let update = {
+          const update = {
             raw: pnts.map(x => {
               return [x.lat, x.lon, x.alt]
             }),
@@ -587,7 +640,7 @@ export default {
             })
           }
           await api.updateCourse(this.course._id, update)
-          this.$logger(`Course|getPoints: uploading reformatted points)`)
+          this.$logger('Course|getPoints: uploading reformatted points)')
         }
         t = this.$logger(`Course|getPoints: reduced to (${this.points.length} points)`, t)
       } else {
@@ -602,7 +655,7 @@ export default {
           }
         })
       }
-      let stats = geo.calcStats(this.points, false)
+      const stats = geo.calcStats(this.points, false)
       this.scales = {
         gain: this.course.gain / stats.gain,
         loss: this.course.loss / stats.loss,
@@ -660,7 +713,7 @@ export default {
             this.waypoint = {}
           }
           await api.deleteWaypoint(waypoint._id)
-          var index = this.course.waypoints.findIndex(
+          const index = this.course.waypoints.findIndex(
             x => x._id === waypoint._id
           )
           if (index > -1) {
@@ -675,6 +728,20 @@ export default {
         }
       )
     },
+    updateWaypointLocation (_id, loc) {
+      const waypoint = this.course.waypoints.find(wp => wp._id === _id)
+      waypoint.location = loc
+      wputil.updateLLA(waypoint, this.points)
+      wputil.sortWaypointsByDistance(this.course.waypoints)
+      if (String(waypoint._id) === this.updatingWaypointTimeoutID) {
+        clearTimeout(this.updatingWaypointTimeout)
+      }
+      this.updatingWaypointTimeoutID = String(waypoint._id)
+      this.updatingWaypointTimeout = setTimeout(() => {
+        api.updateWaypoint(waypoint._id, waypoint)
+      }, 2000)
+      this.$emit('setUpdateFlag')
+    },
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
       this.resetWaypointShow()
@@ -688,17 +755,10 @@ export default {
     },
     async newPlan () {
       this.$ga.event('Plan', 'add', this.publicName)
-      if (
-        this.isAuthenticated &&
-        !this.owner &&
-        !this.user._courses.find(x => x === this.course._id)
-      ) {
-        this.user._courses.push(this.course._id)
-      }
       if (this.planAssigned) {
-        let p = this.plan
+        const p = this.plan
         this.$refs.planEdit.show({
-          heatModel: p.heatModel ? {...p.heatModel} : null,
+          heatModel: p.heatModel ? { ...p.heatModel } : null,
           eventStart: p.eventStart,
           eventTimezone: p.eventTimezone,
           pacingMethod: p.pacingMethod,
@@ -721,7 +781,7 @@ export default {
         async () => {
           await api.deletePlan(plan._id)
           this.$ga.event('Plan', 'delete', this.publicName)
-          this.plans = await api.getPlans(this.course._id, this.user._id)
+          this.plans = await api.getPlans(this.course._id, this.$user._id)
           if (this.plan._id === plan._id) {
             if (this.plans.length) {
               this.plan = this.plans[0]
@@ -741,11 +801,11 @@ export default {
     },
     async refreshPlans (plan, callback) {
       if (this.$auth.isAuthenticated()) {
-        this.plans = await api.getPlans(this.course._id, this.user._id)
+        this.plans = await api.getPlans(this.course._id, this.$user._id)
         this.syncCache(this.plans)
         this.plan = this.plans.find(p => p._id === plan._id)
       } else {
-        this.plan = {...plan}
+        this.plan = { ...plan }
         this.plans = [this.plan]
       }
       delete this.plan.cache
@@ -753,20 +813,20 @@ export default {
       if (typeof callback === 'function') callback()
     },
     async calcPlan () {
-      let t = this.$logger()
+      const t = this.$logger()
       if (!this.planAssigned) { return }
       if (this.plan._id) {
         this.$router.push({
           name: 'Plan',
           params: {
-            'plan': this.plan._id
+            plan: this.plan._id
           }
         })
         if (this.owner) {
-          api.selectCoursePlan(this.course._id, {plan: this.plan._id})
+          api.selectCoursePlan(this.course._id, { plan: this.plan._id })
         }
       } else {
-        let route = {
+        const route = {
           name: 'Course',
           params: {
             course: this.course._id
@@ -787,7 +847,7 @@ export default {
         this.$calculating.setCalculating(true)
         setTimeout(() => { this.updatePacing() }, 10)
       } else {
-        if (this.points[0].hasOwnProperty('actual')) {
+        if (this.points[0].actual !== undefined) {
           await this.updatePacing()
         }
         this.$refs.profile.update()
@@ -799,10 +859,10 @@ export default {
       if (!this.planAssigned) { return }
       this.plan = null
       this.pacing = {}
-      let route = {
+      const route = {
         name: 'Course',
         params: {
-          'course': this.course._id
+          course: this.course._id
         }
       }
       if (this.course.link) {
@@ -820,12 +880,12 @@ export default {
       this.$logger('Course|clearPlan')
     },
     async updatePacing () {
-      let t = this.$logger()
+      const t = this.$logger()
       // update splits, segments, and pacing
       this.busy = true
       this.updateFlag = false
       this.$calculating.setCalculating(true)
-      let result = geo.calcPacing({
+      const result = geo.calcPacing({
         course: this.course,
         plan: this.plan,
         points: this.points,
@@ -855,14 +915,14 @@ export default {
       this.updateSegments()
 
       // save cached data:
-      if (this.isAuthenticated) {
-        let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
+      if (this.$user.isAuthenticated) {
+        const cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
         if (this.planAssigned) {
           this.plan.cache = {}
           cacheFields.forEach(f => {
             this.plan.cache[f] = this[f]
           })
-          if (this.planOwner) {
+          if (this.planAssigned && this.planOwner) {
             this.$logger('Course|updatePacing: saving plan cache')
             api.updatePlanCache(
               this.plan._id,
@@ -894,16 +954,16 @@ export default {
       this.$logger('Course|updatePacing', t)
     },
     updateSegments: function () {
-      let t = this.$logger()
-      var breaks = []
-      let wps = []
+      const t = this.$logger()
+      const breaks = []
+      const wps = []
       this.course.waypoints.forEach(x => {
         if (x.tier < 3) {
           breaks.push(x.location)
           wps.push(x)
         }
       })
-      let arr = geo.calcSegments(this.points, breaks, this.pacing)
+      const arr = geo.calcSegments(this.points, breaks, this.pacing)
       arr.forEach((x, i) => {
         arr[i].waypoint1 = wps[i]
         arr[i].waypoint2 = wps[i + 1]
@@ -925,7 +985,7 @@ export default {
       this.$refs.waypointTable.selectWaypoint(id)
     },
     waypointShow: function (arr) {
-      let wps = this.course.waypoints.filter(x => arr.includes(x._id))
+      const wps = this.course.waypoints.filter(x => arr.includes(x._id))
       wps.forEach((x, i) => {
         wps[i].show = true
       })
@@ -933,7 +993,7 @@ export default {
       this.$refs.map.forceUpdate()
     },
     waypointHide: function (arr) {
-      let wps = this.course.waypoints.filter(x => arr.includes(x._id))
+      const wps = this.course.waypoints.filter(x => arr.includes(x._id))
       wps.forEach((x, i) => {
         wps[i].show = false
       })
@@ -963,12 +1023,12 @@ export default {
       })
     },
     useCache: function () {
-      let type = (this.planAssigned) ? 'plan' : 'course'
+      const type = (this.planAssigned) ? 'plan' : 'course'
       // if cache data is stored, assign it
-      let cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
+      const cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
       if (
         this[type].cache &&
-        this[type].cache.pacing.hasOwnProperty('scales') &&
+        this[type].cache.pacing.scales !== undefined &&
         this[type].cache.segments[0].factors.dark !== null // ignore caches before 2020-02-21
       ) {
         this.$logger(`Course|useCache: using cached ${type} data`)
@@ -988,8 +1048,8 @@ export default {
       await this.$refs.download.show()
     },
     async changeOwner (_user) {
-      if (!this.user.admin) { return }
-      await api.updateCourse(this.course._id, {_user: _user})
+      if (!this.$user.admin) { return }
+      await api.updateCourse(this.course._id, { _user: _user })
     },
     async stopCompare (cb) {
       this.comparing = false
@@ -999,11 +1059,11 @@ export default {
       this.$refs.courseCompare.show(
         async (actual) => {
           await new Promise(resolve => setTimeout(resolve, 100)) // sleep a bit
-          if (!this.points[0].hasOwnProperty('elapsed')) {
+          if (this.points[0].elapsed === undefined) {
             await this.updatePacing()
           }
           this.$calculating.setCalculating(true)
-          let res = geo.addActuals(this.points, actual)
+          const res = geo.addActuals(this.points, actual)
           if (res.match) {
             this.$ga.event('Course', 'compare', this.publicName, 1)
             this.comparing = true
@@ -1025,7 +1085,7 @@ export default {
             this.$ga.event('Course', 'compare', this.publicName, 0)
             this.comparing = false
             this.$bvToast.toast(
-              `Activity diverged from Course at ${round(res.point.loc * this.units.distScale, 2)} ${this.units.dist}.`,
+              `Activity diverged from Course at ${this.$units.distf(res.point.loc, 2)} ${this.$units.dist}.`,
               {
                 title: 'Matching Error',
                 toaster: 'b-toaster-bottom-right',
@@ -1038,26 +1098,6 @@ export default {
           this.$calculating.setCalculating(false)
         }
       )
-    }
-  },
-  watch: {
-    editing: function (val) {
-      // update after disabling editing
-      if (!val && this.updateFlag) {
-        this.updatePacing()
-      }
-    },
-    tableTabIndex: function (val) {
-      // if editing and navigating away from waypoint table, recalc
-      if (this.updateFlag && this.tableTabIndex !== 2) {
-        this.updatePacing()
-      }
-    },
-    updateFlag: function (val) {
-      // when update flag transitions to true, clear cached data
-      if (val) {
-        this.clearCache()
-      }
     }
   }
 }

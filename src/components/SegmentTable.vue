@@ -2,31 +2,38 @@
   <b-table
     ref="table"
     :busy="busy"
-    :items="visibleSegments"
+    :items="rows"
     :fields="fields"
-    primary-key="waypoint1._id"
+    primary-key="_index"
     selectable
     select-mode="single"
-    @row-selected="selectRow"
     hover
     foot-clone
     small
     class="segment-table"
+    @row-clicked="selectRow"
   >
-    <template #foot(waypoint2.name)>&nbsp;</template>
+    <template #foot(name)>
+&nbsp;
+    </template>
     <template #foot(len)>
-      {{ course.distance | formatDist(units.distScale) }}
+      {{ $units.distf(course.distance, 2) }}
     </template>
     <template #foot(end)>
-      {{ segments[segments.length - 1].end | formatDist(units.distScale) }}
+      {{ $units.distf(course.distance, 2) }}
     </template>
-    <template #foot(gain)>{{ gain | formatAlt(units.altScale) }}</template>
-    <template #foot(loss)>{{ loss | formatAlt(units.altScale) }}</template>
-    <template #foot(grade)>&nbsp;</template>
-    <template #foot(factors.tF) v-if="pacing.factors">
-      +{{ ((pacing.factors.tF - 1) * 100).toFixed(1) }}%
+    <template #foot(gain)>
+      {{ $units.altf(course.gain, 0) | commas }}
     </template>
-    <template #foot(time)>{{ time }}</template>
+    <template #foot(loss)>
+      {{ $units.altf(course.loss, 0) | commas }}
+    </template>
+    <template #foot(grade)>
+&nbsp;
+    </template>
+    <template #foot(time)>
+      {{ time }}
+    </template>
     <template #foot(elapsed)>
       {{ segments[segments.length - 1].elapsed | formatTime }}
     </template>
@@ -37,75 +44,105 @@
       {{ sec2string(segments[segments.length - 1].tod, 'am/pm') }}
     </template>
     <template #foot(pace)>
-      {{ pacing.pace / units.distScale | formatTime }}
+      {{ $units.pacef(pacing.pace) | formatTime }}
     </template>
-    <template #cell(collapse)="row">
+    <template
+      v-if="mode==='segments'"
+      #cell(collapse)="row"
+    >
       <b-button
-        v-if="row.item.collapsed"
+        v-if="isCollapsed(row.item)"
         size="sm"
-        @click="expandRow(row.item)"
         class="mr-1 tinyButton"
+        @click="expandRow(row.item)"
       >
         &#9660;
       </b-button>
       <b-button
-        v-if="!row.item.collapsed && row.item.collapseable"
+        v-else-if="isCollapseable(row.item)"
         size="sm"
-        @click="collapseRow(row.item)"
         class="mr-1 tinyButton"
+        @click="collapseRow(row.item)"
       >
         &#9650;
       </b-button>
-      <div v-if="row.item.waypoint1.tier===2" style="text-align:center">
+      <div
+        v-else-if="isChild(row.item)"
+        style="text-align:center"
+      >
         &#8944;
       </div>
     </template>
     <template #row-details="row">
       <b-list-group
-        v-bind:class="(hasInterimWaypoints(row.item) || hasFactors(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
+        :class="(spannedWaypoints(getSegment(row.item)).length || hasFactors(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
       >
         <b-list-group-item
           class="d-md-none"
         >
           <b-row
-            v-for="f in fields"
-            v-bind:key="f.key"
-            v-if="!mobileFields.includes(f.key)"
+            v-for="f in fields.filter(f=>!mobileFields.includes(f.key))"
+            :key="f.key"
             class="mb-1 d-md-none"
           >
-            <b-col cols="4" class="text-right"><b>{{ f.label }}:</b></b-col>
-            <b-col v-if="f.formatter">{{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}</b-col>
+            <b-col
+              cols="4"
+              class="text-right"
+            >
+              <b>{{ f.label }}:</b>
+            </b-col>
+            <b-col v-if="f.formatter">
+              {{ f.formatter(parseField(row.item, f.key), f.key, row.item) }}
+            </b-col>
           </b-row>
         </b-list-group-item>
 
         <b-list-group-item
-          v-for="wp in spannedWaypoints(row.item)"
-          v-bind:key="wp._id"
-          v-if="wp.tier < 3 && (waypointDelay(wp) || wp.description)">
-          <b>{{ wp.name }} ({{ $waypointTypes[wp.type] }}), {{ wp.location | formatDist(units.distScale) }} {{ units.dist }}</b><br/>
+          v-for="wp in spannedWaypoints(getSegment(row.item))"
+          :key="wp._id"
+        >
+          <b>{{ wp.name }} ({{ $waypointTypes[wp.type] }}), {{ $units.distf(wp.location, 2) }} {{ $units.dist }}</b><br>
           <b-row v-if="waypointDelay(wp)">
-            <b-col cols="4" class="text-sm-right"><b>Delay:</b></b-col>
+            <b-col
+              cols="4"
+              class="text-sm-right"
+            >
+              <b>Delay:</b>
+            </b-col>
             <b-col>{{ waypointDelay(wp) / 60 }} minutes</b-col>
           </b-row>
           <b-row v-if="wp.description">
-            <b-col cols="4" class="text-right"><b>Notes:</b></b-col>
-            <b-col style="white-space:pre-wrap">{{ wp.description }}</b-col>
+            <b-col
+              cols="4"
+              class="text-right"
+            >
+              <b>Notes:</b>
+            </b-col>
+            <b-col style="white-space:pre-wrap">
+              {{ wp.description }}
+            </b-col>
           </b-row>
         </b-list-group-item>
 
-        <b-list-group-item v-if="hasFactors(row.item)" class="d-none d-md-block">
-          <b>Pacing Factors</b><br/>
+        <b-list-group-item
+          v-if="hasFactors(row.item)"
+          class="d-none d-md-block"
+        >
+          <b>Pacing Factors</b><br>
           <b-row
-            v-for="key in Object.keys(row.item.factors)"
-            v-bind:key="key"
-            v-if="round(row.item.factors[key], 4) !== 1"
+            v-for="factor in getFactors(row.item)"
+            :key="factor.name"
             class="mb-1"
           >
-            <b-col cols="4" class="text-right"><b>{{ factorLables[key] }}:</b></b-col>
-            <b-col>{{ formatPaceTimePercent(row.item.factors[key], row.item) }}</b-col>
+            <b-col
+              cols="4"
+              class="text-right"
+            >
+              <b>{{ factorLables[factor.name] }}:</b>
+            </b-col>
+            <b-col>{{ formatPaceTimePercent(factor.value, row.item) }}</b-col>
           </b-row>
         </b-list-group-item>
-
       </b-list-group>
     </template>
   </b-table>
@@ -115,29 +152,62 @@
 import { round } from '../util/math'
 import timeUtil from '../util/time'
 export default {
-  props: ['course', 'segments', 'units', 'pacing', 'busy', 'mode', 'showActual'],
-  data () {
-    return {
-      clearing: false,
-      visibleTrigger: 0,
-      factorLables: { gF: 'Grade', tF: 'Terrain', aF: 'Altitude', hF: 'Heat', dF: 'Drift', dark: 'Darkness' }
-    }
-  },
   filters: {
-    formatDist (val, distScale) {
-      return (val * distScale).toFixed(2)
-    },
-    formatAlt (val, altScale) {
-      return (val * altScale).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    commas (val) {
+      return val.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     },
     formatTime (val) {
       if (!val) { return '' }
       return timeUtil.sec2string(val, '[h]:m:ss')
     }
   },
+  props: {
+    course: {
+      type: Object,
+      required: true
+    },
+    segments: {
+      type: Array,
+      required: true
+    },
+    pacing: {
+      type: Object,
+      required: true
+    },
+    busy: {
+      type: Boolean,
+      default: false
+    },
+    mode: {
+      type: String,
+      required: true
+    },
+    showActual: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data () {
+    return {
+      clearing: false,
+      visibleTrigger: 0,
+      factorLables: { gF: 'Grade', tF: 'Terrain', aF: 'Altitude', hF: 'Heat', dF: 'Drift', dark: 'Darkness' },
+      visibleSubWaypoints: []
+    }
+  },
   computed: {
+    rows: function () {
+      let arr = this.segments.map((s, i) => { return { _index: i } })
+      if (this.mode === 'segments') {
+        arr = arr.filter((r, i) =>
+          this.segments[i].waypoint2.tier === 1 ||
+          this.visibleSubWaypoints.findIndex(vi => vi === i) >= 0
+        )
+      }
+      return arr
+    },
     planAssigned: function () {
-      return this.pacing.hasOwnProperty('time') && this.pacing.time > 0
+      return Boolean(this.pacing.time)
     },
     mobileFields: function () {
       if (this.mode === 'splits') {
@@ -148,42 +218,42 @@ export default {
         }
       } else {
         if (this.pacing.time) {
-          return ['waypoint2.name', 'len', 'elapsed', 'collapse']
+          return ['name', 'len', 'elapsed', 'collapse']
         } else {
-          return ['waypoint2.name', 'len', 'gain', 'loss', 'collapse']
+          return ['name', 'len', 'gain', 'loss', 'collapse']
         }
       }
     },
     fields: function () {
-      var f = [
+      const f = [
         {
           key: 'end',
-          label: 'Dist [' + this.units.dist + ']',
+          label: 'Dist [' + this.$units.dist + ']',
           formatter: (value, key, item) => {
-            return (value * this.units.distScale).toFixed(2)
+            return this.$units.distf(this.rollup(item, key, 'last'), 2)
           }
         },
         {
           key: 'gain',
-          label: `Gain [${this.units.alt}]`,
+          label: `Gain [${this.$units.alt}]`,
           formatter: (value, key, item) => {
             let scale = 1
             if (this.pacing.scales) {
               scale = this.pacing.scales.gain
             }
-            return (value * scale * this.units.altScale).toFixed(0)
+            return this.$units.altf(this.rollup(item, key, 'sum') * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           }
         },
         {
           key: 'loss',
-          label: 'Loss [' + this.units.alt + ']',
+          label: 'Loss [' + this.$units.alt + ']',
           formatter: (value, key, item) => {
             let scale = 1
             if (this.pacing.scales) {
               scale = this.pacing.scales.loss
             }
-            return (value * scale * this.units.altScale).toFixed(0)
+            return this.$units.altf(this.rollup(item, key, 'sum') * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           }
         },
@@ -191,9 +261,9 @@ export default {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
-            let gs = this.pacing.scales ? this.pacing.scales.gain : 1
-            let ls = this.pacing.scales ? this.pacing.scales.loss : 1
-            let g = (item.gain * gs + item.loss * ls) / item.len / 10
+            const gs = this.pacing.scales ? this.pacing.scales.gain : 1
+            const ls = this.pacing.scales ? this.pacing.scales.loss : 1
+            const g = (this.rollup(item, 'gain', 'sum') * gs + this.rollup(item, 'loss', 'sum') * ls) / this.rollup(item, 'len', 'sum') / 10
             return (g).toFixed(1) + '%'
           }
         }
@@ -201,39 +271,42 @@ export default {
       if (this.mode === 'segments') {
         f.splice(1, 0, {
           key: 'len',
-          label: 'Len [' + this.units.dist + ']',
+          label: 'Len [' + this.$units.dist + ']',
           formatter: (value, key, item) => {
-            return (value * this.units.distScale).toFixed(2)
+            return this.$units.distf(this.rollup(item, key, 'sum'), 2)
           }
         })
         f.unshift({
-          key: 'waypoint2.name',
-          label: 'End'
+          key: 'name',
+          label: 'End',
+          formatter: (value, key, item) => {
+            return this.rollup(item, 'waypoint2.name', 'last')
+          }
         })
       }
-      if (this.segments[0].time) {
+      if (this.planAssigned) {
         if (this.mode === 'segments') {
           f.push({
             key: 'time',
             label: 'Moving Time',
             formatter: (value, key, item) => {
-              return timeUtil.sec2string(value, '[h]:m:ss')
+              return timeUtil.sec2string(this.rollup(item, key, 'sum'), '[h]:m:ss')
             }
           })
         }
         f.push({
           key: 'pace',
-          label: `Pace [/${this.units.dist}]`,
+          label: `Pace [/${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            let l = item.len * this.units.distScale
-            return timeUtil.sec2string(item.time / l, '[h]:m:ss')
+            const l = this.$units.distf(this.rollup(item, 'len', 'sum'))
+            return timeUtil.sec2string(this.rollup(item, 'time', 'sum') / l, '[h]:m:ss')
           }
         })
         f.push({
           key: 'elapsed',
           label: 'Elapsed',
           formatter: (value, key, item) => {
-            return timeUtil.sec2string(value, '[h]:m:ss')
+            return timeUtil.sec2string(this.rollup(item, key, 'sum'), '[h]:m:ss')
           }
         })
         if (this.showActual) {
@@ -241,7 +314,7 @@ export default {
             key: 'actualElapsed',
             label: 'Actual',
             formatter: (value, key, item) => {
-              return timeUtil.sec2string(value, '[h]:m:ss')
+              return timeUtil.sec2string(this.rollup(item, key, 'sum'), '[h]:m:ss')
             }
           })
         }
@@ -250,7 +323,7 @@ export default {
             key: 'tod',
             label: 'Arrival',
             formatter: (value, key, item) => {
-              return timeUtil.sec2string(value, 'am/pm')
+              return timeUtil.sec2string(this.rollup(item, key, 'last'), 'am/pm')
             }
           })
         }
@@ -270,44 +343,20 @@ export default {
       }
       return f
     },
-    gain: function () {
-      let v = this.visibleSegments.reduce((t, x) => { return t + x.gain }, 0)
-      if (this.pacing.scales) {
-        v = v * this.pacing.scales.gain
-      }
-      return v
-    },
-    loss: function () {
-      let v = this.visibleSegments.reduce((t, x) => { return t + x.loss }, 0)
-      if (this.pacing.scales) {
-        v = v * this.pacing.scales.loss
-      }
-      return v
-    },
     time: function () {
-      let t = this.segments.reduce((t, x) => { return t + x.time }, 0)
+      const t = this.segments.reduce((t, x) => { return t + x.time }, 0)
       return timeUtil.sec2string(t, '[h]:m:ss')
     },
     actualMovingTime: function () {
       if (this.showActual) {
-        let t = this.segments.reduce((t, x) => { return t + x.actualElapsed }, 0)
+        const t = this.segments.reduce((t, x) => { return t + x.actualElapsed }, 0)
         return timeUtil.sec2string(t, '[h]:m:ss')
       } else {
         return 0
       }
     },
-    showTerrain: function () {
-      for (let i = 0; i < this.segments.length; i++) {
-        if (
-          round(this.segments[i].factors.tF, 4) !==
-          round(this.segments[0].factors.tF, 4)) {
-          return true
-        }
-      }
-      return false
-    },
     showClock: function () {
-      return this.segments[0].hasOwnProperty('tod') && this.segments[0].tod !== null
+      return this.segments[0].tod !== null
     },
     collapseableIds: function () {
       return this.segments.filter((s, i) =>
@@ -315,60 +364,51 @@ export default {
         s.waypoint1.tier === 1 &&
         this.segments[i + 1].waypoint1.tier > 1
       ).map(s => { return s.waypoint1._id })
-    },
-    visibleSegments: function () {
-      // eslint-disable-next-line
-      this.visibleTrigger++
-      if (this.mode === 'splits') {
-        return this.segments
-      }
-      let t = this.$logger()
-      let arr = this.segments.filter(x => x.waypoint1.show)
-      let arr2 = []
-      arr.forEach((s, i) => {
-        let subs = this.subSegments(s)
-        let seg = {
-          collapseable: this.collapseableIds.includes(s.waypoint1._id),
-          collapsed: subs.length > 1,
-          waypoint1: arr[i].waypoint1,
-          waypoint2: this.rollup(subs, arr[i], 'last', 'waypoint2'),
-          start: arr[i].start,
-          end: this.rollup(subs, s, 'last', 'end'),
-          len: this.rollup(subs, s, 'sum', 'len'),
-          gain: this.rollup(subs, s, 'sum', 'gain'),
-          loss: this.rollup(subs, s, 'sum', 'loss'),
-          grade: this.rollup(subs, s, 'weightedAvg', 'grade'),
-          factors: {}
-        }
-        Object.keys(this.factorLables).forEach(k => {
-          seg.factors[k] = this.rollup(subs, s, 'weightedAvg', `factors.${k}`)
-        })
-        if (s.time) {
-          seg.time = this.rollup(subs, s, 'sum', 'time')
-          seg.pace = seg.time / seg.len
-          seg.elapsed = this.rollup(subs, s, 'last', 'elapsed')
-        }
-        if (s.actualElapsed) {
-          seg.actualElapsed = this.rollup(subs, s, 'last', 'actualElapsed')
-        }
-        if (this.showClock) {
-          seg.tod = this.rollup(subs, s, 'last', 'tod')
-        }
-        arr2.push(seg)
-      })
-      this.$logger('SegmentTable|visibleSegments', t)
-      return arr2
+    }
+  },
+  watch: {
+    segments: function (val) {
+      this.visibleSubWaypoints = []
     }
   },
   methods: {
+    getSegment: function (row, field = null) {
+      // return the segment object/field associated with a row
+      const s = this.segments[row._index]
+      return (field) ? this.parseField(s, field) : s
+    },
+    getFactors: function (row) {
+      const fs = []
+      Object.keys(this.factorLables).forEach(k => {
+        const f = this.rollup(row, `factors.${k}`, 'weightedAvg')
+        if (round(f, 4) !== 1) {
+          fs.push({
+            name: k,
+            value: f
+          })
+        }
+      })
+      return fs
+    },
     getClass: function (key) {
-      let lefts = ['waypoint2.name']
-      let base = lefts.includes(key) ? '' : 'text-right'
+      // return class of cell in table for each key
+      const lefts = ['name']
+      const base = lefts.includes(key) ? '' : 'text-right'
       if (this.mobileFields.includes(key)) {
         return base
       } else {
         return `d-none d-md-table-cell ${base}`
       }
+    },
+    isCollapsed: function (row) {
+      const ri = this.rows.findIndex(r => r._index === row._index)
+      return ((ri === 0 && row._index > 0) || (ri > 0 && row._index - this.rows[ri - 1]._index > 1))
+    },
+    isCollapseable: function (row) {
+      return row._index === 0 ? false : this.segments[row._index - 1].waypoint2.tier === 2
+    },
+    isChild: function (row) {
+      return this.segments[row._index].waypoint2.tier === 2
     },
     clear: async function () {
       this.clearing = true
@@ -377,76 +417,81 @@ export default {
         .forEach(s => { this.$set(s, '_showDetails', false) })
       this.clearing = false
     },
-    expandRow: function (s) {
-      let subs = this.subSegments(s)
-      subs.splice(0, 1)
-      let arr = subs.map(x => { return x.waypoint1._id })
-      this.$emit('show', arr)
-      this.visibleTrigger++
+    expandRow: function (row) {
+      const ri = this.rows.findIndex(r => r._index === row._index)
+      const prev = (ri > 0) ? this.rows[ri - 1]._index : -1
+      const wps = []
+      this.segments.forEach((s, i) => {
+        if (i > prev && i < row._index) {
+          this.visibleSubWaypoints.push(i)
+          wps.push(s.waypoint2._id)
+        }
+      })
+      this.$emit('show', wps)
     },
-    collapseRow: function (segment) {
-      let ind = this.segments.findIndex(
-        s => s.waypoint1._id === segment.waypoint1._id
-      )
-      let next = this.segments.findIndex((x, j) =>
-        j > ind && x.waypoint1.tier === 1
-      )
-      let subs = this.segments.filter((x, j) =>
-        j > ind && (next < 0 || j < next)
-      )
-      let arr = subs.map(x => { return x.waypoint1._id })
-      this.$emit('hide', arr)
-      this.visibleTrigger++
+    collapseRow: function (row) {
+      let prev
+      for (prev = row._index - 1; prev >= 0; prev--) {
+        if (prev < 0) { break } else if (this.segments[prev].waypoint2.tier === 1) { break }
+      }
+      const wps = []
+      this.segments.forEach((s, i) => {
+        if (i > prev && i < row._index) {
+          this.visibleSubWaypoints = this.visibleSubWaypoints.filter(vi => vi !== i)
+          wps.push(s.waypoint2._id)
+        }
+      })
+      this.$emit('hide', wps)
     },
-    selectRow: function (segment) {
-      if (this.clearing) return
-      if (segment.length) {
-        this.visibleSegments.filter(s => s._showDetails && s.start !== segment.start)
-          .forEach(s => { this.$set(s, '_showDetails', false) })
-        this.$set(segment[0], '_showDetails', !segment._showDetails)
-        this.$emit(
-          'select',
-          this.mode,
-          [segment[0].start, segment[0].end]
-        )
-      } else {
-        this.visibleSegments.filter(s => s._showDetails)
-          .forEach(s => { this.$set(s, '_showDetails', false) })
+    selectRow: function (row) {
+      this.rows.filter((r, i) => r._index !== row._index).forEach(r => {
+        this.$set(r, '_showDetails', false)
+      })
+      this.$set(row, '_showDetails', !row._showDetails)
+      this.$emit(
+        'select',
+        this.mode,
+        [this.rollup(row, 'start', 'first'), this.getSegment(row, 'end')]
+      )
+      if (!row._showDetails) {
         this.$emit('select', this.mode, [])
       }
     },
-    subSegments: function (segment) {
-      let ind = this.segments.findIndex(
-        s => s.waypoint1._id === segment.waypoint1._id
-      )
-      let next = this.segments.findIndex((x, j) =>
-        j > ind && x.waypoint1.show
-      )
-      return this.segments.filter((x, j) =>
-        j >= ind && (next < 0 || j < next)
-      )
-    },
-    rollup: function (subs, segment, method, field) {
-      switch (method) {
-        case 'sum': {
-          return subs.reduce((v, x) => { return v + x[field] }, 0)
+    rollup: function (row, field, method) {
+      const ri = this.rows.findIndex(r => r._index === row._index)
+      if (
+        this.mode === 'segments' &&
+        ((ri === 0 && row._index > 0) ||
+        (ri > 0 && row._index - this.rows[ri - 1]._index > 1))
+      ) {
+        const prev = (ri > 0) ? this.rows[ri - 1]._index : -1
+        const subs = this.segments.filter((s, i) => i > prev && i <= row._index)
+        switch (method) {
+          case 'sum': {
+            return subs.reduce((v, x) => { return v + this.parseField(x, field) }, 0)
+          }
+          case 'first': {
+            return this.parseField(subs[0], field)
+          }
+          case 'last': {
+            return this.parseField(subs[subs.length - 1], field)
+          }
+          case 'weightedAvg': {
+            let v = 0
+            let t = 0
+            subs.forEach(s => {
+              v += s.len * this.parseField(s, field)
+              t += s.len
+            })
+            return v / t
+          }
         }
-        case 'last': {
-          return subs[subs.length - 1][field]
-        }
-        case 'weightedAvg': {
-          let v = 0
-          let t = 0
-          subs.forEach(s => {
-            v += s.len * this.parseField(s, field)
-            t += s.len
-          })
-          return v / t
-        }
+      } else {
+        return this.getSegment(row, field)
       }
     },
     parseField: function (obj, field) {
-      let arr = field.split('.')
+      const arr = field.split('.')
       switch (arr.length) {
         case 1:
           return obj[field]
@@ -461,46 +506,39 @@ export default {
       return round(v, t)
     },
     spannedWaypoints: function (s) {
-      let wps = this.course.waypoints.filter(wp =>
+      return this.course.waypoints.filter(wp =>
         round(wp.location, 4) > round(s.start, 4) &&
-        round(wp.location, 4) <= round(s.end, 4)
-      )
-      return wps
-    },
-    hasInterimWaypoints: function (s) {
-      return (
-        this.spannedWaypoints(s).filter(
-          wp =>
-            wp.description ||
-            this.waypointDelay(wp)
-        ).length > 0
+        round(wp.location, 4) <= round(s.end, 4) && (
+          wp.description ||
+        this.waypointDelay(wp))
       )
     },
     waypointDelay: function (wp) {
-      let d = this.pacing.delays.find(d =>
+      const d = this.pacing.delays.find(d =>
         round(d.loc, 4) === round(wp.location, 4)
       )
       return (d) ? d.delay : 0
     },
     formatPaceTimePercent (f, item) {
-      let df = f - 1
-      let sign = f - 1 > 0 ? '+' : '-'
+      const df = f - 1
+      const sign = f - 1 > 0 ? '+' : '-'
       let str = `${sign}${(Math.abs(df) * 100).toFixed(1)}%`
       if (this.planAssigned) {
-        let dTime = Math.abs(item.time * (1 - 1 / f) / this.units.distScale)
-        let paceStr = ''
-        if (item.hasOwnProperty('pace')) {
-          let dPace = Math.abs(item.pace * (1 - 1 / f) / this.units.distScale)
-          paceStr = `[${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.units.dist}] `
-        }
+        const time = this.rollup(item, 'time', 'sum')
+        const len = this.rollup(item, 'len', 'sum')
+        const pace = time / len
+        const dTime = Math.abs(time * (1 - 1 / f) / this.$units.distScale)
+        const dPace = Math.abs(pace * (1 - 1 / f) / this.$units.distScale)
+        const paceStr = `[${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.$units.dist}] `
         str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} ${paceStr}[${str}]`
       }
       return str
     },
     hasFactors (item) {
+      const segment = this.getSegment(item)
       let res = false
-      Object.keys(item.factors).forEach(k => {
-        if (round(item.factors[k], 4) !== 1) {
+      Object.keys(segment.factors).forEach(k => {
+        if (round(segment.factors[k], 4) !== 1) {
           res = true
         }
       })

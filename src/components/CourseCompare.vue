@@ -6,41 +6,60 @@
       title="Compare to Activity (Beta)"
       @ok="handleOk"
     >
-    <p>How'd you do? Select a .GPX file from your race or activity to compare against your plans.</p>
-    <p style="color: red">This feature is in beta. Contact me if it doesn't work for you.</p>
-      <form ref="compareform" @submit.prevent="">
+      <p>How'd you do? Select a .GPX file from your race or activity to compare against your plans.</p>
+      <p style="color: red">
+        This feature is in beta. Contact me if it doesn't work for you.
+      </p>
+      <form
+        ref="compareform"
+        @submit.prevent=""
+      >
         <b-input-group
-          prepend="File"
-          class="mb-2"
-          size="sm"
           v-b-popover.hover.bottomright.d250.v-info="
             'File: GPX format file exported from a GPS track.'
           "
+          prepend="File"
+          class="mb-2"
+          size="sm"
         >
           <b-form-file
-            size="sm"
             v-model="gpxFile"
+            size="sm"
             placeholder="Choose a GPX file..."
             accept=".gpx"
-            @change="loadGPX"
             no-drop
             required
-          ></b-form-file>
+            @change="loadGPX"
+          />
         </b-input-group>
       </form>
       <template #modal-footer="{ ok, cancel }">
         <div
           v-if="comparing"
-          style="text-align: left; flex: auto">
-          <b-button size="sm" variant="warning" @click="stop()">
+          style="text-align: left; flex: auto"
+        >
+          <b-button
+            size="sm"
+            variant="warning"
+            @click="stop()"
+          >
             Stop Comparison
           </b-button>
         </div>
-        <b-button variant="secondary" @click="cancel()">
+        <b-button
+          variant="secondary"
+          @click="cancel()"
+        >
           Cancel
         </b-button>
-        <b-button variant="primary" @click="ok()">
-          <b-spinner v-show="saving" small></b-spinner>
+        <b-button
+          variant="primary"
+          @click="ok()"
+        >
+          <b-spinner
+            v-show="saving"
+            small
+          />
           Load
         </b-button>
       </template>
@@ -53,7 +72,12 @@ import geo from '@/util/geo'
 import moment from 'moment-timezone'
 const gpxParse = require('gpx-parse')
 export default {
-  props: ['user', 'comparing'],
+  props: {
+    comparing: {
+      type: Boolean,
+      default: false
+    }
+  },
   data () {
     return {
       gpxFile: null,
@@ -90,7 +114,7 @@ export default {
           if (error) {
             throw error
           } else {
-            let startTime = moment(data.tracks[0].segments[0][0].time)
+            const startTime = moment(data.tracks[0].segments[0][0].time)
             this.gpxPoints = data.tracks[0].segments[0].map(p => {
               return {
                 alt: p.elevation,

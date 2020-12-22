@@ -1,6 +1,8 @@
 <template>
   <div class="container-fluid mt-4">
-    <h1 class="h1">Privacy Policy of ultraPacer</h1>
+    <h1 class="h1">
+      Privacy Policy of ultraPacer
+    </h1>
     <b-card>
       <p>ultraPacer operates the "{{ domain }}" website, which provides the SERVICE.</p>
       <h2>Short version</h2>

@@ -1,11 +1,11 @@
-const { VueLoaderPlugin } = require("vue-loader");
-const htmlWebpackPlugin = require("html-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const { VueLoaderPlugin } = require('vue-loader')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
-const autoprefixer = require("autoprefixer");
-const path = require("path");
+const autoprefixer = require('autoprefixer')
+const path = require('path')
 const webpack = require('webpack')
 const keys = require('../config/keys')
 
@@ -14,15 +14,15 @@ function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
-var config = {
+const config = {
   entry: {
-    main: "./src/main.js",
+    main: './src/main.js'
   },
   output: {
     filename: '[name].[hash].js',
     path: path.resolve(__dirname, '../dist'),
-    chunkFilename: "[name].[hash].js",
-    publicPath: '/',
+    chunkFilename: '[name].[hash].js',
+    publicPath: '/'
   },
   module: {
     rules: [
@@ -30,40 +30,40 @@ var config = {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
-          loader: "babel-loader",
-        },
+          loader: 'babel-loader'
+        }
       },
       {
         test: /\.vue$/,
-        loader: "vue-loader",
+        loader: 'vue-loader'
       },
       {
         test: /\.s?css$/,
         use: [
-          "style-loader",
+          'style-loader',
           MiniCssExtractPlugin.loader,
-          "css-loader",
+          'css-loader',
           {
-            loader: "postcss-loader",
+            loader: 'postcss-loader',
             options: {
-              plugins: () => [autoprefixer()],
-            },
+              plugins: () => [autoprefixer()]
+            }
           },
-          "sass-loader",
-        ],
+          'sass-loader'
+        ]
       },
       {
         test: /\.(eot|ttf|woff|woff2)(\?\S*)?$/,
-        loader: "file-loader",
+        loader: 'file-loader'
       },
       {
         test: /\.(png|jpe?g|gif|webm|mp4|svg)$/,
-        loader: "file-loader",
+        loader: 'file-loader',
         options: {
-          name: "[name][contenthash:8].[ext]",
-          outputPath: "public/img",
-          esModule: false,
-        },
+          name: '[name][contenthash:8].[ext]',
+          outputPath: 'public/img',
+          esModule: false
+        }
       },
       {
         test: /\.(js|vue)$/,
@@ -75,16 +75,16 @@ var config = {
           emitWarning: true
         }
       }
-    ],
+    ]
   },
   plugins: [
     new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
-      filename: "public/css/[name].[contenthash:8].css",
-      chunkFilename: "public/css/[name].[contenthash:8].css",
+      filename: 'public/css/[name].[contenthash:8].css',
+      chunkFilename: 'public/css/[name].[contenthash:8].css'
     }),
-    new htmlWebpackPlugin({
-      template: path.resolve(__dirname, "../src", "index.html"),
+    new HtmlWebpackPlugin({
+      template: path.resolve(__dirname, '../src', 'index.html')
     }),
     new webpack.DefinePlugin({
       'process.env': keys
@@ -92,41 +92,41 @@ var config = {
     new webpack.DefinePlugin({
       'process.env.GPXPARSE_COV': 0 // because of a bug in gpx-parse
     }),
-    new FriendlyErrorsPlugin(),
+    new FriendlyErrorsPlugin()
   ],
   resolve: {
     alias: {
-      vue$: "vue/dist/vue.esm.js",
-      '@': resolve('src'),
+      vue$: 'vue/dist/vue.esm.js',
+      '@': resolve('src')
     },
-    extensions: ["*", ".js", ".vue", ".json"],
+    extensions: ['*', '.js', '.vue', '.json']
   },
   optimization: {
-    moduleIds: "hashed",
-    runtimeChunk: "single",
+    moduleIds: 'hashed',
+    runtimeChunk: 'single',
     splitChunks: {
       cacheGroups: {
         vendor: {
           test: /[\\/]node_modules[\\/]/,
-          name: "vendors",
+          name: 'vendors',
           priority: -10,
-          chunks: "all",
-        },
-      },
-    },
+          chunks: 'all'
+        }
+      }
+    }
   },
   devServer: {
     historyApiFallback: true,
     port: 3000,
     proxy: {
-      "/api": {
-        target: "http://localhost:8080"
+      '/api': {
+        target: 'http://localhost:8080'
       }
     }
   },
   node: {
     fs: 'empty'
-  },
+  }
 }
 
 module.exports = (env, argv) => {
@@ -138,14 +138,14 @@ module.exports = (env, argv) => {
     config.output.chunkFilename = 'public/js/[name].[contenthash:8].js'
     config.plugins.push(
       new CopyWebpackPlugin([{
-          from: path.resolve(__dirname, '../static'),
-          to: path.resolve(__dirname, '../dist/public'),
-          ignore: ['.*']
+        from: path.resolve(__dirname, '../static'),
+        to: path.resolve(__dirname, '../dist/public'),
+        ignore: ['.*']
       }])
     )
     config.plugins.push(
       new CleanWebpackPlugin()
     )
   }
-  return config;
-};
+  return config
+}

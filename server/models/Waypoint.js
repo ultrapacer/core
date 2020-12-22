@@ -1,8 +1,8 @@
-var mongoose = require('mongoose')
-var Schema = mongoose.Schema
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
 
 // Define collection and schema for Posts
-var WaypointSchema = new Schema({
+const WaypointSchema = new Schema({
   name: {
     type: String
   },

@@ -3,38 +3,40 @@
     :items="races"
     :fields="fields"
     primary-key="_id"
-    @row-clicked="goToRace"
     hover
-    >
+    @row-clicked="goToRace"
+  >
     <template #head(distance)>
-      Dist. [{{ units.dist }}]
+      Dist. [{{ $units.dist }}]
     </template>
     <template #head(gain)>
-      Gain [{{ units.alt }}]
+      Gain [{{ $units.alt }}]
     </template>
     <template #head(loss)>
-      Loss [{{ units.alt }}]
+      Loss [{{ $units.alt }}]
     </template>
-    <template #head(actions)>&nbsp;</template>
-      <template #cell(actions)="row">
-        <router-link
-          :to="{
-            name: 'Race',
-            params: {
-              permalink: row.item.link
-            }
-          }"
-        >
+    <template #head(actions)>
+&nbsp;
+    </template>
+    <template #cell(actions)="row">
+      <router-link
+        :to="{
+          name: 'Race',
+          params: {
+            permalink: row.item.link
+          }
+        }"
+      >
         <b-button
-            size="sm"
-            class="mr-1"
-            variant="success"
-          >
-          <v-icon name="arrow-right"></v-icon>
+          size="sm"
+          class="mr-1"
+          variant="success"
+        >
+          <v-icon name="arrow-right" />
           <span class="d-none d-md-inline">Go!</span>
         </b-button>
-        </router-link>
-      </template>
+      </router-link>
+    </template>
   </b-table>
 </template>
 
@@ -43,7 +45,12 @@ import api from '@/api'
 import moment from 'moment-timezone'
 export default {
   title: 'Races',
-  props: ['units', 'races'],
+  props: {
+    races: {
+      type: Array,
+      required: true
+    }
+  },
   data () {
     return {
       initializing: true,
@@ -55,7 +62,7 @@ export default {
           label: 'Date',
           sortable: true,
           formatter: (value, key, item) => {
-            let m = moment(value).tz(item.eventTimezone)
+            const m = moment(value).tz(item.eventTimezone)
             return m.format('M/D/YYYY')
           }
         },
@@ -68,15 +75,14 @@ export default {
           key: 'distance',
           sortable: true,
           formatter: (value, key, item) => {
-            return (value * this.units.distScale).toFixed(2)
+            return this.$units.distf(value, 2)
           }
         },
         {
           key: 'gain',
           sortable: true,
           formatter: (value, key, item) => {
-            return (value * this.units.altScale).toFixed(0)
-              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(value, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-sm-table-cell',
           tdClass: 'd-none d-sm-table-cell'
@@ -85,8 +91,7 @@ export default {
           key: 'loss',
           sortable: true,
           formatter: (value, key, item) => {
-            return (value * this.units.altScale).toFixed(0)
-              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(value, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-sm-table-cell',
           tdClass: 'd-none d-sm-table-cell'

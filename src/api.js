@@ -8,8 +8,8 @@ const client = axios.create({
 
 export default {
   async executeAuth (method, resource, data) {
-    let t = logger(`api|executeAuth|${method}|${resource} initiated`)
-    let accessToken = await Vue.prototype.$auth.getAccessToken()
+    const t = logger(`api|executeAuth|${method}|${resource} initiated`)
+    const accessToken = await Vue.prototype.$auth.getAccessToken()
     return client({
       method,
       url: resource,
@@ -23,7 +23,7 @@ export default {
     })
   },
   async execute (method, resource, data) {
-    let t = logger(`api|execute|${method}|${resource} initiated`)
+    const t = logger(`api|execute|${method}|${resource} initiated`)
     return client({
       method,
       url: resource,
@@ -34,7 +34,7 @@ export default {
     })
   },
   getUser () {
-    return this.executeAuth('get', `/api/user`)
+    return this.executeAuth('get', '/api/user')
   },
   updateSettings (id, data) {
     return this.executeAuth('put', `/api/user/${id}`, data)
@@ -46,7 +46,7 @@ export default {
     return this.execute('get', '/api-public/races')
   },
   async getCourse (id, key = 'course') {
-    let sub = (key === 'course') ? '' : key + '/'
+    const sub = (key === 'course') ? '' : key + '/'
     if (Vue.prototype.$auth.isAuthenticated()) {
       return this.executeAuth('get', `/api/course/${sub}${id}`)
     } else {
@@ -61,7 +61,7 @@ export default {
     }
   },
   async getCourseFields (id, key = 'course', fields, tryAuth = true) {
-    let sub = (key === 'course') ? '' : key + '/'
+    const sub = (key === 'course') ? '' : key + '/'
     if (tryAuth && Vue.prototype.$auth.isAuthenticated()) {
       return this.executeAuth('put', `/api/course/${sub}${id}/fields`, fields)
     } else {
@@ -90,7 +90,7 @@ export default {
     return this.executeAuth('get', `/api/course/${courseID}/waypoints`)
   },
   createWaypoint (data) {
-    return this.executeAuth('post', `/api/waypoint`, data)
+    return this.executeAuth('post', '/api/waypoint', data)
   },
   updateWaypoint (id, data) {
     return this.executeAuth('put', `/api/waypoint/${id}`, data)
@@ -102,7 +102,7 @@ export default {
     return this.executeAuth('get', `/api/course/${courseID}/plans/${userID}`)
   },
   createPlan (data) {
-    return this.executeAuth('post', `/api/plan`, data)
+    return this.executeAuth('post', '/api/plan', data)
   },
   updatePlan (id, data) {
     return this.executeAuth('put', `/api/plan/${id}`, data)

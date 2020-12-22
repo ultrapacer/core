@@ -15,10 +15,10 @@ function timeStr (t) {
 
 export function logger (message = null, prev = null) {
   if (process.env.NODE_ENV === 'development') {
-    let t = new Date()
+    const t = new Date()
     if (message) {
       if (prev) {
-        let delt = (t - prev) / 1000
+        const delt = (t - prev) / 1000
         console.log(`[${timeStr(t)}] ${message} (${delt} sec)`)
       } else {
         console.log(`[${timeStr(t)}] ${message}`)

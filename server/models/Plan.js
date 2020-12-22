@@ -1,7 +1,7 @@
-var mongoose = require('mongoose')
-var Schema = mongoose.Schema
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
 
-var PlanSchema = new Schema({
+const PlanSchema = new Schema({
   _user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

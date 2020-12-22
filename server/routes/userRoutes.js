@@ -1,12 +1,12 @@
 // userRoutes.js
-var express = require('express')
-var userRoutes = express.Router()
-var User = require('../models/User')
+const express = require('express')
+const userRoutes = express.Router()
+const User = require('../models/User')
 
 // GET
 userRoutes.route('/').get(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    let user = await User.findOne({ auth0ID: req.user.sub }).exec()
     if (user == null) {
       user = new User({
         auth0ID: req.user.sub
@@ -23,10 +23,10 @@ userRoutes.route('/').get(async function (req, res) {
 // UPDATE
 userRoutes.route('/:id').put(async function (req, res) {
   try {
-    var user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    let fields = ['distUnits', 'elevUnits', 'altModel', 'email']
+    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const fields = ['distUnits', 'elevUnits', 'altModel', 'email']
     fields.forEach((f) => {
-      if (req.body.hasOwnProperty(f)) {
+      if (req.body[f] !== undefined) {
         user[f] = req.body[f]
       }
     })
