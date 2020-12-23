@@ -82,13 +82,16 @@ export default {
   },
   data () {
     return {
-      user: {}
+      user: {},
+      authInterval: null
     }
   },
   watch: {
     '$user.isAuthenticated': function (val) {
       if (val) {
         this.getUser()
+      } else {
+        this.$router.push({ name: 'Home' })
       }
     }
   },
@@ -138,6 +141,7 @@ export default {
       this.profile = data.profile
       this.$ga.event('User', 'authenticated')
       this.$ga.set({ dimension1: true })
+      this.authInterval = window.setInterval(this.refreshAuth, 30000)
     },
     async getUser () {
       this.user = await api.getUser()
@@ -151,6 +155,13 @@ export default {
       if (this.user.admin) {
         // ignore analytics metrics for admins
         this.$ga.disable()
+      }
+    },
+    async refreshAuth () {
+      this.$user.isAuthenticated = await this.$auth.isAuthenticated()
+      this.$logger(`Authenticated: ${this.$user.isAuthenticated}`)
+      if (!this.$user.isAuthenticated) {
+        window.clearInterval(this.refreshAuth)
       }
     }
   }
