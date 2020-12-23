@@ -52,6 +52,7 @@
 
 <script>
 import { LMap, LControlLayers, LTileLayer, LPolyline, LCircleMarker, LPopup } from 'vue2-leaflet'
+import 'leaflet/dist/leaflet.css'
 export default {
   components: {
     LMap,

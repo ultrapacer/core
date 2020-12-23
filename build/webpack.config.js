@@ -4,6 +4,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 const autoprefixer = require('autoprefixer')
 const path = require('path')
 const webpack = require('webpack')
@@ -105,14 +106,7 @@ const config = {
     moduleIds: 'hashed',
     runtimeChunk: 'single',
     splitChunks: {
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          priority: -10,
-          chunks: 'all'
-        }
-      }
+      chunks: 'all'
     }
   },
   devServer: {
@@ -145,6 +139,9 @@ module.exports = (env, argv) => {
     )
     config.plugins.push(
       new CleanWebpackPlugin()
+    )
+    config.plugins.push(
+      new BundleAnalyzerPlugin()
     )
   }
   return config

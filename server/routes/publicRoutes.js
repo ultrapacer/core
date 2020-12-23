@@ -78,8 +78,6 @@ publicRoutes.route(['/course/:_id/fields', '/course/link/:link/fields']).put(asy
 // GET COURSE PUBLIC
 publicRoutes.route('/ispublic/:type/:id').get(async function (req, res) {
   try {
-    console.log(req.params.type)
-    console.log(req.params.id)
     let course = {}
     if (req.params.type === 'course') {
       course = await Course.findById(req.params.id)

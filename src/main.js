@@ -13,9 +13,6 @@ import VuePageTitle from 'vue-page-title'
 import VueTheMask from 'vue-the-mask'
 import vueHeadful from 'vue-headful'
 
-import { Icon } from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-
 import 'vue-awesome/icons/brands/github'
 import 'vue-awesome/icons/brands/instagram'
 import 'vue-awesome/icons/brands/facebook'
@@ -32,12 +29,7 @@ import 'vue-awesome/icons/plus'
 import 'vue-awesome/icons/running'
 import 'vue-awesome/icons/trash'
 import VIcon from 'vue-awesome/components/Icon'
-delete Icon.Default.prototype._getIconUrl
-Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png')
-})
+
 Vue.component('VIcon', VIcon)
 Vue.component('VueHeadful', vueHeadful)
 

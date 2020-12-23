@@ -5,7 +5,6 @@ import Callback from '@/components/Callback'
 import Profile from '@/components/Profile'
 import auth from './auth/authService'
 import CoursesManager from '@/components/CoursesManager'
-import Course from '@/components/Course'
 import Settings from '@/components/Settings'
 import PrivacyPolicy from '@/components/PrivacyPolicy'
 import About from '@/components/About'
@@ -14,6 +13,10 @@ import Races from '@/components/Races'
 import api from '@/api'
 
 Vue.use(Router)
+
+function lazyLoad (view) {
+  return () => import(`@/components/${view}.vue`)
+}
 
 const router = new Router({
   mode: 'history',
@@ -65,17 +68,17 @@ const router = new Router({
     {
       path: '/course/:course',
       name: 'Course',
-      component: Course
+      component: lazyLoad('Course')
     },
     {
       path: '/race/:permalink',
       name: 'Race',
-      component: Course
+      component: lazyLoad('Course')
     },
     {
       path: '/course/plan/:plan',
       name: 'Plan',
-      component: Course
+      component: lazyLoad('Course')
     },
     {
       path: '/about',
