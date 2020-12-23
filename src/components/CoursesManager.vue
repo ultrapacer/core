@@ -165,8 +165,10 @@ export default {
     }
   },
   async created () {
+    this.$status.calculating = true
     this.courses = await api.getCourses()
     this.initializing = false
+    this.$status.calculating = false
   },
   methods: {
     async refreshCourses (callback) {

@@ -11,6 +11,7 @@ import PrivacyPolicy from '@/components/PrivacyPolicy'
 import About from '@/components/About'
 import Help from '@/components/Help'
 import Races from '@/components/Races'
+import api from '@/api'
 
 Vue.use(Router)
 
@@ -93,8 +94,20 @@ const router = new Router({
   ]
 })
 
-router.beforeEach((to, from, next) => {
-  if (!to.meta.requiresAuth || auth.isAuthenticated()) {
+router.beforeEach(async (to, from, next) => {
+  const isAuthenticated = auth.isAuthenticated()
+
+  // if navigating to a course, check if public and login otherwise:
+  if (!isAuthenticated && (to.name === 'Course' || to.name === 'Plan')) {
+    try {
+      const id = to.name === 'Course' ? to.params.course : to.params.plan
+      const ispublic = await api.isPublic(to.name.toLowerCase(), id)
+      to.meta.requiresAuth = !ispublic
+    } catch (err) {
+      console.log(err)
+    }
+  }
+  if (!to.meta.requiresAuth || isAuthenticated) {
     return next()
   }
   // Specify the current path as the customState parameter, meaning it

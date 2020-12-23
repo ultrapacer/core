@@ -1,8 +1,10 @@
 <!-- src/components/Callback.vue -->
 
 <template>
-  <div>
-    <p>Loading...</p>
+  <div
+    class="d-flex justify-content-center mb-3"
+  >
+    <b-spinner label="Loading..." />
   </div>
 </template>
 

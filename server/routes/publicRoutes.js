@@ -75,6 +75,29 @@ publicRoutes.route(['/course/:_id/fields', '/course/link/:link/fields']).put(asy
   }
 })
 
+// GET COURSE PUBLIC
+publicRoutes.route('/ispublic/:type/:id').get(async function (req, res) {
+  try {
+    console.log(req.params.type)
+    console.log(req.params.id)
+    let course = {}
+    if (req.params.type === 'course') {
+      course = await Course.findById(req.params.id)
+        .select(['public'])
+        .exec()
+    } else {
+      const plan = await Plan.findById(req.params.id)
+        .populate([{ path: '_course', select: 'public' }])
+        .exec()
+      course = plan._course
+    }
+    res.json(course.public)
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
 // GET RACES
 publicRoutes.route('/races').get(async function (req, res) {
   try {
