@@ -857,7 +857,7 @@ export default {
     async clearPlan () {
       // deselect the current plan
       if (!this.planAssigned) { return }
-      this.plan = null
+      this.plan = {}
       this.pacing = {}
       const route = {
         name: 'Course',
