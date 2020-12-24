@@ -12,9 +12,9 @@ function timeStr (t) {
           leftZero(t.getSeconds()) + '.' +
           leftZero(Math.round(t.getMilliseconds() / 10))
 }
-
+const isBeta = window.location.origin.includes('appspot.com')
 export function logger (message = null, prev = null) {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' || isBeta) {
     const t = new Date()
     if (message) {
       if (prev) {
