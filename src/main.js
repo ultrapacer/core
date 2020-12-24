@@ -11,7 +11,6 @@ import VueAnalytics from 'vue-analytics'
 import VuePageTitle from 'vue-page-title'
 import VueTheMask from 'vue-the-mask'
 import vueHeadful from 'vue-headful'
-
 import 'vue-awesome/icons/brands/github'
 import 'vue-awesome/icons/brands/instagram'
 import 'vue-awesome/icons/brands/facebook'
@@ -28,6 +27,9 @@ import 'vue-awesome/icons/plus'
 import 'vue-awesome/icons/running'
 import 'vue-awesome/icons/trash'
 import VIcon from 'vue-awesome/components/Icon'
+
+// eslint-disable-next-line no-unused-vars
+import geo from '@/util/geo'
 
 Vue.component('VIcon', VIcon)
 Vue.component('VueHeadful', vueHeadful)

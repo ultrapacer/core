@@ -2,20 +2,14 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Home from '@/components/Home'
 import Callback from '@/components/Callback'
-import Profile from '@/components/Profile'
 import auth from './auth/authService'
-import CoursesManager from '@/components/CoursesManager'
-import Settings from '@/components/Settings'
 import PrivacyPolicy from '@/components/PrivacyPolicy'
-import About from '@/components/About'
-import Help from '@/components/Help'
-import Races from '@/components/Races'
 import api from '@/api'
 
 Vue.use(Router)
 
 function lazyLoad (view) {
-  return () => import(`@/components/${view}.vue`)
+  return () => import(/* webpackPrefetch: true */ `@/components/${view}.vue`)
 }
 
 const router = new Router({
@@ -39,7 +33,7 @@ const router = new Router({
     {
       path: '/profile',
       name: 'Profile',
-      component: Profile,
+      component: lazyLoad('Profile'),
       meta: {
         requiresAuth: true
       }
@@ -47,7 +41,7 @@ const router = new Router({
     {
       path: '/settings',
       name: 'Settings',
-      component: Settings,
+      component: lazyLoad('Settings'),
       meta: {
         requiresAuth: true
       }
@@ -55,12 +49,12 @@ const router = new Router({
     {
       path: '/races',
       name: 'Races',
-      component: Races
+      component: lazyLoad('Races')
     },
     {
       path: '/courses',
       name: 'CoursesManager',
-      component: CoursesManager,
+      component: lazyLoad('CoursesManager'),
       meta: {
         requiresAuth: true
       }
@@ -83,12 +77,12 @@ const router = new Router({
     {
       path: '/about',
       name: 'About',
-      component: About
+      component: lazyLoad('About')
     },
     {
       path: '/help',
       name: 'Help',
-      component: Help
+      component: lazyLoad('Help')
     },
     {
       path: '*',

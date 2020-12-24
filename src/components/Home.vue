@@ -33,11 +33,10 @@
 
 <script>
 import AboutContent from './AboutContent'
-import CoursesManager from './CoursesManager'
 export default {
   components: {
     AboutContent,
-    CoursesManager
+    CoursesManager: () => import(/* webpackPrefetch: true */ './CoursesManager.vue')
   }
 }
 </script>

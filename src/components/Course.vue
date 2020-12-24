@@ -242,6 +242,7 @@
           class="sticky-top mt-1"
         >
           <course-profile
+            v-if="points.length"
             ref="profile"
             :course="course"
             :points="points"
@@ -251,6 +252,7 @@
             @waypointClick="waypointClick"
           />
           <course-map
+            v-if="points.length"
             ref="map"
             :course="course"
             :points="points"
@@ -341,8 +343,6 @@ import { string2sec } from '../util/time'
 import wputil from '../util/waypoints'
 import CourseEdit from './CourseEdit'
 import CourseCompare from './CourseCompare'
-import CourseMap from './CourseMap'
-import CourseProfile from './CourseProfile'
 import DeleteModal from './DeleteModal'
 import DownloadTrack from './DownloadTrack'
 import SegmentTable from './SegmentTable'
@@ -359,8 +359,8 @@ export default {
   components: {
     CourseEdit,
     CourseCompare,
-    CourseMap,
-    CourseProfile,
+    CourseMap: () => import(/* webpackPrefetch: true */ './CourseMap.vue'),
+    CourseProfile: () => import(/* webpackPrefetch: true */ './CourseProfile.vue'),
     DeleteModal,
     DownloadTrack,
     SegmentTable,

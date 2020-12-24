@@ -96,6 +96,7 @@
       </b-col>
     </b-row>
     <course-edit
+      v-if="courses.length"
       ref="courseEdit"
       @refresh="refreshCourses"
       @delete="deleteCourse"
@@ -112,12 +113,11 @@
 
 <script>
 import api from '@/api'
-import CourseEdit from './CourseEdit'
 import DeleteModal from './DeleteModal'
 export default {
   title: 'My Courses',
   components: {
-    CourseEdit,
+    CourseEdit: () => import(/* webpackPrefetch: true */ './CourseEdit.vue'),
     DeleteModal
   },
   data () {
