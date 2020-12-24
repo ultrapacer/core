@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-modal
-      id="plan-edit-modal"
+      ref="modal"
       centered
       :title="(model._id ? 'Edit' : 'New') + ' Plan'"
       @hidden="clear"
@@ -291,6 +291,16 @@
         </b-button>
       </template>
     </b-modal>
+    <b-toast
+      ref="toast-new-plan"
+      :title="'New plan for ' + course.name"
+      toaster="b-toaster-bottom-right"
+      solid
+      variant="info"
+      auto-hide-delay="5000"
+    >
+      {{ newPlanToastMsg }}Login or Signup to ultraPacer to save or share your new plan for "{{ course.name }}".
+    </b-toast>
   </div>
 </template>
 
@@ -342,7 +352,8 @@ export default {
       customStart: false,
       eventDate: null,
       eventTime: null,
-      timezones: moment.tz.names()
+      timezones: moment.tz.names(),
+      newPlanToastMsg: ''
     }
   },
   computed: {
@@ -438,7 +449,7 @@ export default {
       } else {
         this.hF.enabled = false
       }
-      this.$bvModal.show('plan-edit-modal')
+      this.$refs.modal.show()
     },
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
@@ -484,24 +495,14 @@ export default {
             this.course.public ? this.course.name : 'private'
           )
           if (String(p._user._id) !== String(this.course._user)) {
-            this.$bvToast.toast(`View, edit, and add plans for "${this.course.name}" next time you log in by selecting "Courses" in the top menu.`, {
-              title: `New plan for "${this.course.name}!`,
-              toaster: 'b-toaster-bottom-right',
-              solid: true,
-              variant: 'info',
-              'auto-hide-delay': 5000
-            })
+            this.newPlanToastMsg = `View, edit, and add plans for "${this.course.name}" next time you log in by selecting "My Courses" in the top menu.`
+            this.$refs['toast-new-plan'].show()
           }
         }
       } else {
         p = { ...this.model }
-        this.$bvToast.toast(`Login or Signup to ultraPacer to save or share your new plan for "${this.course.name}".`, {
-          title: `New plan for "${this.course.name}!`,
-          toaster: 'b-toaster-bottom-right',
-          solid: true,
-          variant: 'info',
-          'auto-hide-delay': 5000
-        })
+        this.newPlanToastMsg = `Login or Signup to ultraPacer to save or share your new plan for "${this.course.name}".`
+        this.$refs['toast-new-plan'].show()
         this.$ga.event('Plan', 'temporary',
           this.course.public ? this.course.name : 'private'
         )
@@ -509,7 +510,7 @@ export default {
       await this.$emit('refresh', p, () => {
         this.saving = false
         this.clear()
-        this.$bvModal.hide('plan-edit-modal')
+        this.$refs.modal.hide()
       })
     },
     clear () {
@@ -523,7 +524,7 @@ export default {
       this.$emit('delete', this.model, async (err) => {
         if (!err) {
           this.clear()
-          this.$bvModal.hide('plan-edit-modal')
+          this.$refs.modal.hide()
         }
         this.deleting = false
       })

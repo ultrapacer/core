@@ -85,13 +85,13 @@
           </template>
         </b-table>
         <div>
-          <b-btn
+          <b-button
             variant="success"
             @click.prevent="newCourse()"
           >
             <v-icon name="plus" />
             <span>New Course</span>
-          </b-btn>
+          </b-button>
         </div>
       </b-col>
     </b-row>

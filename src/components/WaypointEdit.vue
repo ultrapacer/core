@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-modal
-      id="waypoint-edit-modal"
+      ref="modal"
       centered
       :static="true"
       :title="(model._id ? 'Edit' : 'New') + ' Waypoint'"
@@ -231,7 +231,7 @@ export default {
         this.model.locUserUnit =
           this.$units.distf(this.model.location, 2)
       }
-      this.$bvModal.show('waypoint-edit-modal')
+      this.$refs.modal.show()
     },
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
@@ -258,7 +258,7 @@ export default {
         this.saving = false
         this.clear()
         this.$emit('setUpdateFlag')
-        this.$bvModal.hide('waypoint-edit-modal')
+        this.$refs.modal.hide()
       })
     },
     clear () {
@@ -268,7 +268,7 @@ export default {
       this.deleting = true
       this.$emit('delete', this.model, async (err) => {
         if (!err) {
-          this.$bvModal.hide('waypoint-edit-modal')
+          this.$refs.modal.hide()
         }
         this.$emit('setUpdateFlag')
         this.deleting = false

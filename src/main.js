@@ -3,7 +3,6 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
-import BootstrapVue from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import AuthPlugin from './plugins/auth'
@@ -33,7 +32,6 @@ import VIcon from 'vue-awesome/components/Icon'
 Vue.component('VIcon', VIcon)
 Vue.component('VueHeadful', vueHeadful)
 
-Vue.use(BootstrapVue)
 Vue.use(AuthPlugin)
 Vue.use(VueAnalytics, {
   id: 'UA-148791352-1',

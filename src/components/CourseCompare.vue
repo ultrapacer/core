@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-modal
-      id="course-compare-modal"
+      ref="modal"
       centered
       title="Compare to Activity (Beta)"
       @ok="handleOk"
@@ -57,13 +57,23 @@
           @click="ok()"
         >
           <b-spinner
-            v-show="saving"
+            v-show="loading"
             small
           />
           Load
         </b-button>
       </template>
     </b-modal>
+    <b-toast
+      ref="toast-match-error"
+      title="Matching Error"
+      toaster="b-toaster-bottom-right"
+      solid
+      variant="danger"
+      auto-hide-delay="5000"
+    >
+      Activity diverged from Course at {{ $units.distf(faildist, 2) }} {{ $units.dist }}.
+    </b-toast>
   </div>
 </template>
 
@@ -82,30 +92,36 @@ export default {
     return {
       gpxFile: null,
       gpxPoints: [],
-      saving: false,
-      cb: null
+      loading: false,
+      cb: null,
+      faildist: 0
     }
   },
   methods: {
     async show (cb) {
       this.cb = cb
-      this.$bvModal.show('course-compare-modal')
+      this.$refs.modal.show()
     },
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
       if (this.$refs.compareform.reportValidity()) {
-        this.save()
+        this.load()
       }
     },
-    async save () {
-      if (this.saving) { return }
-      this.saving = true
+    async load () {
+      if (this.loading) { return }
+      this.loading = true
       if (this.gpxPoints.length) {
         geo.addLoc(this.gpxPoints)
       }
-      await this.cb(this.gpxPoints)
-      this.$bvModal.hide('course-compare-modal')
-      this.saving = false
+      const result = await this.cb(this.gpxPoints)
+      if (result.match) {
+        this.$refs.modal.hide()
+      } else {
+        this.faildist = result.point.loc
+        this.$refs['toast-match-error'].show()
+      }
+      this.loading = false
     },
     async loadGPX (f) {
       const reader = new FileReader()
@@ -130,7 +146,7 @@ export default {
     },
     async stop () {
       this.$emit('stop', () => {
-        this.$bvModal.hide('course-compare-modal')
+        this.$refs.modal.hide()
       })
     }
   }

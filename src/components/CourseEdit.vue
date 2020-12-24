@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-modal
-      id="course-edit-modal"
+      ref="modal"
       centered
       :title="(model._id ? 'Edit' : 'New') + ' Course'"
       @hidden="clear"
@@ -302,7 +302,7 @@ export default {
       } else {
         this.model = Object.assign({}, this.defaults)
       }
-      this.$bvModal.show('course-edit-modal')
+      this.$refs.modal.show()
     },
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
@@ -424,7 +424,7 @@ export default {
       this.$emit('refresh', () => {
         this.saving = false
         this.clear()
-        this.$bvModal.hide('course-edit-modal')
+        this.$refs.modal.hide()
       })
     },
     clear () {
@@ -435,7 +435,7 @@ export default {
       this.$emit('delete', this.model, async (err) => {
         if (!err) {
           this.$ga.event('Course', 'delete')
-          this.$bvModal.hide('course-edit-modal')
+          this.$refs.modal.hide()
         }
         this.deleting = false
       })

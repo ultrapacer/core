@@ -5,6 +5,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
+const BoostrapVueLoader = require('bootstrap-vue-loader')
 const autoprefixer = require('autoprefixer')
 const path = require('path')
 const webpack = require('webpack')
@@ -80,6 +81,7 @@ const config = {
   },
   plugins: [
     new VueLoaderPlugin(),
+    new BoostrapVueLoader(),
     new MiniCssExtractPlugin({
       filename: 'public/css/[name].[contenthash:8].css',
       chunkFilename: 'public/css/[name].[contenthash:8].css'

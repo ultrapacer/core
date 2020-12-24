@@ -55,12 +55,12 @@
           </b-form-group>
         </b-card>
         <div>
-          <b-btn
+          <b-button
             type="submit"
             variant="success"
           >
             Save Settings
-          </b-btn>
+          </b-button>
         </div>
       </form>
     </b-card>

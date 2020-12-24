@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-modal
-      id="download-modal"
+      ref="modal"
       centered
       title="Download GPS/TCX Files"
       hide-footer
@@ -138,7 +138,7 @@ export default {
   methods: {
     async show () {
       this.ready = {}
-      this.$bvModal.show('download-modal')
+      this.$refs.modal.show()
     },
     async generate (type, resolution, target) {
       const t = this.$logger(`DownloadGPX|generate ${type} ${resolution}`)

@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-modal
-      id="delete-modal"
+      ref="modal"
       centered
       :static="true"
       @hidden="clear"
@@ -55,7 +55,7 @@ export default {
     async remove () {
       this.deleting = true
       await this.delFun(this.object)
-      this.$bvModal.hide('delete-modal')
+      this.$refs.modal.hide()
       this.deleting = false
       if (typeof (this.cb) === 'function') this.cb()
     },
@@ -65,7 +65,7 @@ export default {
       this.verb = data.verb || 'delete'
       this.delFun = delFun
       this.cb = cb
-      this.$bvModal.show('delete-modal')
+      this.$refs.modal.show()
     }
   }
 }

@@ -45,7 +45,7 @@
             :md="plansSelect.length ? '2': '9'"
             class="pl-2"
           >
-            <b-btn
+            <b-button
               v-if="plansSelect.length && planOwner"
               v-b-popover.hover.blur.bottomright.d250.v-info="
                 'Edit the selected pacing plan.'
@@ -55,8 +55,8 @@
               @click="editPlan()"
             >
               <v-icon name="edit" />
-            </b-btn>
-            <b-btn
+            </b-button>
+            <b-button
               v-b-popover.hover.blur.bottomright.d250.v-info="
                 'Create a new pacing plan for this course.'
               "
@@ -67,7 +67,7 @@
             >
               <v-icon name="plus" />
               <span v-if="!plansSelect.length">New Pacing Plan</span>
-            </b-btn>
+            </b-button>
           </b-col>
           <b-col
             cols="2"
@@ -195,27 +195,27 @@
               @updateWaypointLocation="updateWaypointLocation"
             />
             <div v-if="editing">
-              <b-btn
+              <b-button
                 variant="success"
                 @click.prevent="newWaypoint()"
               >
                 <v-icon name="plus" /><span>New Waypoint</span>
-              </b-btn>
-              <b-btn
+              </b-button>
+              <b-button
                 variant="outline-primary"
                 style="float:right"
                 @click.prevent="editing=false"
               >
                 <v-icon name="edit" /><span>editing: on</span>
-              </b-btn>
+              </b-button>
             </div>
             <div v-if="owner && !editing">
-              <b-btn
+              <b-button
                 style="float:right"
                 @click.prevent="editing=true"
               >
                 <v-icon name="lock" /><span>editing: off</span>
-              </b-btn>
+              </b-button>
             </div>
           </b-tab>
           <b-tab
@@ -310,6 +310,26 @@
       :description="description"
       :title="title"
     />
+    <b-toast
+      ref="toast-welcome"
+      title="Welcome to ultraPacer!"
+      toaster="b-toaster-bottom-right"
+      solid
+      variant="info"
+      auto-hide-delay="10000"
+    >
+      ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue. To create a pace plan for this course, select the "New Pacing Plan" button on the top right. Happy running!
+    </b-toast>
+    <b-toast
+      ref="toast-small-screen"
+      title="Small/mobile screen"
+      toaster="b-toaster-bottom-center"
+      solid
+      variant="info"
+      auto-hide-delay="6000"
+    >
+      Much of the data on this page is hidden on small screens. Select rows in tables to expand. Use a desktop or tablet for a better experience.
+    </b-toast>
   </div>
 </template>
 
@@ -582,27 +602,9 @@ export default {
     this.$status.calculating = false
     setTimeout(() => {
       if (!this.$user.isAuthenticated) {
-        this.$bvToast.toast(
-          'ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue. To create a pace plan for this course, select the "New Pacing Plan" button on the top right. Happy running!',
-          {
-            title: 'Welcome to ultraPacer!',
-            toaster: 'b-toaster-bottom-right',
-            solid: true,
-            variant: 'info',
-            autoHideDelay: 10000
-          }
-        )
+        this.$refs['toast-welcome'].show()
       } else if (screen.width < 992) {
-        this.$bvToast.toast(
-          'Much of the data on this page is hidden on small screens. Select rows in tables to expand. Use a desktop or tablet for a better experience.',
-          {
-            title: 'Small/mobile screen',
-            toaster: 'b-toaster-bottom-center',
-            solid: true,
-            variant: 'info',
-            autoHideDelay: 6000
-          }
-        )
+        this.$refs['toast-small-screen'].show()
       }
     }, 1000)
     if (this.$route.query.plan) {
@@ -1084,18 +1086,9 @@ export default {
           } else {
             this.$ga.event('Course', 'compare', this.publicName, 0)
             this.comparing = false
-            this.$bvToast.toast(
-              `Activity diverged from Course at ${this.$units.distf(res.point.loc, 2)} ${this.$units.dist}.`,
-              {
-                title: 'Matching Error',
-                toaster: 'b-toaster-bottom-right',
-                solid: true,
-                variant: 'danger',
-                autoHideDelay: 5000
-              }
-            )
           }
           this.$status.calculating = false
+          return res
         }
       )
     }
