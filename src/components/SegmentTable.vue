@@ -356,7 +356,7 @@ export default {
       }
     },
     showClock: function () {
-      return this.segments[0].tod !== null
+      return this.segments[0].tod !== undefined
     },
     collapseableIds: function () {
       return this.segments.filter((s, i) =>
