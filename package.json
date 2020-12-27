@@ -64,7 +64,7 @@
     "sass-loader": "^10.0.2",
     "style-loader": "^1.2.1",
     "suncalc": "^1.8.0",
-    "vue-analytics": "^5.17.2",
+    "vue-analytics": "^5.22.1",
     "vue-awesome": "^3.5.2",
     "vue-chartjs": "^3.5.1",
     "vue-headful": "^2.1.0",

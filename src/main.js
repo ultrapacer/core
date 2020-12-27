@@ -35,17 +35,22 @@ Vue.component('VIcon', VIcon)
 Vue.component('VueHeadful', vueHeadful)
 
 Vue.use(AuthPlugin)
-Vue.use(VueAnalytics, {
-  id: 'UA-148791352-1',
-  router,
-  ignoreRoutes: ['/callback'],
-  debug: {
-    sendHitTask: process.env.NODE_ENV !== 'development'
-  },
-  set: [
-    { field: 'dimension1', value: false }
-  ]
-})
+
+if (process.env.GOOGLE_ANALYTICS_KEY) {
+  const isBeta = window.location.origin.includes('appspot.com')
+  Vue.use(VueAnalytics, {
+    id: process.env.GOOGLE_ANALYTICS_KEY,
+    router,
+    ignoreRoutes: ['/callback'],
+    debug: {
+      sendHitTask: (process.env.NODE_ENV !== 'development' && !isBeta)
+    },
+    set: [
+      { field: 'dimension1', value: false }
+    ]
+  })
+}
+
 Vue.use(VuePageTitle, {
   // prefix: 'My App - ',
   suffix: '- ultraPacer'
