@@ -8,6 +8,24 @@
     </div>
     <div v-else>
       <b-list-group style="font-size:0.9rem">
+        <b-list-group-item>
+          <h5 class="mb-1">
+            Course Description
+          </h5>
+          <span v-if="course.description">
+            {{ course.description }}
+          </span>
+          <span v-else>
+            The <b>{{ course.name }}</b> course covers <b>{{ $units.distf(course.distance, 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.gain, 0) | commas }} {{ $units.alt }}</b> of climbing.
+          </span>
+          <br>
+          <span
+            v-if="userCount > 1"
+            class="mb-0"
+          >
+            <b>{{ userCount }} runners</b> have ultraPacer plans for this course.
+          </span>
+        </b-list-group-item>
         <b-list-group-item v-if="showPaceInfo">
           <h5 class="mb-1">
             Pacing Calculation Basis
@@ -515,6 +533,7 @@
 </template>
 
 <script>
+import api from '@/api'
 import moment from 'moment-timezone'
 import { sec2string } from '../util/time'
 import { aF, gF } from '../util/normFactor'
@@ -573,7 +592,8 @@ export default {
         time: 'Finish Time',
         pace: 'Average Pace',
         np: 'Normalized Pace'
-      }
+      },
+      userCount: 0
     }
   },
   computed: {
@@ -685,6 +705,9 @@ export default {
         return `${str}, & ${last}`
       }
     }
+  },
+  async created () {
+    this.userCount = await api.courseUserCount(this.course._id)
   },
   methods: {
     fPace: function (p) {

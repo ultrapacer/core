@@ -75,6 +75,20 @@ publicRoutes.route(['/course/:_id/fields', '/course/link/:link/fields']).put(asy
   }
 })
 
+// GET COURSE USER COUNT
+publicRoutes.route('/course/:course/countusers').get(async function (req, res) {
+  try {
+    const q = {
+      _course: req.params.course
+    }
+    const plans = await Plan.find(q).distinct('_user').exec()
+    res.json(plans.length)
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
 // GET COURSE PUBLIC
 publicRoutes.route('/ispublic/:type/:id').get(async function (req, res) {
   try {
