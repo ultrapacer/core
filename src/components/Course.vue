@@ -375,6 +375,11 @@ export default {
     PlanEdit,
     WaypointEdit
   },
+  filters: {
+    commas (val) {
+      return val.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    }
+  },
   data () {
     return {
       initializing: true,
