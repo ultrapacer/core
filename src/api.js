@@ -116,6 +116,9 @@ export default {
   isPublic (type, id) {
     return this.execute('get', `/api-public/ispublic/${type}/${id}`)
   },
+  courseUserCount (id) {
+    return this.execute('get', `/api-public/course/${id}/countusers`)
+  },
   getTimeZone (lat, lon) {
     return this.execute('get', `/api/timezone?lat=${lat}&lon=${lon}`)
   }

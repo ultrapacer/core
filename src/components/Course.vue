@@ -130,6 +130,12 @@
       class="d-flex justify-content-center mb-3"
       data-nosnippet
     >
+      <span v-if="course.description">
+        {{ course.description }}
+      </span>
+      <span v-else-if="course.name">
+        The {{ course.name }} course covers <b>{{ $units.distf(course.distance, 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.gain, 0) | commas }} {{ $units.alt }}</b> of climbing.
+      </span>
       <b-spinner label="Loading..." />
     </div>
     <b-row
@@ -396,7 +402,11 @@ export default {
   },
   computed: {
     description: function () {
-      return `The ${this.$title} covers ${this.$units.distf(this.course.distance, 1)} ${this.$units.dist} with ${this.$units.altf(this.course.gain, 0)} ${this.$units.alt} of climbing. Ready to run?`
+      if (this.course.description) {
+        return this.course.description
+      } else {
+        return `The ${this.$title} course covers ${this.$units.distf(this.course.distance, 1)} ${this.$units.dist} with ${this.$units.altf(this.course.gain, 0)} ${this.$units.alt} of climbing. Ready?`
+      }
     },
     title: function () {
       return this.$title + ' - ultraPacer'
