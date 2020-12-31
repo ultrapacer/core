@@ -15,9 +15,10 @@
 .github
 .editorconfig
 .eslintignore
-.eslintrc
-.postcssrc
-babel.config
+.eslintrc.js
+.postcssrc.js
+babel.config.js
+README.md
 
 # Node.js dependencies:
 build/
