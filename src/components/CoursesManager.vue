@@ -166,13 +166,18 @@ export default {
   },
   async created () {
     this.$status.calculating = true
-    this.courses = await api.getCourses()
+    await this.refreshCourses()
     this.initializing = false
     this.$status.calculating = false
   },
   methods: {
     async refreshCourses (callback) {
       this.courses = await api.getCourses()
+      this.courses.sort((a, b) => {
+        if (a.name < b.name) { return -1 }
+        if (a.name > b.name) { return 1 }
+        return 0
+      })
       if (typeof callback === 'function') callback()
     },
     async goToCourse (course) {
@@ -196,7 +201,9 @@ export default {
       this.$refs.courseEdit.show({})
     },
     async editCourse (course) {
-      this.$refs.courseEdit.show(course)
+      this.$status.calculating = true
+      const c = await api.getCourse(course._id)
+      this.$refs.courseEdit.show(c)
     },
     async deleteCourse (course, cb) {
       this.$refs.delModal.show(

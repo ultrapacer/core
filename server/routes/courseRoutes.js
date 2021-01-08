@@ -53,14 +53,22 @@ courseRoutes.route('/').get(async function (req, res) {
         _user: user
       },
       {
-        _id: {
-          $in: user._courses
-        }
+        $and: [
+          {
+            _id: {
+              $in: user._courses
+            }
+          },
+          {
+            public: true
+          }
+        ]
       }
     ]
   }
-  const courses = await Course.find(q).select(['-points', '-raw'])
-    .collation({ locale: 'en' }).sort('name').exec()
+  const courses = await Course.find(q)
+    .select(['name', 'distance', 'gain', 'loss', 'link', '_user'])
+    .exec()
   res.json(courses)
 })
 
