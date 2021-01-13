@@ -96,7 +96,6 @@
       </b-col>
     </b-row>
     <course-edit
-      v-if="courses.length"
       ref="courseEdit"
       @refresh="refreshCourses"
       @delete="deleteCourse"
