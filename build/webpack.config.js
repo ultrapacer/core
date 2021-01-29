@@ -4,9 +4,11 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const SitemapPlugin = require('sitemap-webpack-plugin').default
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 const BoostrapVueLoader = require('bootstrap-vue-loader')
 const autoprefixer = require('autoprefixer')
+const prettydata = require('pretty-data')
 const path = require('path')
 const webpack = require('webpack')
 const keys = require('../config/keys')
@@ -38,6 +40,10 @@ const config = {
       {
         test: /\.vue$/,
         loader: 'vue-loader'
+      },
+      {
+        test: /\.md$/,
+        loader: 'vue-loader!vue-md-loader'
       },
       {
         test: /\.s?css$/,
@@ -80,8 +86,8 @@ const config = {
     ]
   },
   plugins: [
-    new VueLoaderPlugin(),
     new BoostrapVueLoader(),
+    new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
       filename: 'public/css/[name].[contenthash:8].css',
       chunkFilename: 'public/css/[name].[contenthash:8].css'
@@ -124,7 +130,6 @@ const config = {
     fs: 'empty'
   }
 }
-
 module.exports = (env, argv) => {
   if (argv.mode === 'development') {
     config.devtool = 'eval-cheap-module-source-map'
@@ -139,6 +144,23 @@ module.exports = (env, argv) => {
         ignore: ['.*']
       }])
     )
+
+    // compile sitemap with all documentation:
+    const paths = ['', 'races', 'docs', 'docs/models']
+    const docs = require('../src/docs/.config').docs
+    docs.forEach(d => { paths.push(`docs/${d.path}`) })
+    config.plugins.push(
+      new SitemapPlugin({
+        base: 'https://ultrapacer.com/',
+        paths,
+        options: {
+          filename: 'public/sitemap.xml',
+          skipgzip: true,
+          formatter: xml => { return prettydata.pd.xml(xml) }
+        }
+      })
+    )
+
     config.plugins.push(
       new CleanWebpackPlugin()
     )

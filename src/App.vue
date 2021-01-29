@@ -30,8 +30,8 @@
           >
             Settings
           </b-nav-item>
-          <b-nav-item to="/help">
-            Help
+          <b-nav-item to="/docs">
+            Docs
           </b-nav-item>
           <b-nav-item
             v-if="$user.isAuthenticated"

@@ -80,9 +80,14 @@ const router = new Router({
       component: lazyLoad('About')
     },
     {
-      path: '/help',
-      name: 'Help',
-      component: lazyLoad('Help')
+      path: '/docs',
+      name: 'Docs',
+      component: lazyLoad('Docs')
+    },
+    {
+      path: '/docs/:doc',
+      name: 'Doc',
+      component: lazyLoad('Docs')
     },
     {
       path: '*',

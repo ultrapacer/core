@@ -6,8 +6,8 @@
   "private": true,
   "scripts": {
     "dev": "webpack-dev-server --mode development --hot --config build/webpack.config.js",
-    "lint": "eslint --ext .js,.vue server.js src server config build",
-    "lintfix": "eslint --ext .js,.vue --fix server.js src server config build",
+    "lint": "eslint --ext .js,.vue,.md server.js src server config build",
+    "lintfix": "eslint --ext .js,.vue,.md --fix server.js src server config build",
     "build": "webpack --mode production --config build/webpack.config.js"
   },
   "dependencies": {
@@ -21,6 +21,7 @@
     "geo-tz": "*",
     "jwks-rsa": "^1.12.2",
     "mongoose": "^5.11.9",
+    "pretty-data": "^0.40.0",
     "sgeo": "0.0.5",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1",
@@ -47,6 +48,7 @@
     "eslint-friendly-formatter": "^4.0.1",
     "eslint-loader": "^4.0.2",
     "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-md": "^1.0.19",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^3.0.1",
@@ -62,6 +64,7 @@
     "postcss-loader": "^2.0.8",
     "sass": "^1.26.10",
     "sass-loader": "^10.0.2",
+    "sitemap-webpack-plugin": "^1.0.0",
     "style-loader": "^1.2.1",
     "suncalc": "^1.8.0",
     "vue-analytics": "^5.22.1",
@@ -69,6 +72,7 @@
     "vue-chartjs": "^3.5.1",
     "vue-headful": "^2.1.0",
     "vue-loader": "^15.9.3",
+    "vue-md-loader": "^1.1.7",
     "vue-page-title": "^1.1.4",
     "vue-style-loader": "^3.0.1",
     "vue-template-compiler": "^2.6.12",
