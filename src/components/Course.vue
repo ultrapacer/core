@@ -144,6 +144,7 @@
     >
       <b-col order="2">
         <b-tabs
+          ref="tables"
           v-model="tableTabIndex"
           content-class="mt-3"
           small

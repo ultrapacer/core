@@ -12,7 +12,7 @@
     >
       Loading...
     </b-alert>
-    <b-card>
+    <b-card ref="settings">
       <form @submit.prevent="saveSettings">
         <b-form-group label="Distance Units">
           <b-form-select

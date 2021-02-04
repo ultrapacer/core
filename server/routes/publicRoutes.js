@@ -2,6 +2,7 @@
 const express = require('express')
 const publicRoutes = express.Router()
 const Course = require('../models/Course')
+const Sponsor = require('../models/Sponsor')
 const Plan = require('../models/Plan')
 const xml2js = require('xml2js')
 
@@ -158,6 +159,22 @@ publicRoutes.route('/sitemap.xml').get(async function (req, res) {
     const xml = builder.buildObject(obj)
     res.type('text/plain')
     res.send(xml)
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
+// GET A SPONSOR
+publicRoutes.route('/sponsor').get(async function (req, res) {
+  try {
+    const sponsors = await Sponsor.find({ enabled: true }).exec()
+    if (sponsors.length) {
+      const i = Math.floor(Math.random() * sponsors.length)
+      res.json(sponsors[i])
+    } else {
+      res.json(null)
+    }
   } catch (err) {
     console.log(err)
     res.status(400).send(err)

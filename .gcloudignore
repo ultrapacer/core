@@ -18,6 +18,7 @@
 .eslintrc.js
 .postcssrc.js
 babel.config.js
+desktop.ini
 README.md
 
 # Node.js dependencies:

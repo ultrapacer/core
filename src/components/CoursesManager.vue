@@ -12,7 +12,10 @@
     >
       <b-spinner label="Loading..." />
     </div>
-    <b-row v-if="!initializing">
+    <b-row
+      v-if="!initializing"
+      ref="coursesTable"
+    >
       <b-col>
         <b-table
           :items="courses"

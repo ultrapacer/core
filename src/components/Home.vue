@@ -1,10 +1,5 @@
 <template>
-  <div v-if="$user.isAuthenticated">
-    <courses-manager
-      ref="coursesManager"
-    />
-  </div>
-  <div v-else>
+  <div>
     <div
       class="mt-5"
       style="align-items: center; justify-content: center; text-align: center;"
@@ -34,9 +29,9 @@
 <script>
 import AboutContent from './AboutContent'
 export default {
+  title: 'Home',
   components: {
-    AboutContent,
-    CoursesManager: () => import(/* webpackPrefetch: true */ './CoursesManager.vue')
+    AboutContent
   }
 }
 </script>

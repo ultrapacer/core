@@ -109,6 +109,9 @@ router.beforeEach(async (to, from, next) => {
       console.log(err)
     }
   }
+  if (isAuthenticated && to.name === 'Home') {
+    next({ name: 'CoursesManager' })
+  }
   if (!to.meta.requiresAuth || isAuthenticated) {
     return next()
   }

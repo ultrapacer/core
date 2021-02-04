@@ -27,6 +27,7 @@
       </b-link>
     </p>
     <div
+      ref="docs"
       class="accordion"
       role="tablist"
     >
@@ -104,9 +105,11 @@ export default {
           null,
           path
         )
-        const name = docs.find(x => x.path === collapseId).name
-        this.$title = `Docs: ${name}`
-        this.$ga.page(path)
+        const doc = docs.find(x => x.path === collapseId)
+        if (doc) {
+          this.$title = `Docs: ${doc.name}`
+          this.$ga.page(path)
+        }
       }
     })
   }

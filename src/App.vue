@@ -69,16 +69,19 @@
     <router-view
       ref="routerView"
     />
+    <sponsor />
   </div>
 </template>
 
 <script>
 import api from '@/api'
 import MenuSocial from './components/MenuSocial'
+import Sponsor from './components/Sponsor'
 export default {
   name: 'App',
   components: {
-    MenuSocial
+    MenuSocial,
+    Sponsor
   },
   data () {
     return {

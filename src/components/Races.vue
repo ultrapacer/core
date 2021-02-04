@@ -24,6 +24,7 @@
       <b-col>
         <h4>Past Events</h4>
         <race-table
+          ref="pastRaces"
           :races="pastRaces"
         />
       </b-col>

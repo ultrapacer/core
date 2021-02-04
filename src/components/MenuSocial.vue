@@ -1,6 +1,7 @@
 <template>
   <div style="margin-left: -0.5rem">
     <b-link
+      v-if="$user.isAuthenticated"
       v-b-popover.hover.blur.bottomright.d250.v-info="'Send me a good old-fashioned email!'"
       href="mailto:danny@ultrapacer.com"
       target="_blank"
