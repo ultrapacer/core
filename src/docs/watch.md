@@ -6,7 +6,6 @@ Test this out before your race! Create a Course and a Plan in your neighborhood
 if you don't live next to the race itself.
 
 #### Garmin with Virtual Partner
-<!--lint disable ordered-list-marker-value-->
 1.  For the activity settings on your watch, you need to have the Virtual
     Partner data screen. Add this to your activity settings if necessary.
 

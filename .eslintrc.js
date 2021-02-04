@@ -37,7 +37,8 @@ module.exports = {
       {
         plugins: [
           'preset-lint-markdown-style-guide',
-          ['lint-list-item-spacing', false]
+          ['lint-list-item-spacing', false],
+          ['lint-ordered-list-marker-value', false]
         ]
       }
     ]

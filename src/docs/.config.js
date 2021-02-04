@@ -25,6 +25,11 @@ module.exports = {
       file:"models.md",
       name:"About the Models",
       path:'models'
+    },
+    {
+      file:"contributing.md",
+      name:"Want to Contribute?",
+      path:'contributing'
     }
   ]
 }
