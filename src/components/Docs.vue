@@ -118,8 +118,8 @@ export default {
 
 <style>
 .documentation img  {
-  width: 100%;
-  max-width: 600px;
-  object-fit:contain;
+  max-width: 100%;
+  max-height: 300px;
+  object-fit:scale-down;
 }
 </style>

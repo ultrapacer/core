@@ -9,7 +9,7 @@ The models below are applied for pacing calculations.
 ##### Grade
 The grade model is shown below. Upgrades are obviously take more effort than
 flat terrain. Downgrades require less effort, to a crossover point at about
--16%.
+-16%.\
 ![ultraPacer Grade Model](./img/gradeModel.png)
 
 ##### Altitude
@@ -17,7 +17,7 @@ The altitude model is an exponentially increasing factor. The default model has
 a lower threshold of 750 meters, under which altitude is assumed to be
 insignificant. Above 750 meters, the time to run a given distance increases at
 a rate of 6% every 1000 meters, compounded continuously.
-Users can change the altitude model threshold and rate on their Settings page.
+Users can change the altitude model threshold and rate on their Settings page.\
 ![ultraPacer Altitude Model](./img/altModel.png)
 
 ##### Terrain
@@ -39,7 +39,7 @@ be applied outside of peak hours. The heat model activates 1/2 hour after
 sunrise and returns to baseline 1 hour after sunset, peaking at a maximum value
 as specified.
 A heat model can be defined for each plan. If no heat model is defined, no heat
-factor is used.
+factor is used.\
 ![ultraPacer Heat Model](./img/heatModel.png)
 
 ##### Darkness
@@ -52,5 +52,5 @@ factor.
 ##### Pace Drift
 Pace drift is linearly applied, reducing time per distance at the beginning
 of the race and increasing at the end of the race.
-Pace drift is defined by the user for each plan.
+Pace drift is defined by the user for each plan.\
 ![ultraPacer Drift Model](./img/driftModel.png)

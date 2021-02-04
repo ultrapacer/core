@@ -17,6 +17,11 @@ module.exports = {
       path:'race'
     },
     {
+      file:"watch.md",
+      name:"Use my Plan in Real-Time on my Watch",
+      path:'watch'
+    },
+    {
       file:"models.md",
       name:"About the Models",
       path:'models'

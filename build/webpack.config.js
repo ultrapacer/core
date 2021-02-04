@@ -68,7 +68,7 @@ const config = {
         test: /\.(png|jpe?g|gif|webm|mp4|svg)$/,
         loader: 'file-loader',
         options: {
-          name: '[name][contenthash:8].[ext]',
+          name: '[name].[ext]',
           outputPath: 'public/img',
           esModule: false
         }
