@@ -6,6 +6,13 @@
   >
     <div class="rotate-container">
       <p class="rotate small text-center">
+        <span
+          v-if="align==='right'"
+          class="mb-m1"
+        >
+          ultraPacer IS
+        </span>
+        <br v-if="align==='right'">
         SPONSORED BY
       </p>
     </div>
@@ -261,6 +268,7 @@ export default {
   position:absolute;
   transform: translateX(-100%) rotate(-90deg);
   transform-origin: right;
+  line-height: 1;
 }
 .sponsor-img {
   max-width:320px;
