@@ -3,15 +3,30 @@
     class="container-fluid mt-4"
     style="max-width:60rem"
   >
-    <h1 class="h1 d-none d-md-block">
-      My Courses
-    </h1>
-    <div
+    <b-row>
+      <b-col class="title-row">
+        <h1
+          class="h1 d-none d-md-block"
+          style="float:left"
+        >
+          My Courses
+        </h1>
+        <b-button
+          class="create-button mt-2 mb-2"
+          variant="success"
+          @click.prevent="newCourse()"
+        >
+          <v-icon name="plus" />
+          <span>New Course</span>
+        </b-button>
+      </b-col>
+    </b-row>
+    <b-row
       v-if="initializing"
-      class="d-flex justify-content-center mb-3"
+      class="d-flex justify-content-center mb-3 pt-5"
     >
       <b-spinner label="Loading..." />
-    </div>
+    </b-row>
     <b-row
       v-if="!initializing"
       ref="coursesTable"
@@ -87,15 +102,6 @@
             </router-link>
           </template>
         </b-table>
-        <div>
-          <b-button
-            variant="success"
-            @click.prevent="newCourse()"
-          >
-            <v-icon name="plus" />
-            <span>New Course</span>
-          </b-button>
-        </div>
       </b-col>
     </b-row>
     <course-edit
@@ -236,3 +242,18 @@ export default {
   }
 }
 </script>
+<style>
+.create-button {
+  @media (max-width: 767px) {
+    width: 100%;
+  }
+  @media (min-width: 768px) {
+    float: right;
+  }
+}
+.title-row {
+  @media (max-width: 767px) {
+    text-align: center;
+  }
+}
+</style>
