@@ -27,6 +27,7 @@ import 'vue-awesome/icons/plus'
 import 'vue-awesome/icons/running'
 import 'vue-awesome/icons/trash'
 import VIcon from 'vue-awesome/components/Icon'
+import './custom.scss'
 
 // eslint-disable-next-line no-unused-vars
 import geo from '@/util/geo'

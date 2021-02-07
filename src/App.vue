@@ -5,13 +5,30 @@
       type="dark"
       variant="dark"
     >
-      <b-navbar-toggle target="nav_collapse" />
-      <b-navbar-brand>
-        <span class="d-none d-md-block">ultraPacer</span>
-        <span
-          v-if="!$status.calculating"
-          class="d-block d-md-none"
-        >{{ $title }} | uP</span>
+      <b-navbar-toggle
+        target="nav_collapse"
+        style="z-index: 2;"
+      />
+      <div
+        class="d-block d-md-none navbar-dark navbar-brand navbar-title"
+      >
+        {{ $title }}
+      </div>
+      <b-navbar-brand :href="$user.isAuthenticated ? '/about' : '/'">
+        <div>
+          <div
+            class="navbar-logo"
+            style="float:left;"
+          >
+            <img
+              src="./assets/logo-72x72.png"
+              class="navbar-logo-img"
+            >
+          </div>
+          <div class="d-none d-md-block navbar-ultrapacer">
+            ultraPacer
+          </div>
+        </div>
       </b-navbar-brand>
       <b-collapse
         id="nav_collapse"
@@ -36,6 +53,7 @@
           <b-nav-item
             v-if="$user.isAuthenticated"
             to="/about"
+            class="d-block d-md-none d-lg-block"
           >
             About
           </b-nav-item>
@@ -56,12 +74,7 @@
           <menu-social class="d-block d-md-none " />
         </b-navbar-nav>
       </b-collapse>
-      <span v-if="$status.calculating"><b-spinner
-        variant="primary"
-        label="Spinning"
-      /></span>
       <menu-social
-        v-else
         class="d-none d-md-block navbar-nav "
       />
     </b-navbar>
@@ -178,6 +191,39 @@ export default {
 }
 .btn span:last-child {
     margin-left: 0.5rem;
+}
+.navbar-logo {
+  height:24px;
+  width: 40px;
+}
+.navbar-logo-img {
+  margin-top:-11px;
+  position:absolute;
+  @media (min-width: 576px) {
+    margin-left: -12px;
+  }
+  @media (max-width: 575px) {
+    float:right;
+    margin-right: -5px;
+  }
+}
+.navbar-title {
+  margin-top: 8px;
+  top: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: absolute;
+  padding-left: 72px;
+  padding-right: 80px;
+  width: 100%;
+  z-index: 1;
+}
+.navbar-ultrapacer {
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-left: 50px;
 }
 .actionButtonColumn {
   white-space: nowrap;

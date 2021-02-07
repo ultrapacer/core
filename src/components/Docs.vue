@@ -45,7 +45,7 @@
           <b-button
             v-b-toggle="paths[index]"
             block
-            variant="secondary"
+            variant="dark"
           >
             {{ titles[index] }}
           </b-button>

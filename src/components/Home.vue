@@ -16,7 +16,7 @@
       </p>
       <b-button
         size="lg"
-        variant="outline-primary"
+        variant="success"
         to="/courses"
       >
         {{ ($user.isAuthenticated) ? 'Go to My Courses' : 'Login/Signup' }}
