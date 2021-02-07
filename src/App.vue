@@ -215,8 +215,9 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   position: absolute;
-  padding-left: 72px;
-  padding-right: 80px;
+  margin-left: -1rem;
+  padding-left: 80px;
+  padding-right: 70px;
   width: 100%;
   z-index: 1;
 }
