@@ -35,8 +35,17 @@
         is-nav
       >
         <b-navbar-nav>
-          <b-nav-item to="/">
-            {{ $user.isAuthenticated ? 'My Courses' : 'About' }}
+          <b-nav-item
+            v-if="$user.isAuthenticated"
+            to="/courses"
+          >
+            My Courses
+          </b-nav-item>
+          <b-nav-item
+            v-else
+            to="/"
+          >
+            About
           </b-nav-item>
           <b-nav-item to="/races">
             Races
