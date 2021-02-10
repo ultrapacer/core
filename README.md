@@ -7,21 +7,12 @@ Go to [https://ultrapacer.com](https://ultrapacer.com)
 
 ## Config Files
 ``` bash
-# add a file /config/db.js with:
+# add a file /config/keys.js with:
 module.exports = {
-  DB: 'path_to_your_mongodb'
-}
-
-# add a file /config/auth_config.json with AUTH0 credentials:
-{
-  "domain": "XXXXXXXXXX",
-  "clientId": "XXXXXXXXXXXX",
-  "audience": "XXXXXXXXXXXX"
-}
-
-# add a file /config/keys.js:
-{
-  // THUNDERFOREST_API_KEY: "XXXXXXXXXX",
+  AUTH0_DOMAIN: "'XXXXXXXXXX'", // Auth0 domain address
+  AUTH0_CLIENT_ID: "'XXXXXXXXXX'", // Auth0 Client ID
+  AUTH0_AUDIENCE: "'XXXXXXXXXX'", // Auth0 audience address
+  MONGODB: "'mongodb+srv://XXXXXXXXXX'" // credentials and path to database
 }
 ```
   
@@ -39,4 +30,6 @@ start npm run dev
   
 ## No License / Copyright
 The source code herin is copyright to Danny Murphy.
-This code may be forked, downloaded, and/or modified for the purposes of contributing to this project only. There is no license for any other use or distribution.
+This code may be forked, downloaded, and/or modified for the purposes of\
+contributing to this project only. There is no license for any other use or\
+distribution.
