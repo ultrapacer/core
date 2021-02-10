@@ -7,7 +7,7 @@ Want to contribute to the ultraPacer project? Yes, please!
   [Github](https://github.com/amokrunner/ultrapacer/issues) page
   to report issues.
 2. Help to update and maintain the database of races. Create courses for
-  official races and submit them for addition to the races page. 
+  official races and submit them for addition to the races page.
 3. If you have the skills and interest to help out with code/bugs/features,
   ultraPacer is open-source on
   [Github](https://github.com/amokrunner/ultrapacer).

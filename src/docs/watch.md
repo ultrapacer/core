@@ -23,7 +23,10 @@ if you don't live next to the race itself.
 
 5.  Go! You'll see the time ahead/behind your pace plan in real time. But don't
     forget to watch the trail too!\
-    ![Garmin Virtual Partner example](./img/watchGarminVirtualPartner.png)
+    ![Garmin Virtual Partner example](./img/watchGarminVirtualPartner.jpg)\
+    You will also be able to use other navigation features, such as the map
+    and remaining distance.\
+    ![Garmin course remainng distance](./img/watchGarminDistanceRemaining.jpg)
 
 **Notes:**
 - The estimated race time/ETA/ETC fields in your Garmin are based on remaining
