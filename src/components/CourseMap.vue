@@ -30,13 +30,12 @@
         color="red"
       />
       <l-circle-marker
-        v-for="waypoint in course.waypoints"
+        v-for="waypoint in waypoints"
         :key="waypoint._id"
         :lat-lng="[waypoint.lat, waypoint.lon]"
         :radius="6"
         :fill="true"
         :color="markerColors[waypoint.type] || 'black'"
-        :visible="isVisible(waypoint)"
         :fill-color="markerColors[waypoint.type] || 'white'"
         :fill-opacity="0.5"
       >
@@ -71,13 +70,13 @@ export default {
       type: Array,
       required: true
     },
-    focus: {
+    waypoints: {
       type: Array,
       default () { return [] }
     },
-    waypointShowMode: {
-      type: Number,
-      default: null
+    focus: {
+      type: Array,
+      default () { return [] }
     }
   },
   data () {
@@ -196,16 +195,6 @@ export default {
           { lat: xmax, lng: ymax }
         ]
       }
-    },
-    forceUpdate: function () {
-      this.$forceUpdate()
-    },
-    isVisible: function (wp) {
-      return (
-        (this.waypointShowMode === 3) ||
-        (this.waypointShowMode === 2 && wp.tier <= 2) ||
-        (this.waypointShowMode === null && wp.show)
-      )
     },
     resized: function () {
       let hm = this.mapHeightDefault

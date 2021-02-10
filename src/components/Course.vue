@@ -252,19 +252,19 @@
             v-if="points.length"
             ref="profile"
             :course="course"
+            :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
             :points="points"
             :sun-events="pacing.sunEventsByLoc"
             :show-actual="comparing"
-            :waypoint-show-mode="waypointShowMode"
             @waypointClick="waypointClick"
           />
           <course-map
             v-if="points.length"
             ref="map"
             :course="course"
+            :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
             :points="points"
             :focus="mapFocus"
-            :waypoint-show-mode="waypointShowMode"
           />
         </div>
         <div
@@ -401,6 +401,7 @@ export default {
       mapFocus: [],
       tableTabIndex: 0,
       updateFlag: false,
+      visibleWaypoints: [],
       showMenu: false,
       updatingWaypointTimeout: null,
       updatingWaypointTimeoutID: null
@@ -540,15 +541,6 @@ export default {
     },
     publicName: function () {
       return this.course.public ? this.course.name : 'private'
-    },
-    waypointShowMode: function () {
-      if (this.editing && this.tableTabIndex === 2) {
-        return 3
-      } else if (this.tableTabIndex === 2) {
-        return 2
-      } else {
-        return null
-      }
     }
   },
   watch: {
@@ -594,12 +586,12 @@ export default {
         this.course = await api.getCourse(this.$route.params.course, 'course')
       }
       t = this.$logger('Course|api.getCourse', t)
+      this.refreshVisibleWaypoints()
       this.getPoints()
       this.$ga.event('Course', 'view', this.publicName)
       this.plans = this.course.plans
       this.syncCache(this.course)
       this.syncCache(this.plans)
-      this.resetWaypointShow()
       if (this.$route.params.plan) {
         this.plan = this.plans.find(
           x => x._id === this.$route.params.plan
@@ -762,14 +754,23 @@ export default {
     },
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
-      this.resetWaypointShow()
+      this.refreshVisibleWaypoints()
       this.setUpdateFlag()
       if (typeof callback === 'function') callback()
     },
-    resetWaypointShow () {
-      this.course.waypoints.forEach((x, i) => {
-        x.show = x.type === 'start' || x.tier === 1
-      })
+    async refreshVisibleWaypoints () {
+      this.visibleWaypoints = this.course.waypoints
+        .filter(x => x.type === 'start' || x.tier === 1)
+        .map(x => { return x._id })
+    },
+    waypointShowMode (wp) {
+      if (this.editing && this.tableTabIndex === 2) {
+        return true
+      } else if (this.tableTabIndex === 2) {
+        return wp.tier <= 2
+      } else {
+        return this.visibleWaypoints.includes(wp._id)
+      }
     },
     async newPlan () {
       this.$ga.event('Plan', 'add', this.publicName)
@@ -1003,20 +1004,19 @@ export default {
       this.$refs.waypointTable.selectWaypoint(id)
     },
     waypointShow: function (arr) {
-      const wps = this.course.waypoints.filter(x => arr.includes(x._id))
-      wps.forEach((x, i) => {
-        wps[i].show = true
+      arr.forEach(_id => {
+        if (!this.visibleWaypoints.includes(_id)) {
+          this.visibleWaypoints.push(_id)
+        }
       })
-      this.$refs.profile.forceWaypointsUpdate()
-      this.$refs.map.forceUpdate()
     },
     waypointHide: function (arr) {
-      const wps = this.course.waypoints.filter(x => arr.includes(x._id))
-      wps.forEach((x, i) => {
-        wps[i].show = false
+      arr.forEach(_id => {
+        const i = this.visibleWaypoints.findIndex(x => x === _id)
+        if (i >= 0) {
+          this.visibleWaypoints.splice(i, 1)
+        }
       })
-      this.$refs.profile.forceWaypointsUpdate()
-      this.$refs.map.forceUpdate()
     },
     clearCache: function () {
       this.plans.forEach(p => {
@@ -1098,7 +1098,6 @@ export default {
               unit: 'miles'
             })
             this.updateSegments()
-            this.$refs.profile.forceWaypointsUpdate()
           } else {
             this.$ga.event('Course', 'compare', this.publicName, 0)
             this.comparing = false

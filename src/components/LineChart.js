@@ -1,10 +1,9 @@
 import { Line, mixins } from 'vue-chartjs'
-const { reactiveProp } = mixins
 
 export default {
   extends: Line,
-  mixins: [reactiveProp],
-  props: ['options'],
+  mixins: [mixins.reactiveProp],
+  props: ['chartData', 'options'],
   mounted () {
     this.addPlugin({
       id: 'background-color-plugin',

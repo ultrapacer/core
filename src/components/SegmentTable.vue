@@ -14,7 +14,7 @@
     @row-clicked="selectRow"
   >
     <template #foot(name)>
-&nbsp;
+      &nbsp;
     </template>
     <template #foot(len)>
       {{ $units.distf(course.distance, 2) }}
@@ -29,7 +29,7 @@
       {{ $units.altf(course.loss, 0) | commas }}
     </template>
     <template #foot(grade)>
-&nbsp;
+      &nbsp;
     </template>
     <template #foot(time)>
       {{ time }}
@@ -428,6 +428,7 @@ export default {
         }
       })
       this.$emit('show', wps)
+      this.$emit('select', this.mode, [])
     },
     collapseRow: function (row) {
       let prev
@@ -442,6 +443,7 @@ export default {
         }
       })
       this.$emit('hide', wps)
+      this.$emit('select', this.mode, [])
     },
     selectRow: function (row) {
       this.rows.filter((r, i) => r._index !== row._index).forEach(r => {

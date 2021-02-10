@@ -26,13 +26,13 @@ export default {
       type: Array,
       required: true
     },
-    sunEvents: {
+    waypoints: {
       type: Array,
       default () { return [] }
     },
-    waypointShowMode: {
-      type: Number,
-      default: null
+    sunEvents: {
+      type: Array,
+      default () { return [] }
     },
     showActual: {
       type: Boolean,
@@ -75,21 +75,7 @@ export default {
         }
       },
       pmax: 500,
-      updateTrigger: 0
-    }
-  },
-  computed: {
-    backgroundRules: function () {
-      if (!this.sunEvents) { return [] }
-      const br = [...this.sunEvents]
-      br.forEach((s, i) => {
-        br[i] = { ...br[i] }
-        br[i].loc = this.$units.distf(br[i].loc)
-      })
-      return br
-    },
-    chartOptions: function () {
-      return {
+      chartOptions: {
         animation: {
           duration: 0
         },
@@ -118,12 +104,12 @@ export default {
             id: 'y-axis-1'
           }, {
             type: 'linear',
-            display: !this.comparePoints.length,
+            display: true,
             position: 'right',
             id: 'y-axis-2'
           }, {
             type: 'linear',
-            display: Boolean(this.comparePoints.length),
+            display: false,
             position: 'right',
             id: 'y-axis-3',
             scaleLabel: {
@@ -165,13 +151,15 @@ export default {
           display: false
         },
         onClick: this.click,
-        backgroundRules: this.backgroundRules
+        backgroundRules: []
       }
-    },
+    }
+  },
+  computed: {
     chartData: function () {
       this.$logger('CourseProfile|chartData')
       const datasets = [
-        this.chartPoints,
+        this.chartWaypoints,
         {
           data: this.chartProfile,
           pointRadius: 0,
@@ -219,8 +207,6 @@ export default {
       return Array(this.pmax + 1).fill(0).map((e, i) => i++ * this.course.distance / this.pmax)
     },
     comparePoints: function () {
-      // eslint-disable-next-line
-      this.updateTrigger // hack for force recompute
       if (this.showActual) {
         const mbs = wlslr(
           this.points.map(p => { return p.loc }),
@@ -242,62 +228,61 @@ export default {
         return []
       }
     },
-    chartPoints: function () {
-      this.$logger('CourseProfile|chartPoints')
-      // eslint-disable-next-line
-      this.updateTrigger // hack for force recompute
-      if (!this.course.waypoints.length) { return [] }
-      const d = {
-        data: [],
-        backgroundColor: [],
-        borderColor: [],
-        borderWidth: [],
+    chartWaypoints: function () {
+      this.$logger('CourseProfile|chartWaypoints')
+      if (!this.waypoints.length) { return [] }
+      const len = this.waypoints.length
+      return {
+        data: this.waypoints.map(wp => {
+          return {
+            x: this.$units.distf(wp.location),
+            y: this.$units.altf(wp.elevation),
+            label:
+              wp.name + ' [' +
+              this.$units.distf(wp.location, 1) +
+              this.$units.dist + ']',
+            title: this.$waypointTypes[wp.type],
+            _id: wp._id
+          }
+        }),
+        backgroundColor: this.waypoints.map(wp => {
+          return this.transparentize(
+            this.chartColors[this.markerStyles.color[wp.type] || 'white']
+          )
+        }),
+        borderColor: this.waypoints.map(wp => {
+          return this.chartColors[this.markerStyles.color[wp.type] || 'black']
+        }),
+        borderWidth: Array(len).fill(2),
         fill: false,
-        pointRadius: [],
-        pointStyle: [],
+        pointRadius: this.waypoints.map(wp => {
+          return this.markerStyles.pointRadius[wp.type] || 6
+        }),
+        pointStyle: Array(len).fill('circle'),
         pointHoverRadius: 10,
         showLine: false
       }
-      const wps = this.course.waypoints
-      for (let i = 0, il = wps.length; i < il; i++) {
-        if (!(
-          (this.waypointShowMode === 3) ||
-          (this.waypointShowMode === 2 && wps[i].tier <= 2) ||
-          (this.waypointShowMode === null && wps[i].show)
-        )) { continue }
-        d.data.push({
-          x: this.$units.distf(wps[i].location),
-          y: this.$units.altf(wps[i].elevation),
-          label:
-            wps[i].name + ' [' +
-            this.$units.distf(wps[i].location, 1) +
-            this.$units.dist + ']',
-          title: this.$waypointTypes[wps[i].type],
-          _id: wps[i]._id
-        })
-        d.pointStyle.push('circle')
-        d.borderWidth.push(2)
-        d.pointRadius.push(this.markerStyles.pointRadius[wps[i].type] || 6)
-        d.borderColor.push(
-          this.chartColors[this.markerStyles.color[wps[i].type] || 'black']
-        )
-        d.backgroundColor.push(
-          this.transparentize(
-            this.chartColors[this.markerStyles.color[wps[i].type] || 'white']
-          )
-        )
-      }
-      return d
+    }
+  },
+  watch: {
+    showActual: function (val) {
+      this.chartOptions.scales.yAxes[1].display = !val
+      this.chartOptions.scales.yAxes[2].display = val
+      this.update()
+    },
+    sunEvents: function (val) {
+      this.updateBackgroundRules()
     }
   },
   async created () {
     this.updateChartProfile()
+    this.updateBackgroundRules()
   },
   methods: {
     click: function (point, event) {
       if (!event.length) { return }
       const item = event[0]
-      const id = this.chartPoints.data[item._index]._id
+      const id = this.chartWaypoints.data[item._index]._id
       this.$emit('waypointClick', id)
     },
     focus: function (focus) {
@@ -352,10 +337,14 @@ export default {
       const alpha = opacity === undefined ? 0.5 : 1 - opacity
       return window.Color(color).alpha(alpha).rgbString()
     },
-    forceWaypointsUpdate: function () {
-      // this is a hack because the computed property won't update
-      // when this.course.waypoints[i] change
-      this.updateTrigger++
+    updateBackgroundRules: function () {
+      if (!this.sunEvents.length) { return [] }
+      // format distance unit for day/night background:
+      this.chartOptions.backgroundRules = this.sunEvents.map(br => {
+        const br2 = { ...br }
+        br2.loc = this.$units.distf(br2.loc)
+        return br2
+      })
     },
     update: function () {
       this.$refs.profile.update()
