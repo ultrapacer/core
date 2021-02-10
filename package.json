@@ -11,6 +11,7 @@
     "build": "webpack --mode production --config build/webpack.config.js"
   },
   "dependencies": {
+    "@google-cloud/secret-manager": "^3.4.0",
     "auth0-js": "^9.10.2",
     "body-parser": "^1.19.0",
     "bootstrap-vue-loader": "^1.0.5",

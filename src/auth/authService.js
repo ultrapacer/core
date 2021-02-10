@@ -1,15 +1,13 @@
 /* eslint-disable */
 import auth0 from "auth0-js";
 import { EventEmitter } from "events";
-import authConfig from "../../config/auth_config.json";
-
 const webAuth = new auth0.WebAuth({
-  domain: authConfig.domain,
+  domain: process.env.AUTH0_DOMAIN,
   redirectUri: `${window.location.origin}/callback`,
-  clientID: authConfig.clientId,
+  clientID: process.env.AUTH0_CLIENT_ID,
   responseType: "token id_token",
   scope: "openid profile email",
-  audience: authConfig.audience
+  audience: process.env.AUTH0_AUDIENCE
 });
 
 const localStorageKey = "loggedIn";

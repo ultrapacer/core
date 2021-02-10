@@ -1,0 +1,23 @@
+steps:
+- name: node:10.15.1
+  entrypoint: npm
+  args: ["install"]
+- name: node:10.15.1
+  entrypoint: npm
+  args: ["run", "build"]
+  secretEnv: ['GOOGLE_ANALYTICS_KEY', 'THUNDERFOREST_API_KEY', 'AUTH0_DOMAIN', 'AUTH0_CLIENT_ID', 'AUTH0_AUDIENCE']
+- name: "gcr.io/cloud-builders/gcloud"
+  args: ["app", "deploy"]
+timeout: "1600s"
+availableSecrets:
+  secretManager:
+  - versionName: projects/409830855103/secrets/GOOGLE_ANALYTICS_KEY/versions/1
+    env: 'GOOGLE_ANALYTICS_KEY'
+  - versionName: projects/409830855103/secrets/THUNDERFOREST_API_KEY/versions/1
+    env: 'THUNDERFOREST_API_KEY'
+  - versionName: projects/409830855103/secrets/AUTH0_DOMAIN/versions/1
+    env: 'AUTH0_DOMAIN'
+  - versionName: projects/409830855103/secrets/AUTH0_CLIENT_ID/versions/1
+    env: 'AUTH0_CLIENT_ID'
+  - versionName: projects/409830855103/secrets/AUTH0_AUDIENCE/versions/1
+    env: 'AUTH0_AUDIENCE'

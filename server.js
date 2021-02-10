@@ -1,7 +1,6 @@
 'use strict'
 const express = require('express')
 const path = require('path')
-const dbconfig = require('./config/db')
 const mongoose = require('mongoose')
 const bodyParser = require('body-parser')
 const cors = require('cors')
@@ -12,72 +11,97 @@ const planRoutes = require('./server/routes/planRoutes')
 const publicRoutes = require('./server/routes/publicRoutes')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
-const authConfig = require('./config/auth_config.json')
 const geoTz = require('geo-tz')
 
-const checkJwt = jwt({
-  secret: jwksRsa.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`
-  }),
+// load keys from either ./config/keys.js file or from google cloud secrets:
+let keys = {}
+try {
+  keys = require('./config/keys')
+  // hack to get rid of double+single quote format in keys.js file
+  Object.keys(keys).forEach(k => {
+    keys[k] = keys[k].replace(/'/g, '')
+  })
+  startUp()
+} catch (err) {
+  const { SecretManagerServiceClient } = require('@google-cloud/secret-manager')
+  const client = new SecretManagerServiceClient()
+  const names = ['MONGODB', 'AUTH0_DOMAIN', 'AUTH0_AUDIENCE']
+  Promise.all(names.map(n => {
+    return client.accessSecretVersion({
+      name: `projects/409830855103/secrets/${n}/versions/1`
+    })
+  })).then(res => {
+    names.forEach((n, i) => {
+      keys[n] = res[i][0].payload.data.toString()
+    })
+    startUp()
+  })
+}
 
-  audience: authConfig.audience,
-  issuer: `https://${authConfig.domain}/`,
-  algorithm: ['RS256']
-})
+function startUp () {
+  // connect to the database:
+  mongoose.Promise = global.Promise
+  mongoose.connect(keys.MONGODB).then(
+    () => { console.log('Database is connected') },
+    err => { console.log('Can not connect to the database' + err) }
+  )
 
-const app = express()
-const DIST_DIR = path.join(__dirname, '/dist')
-const HTML_FILE = path.join(DIST_DIR, 'index.html')
-const STATIC_FOLDER = path.join(DIST_DIR, '/static')
+  const app = express()
+  const DIST_DIR = path.join(__dirname, '/dist')
+  const HTML_FILE = path.join(DIST_DIR, 'index.html')
+  const STATIC_FOLDER = path.join(DIST_DIR, '/static')
 
-mongoose.Promise = global.Promise
-mongoose.connect(dbconfig.DB).then(
-  () => { console.log('Database is connected') },
-  err => { console.log('Can not connect to the database' + err) }
-)
+  app.use(cors())
+  app.use(bodyParser.json({ limit: '50mb' }))
 
-app.use(cors())
-app.use(bodyParser.json({ limit: '50mb' }))
+  const checkJwt = jwt({
+    secret: jwksRsa.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: `https://${keys.AUTH0_DOMAIN}/.well-known/jwks.json`
+    }),
 
-// authenticated api routes:
-app.use('/api/user', checkJwt, userRoutes)
-app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes)
-app.use('/api/waypoint', checkJwt, waypointRoutes)
-app.use('/api/plan', checkJwt, planRoutes)
+    audience: keys.AUTH0_AUDIENCE,
+    issuer: `https://${keys.AUTH0_DOMAIN}/`,
+    algorithm: ['RS256']
+  })
 
-// unauthenticated api routes:
-app.use('/api-public', publicRoutes)
+  app.use('/api/user', checkJwt, userRoutes)
+  app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes)
+  app.use('/api/waypoint', checkJwt, waypointRoutes)
+  app.use('/api/plan', checkJwt, planRoutes)
 
-// redirect static files:
-app.get('/robots.txt', function (req, res) {
-  res.sendFile(path.join(DIST_DIR, '/public/robots.txt'))
-})
-app.get('/sitemap.xml', function (req, res) {
-  res.sendFile(path.join(DIST_DIR, '/public/sitemap.xml'))
-})
+  // unauthenticated api routes:
+  app.use('/api-public', publicRoutes)
 
-// get timezone
-app.get('/api/timezone', function (req, res) {
-  console.log(req)
-  const tz = geoTz(req.query.lat, req.query.lon)
-  res.send(tz[0])
-})
+  // redirect static files:
+  app.get('/robots.txt', function (req, res) {
+    res.sendFile(path.join(DIST_DIR, '/public/robots.txt'))
+  })
+  app.get('/sitemap.xml', function (req, res) {
+    res.sendFile(path.join(DIST_DIR, '/public/sitemap.xml'))
+  })
 
-app.get('/*', (req, res) => {
-  res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
-  res.header('Expires', '-1')
-  res.header('Pragma', 'no-cache')
-  res.sendFile(HTML_FILE)
-})
+  // get timezone
+  app.get('/api/timezone', function (req, res) {
+    const tz = geoTz(req.query.lat, req.query.lon)
+    res.send(tz[0])
+  })
 
-const PORT = process.env.PORT || 8080
-app.listen(PORT, () => {
-  console.log(`DIST_DIR: ${DIST_DIR}`)
-  console.log(`HTML_FILE: ${HTML_FILE}`)
-  console.log(`STATIC_FOLDER: ${STATIC_FOLDER}`)
-  console.log(`App listening on port ${PORT}`)
-  console.log('Press Ctrl+C to quit.')
-})
+  app.get('/*', (req, res) => {
+    res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+    res.header('Expires', '-1')
+    res.header('Pragma', 'no-cache')
+    res.sendFile(HTML_FILE)
+  })
+
+  const PORT = process.env.PORT || 8080
+  app.listen(PORT, () => {
+    console.log(`DIST_DIR: ${DIST_DIR}`)
+    console.log(`HTML_FILE: ${HTML_FILE}`)
+    console.log(`STATIC_FOLDER: ${STATIC_FOLDER}`)
+    console.log(`App listening on port ${PORT}`)
+    console.log('Press Ctrl+C to quit.')
+  })
+}

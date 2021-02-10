@@ -5,13 +5,27 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const SitemapPlugin = require('sitemap-webpack-plugin').default
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 const BoostrapVueLoader = require('bootstrap-vue-loader')
 const autoprefixer = require('autoprefixer')
 const prettydata = require('pretty-data')
 const path = require('path')
 const webpack = require('webpack')
-const keys = require('../config/keys')
+
+let keys = {}
+try {
+  // try loading keys from config file:
+  keys = require('../config/keys')
+} catch (err) {
+  // set keys from environment variables
+  ['THUNDERFOREST_API_KEY',
+    'GOOGLE_ANALYTICS_KEY',
+    'AUTH0_DOMAIN',
+    'AUTH0_CLIENT_ID',
+    'AUTH0_AUDIENCE'
+  ].forEach(n => {
+    keys[n] = `'${process.env[n]}'`
+  })
+}
 
 // use below to allow @ alia in import statements
 function resolve (dir) {
@@ -163,9 +177,6 @@ module.exports = (env, argv) => {
 
     config.plugins.push(
       new CleanWebpackPlugin()
-    )
-    config.plugins.push(
-      new BundleAnalyzerPlugin()
     )
   }
   return config
