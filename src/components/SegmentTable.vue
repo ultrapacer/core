@@ -405,7 +405,11 @@ export default {
       return ((ri === 0 && row._index > 0) || (ri > 0 && row._index - this.rows[ri - 1]._index > 1))
     },
     isCollapseable: function (row) {
-      return row._index === 0 ? false : this.segments[row._index - 1].waypoint2.tier === 2
+      // return whether to show the collapse row button
+      if (this.segments[row._index].waypoint2.tier !== 1) return false
+      const last1 = this.segments.filter((s, i) => i < row._index && s.waypoint2.tier === 1).pop()
+      const last2 = this.segments.filter((s, i) => i < row._index && s.waypoint2.tier === 2).pop()
+      return (last2 !== undefined) && (last1 === undefined || last2.waypoint2.location > last1.waypoint2.location)
     },
     isChild: function (row) {
       return this.segments[row._index].waypoint2.tier === 2
