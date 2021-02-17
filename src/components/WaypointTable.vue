@@ -147,7 +147,7 @@ export default {
               const i = this.course.waypoints.findIndex(wp => wp._id === item._id)
               const wp = this.course.waypoints.filter((wp, j) =>
                 j < i &&
-                wp.terrainFactor
+                wp.terrainFactor !== null
               ).pop()
               v = (wp) ? wp.terrainFactor : 0
             }
