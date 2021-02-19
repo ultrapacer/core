@@ -7,7 +7,8 @@
       ref="courseMap"
       style="height:100%"
       :bounds="bounds"
-      :max-zoom="16"
+      :max-zoom="maxZoom"
+      @baselayerchange="updateMaxZoom"
     >
       <l-control-layers position="topright" />
       <l-tile-layer
@@ -88,6 +89,7 @@ export default {
       focusCenter: [],
       focusLL: [],
       initializing: true,
+      isMounted: false,
       markerColors: {
         start: 'black',
         finish: 'black',
@@ -95,9 +97,11 @@ export default {
         landmark: 'green',
         water: 'blue'
       },
+      maxZoom: 18,
       tileProviders: [
         {
           name: 'TF Outdoors',
+          'max-zoom': 18,
           visible: true,
           url: `https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png${process.env.THUNDERFOREST_API_KEY ? '?apikey=' + process.env.THUNDERFOREST_API_KEY : ''}`,
           attribution:
@@ -105,6 +109,7 @@ export default {
         },
         {
           name: 'OpenTopoMap',
+          'max-zoom': 16,
           visible: false,
           url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
           attribution:
@@ -112,6 +117,7 @@ export default {
         },
         {
           name: 'OpenStreetMap',
+          'max-zoom': 18,
           visible: false,
           url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
           attribution:
@@ -119,14 +125,14 @@ export default {
         },
         {
           name: 'ESRI Satellite',
+          'max-zoom': 18,
           visible: false,
           url: 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
           attribution:
             'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
         }
       ],
-      mapHeight: 350,
-      mapHeightDefault: 350
+      mapHeightDefault: 300
     }
   },
   computed: {
@@ -136,6 +142,16 @@ export default {
       } else {
         return this.courseBounds
       }
+    },
+    mapHeight: function () {
+      let hm = this.mapHeightDefault
+      if (this.isMounted && this.$window.width >= 992) {
+        const t = this.$refs.courseMapContainer.getBoundingClientRect().top
+        if (this.$window.height - t > hm) {
+          hm = this.$window.height - t
+        }
+      }
+      return hm
     }
   },
   watch: {
@@ -151,6 +167,12 @@ export default {
       } else {
         this.focusLL = []
       }
+    },
+    mapHeight: function () {
+      this.$logger('CourseMap|resized')
+      this.$nextTick(function () {
+        this.$refs.courseMap.mapObject.invalidateSize()
+      })
     }
   },
   async created () {
@@ -159,13 +181,7 @@ export default {
     this.initializing = false
   },
   mounted () {
-    this.$nextTick(function () {
-      window.addEventListener('resize', this.resized)
-      this.resized()
-    })
-  },
-  beforeDestroy () {
-    window.removeEventListener('resize', this.resized)
+    this.isMounted = true
   },
   methods: {
     updateMapLatLon: function () {
@@ -196,22 +212,8 @@ export default {
         ]
       }
     },
-    resized: function () {
-      let hm = this.mapHeightDefault
-      if (window.innerWidth >= 992) {
-        const hw = window.innerHeight
-        const t = this.$refs.courseMapContainer.getBoundingClientRect().top
-        if (hw - t > hm) {
-          hm = hw - t
-        }
-      }
-      if (hm !== this.mapHeight) {
-        this.$logger('CourseMap|resized')
-        this.mapHeight = hm
-        this.$nextTick(function () {
-          this.$refs.courseMap.mapObject.invalidateSize()
-        })
-      }
+    updateMaxZoom (val) {
+      this.maxZoom = this.tileProviders.find(x => x.name === val.name)['max-zoom']
     }
   }
 }
