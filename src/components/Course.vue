@@ -6,9 +6,12 @@
         md="12"
         lg="6"
       >
-        <h1 class="h1">
+        <h2
+          class="h2"
+          style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+        >
           {{ course.name }}
-        </h1>
+        </h2>
       </b-col>
       <b-col
         v-if="!initializing"
@@ -136,7 +139,6 @@
       <span v-else-if="course.name">
         The {{ course.name }} course covers <b>{{ $units.distf(course.distance, 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.gain, 0) | commas }} {{ $units.alt }}</b> of climbing.
       </span>
-      <b-spinner label="Loading..." />
     </div>
     <b-row
       v-if="!initializing"
@@ -146,7 +148,7 @@
         <b-tabs
           ref="tables"
           v-model="tableTabIndex"
-          content-class="mt-3"
+          content-class="mt-1"
           small
         >
           <b-tab
@@ -162,16 +164,11 @@
               :busy="busy"
               :mode="'segments'"
               :show-actual="comparing"
+              :table-height="tableHeight"
               @select="updateFocus"
               @show="waypointShow"
               @hide="waypointHide"
             />
-            <div
-              v-else
-              class="d-flex justify-content-center mt-3 mb-3"
-            >
-              <b-spinner label="Loading..." />
-            </div>
           </b-tab>
           <b-tab title="Splits">
             <segment-table
@@ -183,14 +180,9 @@
               :busy="busy"
               :mode="'splits'"
               :show-actual="comparing"
+              :table-height="tableHeight"
               @select="updateFocus"
             />
-            <div
-              v-else
-              class="d-flex justify-content-center mt-3 mb-3"
-            >
-              <b-spinner label="Loading..." />
-            </div>
           </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table
@@ -199,9 +191,13 @@
               :editing="editing"
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"
+              :table-height="tableHeight - (owner ? 42 : 0)"
               @updateWaypointLocation="updateWaypointLocation"
             />
-            <div v-if="editing">
+            <div
+              v-if="editing"
+              class="mt-1"
+            >
               <b-button
                 variant="success"
                 @click.prevent="newWaypoint()"
@@ -216,7 +212,10 @@
                 <v-icon name="edit" /><span>editing: on</span>
               </b-button>
             </div>
-            <div v-if="owner && !editing">
+            <div
+              v-if="owner && !editing"
+              class="mt-1"
+            >
               <b-button
                 style="float:right"
                 @click.prevent="editing=true"
@@ -228,6 +227,7 @@
           <b-tab
             v-if="pacing.factors"
             title="Details"
+            :style="tableHeight ? {maxHeight: tableHeight + 'px', overflowY: 'auto'} : {}"
           >
             <plan-details
               :course="course"
@@ -241,38 +241,29 @@
         </b-tabs>
       </b-col>
       <b-col
+        v-if="points.length"
         lg="5"
         order="1"
+        class="chart-map-container"
       >
-        <div
+        <course-profile
           v-if="points.length"
-          class="sticky-top mt-1"
-        >
-          <course-profile
-            v-if="points.length"
-            ref="profile"
-            :course="course"
-            :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
-            :points="points"
-            :sun-events="pacing.sunEventsByLoc"
-            :show-actual="comparing"
-            @waypointClick="waypointClick"
-          />
-          <course-map
-            v-if="points.length"
-            ref="map"
-            :course="course"
-            :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
-            :points="points"
-            :focus="mapFocus"
-          />
-        </div>
-        <div
-          v-else
-          class="d-flex justify-content-center mt-3 mb-3"
-        >
-          <b-spinner label="Loading..." />
-        </div>
+          ref="profile"
+          :course="course"
+          :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
+          :points="points"
+          :sun-events="pacing.sunEventsByLoc"
+          :show-actual="comparing"
+          @waypointClick="waypointClick"
+        />
+        <course-map
+          v-if="points.length"
+          ref="map"
+          :course="course"
+          :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
+          :points="points"
+          :focus="mapFocus"
+        />
       </b-col>
     </b-row>
     <course-edit
@@ -408,6 +399,10 @@ export default {
     }
   },
   computed: {
+    tableHeight: function () {
+      if (this.$window.width < 992) return 0
+      return (this.$window.height - 173)
+    },
     description: function () {
       if (this.course.description) {
         return this.course.description
@@ -564,7 +559,8 @@ export default {
     }
   },
   async created () {
-    this.$status.calculating = true
+    this.$status.processing = true
+    this.$status.loading = true
     let t = this.$logger()
     try {
       await this.$auth.getAccessToken()
@@ -607,7 +603,7 @@ export default {
     this.useCache()
     this.initializing = false
     this.busy = false
-    this.$status.calculating = false
+    this.$status.processing = false
     setTimeout(() => {
       if (!this.$user.isAuthenticated) {
         this.$refs['toast-welcome'].show()
@@ -678,6 +674,7 @@ export default {
         await this.updatePacing()
       }
       this.$logger('Course|getPoints: complete', t)
+      this.$status.loading = false
     },
     async editCourse () {
       this.$refs.courseEdit.show(this.course)
@@ -863,7 +860,7 @@ export default {
       this.$ga.event('Plan', 'view', this.publicName)
       if (!this.useCache()) {
         this.busy = true
-        this.$status.calculating = true
+        this.$status.processing = true
         setTimeout(() => { this.updatePacing() }, 10)
       } else {
         if (this.points[0].actual !== undefined) {
@@ -891,7 +888,7 @@ export default {
       this.$router.push(route)
       if (!this.useCache()) {
         this.busy = true
-        this.$status.calculating = true
+        this.$status.processing = true
         setTimeout(() => { this.updatePacing() }, 10)
       } else {
         this.$refs.profile.update()
@@ -903,7 +900,7 @@ export default {
       // update splits, segments, and pacing
       this.busy = true
       this.updateFlag = false
-      this.$status.calculating = true
+      this.$status.processing = true
       const result = geo.calcPacing({
         course: this.course,
         plan: this.plan,
@@ -969,7 +966,7 @@ export default {
       }
 
       this.busy = false
-      this.$status.calculating = false
+      this.$status.processing = false
       this.$logger('Course|updatePacing', t)
     },
     updateSegments: function () {
@@ -1080,8 +1077,8 @@ export default {
           if (this.points[0].elapsed === undefined) {
             await this.updatePacing()
           }
-          this.$status.calculating = true
-          const res = geo.addActuals(this.points, actual)
+          this.$status.processing = true
+          const res = await geo.addActuals(this.points, actual)
           if (res.match) {
             this.$ga.event('Course', 'compare', this.publicName, 1)
             this.comparing = true
@@ -1102,7 +1099,7 @@ export default {
             this.$ga.event('Course', 'compare', this.publicName, 0)
             this.comparing = false
           }
-          this.$status.calculating = false
+          this.$status.processing = false
           return res
         }
       )

@@ -10,32 +10,9 @@
     >
       <form
         ref="courseform"
+        style="min-height: 100px"
         @submit.prevent=""
       >
-        <b-input-group
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Name: name for the course, for example \'\'Western States 100\'\''
-          "
-          prepend="Name"
-          class="mb-2"
-          size="sm"
-        >
-          <b-form-input
-            v-model="model.name"
-            type="text"
-            required
-          />
-        </b-input-group>
-        <b-input-group
-          prepend="Description"
-          class="mb-2"
-          size="sm"
-        >
-          <b-form-textarea
-            v-model="model.description"
-            rows="2"
-          />
-        </b-input-group>
         <b-input-group
           v-b-popover.hover.bottomright.d250.v-info="
             'File: GPX format file exported from a GPS track or route builder.'
@@ -51,11 +28,39 @@
             accept=".gpx"
             no-drop
             :required="!Boolean(model.source)"
+            :state="!Boolean(gpxFileInvalidMsg)"
             @change="loadGPX"
           />
+          <b-form-invalid-feedback :state="!Boolean(gpxFileInvalidMsg)">
+            {{ gpxFileInvalidMsg }}
+          </b-form-invalid-feedback>
         </b-input-group>
+        <div v-if="courseLoaded === true || model._id">
+          <b-input-group
+            v-b-popover.hover.bottomright.d250.v-info="
+              'Name: name for the course, for example \'\'Western States 100\'\''
+            "
+            prepend="Name"
+            class="mb-2"
+            size="sm"
+          >
+            <b-form-input
+              v-model="model.name"
+              type="text"
+              required
+            />
+          </b-input-group>
+          <b-input-group
+            prepend="Description"
+            class="mb-2"
+            size="sm"
+          >
+            <b-form-textarea
+              v-model="model.description"
+              rows="2"
+            />
+          </b-input-group>
 
-        <div v-if="courseLoaded">
           <b-input-group
             v-b-popover.hover.bottomright.d250.v-info="
               'Date [optional]: use for races, etc.'
@@ -120,8 +125,8 @@
                 type="number"
                 required
                 step="0.01"
-                :min="round(stats.dist * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 0.9, 2)"
-                :max="round(stats.dist * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 1.1, 2)"
+                :min="round((stats ? stats.dist : model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 0.9, 2)"
+                :max="round((stats ? stats.dist : model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 1.1, 2)"
                 @change="updateDistance"
               />
               <b-form-select
@@ -141,8 +146,8 @@
                 type="number"
                 required
                 step="0"
-                :min="round(stats.gain * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
-                :max="round(stats.gain * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
+                :min="round((stats ? stats.gain : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
+                :max="round((stats ? stats.gain : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
                 @change="updateGain"
               />
               <b-form-select
@@ -162,8 +167,8 @@
                 type="number"
                 required
                 step="0"
-                :min="round(-stats.loss * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
-                :max="round(-stats.loss * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
+                :min="round(-(stats ? stats.loss : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
+                :max="round(-(stats ? stats.loss : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
                 @change="updateLoss"
               />
               <b-form-select
@@ -205,21 +210,23 @@
       </form>
       <template #modal-footer="{ ok, cancel }">
         <div
-          v-if="model._id"
           style="text-align: left; flex: auto"
         >
           <b-button
             size="sm"
-            variant="danger"
-            @click="remove"
+            variant="warning"
+            @click="$refs.help.show()"
           >
-            <b-spinner
-              v-show="deleting"
-              small
-            />
-            Delete
+            Help
           </b-button>
         </div>
+        <b-button
+          v-if="model._id"
+          variant="danger"
+          @click="remove"
+        >
+          Delete
+        </b-button>
         <b-button
           variant="secondary"
           @click="cancel()"
@@ -228,16 +235,21 @@
         </b-button>
         <b-button
           variant="primary"
-          :disabled="!courseLoaded"
+          :disabled="courseLoaded !== true"
           @click="ok()"
         >
-          <b-spinner
-            v-show="saving"
-            small
-          />
-          Save Course
+          Save
         </b-button>
       </template>
+    </b-modal>
+    <b-modal
+      ref="help"
+      :title="`Course ${model._id ? 'Edit' : 'Create'} Help`"
+      size="lg"
+      scrollable
+      ok-only
+    >
+      <help-doc />
     </b-modal>
   </div>
 </template>
@@ -245,11 +257,15 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
+import HelpDoc from '@/docs/course_create.md'
 import moment from 'moment-timezone'
 import wputil from '@/util/waypoints'
 import { round } from '@/util/math'
 const gpxParse = require('gpx-parse')
 export default {
+  components: {
+    HelpDoc
+  },
   data () {
     return {
       courseLoaded: false,
@@ -269,12 +285,12 @@ export default {
         { value: 'm', text: 'm' }
       ],
       gpxFile: null,
+      gpxFileInvalidMsg: '',
       gpxPoints: [],
       model: {},
-      saving: false,
-      deleting: false,
       eventDate: null,
       eventTime: null,
+      rawLoaded: false,
       stats: null,
       timezones: moment.tz.names(),
       distancef: null,
@@ -284,9 +300,12 @@ export default {
   },
   methods: {
     async show (course, raw = null) {
+      this.courseLoaded = false
       if (course._id) {
         this.model = Object.assign({}, course)
-        if (!this.model.eventTimezone) { this.model.eventTimezone = moment.tz.guess() }
+        if (!this.model.eventTimezone) {
+          this.model.eventTimezone = moment.tz.guess()
+        }
         if (this.model.eventStart) {
           const m = moment(this.model.eventStart).tz(this.model.eventTimezone)
           this.eventDate = m.format('YYYY-MM-DD')
@@ -296,13 +315,14 @@ export default {
           this.eventTime = null
         }
         this.model.override = { ...course.override }
-        this.$status.calculating = true
-        await this.reloadRaw()
-        this.$status.calculating = false
+        this.updateDistanceUnit(this.model.override.distUnit)
+        this.updateElevUnit(this.model.override.elevUnit)
+        this.courseLoaded = this.reloadRaw()
       } else {
         this.model = Object.assign({}, this.defaults)
       }
       this.$refs.modal.show()
+      this.$status.processing = false
     },
     handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
@@ -317,13 +337,12 @@ export default {
       })
       geo.addLoc(this.gpxPoints)
       this.stats = geo.calcStats(this.gpxPoints, true)
-      this.updateDistanceUnit(this.model.override.distUnit)
-      this.updateElevUnit(this.model.override.elevUnit)
       this.courseLoaded = true
+      return true
     },
     async save () {
-      if (this.saving) { return }
-      this.saving = true
+      if (this.$status.processing) { return }
+      this.$status.processing = true
       if (this.gpxPoints.length) {
         const points = this.gpxPoints
 
@@ -422,7 +441,7 @@ export default {
         this.$ga.event('Course', 'create')
       }
       this.$emit('refresh', () => {
-        this.saving = false
+        this.$status.processing = false
         this.clear()
         this.$refs.modal.hide()
       })
@@ -431,50 +450,65 @@ export default {
       this.model = Object.assign({}, this.defaults)
     },
     async remove () {
-      this.deleting = true
       this.$emit('delete', this.model, async (err) => {
         if (!err) {
           this.$ga.event('Course', 'delete')
           this.$refs.modal.hide()
         }
-        this.deleting = false
       })
     },
     async loadGPX (f) {
-      const reader = new FileReader()
-      reader.onload = e => {
-        gpxParse.parseGpx(e.target.result, (error, data) => {
-          if (error) {
-            throw error
-          } else {
-            this.gpxPoints = data.tracks[0].segments[0].map(p => {
-              return {
-                alt: p.elevation,
-                lat: p.lat,
-                lon: p.lon
+      this.$status.processing = true
+      const t = this.$logger()
+      this.$nextTick(async () => {
+        const reader = new FileReader()
+        reader.onload = e => {
+          gpxParse.parseGpx(e.target.result, (error, data) => {
+            if (error) {
+              this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
+              throw error
+            } else {
+              this.$logger('CourseEdit|GPX parsed', t)
+              this.gpxPoints = data.tracks[0].segments[0].map(p => {
+                return {
+                  alt: p.elevation,
+                  lat: p.lat,
+                  lon: p.lon
+                }
+              })
+              geo.addLoc(this.gpxPoints)
+              this.stats = geo.calcStats(this.gpxPoints, true)
+              if (this.stats.gain === 0) {
+                this.gpxFileInvalidMsg = 'GPX file does not contain elevation data.'
+                return
               }
-            })
-            geo.addLoc(this.gpxPoints)
-            this.stats = geo.calcStats(this.gpxPoints, true)
-            this.model.gain = this.stats.gain
-            this.model.loss = this.stats.loss
-            this.model.distance = this.stats.dist
-            this.setDistGainLoss()
-            this.model.source = {
-              type: 'gpx',
-              name: this.gpxFile.name
+              this.gpxFileInvalidMsg = ''
+              this.model.gain = this.stats.gain
+              this.model.loss = this.stats.loss
+              this.model.distance = this.stats.dist
+              this.setDistGainLoss()
+              this.model.source = {
+                type: 'gpx',
+                name: this.gpxFile.name
+              }
+              this.defaultTimezone(this.gpxPoints[0].lat, this.gpxPoints[0].lon)
+              this.courseLoaded = true
+              this.$status.processing = false
             }
-            this.defaultTimezone(this.gpxPoints[0].lat, this.gpxPoints[0].lon)
-            this.courseLoaded = true
-          }
-        })
-      }
-      reader.readAsText(f.target.files[0])
+          })
+        }
+        reader.readAsText(f.target.files[0])
+      })
     },
     setDistGainLoss: async function (val = false) {
       this.model.override.distUnit = this.$units.dist
       this.model.override.elevUnit = this.$units.alt
       if (!val) {
+        if (this.courseLoaded !== true) {
+          this.$status.processing = true
+          await this.courseLoaded
+          this.$status.processing = false
+        }
         this.model.gain = this.stats.gain
         this.model.loss = this.stats.loss
         this.model.distance = this.stats.dist
@@ -513,6 +547,9 @@ export default {
     },
     round: function (val, dec) {
       return round(val, dec)
+    },
+    showHelp () {
+      this.$refs.help.show()
     }
   }
 }

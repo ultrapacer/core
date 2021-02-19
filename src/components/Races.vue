@@ -7,20 +7,14 @@
       Race Database
     </h1>
     <p>Click on your race below to make a game plan.<br>Not seeing your race? Contact me and let me know!</p>
-    <div
-      v-if="initializing"
-      class="d-flex justify-content-center mb-3"
-    >
-      <b-spinner label="Loading..." />
-    </div>
-    <b-row v-if="!initializing">
+    <b-row v-if="!$status.loading">
       <b-col>
         <race-table
           :races="upcomingRaces"
         />
       </b-col>
     </b-row>
-    <b-row v-if="!initializing">
+    <b-row v-if="!$status.loading">
       <b-col>
         <h4>Past Events</h4>
         <race-table
@@ -47,12 +41,12 @@ export default {
   },
   data () {
     return {
-      initializing: true,
       upcomingRaces: [],
       pastRaces: []
     }
   },
   async created () {
+    this.$status.loading = true
     const races = await api.getRaces()
     // sort by day, name
     races.sort((a, b) =>
@@ -74,7 +68,7 @@ export default {
     this.pastRaces.sort((a, b) =>
       moment(b.eventStart).format('YYYYMMDD') - moment(a.eventStart).format('YYYYMMDD')
     )
-    this.initializing = false
+    this.$status.loading = false
   }
 }
 </script>

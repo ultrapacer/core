@@ -11,6 +11,8 @@ import VueAnalytics from 'vue-analytics'
 import VuePageTitle from 'vue-page-title'
 import VueTheMask from 'vue-the-mask'
 import vueHeadful from 'vue-headful'
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css'
 import 'vue-awesome/icons/brands/github'
 import 'vue-awesome/icons/brands/instagram'
 import 'vue-awesome/icons/brands/facebook'
@@ -34,7 +36,12 @@ import geo from '@/util/geo'
 
 Vue.component('VIcon', VIcon)
 Vue.component('VueHeadful', vueHeadful)
-
+Vue.use(Loading, {
+  color: '#5e8351',
+  loader: 'spinner',
+  width: 100,
+  height: 100
+})
 Vue.use(AuthPlugin)
 
 if (process.env.GOOGLE_ANALYTICS_KEY) {
@@ -72,7 +79,12 @@ Vue.prototype.$waypointTypes = {
   other: 'Other'
 }
 Vue.prototype.$status = Vue.observable({
-  calculating: false
+  processing: false,
+  loading: false
+})
+Vue.prototype.$window = Vue.observable({
+  height: window.innerHeight,
+  width: window.innerWidth
 })
 Vue.prototype.$units = {
   dist: 'mi',

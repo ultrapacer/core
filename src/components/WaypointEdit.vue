@@ -117,10 +117,6 @@
             variant="danger"
             @click="remove"
           >
-            <b-spinner
-              v-show="deleting"
-              small
-            />
             Delete
           </b-button>
         </div>
@@ -134,10 +130,6 @@
           variant="primary"
           @click="ok()"
         >
-          <b-spinner
-            v-show="saving"
-            small
-          />
           Save Waypoint
         </b-button>
       </template>
@@ -166,9 +158,7 @@ export default {
   },
   data () {
     return {
-      deleting: false,
       model: {},
-      saving: false,
       defaults: {
         type: 'aid',
         tier: 1
@@ -240,8 +230,8 @@ export default {
       }
     },
     async save () {
-      if (this.saving) { return }
-      this.saving = true
+      if (this.$status.processing) { return }
+      this.$status.processing = true
       if (this.model.type !== 'start' && this.model.type !== 'finish') {
         this.model.location = this.model.locUserUnit / this.$units.distScale
       }
@@ -255,7 +245,7 @@ export default {
         await api.createWaypoint(this.model)
       }
       this.$emit('refresh', () => {
-        this.saving = false
+        this.$status.processing = false
         this.clear()
         this.$emit('setUpdateFlag')
         this.$refs.modal.hide()
@@ -265,13 +255,11 @@ export default {
       this.model = Object.assign({}, this.defaults)
     },
     async remove () {
-      this.deleting = true
       this.$emit('delete', this.model, async (err) => {
         if (!err) {
           this.$refs.modal.hide()
         }
         this.$emit('setUpdateFlag')
-        this.deleting = false
       })
     }
   }

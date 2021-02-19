@@ -6,14 +6,15 @@
       title="Compare to Activity (Beta)"
       @ok="handleOk"
     >
-      <p>How'd you do? Select a .GPX file from your race or activity to compare against your plans.</p>
-      <p style="color: red">
-        This feature is in beta. Contact me if it doesn't work for you.
-      </p>
       <form
         ref="compareform"
+        style="min-height: 100px"
         @submit.prevent=""
       >
+        <p>How'd you do? Select a .GPX file from your race or activity to compare against your plans.</p>
+        <p style="color: red">
+          This feature is in beta. Contact me if it doesn't work for you.
+        </p>
         <b-input-group
           v-b-popover.hover.bottomright.d250.v-info="
             'File: GPX format file exported from a GPS track.'
@@ -29,8 +30,12 @@
             accept=".gpx"
             no-drop
             required
+            :state="!Boolean(gpxFileInvalidMsg)"
             @change="loadGPX"
           />
+          <b-form-invalid-feedback :state="!Boolean(gpxFileInvalidMsg)">
+            {{ gpxFileInvalidMsg }}
+          </b-form-invalid-feedback>
         </b-input-group>
       </form>
       <template #modal-footer="{ ok, cancel }">
@@ -56,10 +61,6 @@
           variant="primary"
           @click="ok()"
         >
-          <b-spinner
-            v-show="loading"
-            small
-          />
           Load
         </b-button>
       </template>
@@ -91,8 +92,8 @@ export default {
   data () {
     return {
       gpxFile: null,
+      gpxFileInvalidMsg: '',
       gpxPoints: [],
-      loading: false,
       cb: null,
       faildist: 0
     }
@@ -109,40 +110,47 @@ export default {
       }
     },
     async load () {
-      if (this.loading) { return }
-      this.loading = true
-      if (this.gpxPoints.length) {
-        geo.addLoc(this.gpxPoints)
-      }
-      const result = await this.cb(this.gpxPoints)
-      if (result.match) {
-        this.$refs.modal.hide()
-      } else {
-        this.faildist = result.point.loc
-        this.$refs['toast-match-error'].show()
-      }
-      this.loading = false
+      this.$status.processing = true
+      this.$nextTick(async () => {
+        if (this.gpxPoints.length) {
+          geo.addLoc(this.gpxPoints)
+        }
+        const result = await this.cb(this.gpxPoints)
+        if (result.match) {
+          this.$refs.modal.hide()
+        } else {
+          this.faildist = result.point.loc
+          this.$refs['toast-match-error'].show()
+        }
+        this.$status.processing = false
+      })
     },
     async loadGPX (f) {
-      const reader = new FileReader()
-      reader.onload = e => {
-        gpxParse.parseGpx(e.target.result, (error, data) => {
-          if (error) {
-            throw error
-          } else {
-            const startTime = moment(data.tracks[0].segments[0][0].time)
-            this.gpxPoints = data.tracks[0].segments[0].map(p => {
-              return {
-                alt: p.elevation,
-                lat: p.lat,
-                lon: p.lon,
-                elapsed: moment(p.time).diff(startTime, 'seconds')
-              }
-            })
-          }
-        })
-      }
-      reader.readAsText(f.target.files[0])
+      this.$status.processing = true
+      this.$nextTick(async () => {
+        const reader = new FileReader()
+        reader.onload = e => {
+          gpxParse.parseGpx(e.target.result, (error, data) => {
+            if (error) {
+              this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
+              throw error
+            } else {
+              const startTime = moment(data.tracks[0].segments[0][0].time)
+              this.gpxPoints = data.tracks[0].segments[0].map(p => {
+                return {
+                  alt: p.elevation,
+                  lat: p.lat,
+                  lon: p.lon,
+                  elapsed: moment(p.time).diff(startTime, 'seconds')
+                }
+              })
+              this.gpxFileInvalidMsg = ''
+            }
+          })
+        }
+        reader.readAsText(f.target.files[0])
+        this.$status.processing = false
+      })
     },
     async stop () {
       this.$emit('stop', () => {

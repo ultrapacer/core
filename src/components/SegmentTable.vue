@@ -10,7 +10,10 @@
     hover
     foot-clone
     small
-    class="segment-table"
+    head-variant="light"
+    no-border-collapse
+    class="mb-0"
+    :sticky-header="tableHeight ? tableHeight + 'px' : false"
     @row-clicked="selectRow"
   >
     <template #foot(name)>
@@ -185,6 +188,10 @@ export default {
     showActual: {
       type: Boolean,
       default: false
+    },
+    tableHeight: {
+      type: Number,
+      default: 0
     }
   },
   data () {

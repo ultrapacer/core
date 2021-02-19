@@ -14,10 +14,6 @@
       <p>Are you sure you want to {{ verb }} the following {{ type }}?</p>
       <p><b>{{ object.name }}</b></p>
       <template #modal-ok>
-        <b-spinner
-          v-show="deleting"
-          small
-        />
         {{ verb | capitalize }} {{ type }}
       </template>
     </b-modal>
@@ -35,7 +31,6 @@ export default {
   },
   data () {
     return {
-      deleting: false,
       delFun: null,
       model: {},
       object: {},
@@ -49,15 +44,15 @@ export default {
       this.remove()
     },
     clear () {
-      this.deleting = false
+      this.$status.processing = false
       if (typeof (this.cb) === 'function') this.cb(new Error('User cancelled'))
     },
     async remove () {
-      this.deleting = true
+      this.$status.processing = true
       await this.delFun(this.object)
       this.$refs.modal.hide()
-      this.deleting = false
-      if (typeof (this.cb) === 'function') this.cb()
+      if (typeof (this.cb) === 'function') await this.cb()
+      this.$status.processing = false
     },
     async show (data, delFun, cb) {
       this.type = data.type

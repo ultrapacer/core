@@ -8,6 +8,10 @@
     selectable
     select-mode="single"
     small
+    head-variant="light"
+    no-border-collapse
+    class="mb-0"
+    :sticky-header="tableHeight ? tableHeight + 'px' : false"
     @row-clicked="toggleRowDetails"
   >
     <template #cell(actions)="row">
@@ -71,6 +75,10 @@ export default {
     delFn: {
       type: Function,
       required: true
+    },
+    tableHeight: {
+      type: Number,
+      default: 0
     }
   },
   data () {
@@ -131,6 +139,7 @@ export default {
           label: 'Elevation [' + this.$units.alt + ']',
           formatter: (value, key, item) => {
             return this.$units.altf(this.getWaypoint(item, key), 0)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-sm-table-cell text-right',
           tdClass: 'd-none d-sm-table-cell text-right'

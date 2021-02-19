@@ -4,10 +4,12 @@
       toggleable="md"
       type="dark"
       variant="dark"
+      style="z-index: 1060;"
+      :sticky="$window.width >= 768"
     >
       <b-navbar-toggle
         target="nav_collapse"
-        style="z-index: 2;"
+        style="z-index: 80;"
       />
       <div
         class="d-block d-md-none navbar-dark navbar-brand navbar-title"
@@ -88,6 +90,7 @@
       />
     </b-navbar>
     <!-- routes will be rendered here -->
+
     <router-view
       ref="routerView"
     />
@@ -108,7 +111,13 @@ export default {
   data () {
     return {
       user: {},
-      authInterval: null
+      authInterval: null,
+      spinner: {}
+    }
+  },
+  computed: {
+    showSpinner () {
+      return this.$status.loading || this.$status.processing
     }
   },
   watch: {
@@ -118,6 +127,15 @@ export default {
       } else {
         this.$router.push({ name: 'Home' })
       }
+    },
+    showSpinner: function (val) {
+      if (val) {
+        this.spinner = this.$loading.show({
+          zIndex: 1055
+        })
+      } else {
+        this.spinner.hide()
+      }
     }
   },
   async created () {
@@ -126,6 +144,10 @@ export default {
     } catch (e) {
       console.log(e)
     }
+    window.addEventListener('resize', () => {
+      this.$window.width = window.innerWidth
+      this.$window.height = window.innerHeight
+    })
   },
   methods: {
     login () {
@@ -261,5 +283,8 @@ export default {
 .segment-table .b-table-details td {
   padding-top: 0 !important;
   padding-bottom: 0 !important
+}
+.modal-dialog {
+  padding-top: 56px;
 }
 </style>

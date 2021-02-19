@@ -13,7 +13,6 @@ Go to your courses list using the **"My Courses"** link in the top menu.
 Click on the green **"New Course"** button at the bottom of the page.
 
 #### New/Modify Course Menu
-Type in a name (required) and description (optional).
 
 ##### Select a GPX file
 A .gpx file is a file containing latitude, longitude, and elevation points
@@ -22,6 +21,9 @@ one of various route creation tools. *It is important that the .gpx file
 contains good elevation data.* The Strava Route Builder is a good tool with
 quailty elevation data, since Strava's elevation model is built from its user's
 actual altimeter data.
+
+##### Name & Description
+Type in a name (required) and description (optional).
 
 ##### Date/Time
 Date and time fields are optional, and are the default start date/time used when

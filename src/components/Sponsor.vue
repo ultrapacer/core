@@ -1,8 +1,8 @@
 <template>
   <div
-    v-if="sponsor && enabled && (fixed || scrolling) && layout==='corner'"
+    v-if="(fixed || !$status.loading) && sponsor && enabled && (fixed || scrolling) && layout==='corner'"
     :class="classes"
-    style="padding:15px; text-align: center"
+    style="padding:15px; text-align: center; z-index: 70"
   >
     <div class="rotate-container">
       <p class="rotate small text-center">
@@ -67,16 +67,16 @@ export default {
       refBottom: 0,
       refLeft: 0,
       refRight: 0,
-      scrollTop: 0,
-      windowHeight: 0,
-      windowWidth: 0
+      scrollTop: 0
     }
   },
   computed: {
     classes: function () {
       return {
+        'sponsor-scaler': true,
         bottom: this.fixed,
-        'pt-4': !this.fixed,
+        'pt-4': !this.fixed && this.$window.width >= 576,
+        'pt-2': !this.fixed && this.$window.width < 576,
         'd-none': !this.scrolling,
         'd-md-block': !this.scrolling,
         left: this.align === 'left',
@@ -84,19 +84,19 @@ export default {
       }
     },
     roomBelow: function () {
-      return this.windowHeight - this.refBottom > 130
+      return this.$window.height - this.refBottom + (this.scrolling ? 0 : this.scrollTop) > 130
     },
     roomLeft: function () {
       return this.refLeft > 250
     },
     roomRight: function () {
-      return this.windowWidth - this.refRight > 250
+      return this.$window.width - this.refRight > 250
     },
     fixed: function () {
-      if (this.element === null) { return false }
+      if (this.el === null) { return false }
       return (this.align === 'left' && this.roomLeft) ||
         (this.align === 'right' && this.roomRight) ||
-        (this.roomBelow && this.scrollTop === 0)
+        (!this.$status.loading && this.roomBelow && (!this.scrolling || this.scrollTop === 0))
     }
   },
   watch: {
@@ -117,7 +117,9 @@ export default {
   },
   async created () {
     this.getSponsor()
-    this.setWindowSizes()
+  },
+  async mounted () {
+    this.setRefSizes()
   },
   beforeDestroy () {
     this.removeListeners()
@@ -142,12 +144,10 @@ export default {
     },
     setUp () {
       // set up listeners for when to show sponsor info
-      this.el = null
       // get settings for this page
       const settings = [
         {
-          name: ['CoursesManager'],
-          element: 'coursesTable',
+          name: ['CoursesManager', 'Races', 'Doc', 'Docs'],
           align: 'left',
           scrolling: true
         },
@@ -156,18 +156,6 @@ export default {
           element: 'tables',
           align: 'right',
           scrolling: false
-        },
-        {
-          name: ['Races'],
-          element: 'pastRaces',
-          align: 'left',
-          scrolling: true
-        },
-        {
-          name: ['Doc', 'Docs'],
-          element: 'docs',
-          align: 'left',
-          scrolling: true
         },
         {
           name: ['Settings'],
@@ -180,23 +168,30 @@ export default {
 
       // if there are settings for this page, configure
       if (setting) {
-        this.element = setting.element
-        this.align = setting.align
+        this.element = setting.element || null
+        if (this.align !== setting.align) {
+          this.enabled = false
+          this.align = setting.align
+        }
         this.scrolling = setting.scrolling
 
         // wait until the ref is created before enabling the sponsor info
         this.checker = setInterval(() => {
           if (
             this.$parent.$refs.routerView &&
-            this.$parent.$refs.routerView.$refs[this.element] &&
             (
+              this.element === null ||
+              this.$parent.$refs.routerView.$refs[this.element]
+            ) && (
               this.$parent.$refs.routerView.initializing === undefined ||
               !this.$parent.$refs.routerView.initializing
             )
           ) {
             this.enabled = true
             clearInterval(this.checker)
-            if (this.$parent.$refs.routerView.$refs[this.element].$el) {
+            if (this.element === null) {
+              this.el = this.$parent.$refs.routerView.$el
+            } else if (this.$parent.$refs.routerView.$refs[this.element].$el) {
               this.el = this.$parent.$refs.routerView.$refs[this.element].$el
             } else {
               this.el = this.$parent.$refs.routerView.$refs[this.element]
@@ -207,11 +202,6 @@ export default {
       } else {
         this.enabled = false
       }
-    },
-    setWindowSizes () {
-      this.windowWidth = window.innerWidth
-      this.windowHeight = window.innerHeight
-      this.setRefSizes()
     },
     setRefSizes () {
       if (this.el !== null) {
@@ -225,7 +215,7 @@ export default {
       // add listeners to check for space to show sponsor when either screen
       // or reference element change size
       window.addEventListener('resize', () => {
-        this.setWindowSizes()
+        this.setRefSizes()
       })
       window.addEventListener('scroll', () => {
         this.scrollTop = document.scrollingElement.scrollTop
@@ -275,5 +265,11 @@ export default {
   max-height: 100px;
   display:inline-block;
   cursor:pointer;
+}
+.sponsor-scaler {
+  @media (max-width: 575px) {
+    zoom: 75%;
+    -moz-transform: scale(0.75);
+  }
 }
 </style>

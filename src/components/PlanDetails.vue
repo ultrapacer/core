@@ -1,535 +1,528 @@
 <template>
-  <div>
-    <div
-      v-if="busy"
-      class="d-flex justify-content-center mb-3"
-    >
-      <b-spinner label="Loading..." />
-    </div>
-    <div v-else>
-      <b-list-group style="font-size:0.9rem">
-        <b-list-group-item>
-          <h5 class="mb-1">
-            Course Description
-          </h5>
-          <span v-if="course.description">
-            {{ course.description }}
-          </span>
-          <span v-else>
-            The <b>{{ course.name }}</b> course covers <b>{{ $units.distf(course.distance, 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.gain, 0) | commas }} {{ $units.alt }}</b> of climbing.
-          </span>
-          <br>
-          <span
-            v-if="userCount > 1"
-            class="mb-0"
-          >
-            <b>{{ userCount }} runners</b> have ultraPacer plans for this course.
-          </span>
-        </b-list-group-item>
-        <b-list-group-item v-if="showPaceInfo">
-          <h5 class="mb-1">
-            Pacing Calculation Basis
-          </h5>
+  <b-list-group
+    v-if="!busy"
+    style="font-size:0.9rem"
+  >
+    <b-list-group-item>
+      <h5 class="mb-1">
+        Course Description
+      </h5>
+      <span v-if="course.description">
+        {{ course.description }}
+      </span>
+      <span v-else>
+        The <b>{{ course.name }}</b> course covers <b>{{ $units.distf(course.distance, 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.gain, 0) | commas }} {{ $units.alt }}</b> of climbing.
+      </span>
+      <br>
+      <span
+        v-if="userCount > 1"
+        class="mb-0"
+      >
+        <b>{{ userCount }} runners</b> have ultraPacer plans for this course.
+      </span>
+    </b-list-group-item>
+    <b-list-group-item v-if="showPaceInfo">
+      <h5 class="mb-1">
+        Pacing Calculation Basis
+      </h5>
+      <p class="mb-1">
+        <b>{{ methods[plan.pacingMethod] }}</b>
+        of <b>{{ pacingTargetF }}</b>
+      </p>
+    </b-list-group-item>
+    <b-list-group-item v-if="event.sun">
+      <h5 class="mb-1">
+        Event
+      </h5>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Date/Time:
+        </b-col>
+        <b-col><b>{{ event.start | datetime(event.timezone) }}</b></b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Dawn:
+        </b-col>
+        <b-col><b>{{ sec2string(event.sun.dawn, 'am/pm') }}</b></b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Sunrise:
+        </b-col>
+        <b-col><b>{{ sec2string(event.sun.rise, 'am/pm') }}</b></b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Sunset:
+        </b-col>
+        <b-col><b>{{ sec2string(event.sun.set, 'am/pm') }}</b></b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Dusk:
+        </b-col>
+        <b-col><b>{{ sec2string(event.sun.dusk, 'am/pm') }}</b></b-col>
+      </b-row>
+    </b-list-group-item>
+    <b-list-group-item v-if="showPaceInfo">
+      <h5 class="mb-1">
+        Time
+      </h5>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Total Time:
+        </b-col>
+        <b-col><b>{{ sec2string(pacing.time, '[h]:m:ss') }}</b></b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Moving Time:
+        </b-col>
+        <b-col><b>{{ sec2string(pacing.time - pacing.delay, '[h]:m:ss') }}</b></b-col>
+      </b-row>
+      <b-row v-if="event.startTime">
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Start Time:
+        </b-col>
+        <b-col><b>{{ sec2string(event.startTime, 'am/pm') }}</b></b-col>
+      </b-row>
+      <b-row v-if="event.startTime">
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Finish Time:
+        </b-col>
+        <b-col><b>{{ sec2string((event.startTime + pacing.time) % 86400, 'am/pm') }}</b></b-col>
+      </b-row>
+    </b-list-group-item>
+    <b-list-group-item v-if="showPaceInfo">
+      <h5 class="mb-1">
+        Paces
+      </h5>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Average:
+        </b-col>
+        <b-col><b>{{ sec2string(fPace(pacing.pace), 'mm:ss') }}</b> *</b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Normalized:
+        </b-col>
+        <b-col><b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *,**</b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Overall:
+        </b-col>
+        <b-col><b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b></b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        />
+        <b-col>
+          <small>&nbsp; * While Moving</small><br>
+          <small>&nbsp; ** Normalized for {{ normString }}</small>
+        </b-col>
+      </b-row>
+    </b-list-group-item>
+    <b-list-group-item v-if="showPaceInfo && pacing.delay">
+      <h5 class="mb-1">
+        Aid Station Delays
+      </h5>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Typical Delay:
+        </b-col>
+        <b-col><b>{{ sec2string(plan.waypointDelay, '[h]:m:ss') }}</b></b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Quantity:
+        </b-col>
+        <b-col><b>{{ aidStationCount }} stop<span v-if="aidStationCount>1">s</span></b></b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Total Delay:
+        </b-col>
+        <b-col><b>{{ sec2string(pacing.delay, '[h]:m:ss') }}</b></b-col>
+      </b-row>
+    </b-list-group-item>
+    <b-list-group-item v-if="showPaceInfo && plan.drift">
+      <h5 class="mb-1">
+        Pace Drift
+      </h5>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Pace Drift:
+        </b-col>
+        <b-col><b>{{ plan.drift }} %</b></b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Starting Pace:
+        </b-col>
+        <b-col><b>{{ sec2string(fPace(startPace), 'mm:ss') }}</b> *</b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Average Pace:
+        </b-col>
+        <b-col><b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *</b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Ending Pace:
+        </b-col>
+        <b-col><b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *</b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        />
+        <b-col>
+          <small>&nbsp; * Normalized for {{ normString }}</small>
+        </b-col>
+      </b-row>
+    </b-list-group-item>
+    <b-list-group-item>
+      <h5 class="mb-1">
+        Grade Effects
+      </h5>
+      <b-row>
+        <b-col
+          cols="1"
+          class="text-right pr-0"
+        /><b-col>
           <p class="mb-1">
-            <b>{{ methods[plan.pacingMethod] }}</b>
-            of <b>{{ pacingTargetF }}</b>
+            Overall Grade Factor:
+            <b>{{ pacing.factors.gF - 1 | percentWithPace(pacing.np, $units) }}</b>
           </p>
-        </b-list-group-item>
-        <b-list-group-item v-if="event.sun">
-          <h5 class="mb-1">
-            Event
-          </h5>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Date/Time:
-            </b-col>
-            <b-col><b>{{ event.start | datetime(event.timezone) }}</b></b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Dawn:
-            </b-col>
-            <b-col><b>{{ sec2string(event.sun.dawn, 'am/pm') }}</b></b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Sunrise:
-            </b-col>
-            <b-col><b>{{ sec2string(event.sun.rise, 'am/pm') }}</b></b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Sunset:
-            </b-col>
-            <b-col><b>{{ sec2string(event.sun.set, 'am/pm') }}</b></b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Dusk:
-            </b-col>
-            <b-col><b>{{ sec2string(event.sun.dusk, 'am/pm') }}</b></b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item v-if="showPaceInfo">
-          <h5 class="mb-1">
-            Time
-          </h5>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Total Time:
-            </b-col>
-            <b-col><b>{{ sec2string(pacing.time, '[h]:m:ss') }}</b></b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Moving Time:
-            </b-col>
-            <b-col><b>{{ sec2string(pacing.time - pacing.delay, '[h]:m:ss') }}</b></b-col>
-          </b-row>
-          <b-row v-if="event.startTime">
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Start Time:
-            </b-col>
-            <b-col><b>{{ sec2string(event.startTime, 'am/pm') }}</b></b-col>
-          </b-row>
-          <b-row v-if="event.startTime">
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Finish Time:
-            </b-col>
-            <b-col><b>{{ sec2string((event.startTime + pacing.time) % 86400, 'am/pm') }}</b></b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item v-if="showPaceInfo">
-          <h5 class="mb-1">
-            Paces
-          </h5>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Average:
-            </b-col>
-            <b-col><b>{{ sec2string(fPace(pacing.pace), 'mm:ss') }}</b> *</b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Normalized:
-            </b-col>
-            <b-col><b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *,**</b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Overall:
-            </b-col>
-            <b-col><b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b></b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            />
-            <b-col>
-              <small>&nbsp; * While Moving</small><br>
-              <small>&nbsp; ** Normalized for {{ normString }}</small>
-            </b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item v-if="showPaceInfo && pacing.delay">
-          <h5 class="mb-1">
-            Aid Station Delays
-          </h5>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Typical Delay:
-            </b-col>
-            <b-col><b>{{ sec2string(plan.waypointDelay, '[h]:m:ss') }}</b></b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Quantity:
-            </b-col>
-            <b-col><b>{{ aidStationCount }} stop<span v-if="aidStationCount>1">s</span></b></b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Total Delay:
-            </b-col>
-            <b-col><b>{{ sec2string(pacing.delay, '[h]:m:ss') }}</b></b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item v-if="showPaceInfo && plan.drift">
-          <h5 class="mb-1">
-            Pace Drift
-          </h5>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Pace Drift:
-            </b-col>
-            <b-col><b>{{ plan.drift }} %</b></b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Starting Pace:
-            </b-col>
-            <b-col><b>{{ sec2string(fPace(startPace), 'mm:ss') }}</b> *</b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Average Pace:
-            </b-col>
-            <b-col><b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *</b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Ending Pace:
-            </b-col>
-            <b-col><b>{{ sec2string(fPace(endPace), 'mm:ss') }}</b> *</b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            />
-            <b-col>
-              <small>&nbsp; * Normalized for {{ normString }}</small>
-            </b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item>
-          <h5 class="mb-1">
-            Grade Effects
-          </h5>
-          <b-row>
-            <b-col
-              cols="1"
-              class="text-right pr-0"
-            /><b-col>
-              <p class="mb-1">
-                Overall Grade Factor:
-                <b>{{ pacing.factors.gF - 1 | percentWithPace(pacing.np, $units) }}</b>
-              </p>
-              <p class="mb-1">
-                Steepest Climb:
-                <b>{{ maxGrade.toFixed(1) }}%</b> grade
-                [<b>{{ gF(maxGrade) - 1 | percentWithPace(pacing.np, $units) }}</b>]
-              </p>
-              <p class="mb-1">
-                Steepest Descent:
-                <b>{{ minGrade.toFixed(1) }}%</b> grade
-                [<b>{{ gF(minGrade) - 1 | percentWithPace(pacing.np, $units) }}</b>]
-              </p>
-            </b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item v-if="round(pacing.factors.aF, 3) > 1">
-          <h5 class="mb-1">
-            Altitude Effects
-          </h5>
-          <b-row>
-            <b-col
-              cols="1"
-              class="text-right pr-0"
-            /><b-col>
-              <p class="mb-1">
-                Average Altitude Factor:
-                <b>{{ pacing.factors.aF - 1 | percentWithPace(pacing.np, $units) }}</b>
-              </p>
-              <p class="mb-1">
-                Highest Altitude Factor:
-                <b>{{ aF(maxAltitude) - 1 | percentWithPace(pacing.np, $units) }}</b>
-                at
-                <b>{{ $units.altf(maxAltitude, 0) | commas }} {{ $units.alt }}</b>
-              </p>
-              <p class="mb-1">
-                Lowest Altitude Factor:
-                <b>{{ aF(minAltitude) - 1 | percentWithPace(pacing.np, $units) }}</b>
-                at
-                <b>{{ $units.altf(minAltitude, 0) | commas }} {{ $units.alt }}</b>
-              </p>
-            </b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item v-if="round(pacing.factors.tF, 3) > 1">
-          <h5 class="mb-1">
-            Terrain Effects
-          </h5>
-          <b-row>
-            <b-col
-              cols="1"
-              class="text-right pr-0"
-            /><b-col>
-              <p class="mb-1">
-                Overall Terrain Factor:
-                <b>{{ pacing.factors.tF - 1 | percentWithPace(pacing.np, $units) }}</b>
-              </p>
-              <p class="mb-1">
-                Hardest Terrain:
-                <b>{{ pacing.fstats.max.tF - 1 | percentWithPace(pacing.np, $units) }}</b>
-                over
-                <b>{{ $units.distf(maxTFdist, 2) }} {{ $units.dist }}</b>
-              </p>
-              <p class="mb-1">
-                Easiest Terrain:
-                <b>{{ pacing.fstats.min.tF - 1 | percentWithPace(pacing.np, $units) }}</b>
-                over
-                <b>{{ $units.distf(minTFdist, 2) }} {{ $units.dist }}</b>
-              </p>
-            </b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item v-if="round(pacing.factors.hF, 3) > 1">
-          <h5 class="mb-1">
-            Heat Effects
-          </h5>
-          <b-row>
-            <b-col
-              cols="1"
-              class="text-right pr-0"
-            /><b-col>
-              <p class="mb-1">
-                Average Heat Factor:
-                <b>{{ pacing.factors.hF - 1 | percentWithPace(pacing.np, $units) }}</b>
-              </p>
-              <p class="mb-1">
-                Highest Heat Factor:
-                <b>{{ pacing.fstats.max.hF - 1 | percentWithPace(pacing.np, $units) }}</b>
-              </p>
-              <p class="mb-1">
-                Lowest Heat Factor:
-                <b>{{ pacing.fstats.min.hF - 1 | percentWithPace(pacing.np, $units) }}</b>
-              </p>
-            </b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item v-if="showPaceInfo && round(pacing.factors.dark, 3) > 1">
-          <h5 class="mb-1">
-            Darkness Effects
-          </h5>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Avg. Factor:
-            </b-col>
-            <b-col>
-              <b>{{ pacing.factors.dark - 1 | percentWithPace(pacing.np, $units) }}</b>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Daylight Time:
-            </b-col>
-            <b-col>
-              <b>
-                {{ sec2string(pacing.sunTime.day, 'hh:mm:ss') }}&nbsp;
-                ({{ $units.distf(pacing.sunDist.day, 2) }} {{ $units.dist }})
-              </b>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Twilight Time:
-            </b-col>
-            <b-col>
-              <b>
-                {{ sec2string(pacing.sunTime.twilight, 'hh:mm:ss') }}&nbsp;
-                ({{ $units.distf(pacing.sunDist.twilight, 2) }} {{ $units.dist }})
-              </b>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col
-              cols="4"
-              sm="3"
-              lg="3"
-              xl="2"
-              class="text-right pr-0"
-            >
-              Dark Time:
-            </b-col>
-            <b-col>
-              <b>
-                {{ sec2string(pacing.sunTime.dark, 'hh:mm:ss') }}&nbsp;
-                ({{ $units.distf(pacing.sunDist.dark, 2) }} {{ $units.dist }})
-              </b>
-            </b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item>
-          <p
-            v-if="showPaceInfo && !pacing.delay"
-            class="mb-1"
-          >
-            No Delays
+          <p class="mb-1">
+            Steepest Climb:
+            <b>{{ maxGrade.toFixed(1) }}%</b> grade
+            [<b>{{ gF(maxGrade) - 1 | percentWithPace(pacing.np, $units) }}</b>]
           </p>
-          <p
-            v-if="pacing.factors.aF <= 1"
-            class="mb-1"
-          >
-            No Altitude Effects
+          <p class="mb-1">
+            Steepest Descent:
+            <b>{{ minGrade.toFixed(1) }}%</b> grade
+            [<b>{{ gF(minGrade) - 1 | percentWithPace(pacing.np, $units) }}</b>]
           </p>
-          <p
-            v-if="pacing.factors.tF <= 1"
-            class="mb-1"
-          >
-            No Terrain Effects
+        </b-col>
+      </b-row>
+    </b-list-group-item>
+    <b-list-group-item v-if="round(pacing.factors.aF, 3) > 1">
+      <h5 class="mb-1">
+        Altitude Effects
+      </h5>
+      <b-row>
+        <b-col
+          cols="1"
+          class="text-right pr-0"
+        /><b-col>
+          <p class="mb-1">
+            Average Altitude Factor:
+            <b>{{ pacing.factors.aF - 1 | percentWithPace(pacing.np, $units) }}</b>
           </p>
-          <p
-            v-if="showPaceInfo && pacing.factors.hF <= 1"
-            class="mb-1"
-          >
-            No Heat Effects
+          <p class="mb-1">
+            Highest Altitude Factor:
+            <b>{{ aF(maxAltitude) - 1 | percentWithPace(pacing.np, $units) }}</b>
+            at
+            <b>{{ $units.altf(maxAltitude, 0) | commas }} {{ $units.alt }}</b>
           </p>
-          <p
-            v-if="showPaceInfo && pacing.factors.dark <= 1"
-            class="mb-1"
-          >
-            No Darkness Effects
+          <p class="mb-1">
+            Lowest Altitude Factor:
+            <b>{{ aF(minAltitude) - 1 | percentWithPace(pacing.np, $units) }}</b>
+            at
+            <b>{{ $units.altf(minAltitude, 0) | commas }} {{ $units.alt }}</b>
           </p>
-          <p
-            v-if="showPaceInfo && !plan.drift"
-            class="mb-1"
-          >
-            No Pace Drift
+        </b-col>
+      </b-row>
+    </b-list-group-item>
+    <b-list-group-item v-if="round(pacing.factors.tF, 3) > 1">
+      <h5 class="mb-1">
+        Terrain Effects
+      </h5>
+      <b-row>
+        <b-col
+          cols="1"
+          class="text-right pr-0"
+        /><b-col>
+          <p class="mb-1">
+            Overall Terrain Factor:
+            <b>{{ pacing.factors.tF - 1 | percentWithPace(pacing.np, $units) }}</b>
           </p>
-        </b-list-group-item>
-      </b-list-group>
-    </div>
-  </div>
+          <p class="mb-1">
+            Hardest Terrain:
+            <b>{{ pacing.fstats.max.tF - 1 | percentWithPace(pacing.np, $units) }}</b>
+            over
+            <b>{{ $units.distf(maxTFdist, 2) }} {{ $units.dist }}</b>
+          </p>
+          <p class="mb-1">
+            Easiest Terrain:
+            <b>{{ pacing.fstats.min.tF - 1 | percentWithPace(pacing.np, $units) }}</b>
+            over
+            <b>{{ $units.distf(minTFdist, 2) }} {{ $units.dist }}</b>
+          </p>
+        </b-col>
+      </b-row>
+    </b-list-group-item>
+    <b-list-group-item v-if="round(pacing.factors.hF, 3) > 1">
+      <h5 class="mb-1">
+        Heat Effects
+      </h5>
+      <b-row>
+        <b-col
+          cols="1"
+          class="text-right pr-0"
+        /><b-col>
+          <p class="mb-1">
+            Average Heat Factor:
+            <b>{{ pacing.factors.hF - 1 | percentWithPace(pacing.np, $units) }}</b>
+          </p>
+          <p class="mb-1">
+            Highest Heat Factor:
+            <b>{{ pacing.fstats.max.hF - 1 | percentWithPace(pacing.np, $units) }}</b>
+          </p>
+          <p class="mb-1">
+            Lowest Heat Factor:
+            <b>{{ pacing.fstats.min.hF - 1 | percentWithPace(pacing.np, $units) }}</b>
+          </p>
+        </b-col>
+      </b-row>
+    </b-list-group-item>
+    <b-list-group-item v-if="showPaceInfo && round(pacing.factors.dark, 3) > 1">
+      <h5 class="mb-1">
+        Darkness Effects
+      </h5>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Avg. Factor:
+        </b-col>
+        <b-col>
+          <b>{{ pacing.factors.dark - 1 | percentWithPace(pacing.np, $units) }}</b>
+        </b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Daylight Time:
+        </b-col>
+        <b-col>
+          <b>
+            {{ sec2string(pacing.sunTime.day, 'hh:mm:ss') }}&nbsp;
+            ({{ $units.distf(pacing.sunDist.day, 2) }} {{ $units.dist }})
+          </b>
+        </b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Twilight Time:
+        </b-col>
+        <b-col>
+          <b>
+            {{ sec2string(pacing.sunTime.twilight, 'hh:mm:ss') }}&nbsp;
+            ({{ $units.distf(pacing.sunDist.twilight, 2) }} {{ $units.dist }})
+          </b>
+        </b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="4"
+          sm="3"
+          lg="3"
+          xl="2"
+          class="text-right pr-0"
+        >
+          Dark Time:
+        </b-col>
+        <b-col>
+          <b>
+            {{ sec2string(pacing.sunTime.dark, 'hh:mm:ss') }}&nbsp;
+            ({{ $units.distf(pacing.sunDist.dark, 2) }} {{ $units.dist }})
+          </b>
+        </b-col>
+      </b-row>
+    </b-list-group-item>
+    <b-list-group-item>
+      <p
+        v-if="showPaceInfo && !pacing.delay"
+        class="mb-1"
+      >
+        No Delays
+      </p>
+      <p
+        v-if="pacing.factors.aF <= 1"
+        class="mb-1"
+      >
+        No Altitude Effects
+      </p>
+      <p
+        v-if="pacing.factors.tF <= 1"
+        class="mb-1"
+      >
+        No Terrain Effects
+      </p>
+      <p
+        v-if="showPaceInfo && pacing.factors.hF <= 1"
+        class="mb-1"
+      >
+        No Heat Effects
+      </p>
+      <p
+        v-if="showPaceInfo && pacing.factors.dark <= 1"
+        class="mb-1"
+      >
+        No Darkness Effects
+      </p>
+      <p
+        v-if="showPaceInfo && !plan.drift"
+        class="mb-1"
+      >
+        No Pace Drift
+      </p>
+    </b-list-group-item>
+  </b-list-group>
 </template>
 
 <script>

@@ -266,10 +266,6 @@
             variant="danger"
             @click="remove"
           >
-            <b-spinner
-              v-show="deleting"
-              small
-            />
             Delete
           </b-button>
         </div>
@@ -283,10 +279,6 @@
           variant="primary"
           @click="ok()"
         >
-          <b-spinner
-            v-show="saving"
-            small
-          />
           {{ $auth.isAuthenticated() ? 'Save' : 'Generate' }} Plan
         </b-button>
       </template>
@@ -342,8 +334,6 @@ export default {
         { value: 'pace', text: 'Average pace' },
         { value: 'np', text: 'Normalized pace' }
       ],
-      saving: false,
-      deleting: false,
       hF: {
         enabled: false,
         baseline: '',
@@ -458,8 +448,8 @@ export default {
       }
     },
     async save () {
-      if (this.saving) { return }
-      this.saving = true
+      if (this.$status.processing) { return }
+      this.$status.processing = true
       this.model.pacingTarget = string2sec(this.model.pacingTargetF)
       if (
         this.model.pacingMethod === 'pace' ||
@@ -508,7 +498,7 @@ export default {
         )
       }
       await this.$emit('refresh', p, () => {
-        this.saving = false
+        this.$status.processing = false
         this.clear()
         this.$refs.modal.hide()
       })
@@ -520,13 +510,11 @@ export default {
       this.validateTime(this.$refs.planformtimeinput, val)
     },
     async remove () {
-      this.deleting = true
       this.$emit('delete', this.model, async (err) => {
         if (!err) {
           this.clear()
           this.$refs.modal.hide()
         }
-        this.deleting = false
       })
     },
     validateTime (el, val, max1 = null) {

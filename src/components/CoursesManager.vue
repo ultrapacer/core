@@ -22,13 +22,7 @@
       </b-col>
     </b-row>
     <b-row
-      v-if="initializing"
-      class="d-flex justify-content-center mb-3 pt-5"
-    >
-      <b-spinner label="Loading..." />
-    </b-row>
-    <b-row
-      v-if="!initializing"
+      v-if="courses.length"
       ref="coursesTable"
     >
       <b-col>
@@ -130,7 +124,6 @@ export default {
   },
   data () {
     return {
-      initializing: true,
       courses: [],
       courseEditor: false,
       fields: [
@@ -173,20 +166,21 @@ export default {
     }
   },
   async created () {
-    this.$status.calculating = true
+    this.$status.loading = true
     await this.refreshCourses()
-    this.initializing = false
-    this.$status.calculating = false
+    this.$status.loading = false
   },
   methods: {
     async refreshCourses (callback) {
+      this.$status.processing = true
       this.courses = await api.getCourses()
       this.courses.sort((a, b) => {
-        if (a.name < b.name) { return -1 }
-        if (a.name > b.name) { return 1 }
+        if (a.name.toLowerCase() < b.name.toLowerCase()) { return -1 }
+        if (a.name.toLowerCase() > b.name.toLowerCase()) { return 1 }
         return 0
       })
       if (typeof callback === 'function') callback()
+      this.$status.processing = false
     },
     async goToCourse (course) {
       if (course.link) {
@@ -209,7 +203,7 @@ export default {
       this.$refs.courseEdit.show({})
     },
     async editCourse (course) {
-      this.$status.calculating = true
+      this.$status.processing = true
       const c = await api.getCourse(course._id)
       this.$refs.courseEdit.show(c)
     },

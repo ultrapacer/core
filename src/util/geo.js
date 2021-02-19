@@ -750,7 +750,7 @@ function calcSunTime (data) {
   return s
 }
 
-export function addActuals (points, actual) {
+export async function addActuals (points, actual) {
   // interpolate actual array to points lat/lon and add actual elapsed & loc
   const t = logger()
   actual = actual.map(p => {
@@ -760,7 +760,13 @@ export function addActuals (points, actual) {
   })
   let MatchFailure = {}
   try {
-    points.forEach(p => {
+    for (let index = 0; index < points.length; index++) {
+      const p = points[index]
+      // this requires a lot of processing; prevent browser from hanging:
+      if (index % 10 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 5))
+      }
+
       const ll = new sgeo.latlon(p.lat, p.lon)
       // pick all points within the next "th"
       let j = 0
@@ -807,7 +813,7 @@ export function addActuals (points, actual) {
           }
         }
       }
-    })
+    }
     logger('geo|addActuals MATCH', t)
     return {
       match: true

@@ -6,12 +6,6 @@
     <h1 class="h1 d-none d-md-block">
       Settings{{ $user.admin ? ' [Admin]' : '' }}
     </h1>
-    <b-alert
-      :show="loading"
-      variant="info"
-    >
-      Loading...
-    </b-alert>
     <b-card ref="settings">
       <form @submit.prevent="saveSettings">
         <b-form-group label="Distance Units">
@@ -110,10 +104,12 @@ export default {
     }
   },
   async created () {
+    this.$status.loading = true
     this.populateForm()
   },
   methods: {
     async saveSettings () {
+      this.$status.processing = true
       if (!this.customAltModel) {
         this.model.altModel = null
       } else {
@@ -122,15 +118,18 @@ export default {
       await api.updateSettings(this.$user._id, this.model)
       await api.getUser()
       await this.$parent.getUser()
+      this.$status.processing = false
       this.$router.go(-1)
     },
     async populateForm () {
+      this.$status.loading = true
       const user = await api.getUser()
       this.model = Object.assign({}, user)
       if (user.altModel !== null) {
         this.customAltModel = true
         this.altModel = Object.assign({}, user.altModel)
       }
+      this.$status.loading = false
     }
   }
 }
