@@ -287,4 +287,14 @@ export default {
 .modal-dialog {
   padding-top: 56px;
 }
+.form-tip {
+  margin-top: -0.4rem;
+  color: #5e8351;
+  font-size: 80%;
+}
+.documentation img  {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit:scale-down;
+}
 </style>

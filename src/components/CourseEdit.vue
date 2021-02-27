@@ -14,9 +14,6 @@
         @submit.prevent=""
       >
         <b-input-group
-          v-b-popover.hover.bottomright.d250.v-info="
-            'File: GPX format file exported from a GPS track or route builder.'
-          "
           prepend="File"
           class="mb-2"
           size="sm"
@@ -35,11 +32,11 @@
             {{ gpxFileInvalidMsg }}
           </b-form-invalid-feedback>
         </b-input-group>
+        <form-tip v-if="showTips">
+          Required: ".gpx" format file exported from a GPS track or route builder.
+        </form-tip>
         <div v-if="courseLoaded === true || model._id">
           <b-input-group
-            v-b-popover.hover.bottomright.d250.v-info="
-              'Name: name for the course, for example \'\'Western States 100\'\''
-            "
             prepend="Name"
             class="mb-2"
             size="sm"
@@ -50,6 +47,9 @@
               required
             />
           </b-input-group>
+          <form-tip v-if="showTips">
+            Required: name for the course; for example: "Western States 100".
+          </form-tip>
           <b-input-group
             prepend="Description"
             class="mb-2"
@@ -60,47 +60,17 @@
               rows="2"
             />
           </b-input-group>
-
-          <b-input-group
-            v-b-popover.hover.bottomright.d250.v-info="
-              'Date [optional]: use for races, etc.'
-            "
-            prepend="Event Date"
-            class="mb-2"
-            size="sm"
+          <form-tip v-if="showTips">
+            Optional: description for your course or race.
+          </form-tip>
+          <form-date-time
+            v-model="moment"
+            :show-tips="showTips"
           >
-            <b-form-input
-              v-model="eventDate"
-              type="date"
-              :required="Boolean(eventDate)"
-            />
-          </b-input-group>
-          <b-input-group
-            v-b-popover.hover.bottomright.d250.v-info="
-              'Start Time [optional]: time of day event begins'
-            "
-            prepend="Start Time"
-            class="mb-2"
-            size="sm"
-          >
-            <b-form-input
-              v-model="eventTime"
-              type="time"
-              :required="Boolean(eventDate)"
-            />
-          </b-input-group>
-          <b-input-group
-            prepend="Timezone"
-            class="mb-2"
-            size="sm"
-          >
-            <b-form-select
-              v-model="model.eventTimezone"
-              :options="timezones"
-              :required="Boolean(eventTime)"
-            />
-          </b-input-group>
-
+            <template #date-tip>
+              Optional: use for organized races. Plans made for this course can set thier own times.
+            </template>
+          </form-date-time>
           <b-form-checkbox
             v-model="model.override.enabled"
             size="sm"
@@ -110,7 +80,9 @@
           >
             Override distance/gain/loss from GPX file
           </b-form-checkbox>
-
+          <form-tip v-if="showTips">
+            Optional: enable to manually specify distance/elevation.
+          </form-tip>
           <b-form-group
             v-if="model.override.enabled"
             class="mb-0 pl-3"
@@ -136,6 +108,9 @@
                 @change="updateDistanceUnit"
               />
             </b-input-group>
+            <form-tip v-if="showTips">
+              Required (if Override is enabled): specify distance and units.
+            </form-tip>
             <b-input-group
               prepend="Elevation Gain"
               class="mb-2"
@@ -157,6 +132,9 @@
                 @change="updateElevUnit"
               />
             </b-input-group>
+            <form-tip v-if="showTips">
+              Required (if Override is enabled): specify climbing/gain and units.
+            </form-tip>
             <b-input-group
               prepend="Elevation Loss"
               class="mb-2"
@@ -178,13 +156,12 @@
                 @change="updateElevUnit"
               />
             </b-input-group>
+            <form-tip v-if="showTips">
+              Required (if Override is enabled): specify descent/loss and units.
+            </form-tip>
           </b-form-group>
-
           <b-form-checkbox
             v-model="model.public"
-            v-b-popover.hover.bottomright.d250.v-info="
-              'Visibility: if public, anybody with the link can view and make plans for the course.'
-            "
             :value="true"
             size="sm"
             class="mb-2"
@@ -192,11 +169,11 @@
           >
             Visible to public
           </b-form-checkbox>
+          <form-tip v-if="showTips">
+            Optional: allow link sharing for course and plans (to anybody).
+          </form-tip>
           <b-input-group
             v-if="model.public && $user.admin"
-            v-b-popover.hover.bottomright.d250.v-info="
-              'Permalink: readable link for official races; https://ultrapacer.com/race/(permalink)'
-            "
             prepend="Permalink"
             class="mb-2"
             size="sm"
@@ -206,6 +183,9 @@
               type="text"
             />
           </b-input-group>
+          <form-tip v-if="model.public && $user.admin && showTips">
+            Optional: readable link for official races; https://ultrapacer.com/race/(permalink).
+          </form-tip>
         </div>
       </form>
       <template #modal-footer="{ ok, cancel }">
@@ -217,7 +197,14 @@
             variant="warning"
             @click="$refs.help.show()"
           >
-            Help
+            Docs
+          </b-button>
+          <b-button
+            size="sm"
+            variant="warning"
+            @click="toggleTips()"
+          >
+            Tips
           </b-button>
         </div>
         <b-button
@@ -249,7 +236,7 @@
       scrollable
       ok-only
     >
-      <help-doc />
+      <help-doc class="documentation" />
     </b-modal>
   </div>
 </template>
@@ -257,14 +244,18 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
-import HelpDoc from '@/docs/course_create.md'
+import FormDateTime from './FormDateTime'
+import FormTip from './FormTip'
+import HelpDoc from '@/docs/course.md'
 import moment from 'moment-timezone'
 import wputil from '@/util/waypoints'
 import { round } from '@/util/math'
 const gpxParse = require('gpx-parse')
 export default {
   components: {
-    HelpDoc
+    HelpDoc,
+    FormDateTime,
+    FormTip
   },
   data () {
     return {
@@ -288,11 +279,10 @@ export default {
       gpxFileInvalidMsg: '',
       gpxPoints: [],
       model: {},
-      eventDate: null,
-      eventTime: null,
+      moment: null,
       rawLoaded: false,
+      showTips: false,
       stats: null,
-      timezones: moment.tz.names(),
       distancef: null,
       gainf: null,
       lossf: null
@@ -301,24 +291,22 @@ export default {
   methods: {
     async show (course, raw = null) {
       this.courseLoaded = false
+      this.showTips = false
+      this.moment = null
       if (course._id) {
         this.model = Object.assign({}, course)
-        if (!this.model.eventTimezone) {
-          this.model.eventTimezone = moment.tz.guess()
-        }
+        const tz = this.model.eventTimezone || moment.tz.guess()
         if (this.model.eventStart) {
-          const m = moment(this.model.eventStart).tz(this.model.eventTimezone)
-          this.eventDate = m.format('YYYY-MM-DD')
-          this.eventTime = m.format('kk:mm')
+          this.moment = moment(this.model.eventStart).tz(tz)
         } else {
-          this.eventDate = null
-          this.eventTime = null
+          this.moment = moment(0).tz(tz)
         }
         this.model.override = { ...course.override }
         this.updateDistanceUnit(this.model.override.distUnit)
         this.updateElevUnit(this.model.override.elevUnit)
         this.courseLoaded = this.reloadRaw()
       } else {
+        this.moment = moment(0).tz(moment.tz.guess())
         this.model = Object.assign({}, this.defaults)
       }
       this.$refs.modal.show()
@@ -400,10 +388,9 @@ export default {
         }
       }
 
-      if (this.eventTime && this.eventDate) {
-        this.model.eventStart = moment.tz(
-          `${this.eventDate} ${this.eventTime}`,
-          this.model.eventTimezone).toDate()
+      this.model.eventTimezone = this.moment.tz()
+      if (Number(this.moment.format('YYYY') > 1970)) {
+        this.model.eventStart = this.moment.toDate()
       } else {
         this.model.eventStart = null
       }
@@ -463,9 +450,10 @@ export default {
       this.$nextTick(async () => {
         const reader = new FileReader()
         reader.onload = e => {
-          gpxParse.parseGpx(e.target.result, (error, data) => {
+          gpxParse.parseGpx(e.target.result, async (error, data) => {
             if (error) {
               this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
+              this.$status.processing = false
               throw error
             } else {
               this.$logger('CourseEdit|GPX parsed', t)
@@ -476,10 +464,16 @@ export default {
                   lon: p.lon
                 }
               })
+              if (this.gpxPoints.length < 100) {
+                this.gpxFileInvalidMsg = 'GPX file has too few points.'
+                this.$status.processing = false
+                return
+              }
               geo.addLoc(this.gpxPoints)
               this.stats = geo.calcStats(this.gpxPoints, true)
               if (this.stats.gain === 0) {
                 this.gpxFileInvalidMsg = 'GPX file does not contain elevation data.'
+                this.$status.processing = false
                 return
               }
               this.gpxFileInvalidMsg = ''
@@ -491,7 +485,7 @@ export default {
                 type: 'gpx',
                 name: this.gpxFile.name
               }
-              this.defaultTimezone(this.gpxPoints[0].lat, this.gpxPoints[0].lon)
+              await this.defaultTimezone(this.gpxPoints[0].lat, this.gpxPoints[0].lon)
               this.courseLoaded = true
               this.$status.processing = false
             }
@@ -537,12 +531,11 @@ export default {
       this.lossf = -round(this.model.loss * ((val === 'ft') ? 3.28084 : 1), 0)
     },
     async defaultTimezone (lat, lon) {
-      // if empty, populate the eventTimezone from the GPX file
-      if (!this.model.eventTimezone) {
-        const tz = await api.getTimeZone(lat, lon)
-        if (!this.model.eventTimezone) {
-          this.$set(this.model, 'eventTimezone', tz)
-        }
+      const tz = await api.getTimeZone(lat, lon)
+      if (Number(this.moment.format('YYYY') > 1970)) {
+        this.moment = moment(this.moment.format('YYYY-MM-DD kk:mm')).tz(tz)
+      } else {
+        this.moment = moment(0).tz(tz)
       }
     },
     round: function (val, dec) {
@@ -550,6 +543,9 @@ export default {
     },
     showHelp () {
       this.$refs.help.show()
+    },
+    toggleTips () {
+      this.showTips = !this.showTips
     }
   }
 }

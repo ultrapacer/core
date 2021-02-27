@@ -14,9 +14,6 @@
         @submit.prevent=""
       >
         <b-input-group
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Name: name for the waypoint, such as aid station name or landmark description'
-          "
           prepend="Name"
           class="mb-2"
           size="sm"
@@ -27,11 +24,11 @@
             required
           />
         </b-input-group>
+        <form-tip v-if="showTips">
+          Required: name for the waypoint, such as aid station name or landmark description.
+        </form-tip>
         <b-input-group
           v-if="model.type != 'start' && model.type != 'finish'"
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Location: distance along course for this waypoint'
-          "
           prepend="Location"
           :append="$units.dist"
           class="mb-2"
@@ -46,10 +43,10 @@
             required
           />
         </b-input-group>
+        <form-tip v-if="showTips">
+          Required: distance along course for this waypoint.
+        </form-tip>
         <b-input-group
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Type: type of waypoint.\nNote that \'Aid Station\' and \'Water Source\' both include delay for plans.'
-          "
           prepend="Type"
           class="mb-2"
           size="sm"
@@ -61,10 +58,11 @@
             required
           />
         </b-input-group>
+        <form-tip v-if="showTips">
+          Required: type of waypoint.
+          Note that "Aid Station" and "Water Source" both include delays for plans.
+        </form-tip>
         <b-input-group
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Priority: how important the waypoint is, as follows:\n - Major: always appears on segment breakdown, map, and profile\n - Minor: only appears in tables, map, and profile when its major segment is expanded\n - Minor: never appears in tables, map, or profile (used for terrain factor only)'
-          "
           prepend="Priority"
           class="mb-2"
           size="sm"
@@ -76,10 +74,10 @@
             required
           />
         </b-input-group>
+        <form-tip v-if="showTips">
+          Required: how important the waypoint is, as follows (see Docs).
+        </form-tip>
         <b-input-group
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Terrain factor: terrain-based pace adjustment, basically anything that is too small to appear in elevation data. Requires course knowledge. Guidelines:\n - Paved surface: 0%\n - Smooth fire road: 2-4%\n - Smooth singletrack: 5-10%\n - Rocky singletrack: 10-20%\n - Technical trail: 20%+'
-          "
           prepend="Terrain factor"
           append="% (increase)"
           class="mb-2"
@@ -93,10 +91,10 @@
             step="0"
           />
         </b-input-group>
+        <form-tip v-if="showTips">
+          Required: terrain-based pace adjustment, basically anything that is too small to appear in elevation data (see Docs).
+        </form-tip>
         <b-input-group
-          v-b-popover.hover.bottomright.d250.v-info="
-            'Notes: description of waypoint, crew access, supplies, etc.'
-          "
           prepend="Notes"
           class="mb-2"
           size="sm"
@@ -106,20 +104,36 @@
             rows="4"
           />
         </b-input-group>
+        <form-tip v-if="showTips">
+          Optional: description of waypoint, crew access, supplies, cut-off times, etc.
+        </form-tip>
       </form>
       <template #modal-footer="{ ok, cancel }">
         <div
-          v-if="model._id && model.type !== 'start' && model.type !== 'finish'"
           style="text-align: left; flex: auto"
         >
           <b-button
             size="sm"
-            variant="danger"
-            @click="remove"
+            variant="warning"
+            @click="$refs.help.show()"
           >
-            Delete
+            Docs
+          </b-button>
+          <b-button
+            size="sm"
+            variant="warning"
+            @click="toggleTips()"
+          >
+            Tips
           </b-button>
         </div>
+        <b-button
+          v-if="model._id && model.type !== 'start' && model.type !== 'finish'"
+          variant="danger"
+          @click="remove"
+        >
+          Delete
+        </b-button>
         <b-button
           variant="secondary"
           @click="cancel()"
@@ -130,18 +144,33 @@
           variant="primary"
           @click="ok()"
         >
-          Save Waypoint
+          Save
         </b-button>
       </template>
+    </b-modal>
+    <b-modal
+      ref="help"
+      :title="`Waypoint ${model._id ? 'Edit' : 'Create'} Help`"
+      size="lg"
+      scrollable
+      ok-only
+    >
+      <help-doc class="documentation" />
     </b-modal>
   </div>
 </template>
 
 <script>
 import api from '@/api'
+import FormTip from './FormTip'
+import HelpDoc from '@/docs/waypoint.md'
 import wputil from '../util/waypoints'
 import { tF } from '../util/normFactor'
 export default {
+  components: {
+    HelpDoc,
+    FormTip
+  },
   props: {
     course: {
       type: Object,
@@ -162,7 +191,8 @@ export default {
       defaults: {
         type: 'aid',
         tier: 1
-      }
+      },
+      showTips: false
     }
   },
   computed: {
@@ -212,6 +242,7 @@ export default {
   },
   methods: {
     async show (waypoint) {
+      this.showTips = false
       if (waypoint._id) {
         this.model = Object.assign({}, waypoint)
       } else {
@@ -261,6 +292,9 @@ export default {
         }
         this.$emit('setUpdateFlag')
       })
+    },
+    toggleTips () {
+      this.showTips = !this.showTips
     }
   }
 }

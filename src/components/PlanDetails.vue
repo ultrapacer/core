@@ -15,7 +15,7 @@
       </span>
       <br>
       <span
-        v-if="userCount > 1"
+        v-if="userCount > 9"
         class="mb-0"
       >
         <b>{{ userCount }} runners</b> have ultraPacer plans for this course.

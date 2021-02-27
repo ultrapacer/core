@@ -23,12 +23,12 @@
             size="sm"
             required
           />
-          <help-button
-            message="Name: title for this plan; for example 'A goal' or 'Qualify' or '24-hour finish'.'"
-          />
         </b-input-group>
+        <form-tip v-if="showTips">
+          Required: title for this plan; for example "A goal" or "Qualify" or "24-hour finish".
+        </form-tip>
         <b-input-group
-          prepend="Pacing method"
+          prepend="Pacing Method"
           class="mb-2"
           size="sm"
         >
@@ -39,10 +39,10 @@
             size="sm"
             required
           />
-          <help-button
-            :message="'Pacing methods:\n - Elapsed time: computes splits to complete the event at the specified elapsed time.\n - Average pace: computes splits to make an average overall pace.\n - Normalized pace: computes splits for a pace normalized for grade, altitude, heat, and terrain.'"
-          />
         </b-input-group>
+        <form-tip v-if="showTips">
+          Required: pacing method for this plan; see Docs.
+        </form-tip>
         <b-input-group
           :prepend="targetLabel"
           class="mb-2"
@@ -59,52 +59,12 @@
             required
             @change="checkTargetFormat"
           />
-          <help-button :message="targetPopover" />
         </b-input-group>
-
-        <div v-if="!Boolean(course.eventStart)">
-          <b-form-group
-            v-if="customStart"
-            :class="(course.eventStart) ? 'mb-0 pl-3' : 'mb-0'"
-          >
-            <b-input-group
-              prepend="Event Date"
-              class="mb-2"
-              size="sm"
-            >
-              <b-form-input
-                v-model="eventDate"
-                type="date"
-                :required="Boolean(eventDate) || hF.enabled"
-              />
-            </b-input-group>
-            <b-input-group
-              prepend="Start Time"
-              class="mb-2"
-              size="sm"
-            >
-              <b-form-input
-                v-model="eventTime"
-                type="time"
-                :required="Boolean(eventDate) || hF.enabled"
-              />
-            </b-input-group>
-            <b-input-group
-              prepend="Timezone"
-              class="mb-2"
-              size="sm"
-            >
-              <b-form-select
-                v-model="model.eventTimezone"
-                :options="timezones"
-                :required="Boolean(eventTime) || hF.enabled"
-              />
-            </b-input-group>
-          </b-form-group>
-        </div>
-
+        <form-tip v-if="showTips">
+          Required: {{ targetPopover }}
+        </form-tip>
         <b-input-group
-          prepend="Aid station delay"
+          prepend="Aid Station Delay"
           class="mb-2"
           size="sm"
         >
@@ -119,69 +79,132 @@
             size="sm"
             required
           />
-          <help-button
-            message="Aid station delay: time spent at each aid station."
-          />
         </b-input-group>
-        <b-input-group
-          prepend="Pace drift [%]"
-          class="mb-2"
-          size="sm"
+        <form-tip v-if="showTips">
+          Optional: aid station delay or time spent at each aid station. Also
+          applies to water sources.
+        </form-tip>
+        <b-form-group
+          v-if="Boolean(course.eventStart)"
+          :class="customStart ? 'mb-0' : 'mb-2'"
         >
-          <b-form-input
-            v-model="model.drift"
-            type="text"
+          <b-form-radio
+            v-model="customStart"
             size="sm"
-            required
-          />
-          <help-button
-            message="Pace drift: linear decrease in speed throughout race. For example, 10% means you begin the race 10% faster than you finish."
-          />
-        </b-input-group>
+            :value="false"
+            @input="customStartDefaults"
+          >
+            Use course start (<b>{{ course.eventStart | datetime(course.eventTimezone) }}</b>), or
+          </b-form-radio>
+          <b-form-radio
+            v-model="customStart"
+            size="sm"
+            :value="true"
+            @input="customStartDefaults"
+          >
+            Use custom start<span v-if="customStart">, defined below:</span>
+          </b-form-radio>
+          <form-tip v-if="showTips">
+            Optional: specify a different date/time for this Plan.
+          </form-tip>
+        </b-form-group>
+        <form-date-time
+          v-if="customStart || !Boolean(course.eventStart)"
+          v-model="moment"
+          :class="(Boolean(course.eventStart)) ? 'pl-3' : ''"
+          :show-tips="showTips"
+        >
+          <template #date-tip>
+            Optional: start date of your activity; many pacing factors will only be applied if a date and time are specified.
+          </template>
+        </form-date-time>
         <b-form-checkbox
-          v-model="hF.enabled"
-          v-b-popover.hover.bottomright.d250.v-info="{
-            customClass: isMobile ? 'd-none' : '',
-            content: 'Heat factor: pace modifier for heat and sun exposure.'
-          }"
+          v-model="enableDrift"
           :value="true"
           size="sm"
           class="mb-2"
           :unchecked-value="false"
         >
-          Apply heat factor
+          Apply pace drift
         </b-form-checkbox>
+        <form-tip v-if="showTips && !enableDrift">
+          Optional: enable to add a linear change in speed throughout the race.
+        </form-tip>
         <b-form-group
-          v-if="hF.enabled"
-          class="mb-0"
-          style="padding-left: 1em"
+          v-if="enableDrift"
+          class="mb-0 pl-3"
         >
           <b-input-group
-            prepend="Baseline [%]"
+            prepend="Pace drift"
+            append="%"
             class="mb-2"
             size="sm"
           >
             <b-form-input
-              v-model="hF.baseline"
-              class="mb-n2"
-            />
-            <help-button
-              message="Baseline heat factor: pace modifier for heat; baseline factor is consistent throughout the whole event."
+              v-model="model.drift"
+              type="text"
+              size="sm"
+              required
             />
           </b-input-group>
-          <b-input-group
-            prepend="Maximum [%]"
-            class="mb-2"
+          <form-tip v-if="showTips">
+            Optional: linear change in speed throughout race. For
+            example, 10% means you begin the race 10% faster than you finish.
+            Negative value for negative split.
+          </form-tip>
+        </b-form-group>
+        <b-form-group
+          v-if="Boolean(course.eventStart) || (moment !== null && Number(moment.format('YYYY') > 1970))"
+          class="mb-0"
+        >
+          <b-form-checkbox
+            v-model="hF.enabled"
+            :value="true"
             size="sm"
+            class="mb-2"
+            :unchecked-value="false"
           >
-            <b-form-input
-              v-model="hF.max"
-              class="mb-n2"
-            />
-            <help-button
-              message="Maximum heat factor: pace modifier for heat; maximum heat factor at the hottest part of the day, increasing from baseline 30 minutes after sunrise and returning to baseline 2 hours after sunset."
-            />
-          </b-input-group>
+            Apply heat factor
+          </b-form-checkbox>
+          <form-tip v-if="showTips">
+            Optional: pace modifier for heat and sun exposure. Requires date
+            and time to be specified.
+          </form-tip>
+          <b-form-group
+            v-if="hF.enabled"
+            class="mb-0 pl-3"
+          >
+            <b-input-group
+              prepend="Baseline"
+              append="%"
+              class="mb-2"
+              size="sm"
+            >
+              <b-form-input
+                v-model="hF.baseline"
+                class="mb-n2"
+              />
+            </b-input-group>
+            <form-tip v-if="showTips">
+              Optional: pace modifier for heat; baseline factor is consistent
+              throughout the whole event. See Docs.
+            </form-tip>
+            <b-input-group
+              prepend="Maximum"
+              append="%"
+              class="mb-2"
+              size="sm"
+            >
+              <b-form-input
+                v-model="hF.max"
+                class="mb-n2"
+              />
+            </b-input-group>
+            <form-tip v-if="showTips">
+              Optional: pace modifier for heat; maximum heat factor in addition
+              to Baseline above. See Docs.
+            </form-tip>
+          </b-form-group>
         </b-form-group>
         <b-input-group
           prepend="Notes"
@@ -194,81 +217,36 @@
             size="sm"
           />
         </b-input-group>
-
-        <div v-if="Boolean(course.eventStart)">
-          <b-form-radio
-            v-if="Boolean(course.eventStart)"
-            v-model="customStart"
-            size="sm"
-            class="mb-0"
-            :value="false"
-            @change="customStartDefaults"
-          >
-            Use course start (<b>{{ course.eventStart | datetime(course.eventTimezone) }}</b>), or
-          </b-form-radio>
-          <b-form-radio
-            v-if="Boolean(course.eventStart)"
-            v-model="customStart"
-            size="sm"
-            class="mb-0"
-            :value="true"
-            @change="customStartDefaults"
-          >
-            Use custom start<span v-if="customStart">, defined below:</span>
-          </b-form-radio>
-          <b-form-group
-            v-if="customStart"
-            :class="(course.eventStart) ? 'mb-0 pl-3' : 'mb-0'"
-          >
-            <b-input-group
-              prepend="Event Date"
-              class="mb-2"
-              size="sm"
-            >
-              <b-form-input
-                v-model="eventDate"
-                type="date"
-                :required="Boolean(eventDate) || hF.enabled"
-              />
-            </b-input-group>
-            <b-input-group
-              prepend="Start Time"
-              class="mb-2"
-              size="sm"
-            >
-              <b-form-input
-                v-model="eventTime"
-                type="time"
-                :required="Boolean(eventDate) || hF.enabled"
-              />
-            </b-input-group>
-            <b-input-group
-              prepend="Timezone"
-              class="mb-2"
-              size="sm"
-            >
-              <b-form-select
-                v-model="model.eventTimezone"
-                :options="timezones"
-                :required="Boolean(eventTime) || hF.enabled"
-              />
-            </b-input-group>
-          </b-form-group>
-        </div>
+        <form-tip v-if="showTips">
+          Optional: any miscellaneous notes for this Plan.
+        </form-tip>
       </form>
       <template #modal-footer="{ ok, cancel }">
         <div
-          v-if="model._id"
           style="text-align: left; flex: auto"
         >
           <b-button
             size="sm"
-            variant="danger"
-            @click="remove"
+            variant="warning"
+            @click="$refs.help.show()"
           >
-            Delete
+            Docs
+          </b-button>
+          <b-button
+            size="sm"
+            variant="warning"
+            @click="toggleTips()"
+          >
+            Tips
           </b-button>
         </div>
+        <b-button
+          v-if="model._id"
+          variant="danger"
+          @click="remove"
+        >
+          Delete
+        </b-button>
         <b-button
           variant="secondary"
           @click="cancel()"
@@ -282,6 +260,15 @@
           {{ $auth.isAuthenticated() ? 'Save' : 'Generate' }} Plan
         </b-button>
       </template>
+    </b-modal>
+    <b-modal
+      ref="help"
+      :title="`Plan ${model._id ? 'Edit' : 'Create'} Help`"
+      size="lg"
+      scrollable
+      ok-only
+    >
+      <help-doc class="documentation" />
     </b-modal>
     <b-toast
       ref="toast-new-plan"
@@ -300,10 +287,14 @@
 import api from '@/api'
 import moment from 'moment-timezone'
 import { sec2string, string2sec } from '../util/time'
-import HelpButton from './HelpButton'
+import FormDateTime from './FormDateTime'
+import FormTip from './FormTip'
+import HelpDoc from '@/docs/plan.md'
 export default {
   components: {
-    HelpButton
+    FormDateTime,
+    FormTip,
+    HelpDoc
   },
   filters: {
     datetime: function (val, tz) {
@@ -322,17 +313,15 @@ export default {
       defaults: {
         pacingMethod: 'time',
         waypointDelay: 60,
-        drift: 0,
-        startTime: null,
-        heatModel: null,
-        eventStart: null,
-        eventTimezone: moment.tz.guess()
+        drift: null,
+        heatModel: null
       },
       model: {},
+      moment: null,
       pacingMethods: [
-        { value: 'time', text: 'Elapsed time' },
-        { value: 'pace', text: 'Average pace' },
-        { value: 'np', text: 'Normalized pace' }
+        { value: 'time', text: 'Elapsed Time' },
+        { value: 'pace', text: 'Average Pace' },
+        { value: 'np', text: 'Normalized Pace' }
       ],
       hF: {
         enabled: false,
@@ -340,16 +329,13 @@ export default {
         max: ''
       },
       customStart: false,
-      eventDate: null,
-      eventTime: null,
+      enableDrift: false,
+      showTips: false,
       timezones: moment.tz.names(),
       newPlanToastMsg: ''
     }
   },
   computed: {
-    isMobile: function () {
-      return screen.width < 992
-    },
     targetLabel: function () {
       let str = ''
       const pacingMethod = this.pacingMethods.find(
@@ -394,13 +380,17 @@ export default {
     'course.eventStart': function (v) {
       // because course.eventStart isn't always ready at form show
       this.customStart = !v
+    },
+    enableDrift: function (val) {
+      if (!val) this.model.drift = null
     }
   },
   methods: {
     async show (plan) {
+      this.showTips = false
+      this.moment = null
       if (typeof (plan) !== 'undefined') {
         this.model = Object.assign({}, plan)
-        if (!this.model.eventTimezone) { this.model.eventTimezone = moment.tz.guess() }
       } else {
         this.model = Object.assign({}, this.defaults)
       }
@@ -422,15 +412,13 @@ export default {
         this.model.waypointDelay,
         'mm:ss'
       )
+      const tz = this.model.eventTimezone || this.course.eventTimezone || moment.tz.guess()
       if (this.model.eventStart) {
-        const m = moment(this.model.eventStart).tz(this.model.eventTimezone)
-        this.eventDate = m.format('YYYY-MM-DD')
-        this.eventTime = m.format('kk:mm')
+        this.moment = moment(this.model.eventStart).tz(tz)
         this.customStart = true
       } else {
-        this.eventDate = null
-        this.eventTime = null
-        this.customStart = !this.course.eventStart
+        this.moment = moment(0).tz(tz)
+        this.customStart = false
       }
       if (this.model.heatModel !== null) {
         this.hF.max = this.model.heatModel.max
@@ -439,6 +427,7 @@ export default {
       } else {
         this.hF.enabled = false
       }
+      this.enableDrift = Boolean(this.model.drift)
       this.$refs.modal.show()
     },
     handleOk (bvModalEvt) {
@@ -457,10 +446,16 @@ export default {
       ) {
         this.model.pacingTarget = this.$units.distf(this.model.pacingTarget)
       }
-      if (this.customStart && this.eventTime && this.eventDate) {
-        this.model.eventStart = moment.tz(`${this.eventDate} ${this.eventTime}`, this.model.eventTimezone).toDate()
+      if (this.customStart || !this.course.eventStart) {
+        this.model.eventTimezone = this.moment.tz()
+        if (Number(this.moment.format('YYYY') > 1970)) {
+          this.model.eventStart = this.moment.toDate()
+        } else {
+          this.model.eventStart = null
+        }
       } else {
         this.model.eventStart = null
+        this.model.eventTimezone = null
       }
       if (this.hF.enabled) {
         this.model.heatModel = {
@@ -564,17 +559,12 @@ export default {
       return v
     },
     customStartDefaults: function (val) {
-      if (val && Boolean(this.course.eventStart)) {
-        const m = moment(this.course.eventStart).tz(this.course.eventTimezone)
-        this.eventDate = m.format('YYYY-MM-DD')
-        this.eventTime = m.format('kk:mm')
-        this.model.eventTimezone = this.course.eventTimezone
-      } else {
-        this.eventDate = null
-        this.eventTime = null
-        this.model.eventStart = null
-        this.model.eventTimezone = moment.tz.guess()
-      }
+      const dt = this.course.eventStart || 0
+      const tz = this.course.eventTimezone || moment.tz.guess()
+      this.moment = moment(dt).tz(tz)
+    },
+    toggleTips () {
+      this.showTips = !this.showTips
     }
   }
 }

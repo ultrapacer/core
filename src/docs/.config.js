@@ -2,14 +2,19 @@
 module.exports = {
   docs: [
     {
-      file:"course_create.md",
+      file:"course.md",
       name:"Create/Modify Courses",
       path:'courses'
     },
     {
-      file:"waypoint_create.md",
+      file:"waypoint.md",
       name:"Create/Modify Waypoints",
       path:'waypoints'
+    },
+    {
+      file:"plan.md",
+      name:"Create/Modify Plans",
+      path:'plans'
     },
     {
       file:"race_add.md",

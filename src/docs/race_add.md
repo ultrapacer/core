@@ -5,4 +5,5 @@ following criteria:
 3. Terrain factors are consistent with the guidance in the [About the models
 section](/docs/models)
 
-Then just contact me and let me know, and I'll add it.
+Then just contact me and let me know, and I'll add it. Reach out if you need
+help.

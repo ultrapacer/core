@@ -115,11 +115,3 @@ export default {
   }
 }
 </script>
-
-<style>
-.documentation img  {
-  max-width: 100%;
-  max-height: 300px;
-  object-fit:scale-down;
-}
-</style>

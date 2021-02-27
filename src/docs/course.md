@@ -10,7 +10,7 @@ in.
 Go to your courses list using the **"My Courses"** link in the top menu.
 
 ##### Create a course
-Click on the green **"New Course"** button at the bottom of the page.
+Click on the green **"New Course"** button at the top of the page.
 
 #### New/Modify Course Menu
 
