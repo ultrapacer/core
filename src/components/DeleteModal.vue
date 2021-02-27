@@ -4,6 +4,9 @@
       ref="modal"
       centered
       :static="true"
+      hide-header-close
+      :no-close-on-esc="this.$status.processing"
+      :no-close-on-backdrop="this.$status.processing"
       @hidden="clear"
       @cancel="clear"
       @ok="handleOk"

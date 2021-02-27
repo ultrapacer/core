@@ -5,6 +5,9 @@
       centered
       :static="true"
       :title="(model._id ? 'Edit' : 'New') + ' Waypoint'"
+      hide-header-close
+      :no-close-on-esc="this.$status.processing"
+      :no-close-on-backdrop="this.$status.processing"
       @hidden="clear"
       @cancel="clear"
       @ok="handleOk"

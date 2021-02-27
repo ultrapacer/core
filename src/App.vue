@@ -136,6 +136,15 @@ export default {
       } else {
         this.spinner.hide()
       }
+    },
+    '$status.processing': function (val) {
+      if (val) {
+        window.onbeforeunload = function () {
+          return true
+        }
+      } else {
+        window.onbeforeunload = null
+      }
     }
   },
   async created () {
