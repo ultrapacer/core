@@ -430,8 +430,8 @@ export default {
         await api.createCourse(this.model)
         this.$ga.event('Course', 'create')
       }
+      this.$status.processing = false
       this.$emit('refresh', () => {
-        this.$status.processing = false
         this.clear()
         this.$refs.modal.hide()
       })

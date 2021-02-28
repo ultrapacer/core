@@ -680,7 +680,10 @@ export default {
       this.$refs.courseEdit.show(this.course)
     },
     async reloadCourse () {
-      location.reload()
+      this.$status.processing = false
+      this.$nextTick(() => {
+        location.reload()
+      })
     },
     async deleteCourse (course, cb) {
       this.$refs.delModal.show(
