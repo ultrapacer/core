@@ -540,7 +540,7 @@ export default {
         const time = this.rollup(item, 'time', 'sum')
         const len = this.rollup(item, 'len', 'sum')
         const pace = time / len
-        const dTime = Math.abs(time * (1 - 1 / f) / this.$units.distScale)
+        const dTime = Math.abs(time * (1 - 1 / f))
         const dPace = Math.abs(pace * (1 - 1 / f) / this.$units.distScale)
         const paceStr = `[${sign}${timeUtil.sec2string(dPace, '[h]:m:ss')}/${this.$units.dist}] `
         str = `${sign}${timeUtil.sec2string(dTime, '[h]:m:ss')} ${paceStr}[${str}]`
