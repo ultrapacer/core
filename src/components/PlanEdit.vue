@@ -260,7 +260,7 @@
           variant="primary"
           @click="ok()"
         >
-          {{ $auth.isAuthenticated() ? 'Save' : 'Generate' }} Plan
+          {{ $auth.isAuthenticated() ? 'Save' : 'Go' }}
         </b-button>
       </template>
     </b-modal>
