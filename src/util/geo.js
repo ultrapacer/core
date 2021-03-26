@@ -427,30 +427,44 @@ export function reduce (points, distance = null) {
     addLoc(points, distance)
   }
 
-  const len = points[points.length - 1].loc
-  const numpoints = Math.floor(len / spacing) + 1
-  const xs = Array(numpoints).fill(0).map((e, i) => round(i++ * spacing, 3))
-  if (xs[xs.length - 1] < len) {
-    xs.push(len)
-  }
-  const adj = pointWLSQ(
-    points,
-    xs,
-    2 * spacing
-  )
-  const llas = getLatLonAltFromDistance(points, xs, 0)
-
-  // reformat
-  return xs.map((x, i) => {
-    return {
-      loc: x,
-      dloc: (i > 0) ? x - xs[i - 1] : 0,
-      lat: round(llas[i].lat, 6),
-      lon: round(llas[i].lon, 6),
-      alt: round(adj[i].alt, 2),
-      grade: round(adj[i].grade, 4)
+  // only reformat if it cuts the size down in half
+  if (points[points.length - 1].loc / spacing < points.length / 2) {
+    const len = points[points.length - 1].loc
+    const numpoints = Math.floor(len / spacing) + 1
+    const xs = Array(numpoints).fill(0).map((e, i) => round(i++ * spacing, 3))
+    if (xs[xs.length - 1] < len) {
+      xs.push(len)
     }
-  })
+    const adj = pointWLSQ(
+      points,
+      xs,
+      2 * spacing
+    )
+    const llas = getLatLonAltFromDistance(points, xs, 0)
+
+    // reformat
+    const points2 = xs.map((x, i) => {
+      return {
+        loc: x,
+        dloc: (i > 0) ? x - xs[i - 1] : 0,
+        lat: round(llas[i].lat, 6),
+        lon: round(llas[i].lon, 6),
+        alt: round(adj[i].alt, 2),
+        grade: round(adj[i].grade, 4)
+      }
+    })
+
+    logger(`geo.reduce: Reduced from ${points.length} to ${points2.length} points`)
+    return points2
+  } else {
+    const points2 = points.map((p, i) => {
+      const p2 = { ...p }
+      p2.grade = i > 0 ? (p.alt - points[i - 1].alt) / p.dloc / 10 : 0
+      return p2
+    })
+    logger(`geo.reduce: Maintained ${points.length} points`)
+    return points2
+  }
 }
 
 export function calcPacing (data) {
@@ -824,6 +838,28 @@ export async function addActuals (points, actual) {
   }
 }
 
+export function arraysToObjects (arr) {
+  if (!arr.length) return []
+  if (arr[0].length === 3) {
+    return arr.map(p => {
+      return { lat: p[0], lon: p[1], alt: p[2] }
+    })
+  } else if (arr[0].length === 5) {
+    return arr.map((p, i) => {
+      return {
+        loc: p[0],
+        dloc: (i > 0) ? p[0] - arr[i - 1][0] : 0,
+        lat: p[1],
+        lon: p[2],
+        alt: p[3],
+        grade: p[4]
+      }
+    })
+  } else {
+    return []
+  }
+}
+
 export default {
   addLoc: addLoc,
   addGrades: addGrades,
@@ -835,5 +871,6 @@ export default {
   reduce: reduce,
   calcPacing: calcPacing,
   calcSplits: calcSplits,
-  addActuals: addActuals
+  addActuals: addActuals,
+  arraysToObjects: arraysToObjects
 }

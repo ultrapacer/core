@@ -65,6 +65,10 @@ const CourseSchema = new Schema({
   }],
   points: [],
   raw: [],
+  reduced: {
+    type: Boolean,
+    default: true
+  },
   source: {},
   altModel: {},
   waypoints: [{

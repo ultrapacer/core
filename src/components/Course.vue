@@ -336,7 +336,6 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
-import { round } from '../util/math'
 import { string2sec } from '../util/time'
 import wputil from '../util/waypoints'
 import CourseEdit from './CourseEdit'
@@ -628,39 +627,9 @@ export default {
         'points'
       )
       t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
-      if (pnts[0].lat) {
-        this.points = geo.reduce(pnts)
-        if (this.owner) {
-          const update = {
-            raw: pnts.map(x => {
-              return [x.lat, x.lon, x.alt]
-            }),
-            points: this.points.map(x => {
-              return [
-                x.loc,
-                round(x.lat, 6),
-                round(x.lon, 6),
-                round(x.alt, 2),
-                round(x.grade, 4)
-              ]
-            })
-          }
-          await api.updateCourse(this.course._id, update)
-          this.$logger('Course|getPoints: uploading reformatted points)')
-        }
-        t = this.$logger(`Course|getPoints: reduced to (${this.points.length} points)`, t)
-      } else {
-        this.points = pnts.map((x, i) => {
-          return {
-            loc: x[0],
-            dloc: (i > 0) ? x[0] - pnts[i - 1][0] : 0,
-            lat: x[1],
-            lon: x[2],
-            alt: x[3],
-            grade: x[4]
-          }
-        })
-      }
+      this.points = geo.arraysToObjects(pnts)
+      geo.addLoc(this.points, this.course.distance)
+      geo.addGrades(this.points)
       const stats = geo.calcStats(this.points, false)
       this.scales = {
         gain: this.course.gain / stats.gain,

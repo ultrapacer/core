@@ -16,14 +16,16 @@ courseRoutes.route('/').post(async function (req, res) {
     await course.save()
 
     // create start and finish waypoints:
+    const arr = course.reduced ? course.raw : course.points
+    const s = arr[0].length === 3 ? 0 : 1
     const ws = new Waypoint({
       name: 'Start',
       type: 'start',
       location: 0,
       _course: course._id,
-      lat: course.raw[0][0],
-      lon: course.raw[0][1],
-      elevation: course.raw[0][2]
+      lat: arr[0][0 + s],
+      lon: arr[0][1 + s],
+      elevation: arr[0][2 + s]
     })
     await ws.save()
     const wf = new Waypoint({
@@ -31,9 +33,9 @@ courseRoutes.route('/').post(async function (req, res) {
       type: 'finish',
       location: course.distance,
       _course: course._id,
-      lat: course.raw[course.raw.length - 1][0],
-      lon: course.raw[course.raw.length - 1][1],
-      elevation: course.raw[course.raw.length - 1][2]
+      lat: arr[arr.length - 1][0 + s],
+      lon: arr[arr.length - 1][1 + s],
+      elevation: arr[arr.length - 1][2 + s]
     })
     await wf.save()
 
@@ -79,7 +81,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
     if (course._user.auth0ID === req.user.sub) {
       const fields = ['name', 'link', 'description', 'public', 'eventStart', 'eventTimezone', 'override']
       if (req.body.points) {
-        fields.push('points', 'raw', 'source', 'distance', 'gain', 'loss')
+        fields.push('points', 'reduced', 'raw', 'source', 'distance', 'gain', 'loss')
       }
       if (course._user.admin) {
         fields.push('_user') // allow only admins to change a user

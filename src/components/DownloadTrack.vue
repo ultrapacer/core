@@ -14,7 +14,7 @@
         <b-button-group vertical>
           <download-track-button
             type="GPX"
-            resolution="Original"
+            :resolution="course.reduced ? 'Original' : ''"
             :ready="ready.gpx"
             :spinner="working.gpx"
             :url="urls.gpx"
@@ -24,7 +24,7 @@
           />
           <download-track-button
             type="TCX"
-            resolution="Original"
+            :resolution="course.reduced ? 'Original' : ''"
             :ready="ready.tcx"
             :spinner="working.tcx"
             :url="urls.tcx"
@@ -33,6 +33,7 @@
             @generate="generate('tcx','orig','tcx')"
           />
           <download-track-button
+            v-if="course.reduced"
             type="GPX"
             resolution="Low"
             :ready="ready.gpx2"
@@ -43,6 +44,7 @@
             @generate="generate('gpx','low','gpx2')"
           />
           <download-track-button
+            v-if="course.reduced"
             type="TCX"
             resolution="Low"
             :ready="ready.tcx2"
@@ -160,37 +162,40 @@ export default {
       let pnts = []
       if (resolution === 'orig') {
         // ORIGINAL RESOLUTION
-        if (!this.raw.length) { // download raw data:
-          this.raw = await api.getCourseField(this.course._id, 'raw')
-        }
-        pnts = this.raw.map(x => {
-          return { lat: x[0], lon: x[1], alt: x[2] }
-        })
-        pnts = geo.addLoc(pnts, this.course.distance)
-        if (this.hasTime) { // interpolate times from distances in pnts
-          const red = this.points.map(p => { return { ...p } })
-          let lastelapsed = 0
-          pnts.forEach(p => {
-            while (red.length > 1 && red[1].loc <= p.loc) {
-              red.shift()
-            }
-            if (p.loc === red[0].loc || red.length === 1) {
-              p.elapsed = red[0].elapsed
-            } else if (p.loc > red[0].loc && p.loc < red[1].loc) {
-              p.elapsed = interp(
-                red[0].loc,
-                red[1].loc,
-                red[0].elapsed,
-                red[1].elapsed,
-                p.loc
-              )
-            }
-            p.elapsed = round(p.elapsed, 3)
-            p.delapsed = p.elapsed - lastelapsed
-            lastelapsed = p.elapsed
-          })
-          // remove any points with zero change in time:
-          pnts = pnts.filter((p, i) => i === 0 || p.delapsed > 0)
+        if (this.course.reduced) {
+          if (!this.raw.length) { // download raw data:
+            this.raw = await api.getCourseField(this.course._id, 'raw')
+          }
+          pnts = geo.arraysToObjects(this.raw)
+          pnts = geo.addLoc(pnts, this.course.distance)
+          if (this.hasTime) { // interpolate times from distances in pnts
+            const red = this.points.map(p => { return { ...p } })
+            let lastelapsed = 0
+            pnts.forEach(p => {
+              while (red.length > 1 && red[1].loc <= p.loc) {
+                red.shift()
+              }
+              if (p.loc === red[0].loc || red.length === 1) {
+                p.elapsed = red[0].elapsed
+              } else if (p.loc > red[0].loc && p.loc < red[1].loc) {
+                p.elapsed = interp(
+                  red[0].loc,
+                  red[1].loc,
+                  red[0].elapsed,
+                  red[1].elapsed,
+                  p.loc
+                )
+              }
+              p.elapsed = round(p.elapsed, 3)
+              p.delapsed = p.elapsed - lastelapsed
+              lastelapsed = p.elapsed
+            })
+            // remove any points with zero change in time:
+            pnts = pnts.filter((p, i) => i === 0 || p.delapsed > 0)
+          }
+        } else {
+          pnts = this.points.map(p => { return { ...p } })
+          pnts = geo.addLoc(pnts, this.course.distance)
         }
       } else {
         // LOW RESOLUTION (adjust odd points lat/lon to correct distance)
@@ -225,7 +230,8 @@ export default {
         pnts = geo.addLoc(pnts, this.course.distance)
       }
 
-      let name = `uP-${this.course.name}${(this.plan ? ('-' + this.plan.name) : '')}-${resolution}`
+      let name = `uP-${this.course.name}${(this.plan.name ? ('-' + this.plan.name) : '')}${(this.course.reduced ? ('-' + resolution) : '')}`
+
       name = name.replace(/ /g, '_')
       this.filenames[target] = `${name}.${type}`
       const fn = (type === 'gpx') ? this.writeGPXText : this.writeTCXText

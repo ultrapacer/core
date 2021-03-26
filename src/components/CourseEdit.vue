@@ -307,7 +307,7 @@ export default {
         this.model.override = { ...course.override }
         this.updateDistanceUnit(this.model.override.distUnit)
         this.updateElevUnit(this.model.override.elevUnit)
-        this.courseLoaded = this.reloadRaw()
+        this.courseLoaded = this.reloadPoints(course.reduced ? 'raw' : 'points')
       } else {
         this.moment = moment(0).tz(moment.tz.guess())
         this.model = Object.assign({}, this.defaults)
@@ -321,11 +321,9 @@ export default {
         this.save()
       }
     },
-    async reloadRaw () {
-      const raw = await api.getCourseField(this.model._id, 'raw')
-      this.gpxPoints = raw.map(p => {
-        return { lat: p[0], lon: p[1], alt: p[2] }
-      })
+    async reloadPoints (field) {
+      const arr = await api.getCourseField(this.model._id, field)
+      this.gpxPoints = geo.arraysToObjects(arr)
       geo.addLoc(this.gpxPoints)
       this.stats = geo.calcStats(this.gpxPoints, true)
       this.courseLoaded = true
@@ -337,21 +335,29 @@ export default {
       if (this.gpxPoints.length) {
         const points = this.gpxPoints
 
-        const reduced = geo.reduce(points, this.model.distance)
-        // reformat points for upload
-        this.model.points = reduced.map(x => {
-          return [
-            x.loc,
-            round(x.lat, 6),
-            round(x.lon, 6),
-            round(x.alt, 2),
-            round(x.grade, 4)
-          ]
-        })
+        const points2 = geo.reduce(points, this.model.distance)
 
-        this.model.raw = points.map(x => {
-          return [x.lat, x.lon, x.alt]
-        })
+        // reformat points for upload
+        this.model.reduced = points2.length !== points.length
+        if (this.model.reduced) {
+          this.model.points = points2.map(x => {
+            return [
+              x.loc,
+              round(x.lat, 6),
+              round(x.lon, 6),
+              round(x.alt, 2),
+              round(x.grade, 4)
+            ]
+          })
+          this.model.raw = points.map(x => {
+            return [x.lat, x.lon, x.alt]
+          })
+        } else {
+          this.model.points = points.map(x => {
+            return [x.lat, x.lon, x.alt]
+          })
+          this.model.raw = null
+        }
 
         if (this.model._id) {
           // update all waypoints to fit updated course:
@@ -377,12 +383,12 @@ export default {
                     // iteration threshold th:
                     const th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
                     // resolve closest distance for waypoint LLA
-                    wp.location = wputil.nearestLoc(wp, reduced, th)
+                    wp.location = wputil.nearestLoc(wp, points2, th)
                   } catch (err) {
                     console.log(err)
                   }
                 }
-                wputil.updateLLA(wp, reduced)
+                wputil.updateLLA(wp, points2)
               }
               await api.updateWaypoint(wp._id, wp)
               this.$logger(`CourseEdit|save|adjustWaypoint: ${wp.name}`, t)
@@ -409,14 +415,12 @@ export default {
           'eventTimezone',
           'points',
           'raw',
+          'reduced',
           'source',
           'distance',
           'gain',
           'loss',
-          'override',
-          'distance',
-          'gain',
-          'loss'
+          'override'
         ]
         fields.forEach(f => {
           if (this.model[f] !== undefined) {
