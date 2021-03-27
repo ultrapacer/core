@@ -377,7 +377,11 @@ export default {
               }
               // if there is a new source file, try to find nearest location:
               if (this.model.source) {
-                if (wp.type !== 'start' && wp.type !== 'finish') {
+                if (wp.type === 'start') {
+                  wp.elevation = points[0].alt
+                } else if (wp.type === 'finish') {
+                  wp.elevation = points[points.length - 1].alt
+                } else {
                   try {
                     const wpdelta = Math.abs(wpold - wp.location)
                     // iteration threshold th:
