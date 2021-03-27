@@ -456,7 +456,6 @@ export default {
       })
     },
     async loadGPX (f) {
-      this.$status.processing = true
       const t = this.$logger()
       this.$nextTick(async () => {
         const reader = new FileReader()
@@ -502,7 +501,10 @@ export default {
             }
           })
         }
-        reader.readAsText(f.target.files[0])
+        if (f.target.files.length) {
+          this.$status.processing = true
+          reader.readAsText(f.target.files[0])
+        }
       })
     },
     setDistGainLoss: async function (val = false) {
