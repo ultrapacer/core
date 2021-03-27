@@ -38,6 +38,7 @@ function calcSegments (p, breaks, pacing) {
   // p: points array of {loc, lat, lon, alt}
   // breaks: array of [loc,loc,...] to break on
   // pacing: pacing object with np and drift fields
+  p = p.filter((x, i) => i === 0 || x.dloc > 0)
   const cLen = p[p.length - 1].loc
   const s = [] // segments array
   const alts = getElevation(p, breaks)
@@ -73,7 +74,6 @@ function calcSegments (p, breaks, pacing) {
   let j = 0
   let j0 = 0
   let delta0 = 0
-  let grade = 0
   let delays = (pacing) ? [...pacing.delays] : []
   function getDelay (a, b) {
     if (!delays.length) { return 0 }
@@ -118,8 +118,7 @@ function calcSegments (p, breaks, pacing) {
       (delta0 < 0) ? s[j0].loss += delta0 : s[j0].gain += delta0
     }
     if (pacing && typeof (pacing.np) !== 'undefined') {
-      grade = (p[i - 1].grade + p[i].grade) / 2
-      factors.gF = nF.gradeFactor(grade)
+      factors.gF = nF.gradeFactor((p[i].alt - p[i - 1].alt) / p[i].dloc / 10)
       if (j > j0) {
         if (j0 >= 0) {
           len = s[j].start - p[i - 1].loc
@@ -573,7 +572,7 @@ function iteratePaceCalc (data) {
     max: { gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0 },
     min: { gF: 100, aF: 100, tF: 100, hF: 100, dark: 100, dF: 100 }
   }
-  const p = data.points
+  const p = data.points.filter((x, i) => i === 0 || x.dloc > 0)
   const hasTOD = (p[0].tod !== undefined)
   let fs = {}
   let elapsed = 0
@@ -604,7 +603,7 @@ function iteratePaceCalc (data) {
   for (let j = 1, jl = p.length; j < jl; j++) {
     // determine pacing factor for point
     fs = {
-      gF: nF.gF((p[j - 1].grade + p[j].grade) / 2),
+      gF: nF.gF((p[j].alt - p[j - 1].alt) / p[j].dloc / 10),
       aF: nF.aF([p[j - 1].alt, p[j].alt], data.course.altModel),
       tF: nF.tF([p[j - 1].loc, p[j].loc], data.terrainFactors),
       hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], data.heatModel) : 1,
@@ -618,15 +617,14 @@ function iteratePaceCalc (data) {
     if (hasTOD) {
       fs.dark = nF.dark([p[j - 1].tod, p[j].tod], fs.tF, data.event.sun)
     }
-    const len = p[j].loc - p[j - 1].loc
     let f = 1 // combined segment factor
     Object.keys(fs).forEach(k => {
-      factors[k] += fs[k] * len
+      factors[k] += fs[k] * p[j].dloc
       f = f * fs[k]
       fstats.max[k] = Math.max(fstats.max[k], fs[k])
       fstats.min[k] = Math.min(fstats.min[k], fs[k])
     })
-    tot += f * len
+    tot += f * p[j].dloc
     if (hasPacingData) {
       p[j].dtime = data.pacing.np * f * p[j].dloc
       delay = getDelay(p[j - 1].loc, p[j].loc)
