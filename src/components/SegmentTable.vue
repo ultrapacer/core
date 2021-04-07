@@ -313,7 +313,7 @@ export default {
           key: 'elapsed',
           label: 'Elapsed',
           formatter: (value, key, item) => {
-            return timeUtil.sec2string(this.rollup(item, key, 'sum'), '[h]:m:ss')
+            return timeUtil.sec2string(this.rollup(item, key, 'last'), '[h]:m:ss')
           }
         })
         if (this.showActual) {
@@ -321,7 +321,7 @@ export default {
             key: 'actualElapsed',
             label: 'Actual',
             formatter: (value, key, item) => {
-              return timeUtil.sec2string(this.rollup(item, key, 'sum'), '[h]:m:ss')
+              return timeUtil.sec2string(this.rollup(item, key, 'last'), '[h]:m:ss')
             }
           })
         }
