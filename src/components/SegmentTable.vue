@@ -322,7 +322,8 @@ export default {
             label: 'Actual',
             formatter: (value, key, item) => {
               return timeUtil.sec2string(this.rollup(item, key, 'last'), '[h]:m:ss')
-            }
+            },
+            variant: 'success'
           })
         }
         if (this.showClock) {

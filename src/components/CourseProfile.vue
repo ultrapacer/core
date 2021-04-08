@@ -192,9 +192,9 @@ export default {
           data: this.comparePoints,
           pointRadius: 0,
           pointHoverRadius: 0,
-          borderColor: 'rgb(40, 167, 69)',
+          borderColor: 'rgb(94, 131, 81)',
           borderWidth: 1,
-          backgroundColor: this.transparentize('rgb(40, 167, 69)', 0.65),
+          backgroundColor: this.transparentize('rgb(94, 131, 81)', 0.7),
           showLine: true,
           yAxisID: 'y-axis-3'
         }
