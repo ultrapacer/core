@@ -222,7 +222,7 @@ export default {
         this.basic = Number(v) || 0
         this.advanced = [{
           onset: 0,
-          value: 0,
+          value: this.basic,
           type: 'linear'
         }]
       } else {
