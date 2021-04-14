@@ -5,6 +5,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const SitemapPlugin = require('sitemap-webpack-plugin').default
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 const BoostrapVueLoader = require('bootstrap-vue-loader')
 const autoprefixer = require('autoprefixer')
 const prettydata = require('pretty-data')
@@ -174,6 +175,11 @@ module.exports = (env, argv) => {
         }
       })
     )
+    if (argv.analyzer === 'on') {
+      config.plugins.push(
+        new BundleAnalyzerPlugin()
+      )
+    }
 
     config.plugins.push(
       new CleanWebpackPlugin()

@@ -236,6 +236,7 @@
               :plan="plan"
               :pacing="pacing"
               :busy="busy"
+              :visible="tableTabIndex===3"
             />
           </b-tab>
         </b-tabs>

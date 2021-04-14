@@ -133,29 +133,13 @@
         <form-tip v-if="showTips && !enableDrift">
           Optional: enable to add a linear change in speed throughout the race.
         </form-tip>
-        <b-form-group
+        <form-drift
           v-if="enableDrift"
+          v-model="model.drift"
           class="mb-0 pl-3"
-        >
-          <b-input-group
-            prepend="Pace drift"
-            append="%"
-            class="mb-2"
-            size="sm"
-          >
-            <b-form-input
-              v-model="model.drift"
-              type="text"
-              size="sm"
-              required
-            />
-          </b-input-group>
-          <form-tip v-if="showTips">
-            Optional: linear change in speed throughout race. For
-            example, 10% means you begin the race 10% faster than you finish.
-            Negative value for negative split.
-          </form-tip>
-        </b-form-group>
+          :show-tips="showTips"
+          :course-distance="course.distance"
+        />
         <b-form-group
           v-if="Boolean(course.eventStart) || (moment !== null && Number(moment.format('YYYY') > 1970))"
           class="mb-0"
@@ -291,11 +275,13 @@ import api from '@/api'
 import moment from 'moment-timezone'
 import { sec2string, string2sec } from '../util/time'
 import FormDateTime from './FormDateTime'
+import FormDrift from './FormDrift'
 import FormTip from './FormTip'
 import HelpDoc from '@/docs/plan.md'
 export default {
   components: {
     FormDateTime,
+    FormDrift,
     FormTip,
     HelpDoc
   },
@@ -502,6 +488,7 @@ export default {
       })
     },
     clear () {
+      this.enableDrift = false
       this.model = Object.assign({}, this.defaults)
     },
     checkTargetFormat (val) {

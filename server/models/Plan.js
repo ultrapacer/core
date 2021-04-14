@@ -24,7 +24,7 @@ const PlanSchema = new Schema({
     type: Number
   },
   drift: {
-    type: Number,
+    type: {},
     default: 0
   },
   startTime: {

@@ -1,5 +1,6 @@
 // normFactor.js
 const mathUtil = require('./math')
+const { driftFactor } = require('./driftFactor')
 
 const defaults = {
   alt: {
@@ -64,25 +65,6 @@ function altFactor (alt, model) {
   } else {
     const r = model.rate / model.span / 100
     return (1 + r) ** (a - model.th)
-  }
-}
-
-function driftFactor (loc, drift, length) {
-  // returns a linear drift factor
-  // loc: point or array [start, end] [km]
-  // drift: in %
-  // length: total course length [km]
-  if (drift) {
-    let mid = 0
-    if (Array.isArray(loc)) {
-      mid = (loc[0] + loc[1]) / 2
-    } else {
-      mid = loc
-    }
-    const dF = ((-drift / 2) + (mid / length * drift)) / 100
-    return dF + 1
-  } else {
-    return 1
   }
 }
 

@@ -247,7 +247,21 @@
       <h5 class="mb-1">
         Pace Drift
       </h5>
-      <b-row>
+      <b-row
+        v-if="visible"
+        style="height:100px"
+      >
+        <b-container style="max-width: 400px">
+          <drift-chart
+            ref="chart"
+            :drift="plan.drift"
+            :course-distance="course.distance"
+          />
+        </b-container>
+      </b-row>
+      <b-row
+        v-if="!Array.isArray(plan.drift)"
+      >
         <b-col
           cols="4"
           sm="3"
@@ -529,9 +543,13 @@
 import api from '@/api'
 import moment from 'moment-timezone'
 import { sec2string } from '../util/time'
-import { aF, gF } from '../util/normFactor'
+import { aF, dF, gF } from '../util/normFactor'
 import { round } from '../util/math'
+import DriftChart from './DriftChart.vue'
 export default {
+  components: {
+    DriftChart
+  },
   filters: {
     commas (val) {
       return val.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -577,6 +595,10 @@ export default {
     busy: {
       type: Boolean,
       default: false
+    },
+    visible: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
@@ -612,10 +634,10 @@ export default {
       }
     },
     startPace: function () {
-      return this.pacing.np * (1 - this.plan.drift / 200)
+      return this.pacing.np * dF(0, this.plan.drift, this.course.distance)
     },
     endPace: function () {
-      return this.pacing.np * (1 + this.plan.drift / 200)
+      return this.pacing.np * dF(this.course.distance, this.plan.drift, this.course.distance)
     },
     maxAltitude: function () {
       const m = Math.max.apply(

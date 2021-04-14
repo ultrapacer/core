@@ -49,9 +49,20 @@ date/time.
 ##### Pace Drift
 Enable and apply a linear change in speed throughout race. This is pacing
 strategy, going out faster expecting to slow throughout, or starting
-conservatively and negative splitting. A value of 10% would mean you begin the
+conservatively and negative splitting. Or maybe a "smell the barn" kick at the
+end.
+
+###### Basic (Linear) Drift
+A value of 10% would mean you begin the
 race 10% faster than you finish. Negative value for negative split.\
 ![ultraPacer Drift Model](./img/driftModel.png)
+
+###### Advanced Pace Drift
+By enabling the "advanced" model, you can add incremental changes through your
+race. For the example 50-mile race below, holding the pace steady for the first
+20 miles, then fatiguing 5% over the next 25 miles, then a finishing kick for
+the last 5 miles:\
+![ultraPacer Drift Model](./img/driftModelAdvanced.png)
 
 ##### Heat Factor
 Enable and apply the heat model to your pacing plan.\

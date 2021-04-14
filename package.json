@@ -8,7 +8,8 @@
     "dev": "webpack-dev-server --mode development --hot --config build/webpack.config.js",
     "lint": "eslint --ext .js,.vue,.md server.js src server config build",
     "lintfix": "eslint --ext .js,.vue,.md --fix server.js src server config build",
-    "build": "webpack --mode production --config build/webpack.config.js"
+    "build": "webpack --mode production --config build/webpack.config.js",
+    "analyzer": "webpack --mode production --analyzer on --config build/webpack.config.js"
   },
   "dependencies": {
     "@google-cloud/secret-manager": "^3.4.0",
