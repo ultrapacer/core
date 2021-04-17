@@ -145,7 +145,7 @@
           class="mb-0"
         >
           <b-form-checkbox
-            v-model="hF.enabled"
+            v-model="enableHeat"
             :value="true"
             size="sm"
             class="mb-2"
@@ -153,45 +153,17 @@
           >
             Apply heat factor
           </b-form-checkbox>
-          <form-tip v-if="showTips">
+          <form-tip v-if="showTips && !enableHeat">
             Optional: pace modifier for heat and sun exposure. Requires date
             and time to be specified.
           </form-tip>
-          <b-form-group
-            v-if="hF.enabled"
+          <form-heat
+            v-if="enableHeat"
+            v-model="model.heatModel"
             class="mb-0 pl-3"
-          >
-            <b-input-group
-              prepend="Baseline"
-              append="%"
-              class="mb-2"
-              size="sm"
-            >
-              <b-form-input
-                v-model="hF.baseline"
-                class="mb-n2"
-              />
-            </b-input-group>
-            <form-tip v-if="showTips">
-              Optional: pace modifier for heat; baseline factor is consistent
-              throughout the whole event. See Docs.
-            </form-tip>
-            <b-input-group
-              prepend="Maximum"
-              append="%"
-              class="mb-2"
-              size="sm"
-            >
-              <b-form-input
-                v-model="hF.max"
-                class="mb-n2"
-              />
-            </b-input-group>
-            <form-tip v-if="showTips">
-              Optional: pace modifier for heat; maximum heat factor in addition
-              to Baseline above. See Docs.
-            </form-tip>
-          </b-form-group>
+            :show-tips="showTips"
+            :sun="event.sun"
+          />
         </b-form-group>
         <b-input-group
           prepend="Notes"
@@ -276,12 +248,14 @@ import moment from 'moment-timezone'
 import { sec2string, string2sec } from '../util/time'
 import FormDateTime from './FormDateTime'
 import FormDrift from './FormDrift'
+import FormHeat from './FormHeat'
 import FormTip from './FormTip'
 import HelpDoc from '@/docs/plan.md'
 export default {
   components: {
     FormDateTime,
     FormDrift,
+    FormHeat,
     FormTip,
     HelpDoc
   },
@@ -295,6 +269,10 @@ export default {
     course: {
       type: Object,
       required: true
+    },
+    event: {
+      type: Object,
+      default: () => { return {} }
     }
   },
   data () {
@@ -312,13 +290,9 @@ export default {
         { value: 'pace', text: 'Average Pace' },
         { value: 'np', text: 'Normalized Pace' }
       ],
-      hF: {
-        enabled: false,
-        baseline: '',
-        max: ''
-      },
       customStart: false,
       enableDrift: false,
+      enableHeat: true,
       showTips: false,
       timezones: moment.tz.names(),
       newPlanToastMsg: ''
@@ -409,13 +383,7 @@ export default {
         this.moment = moment(0).tz(tz)
         this.customStart = false
       }
-      if (this.model.heatModel !== null) {
-        this.hF.max = this.model.heatModel.max
-        this.hF.baseline = this.model.heatModel.baseline || 0
-        this.hF.enabled = true
-      } else {
-        this.hF.enabled = false
-      }
+      this.enableHeat = Boolean(this.model.heatModel !== null && this.event.sun)
       this.enableDrift = Boolean(this.model.drift)
       this.$refs.modal.show()
     },
@@ -445,14 +413,6 @@ export default {
       } else {
         this.model.eventStart = null
         this.model.eventTimezone = null
-      }
-      if (this.hF.enabled) {
-        this.model.heatModel = {
-          max: this.hF.max,
-          baseline: this.hF.baseline
-        }
-      } else {
-        this.model.heatModel = null
       }
       this.model.waypointDelay = string2sec(this.model.waypointDelayF)
       let p = {}

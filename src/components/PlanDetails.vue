@@ -253,7 +253,6 @@
       >
         <b-container style="max-width: 400px">
           <drift-chart
-            ref="chart"
             :drift="plan.drift"
             :course-distance="course.distance"
           />
@@ -408,6 +407,18 @@
       <h5 class="mb-1">
         Heat Effects
       </h5>
+      <b-row
+        v-if="visible"
+        style="height:100px"
+      >
+        <b-container style="max-width: 400px">
+          <heat-chart
+            :heat-model="plan.heatModel"
+            :sun="event.sun"
+            :kilometers="kilometers"
+          />
+        </b-container>
+      </b-row>
       <b-row>
         <b-col
           cols="1"
@@ -546,9 +557,11 @@ import { sec2string } from '../util/time'
 import { aF, dF, gF } from '../util/normFactor'
 import { round } from '../util/math'
 import DriftChart from './DriftChart.vue'
+import HeatChart from './HeatChart.vue'
 export default {
   components: {
-    DriftChart
+    DriftChart,
+    HeatChart
   },
   filters: {
     commas (val) {
@@ -591,6 +604,10 @@ export default {
     event: {
       type: Object,
       required: true
+    },
+    kilometers: {
+      type: Array,
+      default: () => { return null }
     },
     busy: {
       type: Boolean,

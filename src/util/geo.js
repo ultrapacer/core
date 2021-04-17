@@ -572,7 +572,7 @@ function iteratePaceCalc (data) {
     max: { gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0 },
     min: { gF: 100, aF: 100, tF: 100, hF: 100, dark: 100, dF: 100 }
   }
-  const p = data.points.filter((x, i) => i === 0 || x.dloc > 0)
+  const p = data.points
   const hasTOD = (p[0].tod !== undefined)
   let fs = {}
   let elapsed = 0
@@ -603,7 +603,7 @@ function iteratePaceCalc (data) {
   for (let j = 1, jl = p.length; j < jl; j++) {
     // determine pacing factor for point
     fs = {
-      gF: nF.gF((p[j].alt - p[j - 1].alt) / p[j].dloc / 10),
+      gF: p[j].dloc ? nF.gF((p[j].alt - p[j - 1].alt) / p[j].dloc / 10) : 1,
       aF: nF.aF([p[j - 1].alt, p[j].alt], data.course.altModel),
       tF: nF.tF([p[j - 1].loc, p[j].loc], data.terrainFactors),
       hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], data.heatModel) : 1,

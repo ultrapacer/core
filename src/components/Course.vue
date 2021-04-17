@@ -232,6 +232,7 @@
             <plan-details
               :course="course"
               :points="points"
+              :kilometers="kilometers"
               :event="event"
               :plan="plan"
               :pacing="pacing"

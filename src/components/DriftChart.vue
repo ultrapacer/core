@@ -26,9 +26,12 @@ export default {
       required: true
     }
   },
-  data () {
-    return {
-      chartOptions: {
+  computed: {
+    stepSize: function () {
+      return Number(this.$units.distf(this.courseDistance)) > 10 ? 5 : 1
+    },
+    chartOptions: function () {
+      const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
@@ -36,21 +39,31 @@ export default {
             type: 'linear',
             position: 'bottom',
             ticks: {
-              stepSize: 5,
-              callback: function (value, index, values) {
-                if (value % 5 === 0) {
+              stepSize: this.stepSize,
+              callback: (value, index, values) => {
+                if (index === values.length - 1) {
+                  return this.$units.dist
+                } else if (
+                  value % this.stepSize === 0 &&
+                  values[values.length - 1] - value > 0.8 * this.stepSize
+                ) {
                   return value
                 } else {
                   return ''
                 }
               },
-              max: this.$units.distf(this.courseDistance) + 0.01
+              max: Number(this.$units.distf(this.courseDistance))
             }
           }],
           yAxes: [{
             display: true,
             position: 'left',
-            id: 'y-axis-1'
+            id: 'y-axis-1',
+            ticks: {
+              callback: function (value, index, values) {
+                return value + '%'
+              }
+            }
           }]
         },
         tooltips: {
@@ -60,14 +73,13 @@ export default {
           display: false
         }
       }
-    }
-  },
-  computed: {
+      return chartOptions
+    },
     chartData: function () {
       const d = [{ x: 0, y: 0 }]
       if (!Array.isArray(this.drift)) {
         d[0].y = -this.drift / 2
-        d.push({ x: this.$units.distf(this.courseDistance), y: this.drift / 2 })
+        d.push({ x: Number(this.$units.distf(this.courseDistance)), y: this.drift / 2 })
       } else if (this.drift) {
         let arr = []
         arr = this.drift.map(v => { return { ...v } })
@@ -81,7 +93,7 @@ export default {
           }
           last += i.value
         })
-        d.push({ x: this.$units.distf(this.courseDistance), y: last })
+        d.push({ x: Number(this.$units.distf(this.courseDistance)), y: last })
       }
       return {
         datasets: [

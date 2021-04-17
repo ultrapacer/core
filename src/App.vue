@@ -299,7 +299,7 @@ export default {
 .form-tip {
   margin-top: -0.4rem;
   color: #5e8351;
-  font-size: 80%;
+  font-size: 0.8rem;
 }
 .documentation img  {
   max-width: 100%;
