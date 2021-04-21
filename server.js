@@ -9,7 +9,6 @@ const courseRoutes = require('./server/routes/courseRoutes')
 const waypointRoutes = require('./server/routes/waypointRoutes')
 const planRoutes = require('./server/routes/planRoutes')
 const publicRoutes = require('./server/routes/publicRoutes')
-const strava = require('./server/routes/strava')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
 const geoTz = require('geo-tz')
@@ -30,6 +29,8 @@ try {
   Object.keys(keys).forEach(k => {
     keys[k] = keys[k].replace(/'/g, '')
   })
+  // store keys in env:
+  keynames.forEach(k => { process.env[k] = keys[k] })
   startUp()
 } catch (err) {
   const { SecretManagerServiceClient } = require('@google-cloud/secret-manager')
@@ -42,13 +43,14 @@ try {
     keynames.forEach((n, i) => {
       keys[n] = res[i][0].payload.data.toString()
     })
+    // store keys in env:
+    keynames.forEach(k => { process.env[k] = keys[k] })
     startUp()
   })
 }
-// store keys in env:
-keynames.forEach(k => { process.env[k] = keys[k] })
 
 function startUp () {
+  const strava = require('./server/routes/strava')
   // connect to the database:
   mongoose.Promise = global.Promise
   mongoose.connect(keys.MONGODB).then(
