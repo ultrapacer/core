@@ -9,12 +9,21 @@ const courseRoutes = require('./server/routes/courseRoutes')
 const waypointRoutes = require('./server/routes/waypointRoutes')
 const planRoutes = require('./server/routes/planRoutes')
 const publicRoutes = require('./server/routes/publicRoutes')
+const strava = require('./server/routes/strava')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
 const geoTz = require('geo-tz')
 
 // load keys from either ./config/keys.js file or from google cloud secrets:
 let keys = {}
+const keynames = [
+  'MONGODB',
+  'AUTH0_DOMAIN',
+  'AUTH0_AUDIENCE',
+  'STRAVA_CLIENT_ID',
+  'STRAVA_CLIENT_SECRET',
+  'STRAVA_REFRESH_TOKEN'
+]
 try {
   keys = require('./config/keys')
   // hack to get rid of double+single quote format in keys.js file
@@ -25,18 +34,19 @@ try {
 } catch (err) {
   const { SecretManagerServiceClient } = require('@google-cloud/secret-manager')
   const client = new SecretManagerServiceClient()
-  const names = ['MONGODB', 'AUTH0_DOMAIN', 'AUTH0_AUDIENCE']
-  Promise.all(names.map(n => {
+  Promise.all(keynames.map(n => {
     return client.accessSecretVersion({
       name: `projects/409830855103/secrets/${n}/versions/1`
     })
   })).then(res => {
-    names.forEach((n, i) => {
+    keynames.forEach((n, i) => {
       keys[n] = res[i][0].payload.data.toString()
     })
     startUp()
   })
 }
+// store keys in env:
+keynames.forEach(k => { process.env[k] = keys[k] })
 
 function startUp () {
   // connect to the database:
@@ -71,6 +81,7 @@ function startUp () {
   app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes)
   app.use('/api/waypoint', checkJwt, waypointRoutes)
   app.use('/api/plan', checkJwt, planRoutes)
+  app.use('/api/strava', strava)
 
   // unauthenticated api routes:
   app.use('/api-public', publicRoutes)

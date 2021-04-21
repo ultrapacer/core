@@ -16,28 +16,38 @@
         style="min-height: 100px"
         @submit.prevent=""
       >
-        <b-input-group
-          prepend="File"
-          class="mb-2"
-          size="sm"
+        <form-selectable-label
+          v-model="source.type"
+          :options="sourceOptions"
+          @input="sourceChange"
         >
           <b-form-file
+            v-if="source.type==='gpx'"
             v-model="gpxFile"
             size="sm"
-            :placeholder="(model.source) ? model.source.name : 'Choose a GPX file...'"
+            :placeholder="(source) ? source.name : 'Choose a GPX file...'"
             accept=".gpx"
             no-drop
             :required="!Boolean(model.source)"
             :state="!Boolean(gpxFileInvalidMsg)"
-            @change="loadGPX"
+            @change="loadFile"
           />
           <b-form-invalid-feedback :state="!Boolean(gpxFileInvalidMsg)">
             {{ gpxFileInvalidMsg }}
           </b-form-invalid-feedback>
-        </b-input-group>
-        <form-tip v-if="showTips">
-          Required: ".gpx" format file exported from a GPS track or route builder.
-        </form-tip>
+          <form-tip v-if="source.type==='gpx' && showTips">
+            Required: ".gpx" format file exported from a GPS track or route builder.
+          </form-tip>
+          <form-course-strava
+            v-if="source.type==='strava-route'"
+            v-model="source"
+            :show-tips="showTips"
+            class="mb-0"
+            @loadGPX="loadGPX"
+            @change="courseLoaded=false"
+          />
+        </form-selectable-label>
+
         <div v-if="courseLoaded === true || model._id">
           <b-input-group
             prepend="Name"
@@ -247,7 +257,9 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
+import FormCourseStrava from './FormCourseStrava'
 import FormDateTime from './FormDateTime'
+import FormSelectableLabel from './FormSelectableLabel'
 import FormTip from './FormTip'
 import HelpDoc from '@/docs/course.md'
 import moment from 'moment-timezone'
@@ -257,7 +269,9 @@ const gpxParse = require('gpx-parse')
 export default {
   components: {
     HelpDoc,
+    FormCourseStrava,
     FormDateTime,
+    FormSelectableLabel,
     FormTip
   },
   data () {
@@ -268,6 +282,9 @@ export default {
           enabled: false,
           distUnit: 'mi',
           elevUnit: 'ft'
+        },
+        source: {
+          type: 'gpx'
         }
       },
       distUnits: [
@@ -288,12 +305,26 @@ export default {
       stats: null,
       distancef: null,
       gainf: null,
-      lossf: null
+      lossf: null,
+      source: {
+        type: 'gpx'
+      },
+      sourceOptions: [
+        { value: 'gpx', text: 'GPX File' },
+        { value: 'strava-route', text: 'Strava Route' }
+      ],
+      newPointsFlag: false // to track whether we need to upload new points
+    }
+  },
+  watch: {
+    'model.public': function (v) {
+      if (!v) { this.model.link = null }
     }
   },
   methods: {
     async show (course, raw = null) {
       this.courseLoaded = false
+      this.newPointsFlag = false
       this.showTips = false
       this.moment = null
       if (course._id) {
@@ -305,6 +336,7 @@ export default {
           this.moment = moment(0).tz(tz)
         }
         this.model.override = { ...course.override }
+        this.source = { ...course.source }
         this.updateDistanceUnit(this.model.override.distUnit)
         this.updateElevUnit(this.model.override.elevUnit)
         this.courseLoaded = this.reloadPoints(course.reduced ? 'raw' : 'points')
@@ -332,10 +364,13 @@ export default {
     async save () {
       if (this.$status.processing) { return }
       this.$status.processing = true
-      if (this.gpxPoints.length) {
-        const points = this.gpxPoints
 
-        const points2 = geo.reduce(points, this.model.distance)
+      // if we have new points data, format and update:
+      let points = []
+      let points2 = []
+      if (this.newPointsFlag && this.gpxPoints.length) {
+        points = this.gpxPoints
+        points2 = geo.reduce(points, this.model.distance)
 
         // reformat points for upload
         this.model.reduced = points2.length !== points.length
@@ -358,46 +393,46 @@ export default {
           })
           this.model.raw = null
         }
+      }
 
-        if (this.model._id) {
-          // update all waypoints to fit updated course:
-          const waypoints = await api.getWaypoints(this.model._id)
-          const finish = waypoints.find(wp => wp.type === 'finish')
-          const olddist = finish.location
-          if (round(finish.location, 4) !== round(this.model.distance, 4)) {
-            console.log('Scaling waypoints')
-            await Promise.all(waypoints.map(async wp => {
-              const t = this.$logger()
-              const wpold = wp.location
-              // scale waypoint location for new course distance:
-              if (wp.type === 'finish') {
-                wp.location = this.model.distance
-              } else if (wp.type !== 'start') {
-                wp.location = wp.location * this.model.distance / olddist
-              }
-              // if there is a new source file, try to find nearest location:
-              if (this.model.source) {
-                if (wp.type === 'start') {
-                  wp.elevation = points[0].alt
-                } else if (wp.type === 'finish') {
-                  wp.elevation = points[points.length - 1].alt
-                } else {
-                  try {
-                    const wpdelta = Math.abs(wpold - wp.location)
-                    // iteration threshold th:
-                    const th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
-                    // resolve closest distance for waypoint LLA
-                    wp.location = wputil.nearestLoc(wp, points2, th)
-                  } catch (err) {
-                    console.log(err)
-                  }
+      if (this.model._id) {
+        // update all waypoints to fit updated course:
+        const waypoints = await api.getWaypoints(this.model._id)
+        const finish = waypoints.find(wp => wp.type === 'finish')
+        const olddist = finish.location
+        if (round(finish.location, 4) !== round(this.model.distance, 4)) {
+          console.log('Scaling waypoints')
+          await Promise.all(waypoints.map(async wp => {
+            const t = this.$logger()
+            const wpold = wp.location
+            // scale waypoint location for new course distance:
+            if (wp.type === 'finish') {
+              wp.location = this.model.distance
+            } else if (wp.type !== 'start') {
+              wp.location = wp.location * this.model.distance / olddist
+            }
+            // if there is a new source file, try to find nearest location:
+            if (this.newPointsFlag) {
+              if (wp.type === 'start') {
+                wp.elevation = points[0].alt
+              } else if (wp.type === 'finish') {
+                wp.elevation = points[points.length - 1].alt
+              } else {
+                try {
+                  const wpdelta = Math.abs(wpold - wp.location)
+                  // iteration threshold th:
+                  const th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
+                  // resolve closest distance for waypoint LLA
+                  wp.location = wputil.nearestLoc(wp, points2, th)
+                } catch (err) {
+                  console.log(err)
                 }
-                wputil.updateLLA(wp, points2)
               }
-              await api.updateWaypoint(wp._id, wp)
-              this.$logger(`CourseEdit|save|adjustWaypoint: ${wp.name}`, t)
-            }))
-          }
+              wputil.updateLLA(wp, points2)
+            }
+            await api.updateWaypoint(wp._id, wp)
+            this.$logger(`CourseEdit|save|adjustWaypoint: ${wp.name}`, t)
+          }))
         }
       }
 
@@ -417,21 +452,21 @@ export default {
           'public',
           'eventStart',
           'eventTimezone',
-          'points',
-          'raw',
-          'reduced',
-          'source',
           'distance',
           'gain',
           'loss',
           'override'
         ]
+
+        // only include new points info if we have a new course source:
+        if (this.newPointsFlag) {
+          fields.push('source', 'raw', 'reduced', 'points')
+        }
         fields.forEach(f => {
           if (this.model[f] !== undefined) {
             updateModel[f] = this.model[f]
           }
         })
-        if (!updateModel.public) { updateModel.link = null }
         await api.updateCourse(this.model._id, updateModel)
         this.$ga.event('Course', 'edit')
       } else {
@@ -455,55 +490,66 @@ export default {
         }
       })
     },
-    async loadGPX (f) {
+    async loadFile (f) {
       const t = this.$logger()
       this.$nextTick(async () => {
         const reader = new FileReader()
         reader.onload = e => {
-          gpxParse.parseGpx(e.target.result, async (error, data) => {
-            if (error) {
-              this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
-              this.$status.processing = false
-              throw error
-            } else {
-              this.$logger('CourseEdit|GPX parsed', t)
-              this.gpxPoints = data.tracks[0].segments[0].map(p => {
-                return {
-                  alt: p.elevation,
-                  lat: p.lat,
-                  lon: p.lon
-                }
-              })
-              if (this.gpxPoints.length < 100) {
-                this.gpxFileInvalidMsg = 'GPX file has too few points.'
-                this.$status.processing = false
-                return
-              }
-              geo.addLoc(this.gpxPoints)
-              this.stats = geo.calcStats(this.gpxPoints, true)
-              if (this.stats.gain === 0) {
-                this.gpxFileInvalidMsg = 'GPX file does not contain elevation data.'
-                this.$status.processing = false
-                return
-              }
-              this.gpxFileInvalidMsg = ''
-              this.model.gain = this.stats.gain
-              this.model.loss = this.stats.loss
-              this.model.distance = this.stats.dist
-              this.setDistGainLoss()
-              this.model.source = {
-                type: 'gpx',
-                name: this.gpxFile.name
-              }
-              await this.defaultTimezone(this.gpxPoints[0].lat, this.gpxPoints[0].lon)
-              this.courseLoaded = true
-              this.$status.processing = false
-            }
-          })
+          this.$logger('CourseEdit|GPX file read', t)
+          const source = {
+            type: 'gpx',
+            name: this.gpxFile.name.split('.')[0]
+          }
+          this.loadGPX(e.target.result, source)
         }
         if (f.target.files.length) {
           this.$status.processing = true
           reader.readAsText(f.target.files[0])
+        }
+      })
+    },
+    async loadGPX (f, source) {
+      const t = this.$logger()
+
+      gpxParse.parseGpx(f, async (error, data) => {
+        if (error) {
+          this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
+          this.$status.processing = false
+          throw error
+        } else {
+          this.$logger('CourseEdit|GPX parsed', t)
+          this.gpxPoints = data.tracks[0].segments[0].map(p => {
+            return {
+              alt: p.elevation,
+              lat: p.lat,
+              lon: p.lon
+            }
+          })
+          if (this.gpxPoints.length < 100) {
+            this.gpxFileInvalidMsg = 'GPX file has too few points.'
+            this.$status.processing = false
+            return
+          }
+          geo.addLoc(this.gpxPoints)
+          this.stats = geo.calcStats(this.gpxPoints, true)
+          if (this.stats.gain === 0) {
+            this.gpxFileInvalidMsg = 'GPX file does not contain elevation data.'
+            this.$status.processing = false
+            return
+          }
+          this.gpxFileInvalidMsg = ''
+          this.model.gain = this.stats.gain
+          this.model.loss = this.stats.loss
+          this.model.distance = this.stats.dist
+          this.setDistGainLoss()
+          this.model.source = { ...source }
+          if (!this.model.name) {
+            this.model.name = this.model.source.name
+          }
+          await this.defaultTimezone(this.gpxPoints[0].lat, this.gpxPoints[0].lon)
+          this.courseLoaded = true
+          this.newPointsFlag = true
+          this.$status.processing = false
         }
       })
     },
@@ -559,6 +605,12 @@ export default {
     },
     toggleTips () {
       this.showTips = !this.showTips
+    },
+    sourceChange (val) {
+      this.gpxFile = null
+      this.gpxPoints = []
+      this.courseLoaded = false
+      this.source = { type: val }
     }
   }
 }

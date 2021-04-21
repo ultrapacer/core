@@ -2,119 +2,104 @@
   <b-form-group
     class="mb-0"
   >
-    <div
-      role="group"
-      class="input-group mb-2 input-group-sm"
+    <form-selectable-label
+      v-model="driftModel"
+      :options="driftModels"
+      @input="update"
     >
-      <b-form-select
-        v-model="driftModel"
-        class="input-group-prepend input-group-text"
-        style="height:auto; width: auto; flex: inherit; background-color: rgb(233, 236, 239)"
-        type="number"
-        :options="driftModels"
+      <b-input-group
+        v-if="driftModel===1"
+        append="%"
+        class="mb-2"
         size="sm"
-        required
-        small
-        @change="update"
-      />
-      <div
-        class="form-control input-group-sm"
-        style="height: auto"
       >
-        <b-input-group
-          v-if="driftModel===1"
-          append="%"
-          class="mb-2"
+        <b-form-input
+          v-model="basic"
+          type="number"
           size="sm"
+          required
+          step="0.01"
+          @change="basic = Number(basic) || 0; update();"
+        />
+      </b-input-group>
+      <div>
+        <b-table
+          v-if="driftModel===2"
+          class="tinytable"
+          :items="advanced"
+          :fields="fields"
+          fixed
         >
-          <b-form-input
-            v-model="basic"
-            type="number"
-            size="sm"
-            required
-            step="0.01"
-            @change="basic = Number(basic) || 0; update();"
-          />
-        </b-input-group>
-        <div>
-          <b-table
-            v-if="driftModel===2"
-            class="tinytable"
-            :items="advanced"
-            :fields="fields"
-            fixed
-          >
-            <template #cell(onset)="row">
-              <b-form-input
-                v-model="row.item.onset"
-                type="number"
-                required
-                :min="onsetMin(row.index)"
-                :max="onsetMax(row.index)"
-                size="sm"
-                step="0.01"
-                @change="onsetChange(row.item.onset, row.index)"
-              />
-            </template>
-            <template #cell(value)="row">
-              <b-form-input
-                v-model="row.item.value"
-                type="number"
-                required
-                size="sm"
-                step="0.01"
-                @change="row.item.value = Number(row.item.value) || 0; update()"
-              />
-            </template>
-            <template #cell(type)="row">
-              <b-form-select
-                v-model="row.item.type"
-                class="form-control"
-                :options="types"
-                required
-                size="sm"
-                @change="update"
-              />
-            </template>
-            <template #cell(action)="row">
-              <div
-                class="ml-2"
-                style="text-align:left"
-              >
-                <b-button
-                  v-if="advanced.length > 1"
-                  size="sm"
-                  class="mr-1"
-                  @click="delRow(row.index)"
-                >
-                  <v-icon name="trash" />
-                </b-button>
-                <b-button
-                  v-if="advanced.length -1 === row.index"
-                  variant="success"
-                  size="sm"
-                  class="mr-1"
-                  @click="advanced.push({type: 'linear'})"
-                >
-                  <v-icon name="plus" />
-                </b-button>
-              </div>
-            </template>
-          </b-table>
-          <div
-            v-if="driftModel===2"
-            style="text-align: right"
-          />
-          <div style="height:100px; width: 100%">
-            <drift-chart
-              ref="chart"
-              :drift="value"
-              :course-distance="courseDistance"
+          <template #cell(onset)="row">
+            <b-form-input
+              v-model="row.item.onset"
+              type="number"
+              required
+              :min="onsetMin(row.index)"
+              :max="onsetMax(row.index)"
+              size="sm"
+              step="0.01"
+              @change="onsetChange(row.item.onset, row.index)"
             />
-          </div>
+          </template>
+          <template #cell(value)="row">
+            <b-form-input
+              v-model="row.item.value"
+              type="number"
+              required
+              size="sm"
+              step="0.01"
+              @change="row.item.value = Number(row.item.value) || 0; update()"
+            />
+          </template>
+          <template #cell(type)="row">
+            <b-form-select
+              v-model="row.item.type"
+              class="form-control"
+              :options="types"
+              required
+              size="sm"
+              @change="update"
+            />
+          </template>
+          <template #cell(action)="row">
+            <div
+              class="ml-2"
+              style="text-align:left"
+            >
+              <b-button
+                v-if="advanced.length > 1"
+                size="sm"
+                class="mr-1"
+                @click="delRow(row.index)"
+              >
+                <v-icon name="trash" />
+              </b-button>
+              <b-button
+                v-if="advanced.length -1 === row.index"
+                variant="success"
+                size="sm"
+                class="mr-1"
+                @click="advanced.push({type: 'linear'})"
+              >
+                <v-icon name="plus" />
+              </b-button>
+            </div>
+          </template>
+        </b-table>
+        <div
+          v-if="driftModel===2"
+          style="text-align: right"
+        />
+        <div style="height:100px; width: 100%">
+          <drift-chart
+            ref="chart"
+            :drift="value"
+            :course-distance="courseDistance"
+          />
         </div>
       </div>
-    </div>
+    </form-selectable-label>
     <form-tip v-if="showTips && driftModel===1">
       Optional: linear change in speed throughout race. For
       example, 10% means you begin the race 10% faster than you finish.
@@ -131,11 +116,13 @@
 
 <script>
 import DriftChart from './DriftChart.vue'
+import FormSelectableLabel from './FormSelectableLabel'
 import FormTip from './FormTip'
 import { adjust } from '../util/driftFactor.js'
 export default {
   components: {
     DriftChart,
+    FormSelectableLabel,
     FormTip
   },
   props: {

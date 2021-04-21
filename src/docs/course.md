@@ -14,13 +14,22 @@ Click on the green **"New Course"** button at the top of the page.
 
 #### New/Modify Course Menu
 
-##### Select a GPX file
+##### Select a source
+###### GPX File
 A .gpx file is a file containing latitude, longitude, and elevation points
 along the course. These can be downloaded from an actual track recorded, or from
 one of various route creation tools. *It is important that the .gpx file
 contains good elevation data.* The Strava Route Builder is a good tool with
 quailty elevation data, since Strava's elevation model is built from its user's
 actual altimeter data.
+
+###### Strava Route
+Source the route directly from the Strava Route builder.
+Just enter the ID number of the route or the full path,
+typically https:\/\/www.strava.com\/routes\/\[*id-number*\], and select "Load"
+to import the route into ultraPacer. Updates to the Strava route can later be
+carried over to ultraPacer with the Reload button. Note that the route must
+be set as "Public" in Strava.
 
 ##### Name & Description
 Type in a name (required) and description (optional).

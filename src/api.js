@@ -121,5 +121,13 @@ export default {
   },
   getTimeZone (lat, lon) {
     return this.execute('get', `/api/timezone?lat=${lat}&lon=${lon}`)
+  },
+  getStravaRoute (id) {
+    // return information for Strava route ID
+    return this.execute('get', `/api/strava/route/${id}`)
+  },
+  getStravaRouteGPX (id) {
+    // return gpx file for Strava route ID
+    return this.execute('get', `/api/strava/route/${id}/gpx`)
   }
 }
