@@ -112,7 +112,7 @@
                 step="0.01"
                 :min="round((stats ? stats.dist : model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 0.9, 2)"
                 :max="round((stats ? stats.dist : model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 1.1, 2)"
-                @change="updateDistance"
+                @input="updateDistance"
               />
               <b-form-select
                 v-model="model.override.distUnit"
@@ -136,7 +136,7 @@
                 step="0"
                 :min="round((stats ? stats.gain : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
                 :max="round((stats ? stats.gain : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
-                @change="updateGain"
+                @input="updateGain"
               />
               <b-form-select
                 v-model="model.override.elevUnit"
@@ -160,7 +160,7 @@
                 step="0"
                 :min="round(-(stats ? stats.loss : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
                 :max="round(-(stats ? stats.loss : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
-                @change="updateLoss"
+                @input="updateLoss"
               />
               <b-form-select
                 v-model="model.override.elevUnit"

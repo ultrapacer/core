@@ -79,10 +79,11 @@ courseRoutes.route('/:id').put(async function (req, res) {
   try {
     const course = await Course.findById(req.params.id).populate('_user').exec()
     if (course._user.auth0ID === req.user.sub) {
-      const fields = ['name', 'link', 'description', 'public', 'eventStart', 'eventTimezone', 'override']
-      if (req.body.points) {
-        fields.push('points', 'reduced', 'raw', 'source', 'distance', 'gain', 'loss')
-      }
+      const fields = [
+        'name', 'link', 'description', 'public', 'eventStart', 'eventTimezone',
+        'override', 'points', 'reduced', 'raw', 'source',
+        'distance', 'gain', 'loss'
+      ]
       if (course._user.admin) {
         fields.push('_user') // allow only admins to change a user
       }
