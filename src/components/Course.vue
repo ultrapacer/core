@@ -713,7 +713,7 @@ export default {
       this.updatingWaypointTimeout = setTimeout(() => {
         api.updateWaypoint(waypoint._id, waypoint)
       }, 2000)
-      this.$emit('setUpdateFlag')
+      this.setUpdateFlag()
     },
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
