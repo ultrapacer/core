@@ -191,38 +191,30 @@
               :editing="editing"
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"
-              :table-height="tableHeight - (owner ? 42 : 0)"
+              :table-height="tableHeight ? tableHeight - (owner ? 42 : 0) : 0"
               @updateWaypointLocation="updateWaypointLocation"
             />
-            <div
-              v-if="editing"
-              class="mt-1"
+            <b-row
+              v-if="owner"
+              class="m-1"
             >
+              <div style="flex: 1 1 auto">
+                <b-button
+                  v-if="editing"
+                  variant="success"
+                  @click.prevent="newWaypoint()"
+                >
+                  <v-icon name="plus" /><span>New Waypoint</span>
+                </b-button>
+              </div>
               <b-button
-                variant="success"
-                @click.prevent="newWaypoint()"
+                :variant="editing ? 'outline-primary' : 'secondary'"
+                @click.prevent="editing=!editing"
               >
-                <v-icon name="plus" /><span>New Waypoint</span>
+                <v-icon :name="editing ? 'edit' : 'lock'" />
+                <span>editing: {{ editing ? 'on' : 'off' }}</span>
               </b-button>
-              <b-button
-                variant="outline-primary"
-                style="float:right"
-                @click.prevent="editing=false"
-              >
-                <v-icon name="edit" /><span>editing: on</span>
-              </b-button>
-            </div>
-            <div
-              v-if="owner && !editing"
-              class="mt-1"
-            >
-              <b-button
-                style="float:right"
-                @click.prevent="editing=true"
-              >
-                <v-icon name="lock" /><span>editing: off</span>
-              </b-button>
-            </div>
+            </b-row>
           </b-tab>
           <b-tab
             v-if="pacing.factors"

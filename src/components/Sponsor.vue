@@ -84,6 +84,7 @@ export default {
       }
     },
     roomBelow: function () {
+      if (this.scrollTop && !this.scrolling) { return false }
       return this.$window.height - this.refBottom + (this.scrolling ? 0 : this.scrollTop) > 130
     },
     roomLeft: function () {
