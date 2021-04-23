@@ -342,7 +342,8 @@ export default {
         this.courseLoaded = this.reloadPoints(course.reduced ? 'raw' : 'points')
       } else {
         this.moment = moment(0).tz(moment.tz.guess())
-        this.model = Object.assign({}, this.defaults)
+        this.model = Object.assign({}, JSON.parse(JSON.stringify(this.defaults)))
+        this.source = { type: 'gpx' }
       }
       this.$refs.modal.show()
       this.$status.processing = false
@@ -538,10 +539,12 @@ export default {
             return
           }
           this.gpxFileInvalidMsg = ''
-          this.model.gain = this.stats.gain
-          this.model.loss = this.stats.loss
-          this.model.distance = this.stats.dist
-          this.setDistGainLoss()
+          if (!this.model.override || !this.model.override.enabled) {
+            this.model.gain = this.stats.gain
+            this.model.loss = this.stats.loss
+            this.model.distance = this.stats.dist
+            this.setDistGainLoss()
+          }
           this.model.source = { ...source }
           if (!this.model.name) {
             this.model.name = this.model.source.name

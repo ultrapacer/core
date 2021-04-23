@@ -11,10 +11,12 @@ router.route('/route/:id').get(async function (req, res) {
     res.status(data.status).send('error')
   } else {
     const j = await data.json()
-    const d = {
-      name: j.name,
-      date: j.updated_at
-    }
+    const fields = [
+      'id', 'name', 'updated_at', 'description',
+      'distance', 'elevation_gain'
+    ]
+    const d = {}
+    fields.forEach(f => { d[f] = j[f] })
     res.send(d)
   }
 })

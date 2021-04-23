@@ -46,6 +46,35 @@
       </b-col>
       <b-col>{{ stravaRouteDate }}</b-col>
     </b-row>
+    <b-row v-if="stravaRouteDistance">
+      <b-col
+        cols="4"
+        sm="3"
+        lg="3"
+        class="text-right pr-0"
+      >
+        Distance:
+      </b-col>
+      <b-col>{{ stravaRouteDistance }} {{ this.$units.dist }}</b-col>
+    </b-row>
+    <b-row v-if="stravaRouteId">
+      <b-col
+        cols="4"
+        sm="3"
+        lg="3"
+        class="text-right pr-0"
+      >
+        Link:
+      </b-col>
+      <b-col>
+        <b-link
+          :href="`https://strava.com/routes/${stravaRouteId}`"
+          target="_blank"
+        >
+          View on Strava
+        </b-link>
+      </b-col>
+    </b-row>
     <b-form-invalid-feedback :state="stravaRouteInvalid===false">
       Unable to load from Strava; please check that ID is correct.
     </b-form-invalid-feedback>
@@ -74,6 +103,7 @@ export default {
       stravaRouteId: null,
       stravaRouteName: null,
       stravaRouteDate: null,
+      stravaRouteDistance: null,
       stravaRouteInvalid: false
     }
   },
@@ -103,12 +133,16 @@ export default {
           api.getStravaRouteGPX(id)
         ])
         this.stravaRouteName = route.name
-        this.stravaRouteDate = route.date
+        this.stravaRouteDate = route.updated_at
+
+        this.stravaRouteDistance = this.$units.distf(route.distance / 1000, 2)
         this.$emit('loadGPX', gpx, this.mysource)
       } catch (err) {
         console.log(err)
         this.stravaRouteName = null
         this.stravaRouteDate = null
+
+        this.stravaRouteDistance = null
         this.stravaRouteInvalid = true
         this.$status.processing = false
       }
