@@ -306,8 +306,23 @@ export default {
   max-height: 300px;
   object-fit:scale-down;
 }
-.table-sm td, .table-sm th {
+.table-xs td, .table-xs th {
   font-size: 0.8rem;
   line-height: 1.1rem;
+}
+.coursetitlecolumn {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 150px;
+  @media (min-width: 576px) {
+    max-width: 200px;
+  }
+  @media (min-width: 768px) {
+    max-width: 350px;
+  }
+  @media (min-width: 992px) {
+    max-width: 400px
+  }
 }
 </style>

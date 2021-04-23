@@ -4,6 +4,7 @@
     :fields="fields"
     primary-key="_id"
     hover
+    small
     @row-clicked="goToRace"
   >
     <template #head(distance)>
@@ -67,6 +68,7 @@ export default {
           }
         },
         {
+          class: 'coursetitlecolumn',
           key: 'name',
           label: 'Name',
           sortable: true

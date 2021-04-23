@@ -31,6 +31,7 @@
           :fields="fields"
           primary-key="_id"
           hover
+          small
           @row-clicked="goToCourse"
         >
           <template #head(distance)>
@@ -128,6 +129,7 @@ export default {
       courseEditor: false,
       fields: [
         {
+          class: 'coursetitlecolumn',
           key: 'name',
           label: 'Name',
           sortable: true

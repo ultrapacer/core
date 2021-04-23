@@ -12,7 +12,7 @@
     small
     head-variant="light"
     no-border-collapse
-    class="mb-0"
+    class="mb-0 table-xs"
     :sticky-header="tableHeight ? tableHeight + 'px' : false"
     @row-clicked="selectRow"
   >
