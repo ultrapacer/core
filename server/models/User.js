@@ -24,6 +24,10 @@ const UserSchema = new Schema({
     type: Object,
     default: null
   },
+  membership: {
+    type: Object,
+    default: null
+  },
   _courses: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course'

@@ -24,7 +24,7 @@ userRoutes.route('/').get(async function (req, res) {
 userRoutes.route('/:id').put(async function (req, res) {
   try {
     const user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    const fields = ['distUnits', 'elevUnits', 'altModel', 'email']
+    const fields = ['distUnits', 'elevUnits', 'altModel', 'email', 'membership']
     fields.forEach((f) => {
       if (req.body[f] !== undefined) {
         user[f] = req.body[f]
