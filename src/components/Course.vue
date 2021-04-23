@@ -807,12 +807,17 @@ export default {
       const t = this.$logger()
       if (!this.planAssigned) { return }
       if (this.plan._id) {
-        this.$router.push({
-          name: 'Plan',
-          params: {
-            plan: this.plan._id
-          }
-        })
+        if (
+          this.$router.currentRoute.name !== 'Plan' ||
+          this.$router.currentRoute.params.plan !== this.plan._id
+        ) {
+          this.$router.push({
+            name: 'Plan',
+            params: {
+              plan: this.plan._id
+            }
+          })
+        }
         if (this.owner) {
           api.selectCoursePlan(this.course._id, { plan: this.plan._id })
         }
