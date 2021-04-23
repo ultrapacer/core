@@ -169,6 +169,7 @@
               :mode="'segments'"
               :show-actual="comparing"
               :table-height="tableHeight"
+              :visible="tableTabIndex===0"
               @select="updateFocus"
               @show="waypointShow"
               @hide="waypointHide"
@@ -185,6 +186,7 @@
               :mode="'splits'"
               :show-actual="comparing"
               :table-height="tableHeight"
+              :visible="tableTabIndex===1"
               @select="updateFocus"
             />
           </b-tab>
@@ -253,6 +255,7 @@
           :points="points"
           :sun-events="pacing.sunEventsByLoc"
           :show-actual="comparing"
+          :focus="focus"
           @waypointClick="waypointClick"
         />
         <course-map
@@ -261,7 +264,7 @@
           :course="course"
           :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
           :points="points"
-          :focus="mapFocus"
+          :focus="focus"
         />
       </b-col>
     </b-row>
@@ -387,7 +390,7 @@ export default {
       scales: {},
       waypoint: {},
       pacing: {},
-      mapFocus: [],
+      focus: [],
       tableTabIndex: 0,
       updateFlag: false,
       visibleWaypoints: [],
@@ -544,6 +547,7 @@ export default {
       }
     },
     tableTabIndex: function (val) {
+      this.focus = []
       // if editing and navigating away from waypoint table, recalc
       if (this.updateFlag && this.tableTabIndex !== 2) {
         this.updatePacing()
@@ -962,10 +966,7 @@ export default {
       this.$logger('Course|updateSegments', t)
     },
     updateFocus: function (type, focus) {
-      if (type === 'segments') this.$refs.splitTable.clear()
-      if (type === 'splits') this.$refs.segmentTable.clear()
-      this.mapFocus = focus
-      this.$refs.profile.focus(focus)
+      this.focus = focus
     },
     waypointClick: function (id) {
       this.tableTabIndex = 2

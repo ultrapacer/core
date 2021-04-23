@@ -192,6 +192,10 @@ export default {
     tableHeight: {
       type: Number,
       default: 0
+    },
+    visible: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
@@ -397,6 +401,11 @@ export default {
   watch: {
     segments: function (val) {
       this.visibleSubWaypoints = []
+    },
+    visible: function (val) {
+      if (!val) {
+        this.clear()
+      }
     }
   },
   methods: {
@@ -445,8 +454,8 @@ export default {
     clear: async function () {
       this.clearing = true
       await this.$refs.table.clearSelected()
-      this.segments.filter(s => s._showDetails)
-        .forEach(s => { this.$set(s, '_showDetails', false) })
+      this.rows.filter(r => r._showDetails)
+        .forEach(r => { this.$set(r, '_showDetails', false) })
       this.clearing = false
     },
     expandRow: function (row) {

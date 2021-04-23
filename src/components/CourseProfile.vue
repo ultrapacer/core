@@ -37,6 +37,10 @@ export default {
     showActual: {
       type: Boolean,
       default: false
+    },
+    focus: {
+      type: Array,
+      default () { return [] }
     }
   },
   data () {
@@ -54,10 +58,8 @@ export default {
         grey: 'rgb(201, 203, 207)',
         white: 'rgb(255, 255, 255)'
       },
-      chartFocus: [],
       chartProfile: [],
       chartGrade: [],
-      mapFocus: [],
       markerStyles: {
         pointRadius: {
         },
@@ -203,6 +205,18 @@ export default {
         datasets: datasets
       }
     },
+    chartFocus: function () {
+      const cF = []
+      this.chartProfile.forEach(xy => {
+        if (
+          xy.x >= this.$units.distf(this.focus[0]) &&
+          xy.x <= this.$units.distf(this.focus[1])
+        ) {
+          cF.push(xy)
+        }
+      })
+      return cF
+    },
     xs: function () {
       return Array(this.pmax + 1).fill(0).map((e, i) => i++ * this.course.distance / this.pmax)
     },
@@ -285,19 +299,8 @@ export default {
       const id = this.chartWaypoints.data[item._index]._id
       this.$emit('waypointClick', id)
     },
-    focus: function (focus) {
-      const cF = []
-      this.chartProfile.forEach(xy => {
-        if (
-          xy.x >= this.$units.distf(focus[0]) &&
-          xy.x <= this.$units.distf(focus[1])
-        ) {
-          cF.push(xy)
-        }
-      })
-      this.chartFocus = cF
-    },
     updateChartProfile: function () {
+      this.$logger('CourseProfile|updateChartProfile')
       const chartProfile = []
       let mbs = wlslr(
         this.points.map(p => { return p.loc }),
