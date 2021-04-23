@@ -21,7 +21,7 @@
         @click="editFn(getWaypoint(row.item))"
       >
         <v-icon name="edit" />
-        <span class="d-none d-md-inline">Edit</span>
+        <span class="d-none d-xl-inline">Edit</span>
       </b-button>
       <b-button
         v-if="getWaypoint(row.item, 'type') !== 'start' && getWaypoint(row.item, 'type') !== 'finish'"
@@ -30,7 +30,7 @@
         @click="delFn(getWaypoint(row.item))"
       >
         <v-icon name="trash" />
-        <span class="d-none d-md-inline">Delete</span>
+        <span class="d-none d-xl-inline">Delete</span>
       </b-button>
     </template>
     <template #row-details="row">

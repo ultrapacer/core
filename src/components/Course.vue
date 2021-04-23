@@ -144,7 +144,11 @@
       v-if="!initializing"
       data-nosnippet
     >
-      <b-col order="2">
+      <b-col
+        order="2"
+        lg="6"
+        xl="7"
+      >
         <b-tabs
           ref="tables"
           v-model="tableTabIndex"
@@ -236,7 +240,8 @@
       </b-col>
       <b-col
         v-if="points.length"
-        lg="5"
+        lg="6"
+        xl="5"
         order="1"
         class="chart-map-container"
       >

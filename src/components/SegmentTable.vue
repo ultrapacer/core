@@ -81,12 +81,12 @@
         :class="(spannedWaypoints(getSegment(row.item)).length || hasFactors(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
       >
         <b-list-group-item
-          class="d-md-none"
+          :class="`d-${minFieldsSize}-none`"
         >
           <b-row
-            v-for="f in fields.filter(f=>!mobileFields.includes(f.key))"
+            v-for="f in fields.filter(f=>Boolean(fieldsInTable[f.key]))"
             :key="f.key"
-            class="mb-1 d-md-none"
+            :class="`mb-1 d-${fieldsInTable[f.key]}-none`"
           >
             <b-col
               cols="4"
@@ -99,6 +99,7 @@
             </b-col>
           </b-row>
         </b-list-group-item>
+        <b-list-group-item :class="`d-none d-${minFieldsSize}-block p-0`" />
 
         <b-list-group-item
           v-for="wp in spannedWaypoints(getSegment(row.item))"
@@ -129,7 +130,6 @@
 
         <b-list-group-item
           v-if="hasFactors(row.item)"
-          class="d-none d-md-block"
         >
           <b>Pacing Factors</b><br>
           <b-row
@@ -216,20 +216,39 @@ export default {
     planAssigned: function () {
       return Boolean(this.pacing.time)
     },
-    mobileFields: function () {
-      if (this.mode === 'splits') {
+    fieldsInTable: function () {
+      // specify fields to show in table or in details based on size breaks
+      const fieldsInTable = {
+        len: 'sm',
+        tod: 'xl'
+      }
+      if (this.mode === 'segments') {
+        fieldsInTable.grade = 'xl'
+        fieldsInTable.loss = 'xl'
         if (this.pacing.time) {
-          return ['end', 'gain', 'loss', 'pace', 'collapse']
-        } else {
-          return ['end', 'gain', 'loss', 'collapse']
+          fieldsInTable.gain = 'sm'
+          fieldsInTable.time = 'md'
+          fieldsInTable.pace = 'sm'
         }
       } else {
+        fieldsInTable.grade = 'md'
         if (this.pacing.time) {
-          return ['name', 'len', 'elapsed', 'collapse']
-        } else {
-          return ['name', 'len', 'gain', 'loss', 'collapse']
+          fieldsInTable.loss = 'sm'
         }
       }
+      return fieldsInTable
+    },
+    minFieldsSize: function () {
+      // this is the size at which to show hidden columns in the row details
+      const a = ['xs', 'sm', 'md', 'lg', 'xl']
+      let i = 0
+      Object.keys(this.fieldsInTable).forEach(k => {
+        const fieldExists = this.fields.findIndex(f => f.key === k) >= 0
+        if (fieldExists) {
+          i = Math.max(i, a.findIndex(x => x === this.fieldsInTable[k]))
+        }
+      })
+      return a[i]
     },
     fields: function () {
       const f = [
@@ -284,6 +303,7 @@ export default {
           }
         })
         f.unshift({
+          class: 'ellipsis',
           key: 'name',
           label: 'End',
           formatter: (value, key, item) => {
@@ -402,10 +422,10 @@ export default {
       // return class of cell in table for each key
       const lefts = ['name']
       const base = lefts.includes(key) ? '' : 'text-right'
-      if (this.mobileFields.includes(key)) {
-        return base
+      if (this.fieldsInTable[key]) {
+        return `d-none d-${this.fieldsInTable[key]}-table-cell ${base}`
       } else {
-        return `d-none d-md-table-cell ${base}`
+        return base
       }
     },
     isCollapsed: function (row) {
@@ -561,3 +581,12 @@ export default {
   }
 }
 </script>
+
+<style>
+.ellipsis {
+  max-width:7.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+</style>

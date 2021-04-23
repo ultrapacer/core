@@ -306,4 +306,8 @@ export default {
   max-height: 300px;
   object-fit:scale-down;
 }
+.table-sm td, .table-sm th {
+  font-size: 0.8rem;
+  line-height: 1.1rem;
+}
 </style>
