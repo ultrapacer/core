@@ -47,15 +47,9 @@ export default {
     return {
       chartColors: {
         red: 'rgb(255, 0, 0)',
-        orange: 'rgb(255, 159, 64)',
-        yellow: 'rgb(255, 205, 86)',
-        green: 'rgb(75, 192, 192)',
         darkgreen: 'rgb(0, 140, 140)',
-        blue: 'rgb(54, 162, 235)',
         darkblue: 'rgb(45, 45, 200)',
-        purple: 'rgb(153, 102, 255)',
         black: 'rgb(0, 0, 0)',
-        grey: 'rgb(201, 203, 207)',
         white: 'rgb(255, 255, 255)'
       },
       chartProfile: [],
@@ -163,30 +157,30 @@ export default {
       const datasets = [
         this.chartWaypoints,
         {
+          data: this.chartFocus,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderColor: this.$colors.red2,
+          borderWidth: 2,
+          backgroundColor: this.transparentize(this.$colors.red2, 0.5),
+          yAxisID: 'y-axis-1'
+        },
+        {
           data: this.chartProfile,
           pointRadius: 0,
           pointHoverRadius: 0,
-          borderColor: this.chartColors.blue,
-          borderWidth: 1,
-          backgroundColor: this.transparentize(this.chartColors.blue),
+          borderColor: this.$colors.blue2,
+          borderWidth: 2,
+          backgroundColor: this.transparentize(this.$colors.blue2),
           yAxisID: 'y-axis-1'
         },
         {
           data: this.chartGrade,
           pointRadius: 0,
           pointHoverRadius: 0,
-          backgroundColor: this.transparentize(this.chartColors.red, 0.75),
+          backgroundColor: this.transparentize(this.$colors.red2, 0.75),
           showLine: true,
           yAxisID: 'y-axis-2'
-        },
-        {
-          data: this.chartFocus,
-          pointRadius: 0,
-          pointHoverRadius: 0,
-          borderColor: this.chartColors.red,
-          borderWidth: 5,
-          backgroundColor: this.chartColors.red,
-          yAxisID: 'y-axis-1'
         }
       ]
       if (this.showActual) {

@@ -70,8 +70,11 @@ Vue.prototype.$user = Vue.observable({
   admin: false
 })
 Vue.prototype.$colors = {
-  green2: '#415837',
-  brown2: '#422a22'
+  blue1: '#033E75', // dark blue
+  blue2: '#2B6499', // medium blue
+  green2: '#415837', // medium green
+  brown2: '#422a22', // medium brown
+  red2: '#dc3545' // med red
 }
 Vue.prototype.$waypointTypes = {
   start: 'Start',

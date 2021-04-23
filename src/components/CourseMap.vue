@@ -22,13 +22,13 @@
       />
       <l-polyline
         :lat-lngs="courseLL"
-        color="blue"
+        :color="$colors.blue2"
       />
       <l-polyline
         :if="focusLL.length"
         :lat-lngs="focusLL"
-        :weight="5"
-        color="red"
+        :weight="4"
+        :color="this.$colors.red2"
       />
       <l-circle-marker
         v-for="waypoint in waypoints"
