@@ -561,68 +561,72 @@ export default {
     }
   },
   async created () {
-    this.$status.processing = true
-    this.$status.loading = true
-    let t = this.$logger()
-    try {
-      await this.$auth.getAccessToken()
-    } catch (err) {}
-    t = this.$logger('Course|created - auth initiated', t)
-    try {
-      if (this.$route.params.plan) {
-        this.course = await api.getCourse(this.$route.params.plan, 'plan')
-      } else if (this.$route.params.permalink) {
-        this.course = await api.getCourseFields(
-          this.$route.params.permalink,
-          'link',
-          ['name', 'distance', 'gain'],
-          false
-        )
-        this.$title = this.course.name
-        this.course = await api.getCourse(this.$route.params.permalink, 'link')
-      } else {
-        this.course = await api.getCourse(this.$route.params.course, 'course')
-      }
-      t = this.$logger('Course|api.getCourse', t)
-      this.refreshVisibleWaypoints()
-      this.getPoints()
-      this.$ga.event('Course', 'view', this.publicName)
-      this.plans = this.course.plans
-      this.syncCache(this.course)
-      this.syncCache(this.plans)
-      if (this.$route.params.plan) {
-        this.plan = this.plans.find(
-          x => x._id === this.$route.params.plan
-        )
-        this.$ga.event('Plan', 'view', this.publicName)
-      }
-    } catch (err) {
-      console.log(err)
-      this.$router.push({ path: '/' })
-      return
-    }
-    this.$title = this.course.name
-    this.useCache()
-    this.initializing = false
-    this.busy = false
-    this.$status.processing = false
-    setTimeout(() => {
-      if (!this.$user.isAuthenticated) {
-        this.$refs['toast-welcome'].show()
-      } else if (screen.width < 992) {
-        this.$refs['toast-small-screen'].show()
-      }
-    }, 1000)
-    if (this.$route.query.plan) {
-      const p = JSURL.tryParse(this.$route.query.plan, null)
-      if (p) {
-        this.$logger('Course|created: showing plan from URL')
-        this.$refs.planEdit.show(p)
-      }
-    }
-    this.$logger('Course|created', t)
+    this.initialize()
   },
   methods: {
+    async initialize () {
+      this.initializing = true
+      this.$status.processing = true
+      this.$status.loading = true
+      let t = this.$logger()
+      try {
+        await this.$auth.getAccessToken()
+      } catch (err) {}
+      t = this.$logger('Course|initialize - auth initiated', t)
+      try {
+        if (this.$route.params.plan) {
+          this.course = await api.getCourse(this.$route.params.plan, 'plan')
+        } else if (this.$route.params.permalink) {
+          this.course = await api.getCourseFields(
+            this.$route.params.permalink,
+            'link',
+            ['name', 'distance', 'gain'],
+            false
+          )
+          this.$title = this.course.name
+          this.course = await api.getCourse(this.$route.params.permalink, 'link')
+        } else {
+          this.course = await api.getCourse(this.$route.params.course, 'course')
+        }
+        t = this.$logger('Course|api.getCourse', t)
+        this.refreshVisibleWaypoints()
+        await this.getPoints()
+        this.$ga.event('Course', 'view', this.publicName)
+        this.plans = this.course.plans
+        this.syncCache(this.course)
+        this.syncCache(this.plans)
+        if (this.$route.params.plan) {
+          this.plan = this.plans.find(
+            x => x._id === this.$route.params.plan
+          )
+          this.$ga.event('Plan', 'view', this.publicName)
+        }
+      } catch (err) {
+        console.log(err)
+        this.$router.push({ path: '/' })
+        return
+      }
+      this.$title = this.course.name
+      this.useCache()
+      this.initializing = false
+      this.busy = false
+      this.$status.processing = false
+      setTimeout(() => {
+        if (!this.$user.isAuthenticated) {
+          this.$refs['toast-welcome'].show()
+        } else if (screen.width < 992) {
+          this.$refs['toast-small-screen'].show()
+        }
+      }, 1000)
+      if (this.$route.query.plan) {
+        const p = JSURL.tryParse(this.$route.query.plan, null)
+        if (p) {
+          this.$logger('Course|created: showing plan from URL')
+          this.$refs.planEdit.show(p)
+        }
+      }
+      this.$logger('Course|initialize', t)
+    },
     async getPoints () {
       let t = this.$logger()
       const pnts = await api.getCourseField(
@@ -642,6 +646,10 @@ export default {
       this.points.forEach((x, i) => {
         this.points[i].grade = this.points[i].grade * this.scales.grade
       })
+      // refresh LLA's from course points:
+      this.course.waypoints.forEach(wp => {
+        wputil.updateLLA(wp, this.points)
+      })
       if (!this.pacing.factors) {
         await this.updatePacing()
       }
@@ -652,10 +660,9 @@ export default {
       this.$refs.courseEdit.show(this.course)
     },
     async reloadCourse () {
-      this.$status.processing = false
-      this.$nextTick(() => {
-        location.reload()
-      })
+      this.focus = []
+      await this.initialize()
+      await this.updatePacing()
     },
     async deleteCourse (course, cb) {
       this.$refs.delModal.show(

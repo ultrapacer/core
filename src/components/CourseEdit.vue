@@ -300,6 +300,8 @@ export default {
       gpxPoints: [],
       model: {},
       moment: null,
+      points: [],
+      prevDist: 0,
       rawLoaded: false,
       showTips: false,
       stats: null,
@@ -329,6 +331,7 @@ export default {
       this.moment = null
       if (course._id) {
         this.model = Object.assign({}, course)
+        this.prevDist = course.distance
         const tz = this.model.eventTimezone || moment.tz.guess()
         if (this.model.eventStart) {
           this.moment = moment(this.model.eventStart).tz(tz)
@@ -368,15 +371,14 @@ export default {
 
       // if we have new points data, format and update:
       let points = []
-      let points2 = []
       if (this.newPointsFlag && this.gpxPoints.length) {
         points = this.gpxPoints
-        points2 = geo.reduce(points, this.model.distance)
+        this.points = geo.reduce(points, this.model.distance)
 
         // reformat points for upload
-        this.model.reduced = points2.length !== points.length
+        this.model.reduced = this.points.length !== points.length
         if (this.model.reduced) {
-          this.model.points = points2.map(x => {
+          this.model.points = this.points.map(x => {
             return [
               x.loc,
               round(x.lat, 6),
@@ -393,47 +395,6 @@ export default {
             return [x.lat, x.lon, x.alt]
           })
           this.model.raw = null
-        }
-      }
-
-      if (this.model._id) {
-        // update all waypoints to fit updated course:
-        const waypoints = await api.getWaypoints(this.model._id)
-        const finish = waypoints.find(wp => wp.type === 'finish')
-        const olddist = finish.location
-        if (round(finish.location, 4) !== round(this.model.distance, 4)) {
-          console.log('Scaling waypoints')
-          await Promise.all(waypoints.map(async wp => {
-            const t = this.$logger()
-            const wpold = wp.location
-            // scale waypoint location for new course distance:
-            if (wp.type === 'finish') {
-              wp.location = this.model.distance
-            } else if (wp.type !== 'start') {
-              wp.location = wp.location * this.model.distance / olddist
-            }
-            // if there is a new source file, try to find nearest location:
-            if (this.newPointsFlag) {
-              if (wp.type === 'start') {
-                wp.elevation = points[0].alt
-              } else if (wp.type === 'finish') {
-                wp.elevation = points[points.length - 1].alt
-              } else {
-                try {
-                  const wpdelta = Math.abs(wpold - wp.location)
-                  // iteration threshold th:
-                  const th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
-                  // resolve closest distance for waypoint LLA
-                  wp.location = wputil.nearestLoc(wp, points2, th)
-                } catch (err) {
-                  console.log(err)
-                }
-              }
-              wputil.updateLLA(wp, points2)
-            }
-            await api.updateWaypoint(wp._id, wp)
-            this.$logger(`CourseEdit|save|adjustWaypoint: ${wp.name}`, t)
-          }))
         }
       }
 
@@ -470,15 +431,56 @@ export default {
         })
         await api.updateCourse(this.model._id, updateModel)
         this.$ga.event('Course', 'edit')
+
+        // update all waypoints to fit updated course:
+        const diff = this.model.distance - this.prevDist
+        console.log(diff)
+        const scaleWaypoints = round(diff, 4) !== 0
+        if (scaleWaypoints || this.newPointsFlag) {
+          const waypoints = await api.getWaypoints(this.model._id)
+          // if the distance changed locations by new length
+          if (scaleWaypoints) {
+            this.$logger('CourseEdit|save: scaling waypoints to new distance')
+            waypoints.forEach(wp => {
+              if (wp.type === 'finish') {
+                wp.location = this.model.distance
+              } else if (wp.type !== 'start') {
+                wp.location = wp.location * this.model.distance / this.prevDist
+              }
+            })
+          }
+          // if the course changed, map them to the new course LLA's
+          if (this.newPointsFlag) {
+            this.$logger('CourseEdit|save: mapping waypoints to new course')
+            waypoints.forEach(wp => {
+              if (wp.type !== 'start' && wp.type !== 'finish') {
+                try {
+                  const wpdelta = Math.abs(diff) * wp.location / this.model.distance
+                  // iteration threshold th:
+                  const th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
+                  // resolve closest distance for waypoint LLA
+                  wp.location = wputil.nearestLoc(wp, this.points, th)
+                } catch (err) {
+                  console.log(err)
+                }
+              }
+              wputil.updateLLA(wp, this.points)
+            })
+          }
+          // save them all
+          await Promise.all(waypoints.map(async wp => {
+            await api.updateWaypoint(wp._id, wp)
+            this.$logger(`CourseEdit|save: updated waypoint ${wp.name}`)
+          }))
+        }
       } else {
         await api.createCourse(this.model)
         this.$ga.event('Course', 'create')
       }
       this.$status.processing = false
-      this.$emit('refresh', () => {
-        this.clear()
-        this.$refs.modal.hide()
-      })
+      await this.$emit('refresh')
+      this.clear()
+      this.$refs.modal.hide()
     },
     clear () {
       this.model = Object.assign({}, this.defaults)

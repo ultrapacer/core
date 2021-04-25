@@ -152,12 +152,33 @@ export default {
         }
       }
       return hm
+    },
+    points2: function () {
+      // this is a combination of the track points and the waypoints (in case
+      // waypoints are between points
+      const arr = [
+        ...this.points.map(p => {
+          return {
+            loc: p.loc,
+            lat: p.lat,
+            lon: p.lon
+          }
+        }),
+        ...this.waypoints.map(wp => {
+          return {
+            loc: wp.location,
+            lat: wp.lat,
+            lon: wp.lon
+          }
+        })
+      ].sort((a, b) => b.loc - a.loc)
+      return arr
     }
   },
   watch: {
     focus: function (val) {
       if (val.length) {
-        const points = this.points.filter(p =>
+        const points = this.points2.filter(p =>
           p.loc >= val[0] && p.loc <= val[1]
         )
         const res = this.getLLs(points)
@@ -185,26 +206,18 @@ export default {
   },
   methods: {
     updateMapLatLon: function () {
-      const res = this.getLLs(this.points)
+      const res = this.getLLs(this.points2)
       this.courseLL = res.ll
       this.courseCenter = res.center
       this.courseBounds = res.bounds
     },
     getLLs: function (points) {
-      const arr = []
-      let xmin = points[0].lat
-      let xmax = xmin
-      let ymin = points[0].lon
-      let ymax = ymin
-      points.forEach(p => {
-        if (p.lat < xmin) xmin = p.lat
-        else if (p.lat > xmax) xmax = p.lat
-        if (p.lon < ymin) ymin = p.lon
-        else if (p.lon > ymax) ymax = p.lon
-        arr.push([p.lat, p.lon])
-      })
+      const xmin = Math.min.apply(Math, points.map(p => { return p.lat }))
+      const xmax = Math.max.apply(Math, points.map(p => { return p.lat }))
+      const ymin = Math.min.apply(Math, points.map(p => { return p.lon }))
+      const ymax = Math.max.apply(Math, points.map(p => { return p.lon }))
       return {
-        ll: arr,
+        ll: points.map(p => { return [p.lat, p.lon] }),
         center: [(xmin + xmax) / 2, (ymin + ymax) / 2],
         bounds: [
           { lat: xmin, lng: ymin },
