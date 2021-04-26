@@ -534,6 +534,7 @@ export default {
             return
           }
           geo.addLoc(this.gpxPoints)
+          this.gpxPoints = geo.cleanUp(this.gpxPoints)
           this.stats = geo.calcStats(this.gpxPoints, true)
           if (this.stats.gain === 0) {
             this.gpxFileInvalidMsg = 'GPX file does not contain elevation data.'

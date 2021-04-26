@@ -636,6 +636,7 @@ export default {
       t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
       this.points = geo.arraysToObjects(pnts)
       geo.addLoc(this.points, this.course.distance)
+      this.points = geo.cleanUp(this.points)
       geo.addGrades(this.points)
       const stats = geo.calcStats(this.points, false)
       this.scales = {

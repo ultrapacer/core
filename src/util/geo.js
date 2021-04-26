@@ -274,6 +274,58 @@ function addGrades (points) {
   return points
 }
 
+function cleanUp (points) {
+  // function fixes issues with tracks
+  const t = logger('geo|cleanUp')
+  // REMOVE ANY ZERO DISTANCE POINTS:
+  const prev = points.length
+  points = points.filter((p, i) => i === 0 || p.dloc > 0)
+  if (prev > points.length) {
+    logger(`geo|cleanUp: removed ${prev - points.length} zero-distance points`)
+  }
+
+  // REMOVE ALITITUDE STEPS FROM THE GPX. HAPPENS SOMETIMES WITH STRAVA DEM
+  const at = 20 // meters step size
+  const gt = 200 // % grade
+  let i = 0
+  // create array of step indices
+  const steps = []
+  while (i >= 0) {
+    i = points.findIndex((p, j) =>
+      j > i &&
+      (
+        Math.abs((p.alt - points[j - 1].alt)) > at ||
+        Math.abs((p.alt - points[j - 1].alt) / p.dloc / 10) > gt
+      )
+    )
+    if (i > 0) { steps.push(i) }
+  }
+  // for each step, find extents of adjacent flat sections and interp new alt
+  steps.forEach(s => {
+    let a = s - 1
+    while (a >= 0 && points[s - 1].alt === points[a].alt) { a -= 1 }
+    a += 1
+    let z = s
+    while (z <= points.length - 1 && points[s].alt === points[z].alt) { z += 1 }
+    z -= 1
+    if (z - a > 1) {
+      logger(`geo|cleanUp: fixing altitude step at ${round(points[s].loc, 2)} km from ${round(points[a].alt, 2)} m to ${round(points[z].alt, 2)} m`)
+      for (i = a + 1; i < z; i++) {
+        points[i].alt = interp(
+          points[a].loc,
+          points[z].loc,
+          points[a].alt,
+          points[z].alt,
+          points[i].loc
+        )
+      }
+    }
+  }
+  )
+  logger('geo|cleanUp', t)
+  return points
+}
+
 export function pointWLSQ (points, locs, gt) {
   // p: points array of {loc, lat, lon, alt}
   // locs: array of locations (km)
@@ -863,6 +915,7 @@ export default {
   addGrades: addGrades,
   calcStats: calcStats,
   calcSegments: calcSegments,
+  cleanUp: cleanUp,
   getElevation: getElevation,
   getLatLonAltFromDistance: getLatLonAltFromDistance,
   pointWLSQ: pointWLSQ,
