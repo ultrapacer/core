@@ -598,7 +598,7 @@ export default {
     async defaultTimezone (lat, lon) {
       const tz = await api.getTimeZone(lat, lon)
       if (Number(this.moment.format('YYYY') > 1970)) {
-        this.moment = moment(this.moment.format('YYYY-MM-DD kk:mm')).tz(tz)
+        this.moment = moment(this.moment.utc().tz(tz))
       } else {
         this.moment = moment(0).tz(tz)
       }
