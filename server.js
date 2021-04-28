@@ -53,6 +53,7 @@ function startUp () {
   const strava = require('./server/routes/strava')
   // connect to the database:
   mongoose.Promise = global.Promise
+  mongoose.set('useFindAndModify', false)
   mongoose.connect(keys.MONGODB).then(
     () => { console.log('Database is connected') },
     err => { console.log('Can not connect to the database' + err) }
