@@ -434,7 +434,6 @@ export default {
 
         // update all waypoints to fit updated course:
         const diff = this.model.distance - this.prevDist
-        console.log(diff)
         const scaleWaypoints = round(diff, 4) !== 0
         if (scaleWaypoints || this.newPointsFlag) {
           const waypoints = await api.getWaypoints(this.model._id)

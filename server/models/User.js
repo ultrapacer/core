@@ -28,6 +28,10 @@ const UserSchema = new Schema({
     type: Object,
     default: null
   },
+  last_login: {
+    type: Date,
+    default: null
+  },
   _courses: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course'

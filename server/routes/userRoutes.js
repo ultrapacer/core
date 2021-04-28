@@ -6,7 +6,10 @@ const User = require('../models/User')
 // GET
 userRoutes.route('/').get(async function (req, res) {
   try {
-    let user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    let user = await User.findOneAndUpdate(
+      { auth0ID: req.user.sub },
+      { last_login: new Date() }
+    ).exec()
     if (user == null) {
       user = new User({
         auth0ID: req.user.sub
