@@ -4,6 +4,9 @@
     title="Support ultraPacer?"
     scrollable
     centered
+    hide-header-close
+    no-close-on-esc
+    no-close-on-backdrop
   >
     <p>
       Looks like you're enjoying ultraPacer (well at least you've racked up
