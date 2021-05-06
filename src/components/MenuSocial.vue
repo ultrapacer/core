@@ -37,7 +37,7 @@
       v-b-popover.hover.blur.bottomright.d250.v-info="'Donate to uP with Paypal!'"
       target="_blank"
       class="nav-link socialbutton"
-      @click="$refs.paypalForm.submit()"
+      @click="goToPaypal()"
     >
       <form
         ref="paypalForm"
@@ -65,14 +65,29 @@
     </b-link>
     <b-link
       v-b-popover.hover.blur.bottomright.d250.v-info="'Donate to uP with Patreon!'"
-      href="https://www.patreon.com/ultrapacer"
       target="_blank"
       class="nav-link socialbutton"
+      @click="goToPatreon"
     >
       <v-icon name="brands/patreon" />
     </b-link>
   </div>
 </template>
+
+<script>
+export default {
+  methods: {
+    async goToPaypal () {
+      this.$ga.event('Paypal', 'visit')
+      this.$refs.paypalForm.submit()
+    },
+    async goToPatreon () {
+      this.$ga.event('Patreon', 'visit')
+      window.open('https://www.patreon.com/ultrapacer', '_blank')
+    }
+  }
+}
+</script>
 
 <style>
 .socialbutton {
