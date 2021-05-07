@@ -194,6 +194,7 @@
             <waypoint-table
               ref="waypointTable"
               :course="course"
+              :segments="segments"
               :editing="editing"
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"

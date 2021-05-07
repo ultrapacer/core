@@ -58,6 +58,7 @@
 </template>
 
 <script>
+import timeUtil from '../util/time'
 export default {
   props: {
     course: {
@@ -74,6 +75,10 @@ export default {
     },
     delFn: {
       type: Function,
+      required: true
+    },
+    segments: {
+      type: Array,
       required: true
     },
     tableHeight: {
@@ -171,6 +176,35 @@ export default {
           key: 'actions',
           label: '',
           tdClass: 'actionButtonColumn'
+        })
+      } else if (this.segments[0].time) {
+        f.push({
+          key: 'time',
+          label: 'Time',
+          formatter: (value, key, item) => {
+            try {
+              if (this.rows.findIndex(r => r._id === item._id) === 0) {
+                const s = this.segments.find(s => s.waypoint1._id === item._id)
+                if (s.tod !== undefined) {
+                  return timeUtil.sec2string(s.tod - s.elapsed, 'am/pm')
+                } else {
+                  return timeUtil.sec2string(0, '[h]:m:ss')
+                }
+              } else {
+                const s = this.segments.find(s => s.waypoint2._id === item._id)
+                if (s.tod !== undefined) {
+                  return timeUtil.sec2string(s.tod, 'am/pm')
+                } else {
+                  return timeUtil.sec2string(s.elapsed, '[h]:m:ss')
+                }
+              }
+            } catch (err) {
+              console.log(err)
+              return ''
+            }
+          },
+          thClass: 'text-right',
+          tdClass: 'text-right'
         })
       }
       return f
