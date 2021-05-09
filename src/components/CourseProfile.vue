@@ -162,7 +162,7 @@ export default {
           pointHoverRadius: 0,
           borderColor: this.$colors.red2,
           borderWidth: 2,
-          backgroundColor: this.transparentize(this.$colors.red2, 0.5),
+          backgroundColor: this.showActual ? false : this.transparentize(this.$colors.red2, 0.5),
           yAxisID: 'y-axis-1'
         },
         {
@@ -171,29 +171,29 @@ export default {
           pointHoverRadius: 0,
           borderColor: this.$colors.blue2,
           borderWidth: 2,
-          backgroundColor: this.transparentize(this.$colors.blue2),
+          backgroundColor: this.showActual ? false : this.transparentize(this.$colors.blue2),
           yAxisID: 'y-axis-1'
         },
         {
           data: this.chartGrade,
           pointRadius: 0,
           pointHoverRadius: 0,
-          backgroundColor: this.transparentize(this.$colors.red2, 0.75),
+          backgroundColor: this.showActual ? false : this.transparentize(this.$colors.red2, 0.75),
           showLine: true,
           yAxisID: 'y-axis-2'
         }
       ]
       if (this.showActual) {
-        datasets[2] = {
+        datasets.push({
           data: this.comparePoints,
           pointRadius: 0,
           pointHoverRadius: 0,
           borderColor: 'rgb(94, 131, 81)',
-          borderWidth: 1,
+          borderWidth: 2,
           backgroundColor: this.transparentize('rgb(94, 131, 81)', 0.7),
           showLine: true,
           yAxisID: 'y-axis-3'
-        }
+        })
       }
       return {
         datasets: datasets

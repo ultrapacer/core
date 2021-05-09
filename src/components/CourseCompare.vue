@@ -16,9 +16,6 @@
           This feature is in beta. Contact me if it doesn't work for you.
         </p>
         <b-input-group
-          v-b-popover.hover.bottomright.d250.v-info="
-            'File: GPX format file exported from a GPS track.'
-          "
           prepend="File"
           class="mb-2"
           size="sm"
@@ -37,18 +34,28 @@
             {{ gpxFileInvalidMsg }}
           </b-form-invalid-feedback>
         </b-input-group>
+        <form-tip v-if="showTips">
+          Required: ".gpx" format file exported from your GPS track.
+        </form-tip>
       </form>
       <template #modal-footer="{ ok, cancel }">
         <div
-          v-if="comparing"
           style="text-align: left; flex: auto"
         >
           <b-button
+            v-if="comparing"
             size="sm"
             variant="warning"
             @click="stop()"
           >
             Stop Comparison
+          </b-button>
+          <b-button
+            size="sm"
+            variant="warning"
+            @click="showTips = !showTips"
+          >
+            Tips
           </b-button>
         </div>
         <b-button
@@ -81,8 +88,12 @@
 <script>
 import geo from '@/util/geo'
 import moment from 'moment-timezone'
+import FormTip from './FormTip'
 const gpxParse = require('gpx-parse')
 export default {
+  components: {
+    FormTip
+  },
   props: {
     comparing: {
       type: Boolean,
@@ -95,7 +106,8 @@ export default {
       gpxFileInvalidMsg: '',
       gpxPoints: [],
       cb: null,
-      faildist: 0
+      faildist: 0,
+      showTips: false
     }
   },
   methods: {
