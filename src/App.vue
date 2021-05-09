@@ -94,7 +94,7 @@
     <router-view
       ref="routerView"
     />
-    <sponsor />
+    <sponsor ref="sponsor" />
   </div>
 </template>
 

@@ -61,6 +61,7 @@ export default {
       enabled: false,
       resizeObserver: null,
       checker: null,
+      checker2: null,
       scrolling: false,
       sponsor: null,
       refTop: 0,
@@ -109,6 +110,7 @@ export default {
       ) {
         this.enabled = false
       }
+      clearInterval(this.checker2)
       this.removeListeners()
 
       if (this.sponsor) {
@@ -188,6 +190,7 @@ export default {
               !this.$parent.$refs.routerView.initializing
             )
           ) {
+            this.$logger('Sponsor|checker setting watched element')
             this.enabled = true
             clearInterval(this.checker)
             if (this.element === null) {
@@ -198,8 +201,15 @@ export default {
               this.el = this.$parent.$refs.routerView.$refs[this.element]
             }
             this.addListeners()
+            this.checker2 = setInterval(() => {
+              if (!this.el.clientHeight) {
+                this.$logger('Sponsor|checker2 watched element removed, retrying')
+                clearInterval(this.checker2)
+                this.setUp()
+              }
+            }, 1000)
           }
-        }, 50)
+        }, 100)
       } else {
         this.enabled = false
       }
