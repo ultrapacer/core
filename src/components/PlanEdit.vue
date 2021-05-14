@@ -237,7 +237,7 @@
       variant="info"
       auto-hide-delay="5000"
     >
-      {{ newPlanToastMsg }}Login or Signup to ultraPacer to save or share your new plan for "{{ course.name }}".
+      {{ newPlanToastMsg }}
     </b-toast>
   </div>
 </template>
