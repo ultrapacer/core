@@ -174,10 +174,20 @@ export default {
       ]
     }
   },
+  watch: {
+    '$user._id': async function (v) {
+      if (v) {
+        await this.refreshCourses()
+        this.$status.loading = false
+      }
+    }
+  },
   async created () {
     this.$status.loading = true
-    await this.refreshCourses()
-    this.$status.loading = false
+    if (this.$user._id) {
+      await this.refreshCourses()
+      this.$status.loading = false
+    }
   },
   methods: {
     async refreshCourses (callback) {
