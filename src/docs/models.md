@@ -7,9 +7,9 @@ The models below are applied for pacing calculations.
 - **Darkness** is calculated based on terrain and sunrise/sunset times
 
 ##### Grade
-The grade model is shown below. Upgrades are obviously take more effort than
+The grade model is shown below. Upgrades require more effort than
 flat terrain. Downgrades require less effort, to a crossover point at about
--16%.\
+-16%, where it starts to become more difficult again.\
 ![ultraPacer Grade Model](./img/gradeModel.png)
 
 ##### Altitude
