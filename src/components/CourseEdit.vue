@@ -454,11 +454,10 @@ export default {
             waypoints.forEach(wp => {
               if (wp.type !== 'start' && wp.type !== 'finish') {
                 try {
-                  const wpdelta = Math.abs(diff) * wp.location / this.model.distance
-                  // iteration threshold th:
-                  const th = Math.max(0.5, Math.min(wpdelta, this.model.distance))
-                  // resolve closest distance for waypoint LLA
-                  wp.location = wputil.nearestLoc(wp, this.points, th)
+                  // limit of 0.5 km or 5% of total:
+                  const limit = Math.max(0.5, 0.05 * this.model.distance)
+                  // resolve closest distance along course for waypoint LLA
+                  wp.location = wputil.nearestLoc(wp, this.points, limit)
                 } catch (err) {
                   console.log(err)
                 }

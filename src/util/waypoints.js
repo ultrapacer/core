@@ -34,13 +34,16 @@ function sortWaypointsByDistance (waypoints) {
   waypoints.sort(compareWaypointsForSort)
 }
 
-function nearestLoc (waypoint, p, th) {
+function nearestLoc (waypoint, p, limit) {
   // iterate to new location based on waypoint lat/lon
+  // waypoint: waypoint object
+  // p: points array
+  // limit: max distance it can move
   const steps = 5
   let loc = Math.min(p[p.length - 1].loc, waypoint.location)
   const LLA1 = new sgeo.latlon(waypoint.lat, waypoint.lon)
-  while (th > 0.025) {
-    const size = th / steps
+  while (limit > 0.025) {
+    const size = limit / steps
     const locs = []
     for (let i = -steps; i <= steps; i++) {
       const l = loc + (size * i)
@@ -56,7 +59,7 @@ function nearestLoc (waypoint, p, th) {
     const min = llas.reduce((min, b) => Math.min(min, b.dist), llas[0].dist)
     const j = llas.findIndex(x => x.dist === min)
     loc = locs[j]
-    th = th / steps // downsize iteration
+    limit = limit / steps // downsize iteration
   }
   return loc
 }
