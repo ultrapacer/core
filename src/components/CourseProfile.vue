@@ -3,11 +3,9 @@
     ref="profile"
     :chart-data="chartData"
     :options="chartOptions"
-    :width="350"
-    :height="300"
+    :style="printing ? 'width: 9.9in; height: 7.25in' : 'height: 300px'"
   />
 </template>
-
 <script>
 import { wlslr } from '@/util/math'
 import LineChart from './LineChart.js'
@@ -25,6 +23,10 @@ export default {
     points: {
       type: Array,
       required: true
+    },
+    printing: {
+      type: Boolean,
+      default: false
     },
     waypoints: {
       type: Array,

@@ -12,7 +12,7 @@
     small
     head-variant="light"
     no-border-collapse
-    class="mb-0 table-xs"
+    :class="`mb-0 table-xs${printing ? ' show-all-cells' : ''}`"
     :sticky-header="tableHeight ? tableHeight + 'px' : false"
     @row-clicked="selectRow"
   >
@@ -185,6 +185,10 @@ export default {
       type: String,
       required: true
     },
+    printing: {
+      type: Boolean,
+      default: false
+    },
     showActual: {
       type: Boolean,
       default: false
@@ -307,9 +311,9 @@ export default {
           }
         })
         f.unshift({
-          class: 'ellipsis',
           key: 'name',
           label: 'End',
+          class: 'ellipsis',
           formatter: (value, key, item) => {
             return this.rollup(item, 'waypoint2.name', 'last')
           }
@@ -365,6 +369,7 @@ export default {
         f[i].tdClass = f[i].thClass
       })
       if (
+        !this.printing &&
         this.mode === 'segments' &&
         this.course.waypoints.findIndex(x => x.tier > 1) >= 0) {
         f.push({
@@ -597,5 +602,10 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+}
+.show-all-cells {
+  th, td {
+    display: table-cell !important;
+  }
 }
 </style>

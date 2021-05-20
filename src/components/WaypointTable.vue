@@ -10,7 +10,7 @@
     small
     head-variant="light"
     no-border-collapse
-    class="mb-0 table-xs"
+    :class="`mb-0 table-xs${printing ? ' show-all-cells' : ''}`"
     :sticky-header="tableHeight ? tableHeight + 'px' : false"
     @row-clicked="toggleRowDetails"
   >
@@ -77,6 +77,10 @@ export default {
       type: Function,
       required: true
     },
+    printing: {
+      type: Boolean,
+      default: false
+    },
     segments: {
       type: Array,
       required: true
@@ -118,6 +122,7 @@ export default {
       const f = [
         {
           key: 'name',
+          class: 'ellipsis',
           formatter: (value, key, item) => {
             return this.getWaypoint(item, key)
           }
@@ -257,3 +262,16 @@ export default {
   }
 }
 </script>
+<style>
+.ellipsis {
+  max-width:7.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.show-all-cells {
+  th, td {
+    display: table-cell !important;
+  }
+}
+</style>

@@ -78,52 +78,46 @@
             md="3"
             style="text-align:right"
           >
-            <b-button
-              id="menu-button"
+            <b-dropdown
+              right
               variant="primary"
-              class="mr-1"
               size="sm"
-              @click="showMenu = !showMenu"
             >
-              <v-icon name="caret-square-down" />
-              <span class="d-none d-md-inline">
-                Options
-              </span>
-            </b-button>
-            <b-popover
-              :show.sync="showMenu"
-              target="menu-button"
-              title="More options"
-              placement="bottomleft"
-              :triggers="['click','blur']"
-              variant="primary"
-            >
-              <b-button-group vertical>
-                <b-button
-                  v-if="owner"
-                  variant="outline-primary"
-                  @click="editCourse()"
-                >
-                  <v-icon name="edit" />
-                  Modify Course
-                </b-button>
-                <b-button
-                  variant="outline-primary"
-                  @click="download()"
-                >
-                  <v-icon name="download" />
-                  Download GPX/TCX Files
-                </b-button>
-                <b-button
-                  v-if="planAssigned"
-                  variant="outline-primary"
-                  @click="loadCompare()"
-                >
-                  <v-icon name="running" />
-                  Compare to Activity (Beta)
-                </b-button>
-              </b-button-group>
-            </b-popover>
+              <template #button-content>
+                <span class="d-none d-md-inline">
+                  Options
+                </span>
+              </template>
+              <b-dropdown-item
+                v-if="owner"
+                @click="editCourse()"
+              >
+                <v-icon name="edit" />  Modify Course
+              </b-dropdown-item>
+              <b-dropdown-item @click="download()">
+                <v-icon name="download" />
+                Download GPX/TCX Files
+              </b-dropdown-item>
+              <b-dropdown-item
+                v-if="planAssigned"
+                @click="loadCompare()"
+              >
+                <v-icon name="running" />
+                Compare to Activity
+              </b-dropdown-item>
+              <b-dropdown-item
+                @click="print(tableTabNames[tableTabIndex])"
+              >
+                <v-icon name="print" />
+                Print {{ tableTabNames[tableTabIndex] }}{{ tableTabIndex === 3 ? ' Page' : ' Table' }}
+              </b-dropdown-item>
+              <b-dropdown-item
+                @click="print('Profile')"
+              >
+                <v-icon name="print" />
+                Print Profile Chart
+              </b-dropdown-item>
+            </b-dropdown>
           </b-col>
         </b-row>
       </b-col>
@@ -168,8 +162,10 @@
               :busy="busy"
               :mode="'segments'"
               :show-actual="comparing"
-              :table-height="tableHeight"
+              :table-height="printing==='Segments' ? 0 : tableHeight"
               :visible="tableTabIndex===0"
+              :printing="printing==='Segments'"
+              :class="printing==='Segments' ? 'pr-2' : ''"
               @select="updateFocus"
               @show="waypointShow"
               @hide="waypointHide"
@@ -185,8 +181,10 @@
               :busy="busy"
               :mode="'splits'"
               :show-actual="comparing"
-              :table-height="tableHeight"
+              :table-height="printing==='Splits' ? 0 : tableHeight"
+              :class="printing==='Splits' ? 'pr-2' : ''"
               :visible="tableTabIndex===1"
+              :printing="printing==='Splits'"
               @select="updateFocus"
             />
           </b-tab>
@@ -198,7 +196,9 @@
               :editing="editing"
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"
-              :table-height="tableHeight ? tableHeight - (owner ? 42 : 0) : 0"
+              :table-height="tableHeight && printing !== 'Waypoints' ? tableHeight - (owner ? 42 : 0) : 0"
+              :printing="printing==='Waypoints'"
+              :class="printing==='Waypoints' ? 'pr-2' : ''"
               @updateWaypointLocation="updateWaypointLocation"
             />
             <b-row
@@ -229,6 +229,7 @@
             :style="tableHeight ? {maxHeight: tableHeight + 'px', overflowY: 'auto'} : {}"
           >
             <plan-details
+              ref="planDetails"
               :course="course"
               :points="points"
               :kilometers="kilometers"
@@ -251,6 +252,7 @@
         <course-profile
           v-if="points.length"
           ref="profile"
+          :printing="printing==='Profile'"
           :course="course"
           :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
           :points="points"
@@ -352,6 +354,8 @@ import PlanEdit from './PlanEdit'
 import WaypointEdit from './WaypointEdit'
 import SunCalc from 'suncalc'
 import moment from 'moment-timezone'
+import html2pdf from 'html2pdf.js'
+
 const JSURL = require('@yaska-eu/jsurl2')
 
 export default {
@@ -385,6 +389,7 @@ export default {
       plan: {},
       plans: [],
       points: [],
+      printing: false,
       segments: [],
       miles: [],
       kilometers: [],
@@ -393,6 +398,7 @@ export default {
       pacing: {},
       focus: [],
       tableTabIndex: 0,
+      tableTabNames: ['Segments', 'Splits', 'Waypoints', 'Details'],
       updateFlag: false,
       visibleWaypoints: [],
       showMenu: false,
@@ -1089,7 +1095,108 @@ export default {
           return res
         }
       )
+    },
+    async print (component) {
+      // save devicePixelRatio to restore later, set new one to 4
+      // this is for resolution of print
+      const oldPixelRatio = window.devicePixelRatio
+      window.devicePixelRatio = 4
+
+      // set printing status
+      this.printing = component
+      this.$status.processing = true
+
+      // define $refs for each print component:
+      const refs = {
+        Segments: 'segmentTable',
+        Splits: 'splitTable',
+        Waypoints: 'waypointTable',
+        Details: 'planDetails',
+        Profile: 'profile'
+      }
+
+      // set filename:
+      let filename = `uP-${this.course.name}${(this.plan.name ? ('--' + this.plan.name) : '')}--${component}.pdf`
+      filename = filename.replace(/ /g, '_')
+
+      // pdf printing options:
+      const opt = {
+        margin: [0.75, 0.5, 0.5, 0.5],
+        filename: filename,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 4 },
+        jsPDF: {
+          unit: 'in',
+          format: 'letter',
+          orientation: this.tableTabIndex === 3 ? 'portrait' : 'landscape'
+        }
+      }
+      if (component !== 'Profile') {
+        opt.pagebreak = { mode: 'avoid-all' }
+      }
+
+      // define logo image for header:
+      const logo = new Image()
+      logo.src = '/public/img/logo.png'
+
+      // if profile print, render chart to print size:
+      if (component === 'Profile') {
+        await this.$refs.profile.$refs.profile.update()
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+
+      // execute printing:
+      this.$nextTick(() => {
+        html2pdf()
+          .set(opt)
+          .from(this.$refs[refs[component]].$el)
+          .toPdf()
+          .get('pdf')
+          .then((pdf) => {
+            // add header and logo
+            const totalPages = pdf.internal.getNumberOfPages()
+            for (let i = 1; i <= totalPages; i++) {
+              pdf.setPage(i)
+
+              // write ultraPacer:
+              pdf.setFontSize(16)
+              pdf.text('ultraPacer', 0.5, 0.6)
+
+              // write description and page number:
+              const arr = [
+                `Course: ${this.course.name}`,
+                component
+              ]
+              if (this.plan.name) arr.splice(1, 0, `Plan: ${this.plan.name}`)
+              if (totalPages > 1) arr.push(`Page ${i} of ${totalPages}`)
+              pdf.setFontSize(12)
+              pdf.text(
+                arr.join('  |  '),
+                1.75,
+                0.6
+              )
+
+              // add logo to top right:
+              pdf.addImage(logo, 'JPEG', pdf.internal.pageSize.getWidth() - 1, 0.2, 0.5, 0.5)
+            }
+          }).save().then(() => {
+            this.$ga.event(component, 'print', this.publicName)
+
+            // reset status:
+            this.printing = false
+            this.$status.processing = false
+
+            // restore devicePixelRatio:
+            window.devicePixelRatio = oldPixelRatio
+
+            // if profile print, render chart to original size:
+            if (component === 'Profile') {
+              this.$nextTick(() => { this.$refs.profile.update() })
+            }
+          })
+      })
     }
+
   }
 }
 </script>
