@@ -115,7 +115,10 @@ export default {
         return this.course.waypoints.filter(x => x.tier < 3).map(wp => { return { _id: wp._id } })
       }
     },
-    showTerrain: function () {
+    showTerrainType: function () {
+      return this.course.waypoints.findIndex(wp => wp.terrainType) >= 0
+    },
+    showTerrainFactor: function () {
       return this.course.waypoints.findIndex(wp => wp.terrainFactor) >= 0
     },
     fields: function () {
@@ -155,11 +158,33 @@ export default {
           tdClass: 'd-none d-sm-table-cell text-right'
         }
       ]
-      if (this.showTerrain && this.editing) {
+      if (this.showTerrainType && this.editing) {
         f.push({
-          key: 'terrainFactor',
+          key: 'terrainType',
           label: 'Terrain',
           formatter: (value, key, item) => {
+            if (this.getWaypoint(item, 'type') === 'finish') { return '' }
+            let v = this.getWaypoint(item, key)
+            if (v === null) {
+              // if waypoint doesn't have a value, show previous
+              const i = this.course.waypoints.findIndex(wp => wp._id === item._id)
+              const wp = this.course.waypoints.filter((wp, j) =>
+                j < i &&
+                wp.terrainType
+              ).pop()
+              v = (wp) ? wp.terrainType : ''
+            }
+            return v
+          },
+          class: 'd-none d-xl-table-cell text-center'
+        })
+      }
+      if (this.showTerrainFactor && this.editing) {
+        f.push({
+          key: 'terrainFactor',
+          label: 'Factor',
+          formatter: (value, key, item) => {
+            if (this.getWaypoint(item, 'type') === 'finish') { return '' }
             let v = this.getWaypoint(item, key)
             if (v === null) {
               // if waypoint doesn't have a value, show previous
@@ -172,8 +197,7 @@ export default {
             }
             return `+${v}%`
           },
-          thClass: 'd-none d-md-table-cell text-right',
-          tdClass: 'd-none d-md-table-cell text-right'
+          class: 'd-none d-lg-table-cell text-center'
         })
       }
       if (this.editing) {

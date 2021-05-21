@@ -33,6 +33,10 @@ const WaypointSchema = new Schema({
     type: Number,
     default: null
   },
+  terrainType: {
+    type: String,
+    default: null
+  },
   segmentNotes: {
     type: String
   },

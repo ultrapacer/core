@@ -44,6 +44,7 @@
             min="0.01"
             :max="locationMax"
             required
+            @change="updateLocation"
           />
         </b-input-group>
         <form-tip v-if="showTips">
@@ -66,7 +67,7 @@
           Note that "Aid Station" and "Water Source" both include delays for plans.
         </form-tip>
         <b-input-group
-          prepend="Priority"
+          prepend="Visibility"
           class="mb-2"
           size="sm"
         >
@@ -78,14 +79,36 @@
           />
         </b-input-group>
         <form-tip v-if="showTips">
-          Required: how important the waypoint is, as follows (see Docs).
+          Required: when waypoint shows on maps/tables (see Docs).
         </form-tip>
         <b-input-group
-          prepend="Terrain factor"
+          v-if="model.type !== 'finish'"
+          prepend="Terrain"
           append="% (increase)"
           class="mb-2"
           size="sm"
         >
+          <b-form-select
+            v-model="model.terrainType"
+            type="text"
+            @change="changeTerrainType"
+          >
+            <b-form-select-option
+              v-if="terrainTypePlaceholder && !model.terrainType"
+              :value="null"
+              selected
+              hidden
+            >
+              {{ terrainTypePlaceholder }}
+            </b-form-select-option>
+            <b-form-select-option
+              v-for="t in terrainTypes"
+              :key="t.name"
+              :value="t.name"
+            >
+              {{ t.name }}
+            </b-form-select-option>
+          </b-form-select>
           <b-form-input
             v-model="model.terrainFactor"
             type="number"
@@ -168,7 +191,6 @@ import api from '@/api'
 import FormTip from './FormTip'
 import HelpDoc from '@/docs/waypoint.md'
 import wputil from '../util/waypoints'
-import { tF } from '../util/normFactor'
 export default {
   components: {
     HelpDoc,
@@ -193,8 +215,18 @@ export default {
       model: {},
       defaults: {
         type: 'aid',
-        tier: 1
+        tier: 1,
+        terrainType: null,
+        terrainFactor: null
       },
+      terrainTypes: [
+        { name: 'Paved', factor: 0 },
+        { name: 'Fire road', factor: 4 },
+        { name: 'Double track', factor: 8 },
+        { name: 'Singletrack', factor: 12 },
+        { name: 'Technical', factor: 20 },
+        { name: 'Other', factor: '' }
+      ],
       showTips: false
     }
   },
@@ -223,27 +255,62 @@ export default {
       }
     },
     waypointTiers: function () {
-      if (this.model.type === 'start') {
-        return [{ value: 1, text: 'Major' }]
-      } else if (this.model.type === 'finish') {
-        return [{ value: 1, text: 'Major' }]
+      if (this.model.type === 'start' || this.model.type === 'finish') {
+        return [{ value: 1, text: 'Primary' }]
       } else {
         return [
-          { value: 1, text: 'Major' },
-          { value: 2, text: 'Minor' },
+          { value: 1, text: 'Primary' },
+          { value: 2, text: 'Secondary' },
           { value: 3, text: 'Hidden' }
         ]
       }
     },
+    terrainTypePlaceholder: function () {
+      // 1 - use previous type specified
+      // 2 - none (blank)
+      if (!this.course.waypoints.length) return ''
+      const wp = this.course.waypoints.filter(x =>
+        x._id !== this.model._id &&
+        x.location < this.model.location &&
+        x.terrainType
+      )
+      if (wp.length) {
+        return wp[wp.length - 1].terrainType
+      } else {
+        return ''
+      }
+    },
     terrainFactorPlaceholder: function () {
-      let tFP = ''
-      if (!this.model._id) return tFP
-      tFP = tF(this.model.location, this.terrainFactors)
-      tFP = ((tFP - 1) * 100).toFixed(0)
-      return tFP
+      // 1 - if a new type is specified, use default for that type
+      // 2 - use previous type specified
+      // 3 - none (blank)
+      if (
+        this.model.terrainType &&
+        this.model.terrainType !== 'Other' &&
+        this.model.terrainType !== this.model.terrainTypePlaceholder
+      ) {
+        const tt = this.terrainTypes.find(x => x.name === this.model.terrainType)
+        if (tt) return String(tt.factor)
+      }
+      if (!this.course.waypoints.length) return ''
+      const wp = this.course.waypoints.filter(x =>
+        x._id !== this.model._id &&
+        x.location < this.model.location &&
+        x.terrainFactor !== null
+      )
+      if (wp.length) {
+        return String(wp[wp.length - 1].terrainFactor)
+      } else {
+        return ''
+      }
     }
   },
   methods: {
+    async changeTerrainType (v) {
+      if (v) {
+        this.model.terrainFactor = this.terrainTypes.find(x => x.name === v).factor
+      }
+    },
     async show (waypoint) {
       this.showTips = false
       if (waypoint._id) {
@@ -251,10 +318,7 @@ export default {
       } else {
         this.model = Object.assign({}, this.defaults)
       }
-      if (this.model.location) {
-        this.model.locUserUnit =
-          this.$units.distf(this.model.location, 2)
-      }
+      this.model.locUserUnit = this.model.location ? this.$units.distf(this.model.location, 2) : ''
       this.$refs.modal.show()
     },
     handleOk (bvModalEvt) {
@@ -266,9 +330,6 @@ export default {
     async save () {
       if (this.$status.processing) { return }
       this.$status.processing = true
-      if (this.model.type !== 'start' && this.model.type !== 'finish') {
-        this.model.location = this.model.locUserUnit / this.$units.distScale
-      }
       wputil.updateLLA(this.model, this.points)
       if (this.model._id) {
         this.$ga.event('Waypoint', 'edit', this.course.public ? this.course.name : 'private')
@@ -298,6 +359,11 @@ export default {
     },
     toggleTips () {
       this.showTips = !this.showTips
+    },
+    updateLocation: function (val) {
+      if (this.model.type !== 'start' && this.model.type !== 'finish') {
+        this.$set(this.model, 'location', val ? val / this.$units.distScale : null)
+      }
     }
   }
 }

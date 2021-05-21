@@ -34,17 +34,16 @@ waypointRoutes.route('/:id').put(async function (req, res) {
     const waypoint = await Waypoint.findById(req.params.id).exec()
     const course = await Course.findById(waypoint._course).select('_user').exec()
     if (user.equals(course._user)) {
-      waypoint.name = req.body.name
-      waypoint.location = req.body.location
-      waypoint.type = req.body.type
-      waypoint.tier = req.body.tier
-      waypoint.description = req.body.description
-      waypoint.elevation = req.body.elevation
-      waypoint.lat = req.body.lat
-      waypoint.lon = req.body.lon
-      waypoint.pointsIndex = req.body.pointsIndex
-      const tF = req.body.terrainFactor
-      waypoint.terrainFactor = isNaN(tF) ? null : tF
+      const fields = [
+        'name', 'location', 'type', 'tier', 'description', 'elevation',
+        'lat', 'lon', 'pointsIndex', 'terrainFactor', 'terrainType'
+      ]
+      fields.forEach(f => {
+        if (req.body[f] !== undefined) {
+          waypoint[f] = req.body[f]
+        }
+      })
+      if (isNaN(waypoint.terrainFactor)) { waypoint.terrainFactor = null }
       await waypoint.save()
       await course.clearCache()
       res.json('Update complete')

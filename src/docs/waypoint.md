@@ -23,17 +23,21 @@ Click the **+ New Waypoint** button to create a new Waypoint.
   - *Junction* - feature along the Course (without delay) often used to
     change Terrain Factors
   - *Other* - miscellaneous feature along the Course (without delay)
-- **Priority** as follows:
-  - *Major* - 1st-level breakpoint in Segments table; always shown on map/chart
-  - *Minor* - 2nd-level breakpoint in Segments table; shown on map/chart when
-    expanded
+- **Visibility** as follows:
+  - *Primary* - 1st-level breakpoint in Segments table; always shown on map
+    and chart
+  - *Secondary* - 2nd-level breakpoint in Segments table; shown on map/chart
+    when expanded
   - *Hidden* - never shown; used for modifying Terrain Factors between Major or
     Minor Waypoints
-- **Terrain Factor** is a multiplier (increase only) addressing the type of
-  surface/trail. The Terrain Factor for the Waypoint applies for the segment
-  beginning at that Waypoint and going until a different Terrain Factor is set
-  later. If left   blank, the Terrain Factor is unchanged from the previous
-  Waypoint. Typical value ranges by terrain type are:
+- **Terrain** The Terrain for the Waypoint applies for the segment
+  beginning at that Waypoint and going until a different Terrain is set
+  later. If left  blank, the Terrain is unchanged from the previous
+  Waypoint. Each Terrain Type has a default Terrain Factor, which is is a
+  multiplier (increase only) addressing the type of
+  surface/trail. If unspecified, Terrain will be inherited from the previous
+  Waypoint.
+  Typical value ranges by Terrain Type are:
   - Paved surface: 0%
   - Smooth fire road: 2-4%
   - Smooth singletrack: 5-10%
