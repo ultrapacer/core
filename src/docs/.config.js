@@ -32,6 +32,11 @@ module.exports = {
       path:'models'
     },
     {
+      file:"printing.md",
+      name:"How to Print",
+      path:'printing'
+    },
+    {
       file:"contributing.md",
       name:"Want to Contribute?",
       path:'contributing'
