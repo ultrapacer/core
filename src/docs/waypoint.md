@@ -38,11 +38,11 @@ Click the **+ New Waypoint** button to create a new Waypoint.
   surface/trail. If unspecified, Terrain will be inherited from the previous
   Waypoint.
   Typical value ranges by Terrain Type are:
-  - Paved surface: 0%
-  - Smooth fire road: 2-4%
-  - Smooth singletrack: 5-10%
-  - Rocky singletrack: 10-20%
-  - Technical trail: 20%+
+  - Paved: 0%
+  - Fireroad: 2-6%
+  - Doubletrack: 6-10%
+  - Singletrack: 10-15%
+  - Technical: 15-25% +
 
 Click **Save Waypoint** when finished
 

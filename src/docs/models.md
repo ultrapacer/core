@@ -27,11 +27,11 @@ elevation data.
 Terrain factors are defined by the course owner using the "Edit" buttons within
 the "Waypoints" tab.
 Typical value ranges by terrain type are:
-- Paved surface: 0%
-- Smooth fire road: 2-4%
-- Smooth singletrack: 5-10%
-- Rocky singletrack: 10-20%
-- Technical trail: 20%+
+- Paved: 0%
+- Fireroad: 2-6%
+- Doubletrack: 6-10%
+- Singletrack: 10-15%
+- Technical: 15-25% +
 
 ##### Heat
 The heat model the top half of a sinusoidal curve. A "baseline" heat factor can

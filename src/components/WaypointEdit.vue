@@ -221,8 +221,8 @@ export default {
       },
       terrainTypes: [
         { name: 'Paved', factor: 0 },
-        { name: 'Fire road', factor: 4 },
-        { name: 'Double track', factor: 8 },
+        { name: 'Fireroad', factor: 4 },
+        { name: 'Doubletrack', factor: 8 },
         { name: 'Singletrack', factor: 12 },
         { name: 'Technical', factor: 20 },
         { name: 'Other', factor: '' }
