@@ -10,6 +10,14 @@
       <v-icon name="envelope" />
     </b-link>
     <b-link
+      v-b-popover.hover.blur.bottomright.d250.v-info="'YouTube Channel!'"
+      href="https://www.youtube.com/channel/UCKptexajs3nGUG26wYNAmTQ"
+      target="_blank"
+      class="nav-link socialbutton"
+    >
+      <v-icon name="brands/youtube" />
+    </b-link>
+    <b-link
       v-b-popover.hover.blur.bottomright.d250.v-info="'Follow uP on Facebook!'"
       href="https://www.facebook.com/ultrapacer"
       target="_blank"

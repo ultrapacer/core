@@ -7,7 +7,14 @@
       Documentation
     </h1>
     <p>
-      This documentation is a work in progress. Send questions to
+      This documentation is a work in progress. Also check out videos on the
+      <b-link
+        href="https://www.youtube.com/channel/UCKptexajs3nGUG26wYNAmTQ"
+        target="_blank"
+      >
+        ultraPacer YouTube Channel.
+      </b-link>
+      Send questions to
       <b-link href="mailto:danny@ultrapacer.com">
         danny@ultrapacer.com
       </b-link>
