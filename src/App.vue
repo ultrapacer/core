@@ -95,7 +95,10 @@
       ref="routerView"
     />
     <sponsor ref="sponsor" />
-    <patreon-modal ref="patreonModal" />
+    <patreon-modal
+      v-if="$user.isAuthenticated"
+      ref="patreonModal"
+    />
   </div>
 </template>
 
