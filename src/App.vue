@@ -95,6 +95,7 @@
       ref="routerView"
     />
     <sponsor ref="sponsor" />
+    <patreon-modal ref="patreonModal" />
   </div>
 </template>
 
@@ -102,11 +103,13 @@
 import api from '@/api'
 import MenuSocial from './components/MenuSocial'
 import Sponsor from './components/Sponsor'
+import PatreonModal from './components/PatreonModal'
 export default {
   name: 'App',
   components: {
     MenuSocial,
-    Sponsor
+    Sponsor,
+    PatreonModal
   },
   data () {
     return {

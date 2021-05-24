@@ -36,6 +36,9 @@ export default {
   getUser () {
     return this.executeAuth('get', '/api/user')
   },
+  getUserStats () {
+    return this.executeAuth('get', '/api/user/stats')
+  },
   updateSettings (id, data) {
     return this.executeAuth('put', `/api/user/${id}`, data)
   },

@@ -10,10 +10,10 @@
   >
     <p>
       Looks like you're enjoying ultraPacer (well at least you've racked up
-      {{ courseCount }} courses on your list).
+      {{ message }} to your name).
     </p>
     <p>
-      Would you consider joining the ultraPacer Patreon community for $1/month?
+      Would you sponsor ultraPacer on Patreon for as little as $1/month?
     </p>
 
     <template #modal-footer>
@@ -43,32 +43,67 @@
 import api from '@/api'
 import moment from 'moment'
 export default {
-  props: {
-    courseCount: {
-      type: Number,
-      default: 0
+  data () {
+    return {
+      delay: 20000,
+      timeout: null,
+      message: ''
     }
   },
   mounted () {
-    this.initiate()
+    this.timeout = setTimeout(() => {
+      this.initiate()
+    }, this.delay)
+  },
+  beforeDestroy () {
+    clearTimeout(this.timeout)
   },
   methods: {
     async initiate () {
+      if (!this.$user.isAuthenticated) return
+
+      // get user
       const user = await api.getUser()
-      if (user && this.courseCount >= 3) {
-        const m = user.membership || {}
-        if (m.status === 'member') {
-          this.$logger('PatreonModal|initiate: already a member')
-          return
+      const m = user.membership || {}
+      if (m.status === 'member') {
+        this.$logger('PatreonModal|initiate: already a member')
+        return
+      }
+
+      const next = moment(m.next_annoy || 0)
+      const d = moment().diff(next, 'days')
+      if (d >= 0) {
+        // get user stats
+        const userstats = await api.getUserStats()
+        let showModal = false
+        if (userstats.courses >= 2) {
+          showModal = true
+          this.message = `${this.casualNumber(userstats.courses)} courses`
+        } else if (userstats.plans >= 2) {
+          showModal = true
+          this.message = `${this.casualNumber(userstats.plans)} plans`
+        } else {
+          this.$logger('PatreonModal|initiate: not enough plans or courses')
         }
-        const next = moment(m.next_annoy || 0)
-        const d = moment().diff(next, 'days')
-        if (d >= 0) {
+        if (showModal) {
           this.$ga.event('Patreon', 'show')
           this.$refs.patreon.show()
-        } else {
-          this.$logger(`PatreonModal|initiate: remind again in ${-d} days`)
         }
+      } else {
+        this.$logger(`PatreonModal|initiate: remind again in ${-d} days`)
+      }
+    },
+    casualNumber (num) {
+      switch (num) {
+        case 2:
+          return 'a couple'
+        case 3:
+          return 'a few'
+        case 4:
+        case 5:
+          return 'a handful of'
+        default:
+          return 'a lot of'
       }
     },
     async goToPatreon () {

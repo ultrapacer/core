@@ -107,11 +107,6 @@
     <delete-modal
       ref="delModal"
     />
-    <patreon-modal
-      v-if="courses.length"
-      ref="patreonModal"
-      :course-count="courses.length"
-    />
     <vue-headful
       description="ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue."
       title="My Courses - ultraPacer"
@@ -122,13 +117,11 @@
 <script>
 import api from '@/api'
 import DeleteModal from './DeleteModal'
-import PatreonModal from './PatreonModal'
 export default {
   title: 'My Courses',
   components: {
     CourseEdit: () => import(/* webpackPrefetch: true */ './CourseEdit.vue'),
-    DeleteModal,
-    PatreonModal
+    DeleteModal
   },
   data () {
     return {
