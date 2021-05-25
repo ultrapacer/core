@@ -4,7 +4,7 @@
     :class="classes"
     style="padding:15px; text-align: center; z-index: 70"
   >
-    <div class="rotate-container">
+    <div class="rotate-container no-print">
       <p class="rotate small text-center">
         <span
           v-if="align==='right'"
@@ -20,7 +20,7 @@
       :src="sponsor.logourl"
       :title="'Check out ' + sponsor.name"
       :alt="'Check out ' + sponsor.name"
-      class="sponsor-img"
+      class="sponsor-img no-print"
       @click="goToSponsor"
     />
   </div>
@@ -74,6 +74,7 @@ export default {
   computed: {
     classes: function () {
       return {
+        'no-print': true,
         'sponsor-scaler': true,
         bottom: this.fixed,
         'pt-4': !this.fixed && this.$window.width >= 576,
@@ -281,6 +282,11 @@ export default {
   @media (max-width: 575px) {
     zoom: 75%;
     -moz-transform: scale(0.75);
+  }
+}
+.no-print {
+  @media print {
+    display: none !important;
   }
 }
 </style>
