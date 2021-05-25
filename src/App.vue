@@ -245,12 +245,16 @@ export default {
 .navbar-logo-img {
   margin-top:-11px;
   position:absolute;
-  @media (min-width: 576px) {
+  @media (min-width: 768px) {
     margin-left: -12px;
   }
-  @media (max-width: 575px) {
+  @media (max-width: 767px) {
     float:right;
-    margin-right: -5px;
+    margin-right: -8px;
+  }
+  @media (max-width: 767px) {
+    height: 64px;
+    width: 64px;
   }
 }
 .navbar-title {
