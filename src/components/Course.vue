@@ -89,6 +89,17 @@
                 </span>
               </template>
               <b-dropdown-item
+                @click="$refs.courseShare.init()"
+              >
+                <v-icon name="share-alt" />  Share this Course
+              </b-dropdown-item>
+              <b-dropdown-item
+                v-if="planAssigned && plan._id"
+                @click="$refs.courseShare.init('plan')"
+              >
+                <v-icon name="share-alt" />  Share this Plan
+              </b-dropdown-item>
+              <b-dropdown-item
                 v-if="owner"
                 @click="editCourse()"
               >
@@ -310,6 +321,12 @@
       :comparing="comparing"
       @stop="stopCompare"
     />
+    <course-share
+      ref="courseShare"
+      :course="course"
+      :plan="plan"
+      @setPublic="course.public=true"
+    />
     <vue-headful
       v-if="course.name"
       :description="description"
@@ -345,6 +362,7 @@ import { string2sec } from '../util/time'
 import wputil from '../util/waypoints'
 import CourseEdit from './CourseEdit'
 import CourseCompare from './CourseCompare'
+import CourseShare from './CourseShare'
 import DeleteModal from './DeleteModal'
 import DownloadTrack from './DownloadTrack'
 import SegmentTable from './SegmentTable'
@@ -365,6 +383,7 @@ export default {
     CourseCompare,
     CourseMap: () => import(/* webpackPrefetch: true */ './CourseMap.vue'),
     CourseProfile: () => import(/* webpackPrefetch: true */ './CourseProfile.vue'),
+    CourseShare,
     DeleteModal,
     DownloadTrack,
     SegmentTable,
