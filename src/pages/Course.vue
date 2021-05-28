@@ -1108,14 +1108,6 @@ export default {
     },
     async print (component) {
       const t = this.$logger()
-      // save devicePixelRatio to restore later, set new one to 4
-      // this is for resolution of print
-      const oldPixelRatio = window.devicePixelRatio
-      window.devicePixelRatio = 4
-
-      // set printing status
-      this.printing = component
-      this.$status.processing = true
 
       // define $refs for each print component:
       const refs = {
@@ -1125,6 +1117,23 @@ export default {
         Details: 'planDetails',
         Profile: 'profile'
       }
+
+      // clear focus, if any:
+      if (this.focus.length) {
+        this.focus = []
+        if (component === 'Segments' || component === 'Splits') {
+          await this.$refs[refs[component]].clear()
+        }
+      }
+
+      // save devicePixelRatio to restore later, set new one to 4
+      // this is for resolution of print
+      const oldPixelRatio = window.devicePixelRatio
+      window.devicePixelRatio = 4
+
+      // set printing status
+      this.printing = component
+      this.$status.processing = true
 
       // set filename:
       let filename = `uP-${this.course.name}${(this.plan.name ? ('--' + this.plan.name) : '')}--${component}.pdf`
