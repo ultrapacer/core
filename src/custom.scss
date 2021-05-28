@@ -7,6 +7,11 @@ $info: #422a22;
 // medium brown 422a22
 // light green 5e8351
 // medium green 415837
+
+$font-size-base: 0.875rem;
+$small-font-size: 87.5%;
+$input-btn-padding-y: 0.25rem;
+$input-btn-padding-x: 0.5rem;
 // Bootstrap and its default variables
 @import "../node_modules/bootstrap/scss/bootstrap";
 @import '../node_modules/bootstrap-vue/src/index.scss';

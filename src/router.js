@@ -1,15 +1,15 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Home from '@/components/Home'
-import Callback from '@/components/Callback'
+import Home from '@/pages/Home'
+import Callback from '@/pages/Callback'
 import auth from './auth/authService'
-import PrivacyPolicy from '@/components/PrivacyPolicy'
+import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import api from '@/api'
 
 Vue.use(Router)
 
 function lazyLoad (view) {
-  return () => import(/* webpackPrefetch: true */ `@/components/${view}.vue`)
+  return () => import(/* webpackPrefetch: true */ `@/pages/${view}.vue`)
 }
 
 const router = new Router({

@@ -10,13 +10,12 @@
     small
     head-variant="light"
     no-border-collapse
-    :class="`mb-0 table-xs${printing ? ' show-all-cells' : ''}`"
+    :class="`mb-0 ${editing ? '' : ' table-xs'}${printing ? ' show-all-cells' : ''}`"
     :sticky-header="tableHeight ? tableHeight + 'px' : false"
     @row-clicked="toggleRowDetails"
   >
     <template #cell(actions)="row">
       <b-button
-        size="sm"
         class="mr-1"
         @click="editFn(getWaypoint(row.item))"
       >
@@ -25,7 +24,6 @@
       </b-button>
       <b-button
         v-if="getWaypoint(row.item, 'type') !== 'start' && getWaypoint(row.item, 'type') !== 'finish'"
-        size="sm"
         class="mr-1"
         @click="delFn(getWaypoint(row.item))"
       >

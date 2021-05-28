@@ -1,7 +1,6 @@
 <template>
   <b-list-group
     v-if="!busy"
-    style="font-size:0.9rem"
   >
     <b-list-group-item>
       <h5 class="mb-1">

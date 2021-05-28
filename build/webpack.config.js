@@ -161,7 +161,7 @@ module.exports = (env, argv) => {
     )
 
     // compile sitemap with all documentation:
-    const paths = ['', 'races', 'docs', 'docs/models']
+    const paths = ['', 'races', 'docs']
     const docs = require('../src/docs/.config').docs
     docs.forEach(d => { paths.push(`docs/${d.path}`) })
     config.plugins.push(

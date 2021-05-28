@@ -1,6 +1,6 @@
 <template>
   <div
-    class="container-fluid mt-4"
+    class="primary-page"
     style="max-width:60rem"
   >
     <b-row>
@@ -49,7 +49,6 @@
           <template #cell(actions)="row">
             <b-button
               v-if="$user._id==row.item._user"
-              size="sm"
               class="mr-1"
               @click="editCourse(row.item)"
             >
@@ -57,7 +56,6 @@
               <span class="d-none d-md-inline">Edit</span>
             </b-button>
             <b-button
-              size="sm"
               class="mr-1"
               @click="deleteCourse(row.item)"
             >
@@ -87,7 +85,6 @@
               }"
             >
               <b-button
-                size="sm"
                 class="mr-1"
                 variant="success"
               >
@@ -116,11 +113,11 @@
 
 <script>
 import api from '@/api'
-import DeleteModal from './DeleteModal'
+import DeleteModal from '../components/DeleteModal'
 export default {
   title: 'My Courses',
   components: {
-    CourseEdit: () => import(/* webpackPrefetch: true */ './CourseEdit.vue'),
+    CourseEdit: () => import(/* webpackPrefetch: true */ '../components/CourseEdit.vue'),
     DeleteModal
   },
   data () {

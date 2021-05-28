@@ -106,13 +106,12 @@
 import api from '@/api'
 import MenuSocial from './components/MenuSocial'
 import Sponsor from './components/Sponsor'
-import PatreonModal from './components/PatreonModal'
 export default {
   name: 'App',
   components: {
     MenuSocial,
     Sponsor,
-    PatreonModal
+    PatreonModal: () => import(/* webpackPrefetch: true */ './components/PatreonModal.vue')
   },
   data () {
     return {
@@ -231,9 +230,18 @@ export default {
 </script>
 
 <style>
+.primary-page {
+  max-width: 50rem;
+  margin-top: 1.5rem;
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
 .btn .fa-icon {
-    vertical-align: middle;
-    margin-top: -0.25rem;
+  vertical-align: middle;
+  margin-top: -0.25rem;
 }
 .btn span:last-child {
     margin-left: 0.5rem;
@@ -282,23 +290,19 @@ export default {
   padding-top: 0.1rem !important;
   padding-bottom: 0.1rem !important;
   vertical-align: middle !important;
+  .btn {
+    padding: 0.05rem 0.3rem;
+  }
 }
-.table-sm td {
-  font-size: 0.9rem;
-  padding-left: 0.15rem;
-  padding-right: 0.15rem;
-  line-height: 1.25;
+.table-sm td .form-control {
+  height: auto;
+  padding: 0.05rem 0.3rem;
 }
-.table-sm th {
-  font-size: 0.9rem;
-  padding-left: 0.15rem;
-  padding-right: 0.15rem;
-}
-.tinyButton {
-  padding: 0.18rem !important;
-  line-height: 1.2 !important;
-  font-size: 0.7rem !important;
-}
+//.table-sm th {
+//  font-size: 0.9rem;
+//  padding-left: 0.15rem;
+//  padding-right: 0.15rem;
+//}
 .segment-table .b-table-details td {
   padding-top: 0 !important;
   padding-bottom: 0 !important
@@ -307,9 +311,9 @@ export default {
   padding-top: 56px;
 }
 .form-tip {
-  margin-top: -0.4rem;
+  //margin-top: -0.4rem;
   color: #5e8351;
-  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
 }
 .documentation img  {
   max-width: 100%;
@@ -317,8 +321,11 @@ export default {
   object-fit:scale-down;
 }
 .table-xs td, .table-xs th {
-  font-size: 0.8rem;
-  line-height: 1.1rem;
+  font-size: 90%;
+  line-height: 1.25;
+  .btn {
+    font-size: 80%;
+  }
 }
 .coursetitlecolumn {
   text-overflow: ellipsis;

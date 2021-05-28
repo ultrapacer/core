@@ -2,8 +2,7 @@
   <b-form-group class="mb-0">
     <b-input-group
       prepend="Event Date"
-      class="mb-2"
-      size="sm"
+      class="mt-1"
     >
       <b-form-input
         v-model="date"
@@ -18,8 +17,7 @@
     <div v-if="Boolean(date)">
       <b-input-group
         prepend="Start Time"
-        class="mb-2"
-        size="sm"
+        class="mt-1"
       >
         <b-form-input
           v-model="time"
@@ -34,8 +32,7 @@
     </div>
     <b-input-group
       prepend="Timezone"
-      class="mb-2"
-      size="sm"
+      class="mt-1"
     >
       <b-form-select
         v-model="zone"

@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <div class="primary-page">
     <div
-      class="mt-5"
+      class="mt-1 mb-4"
       style="align-items: center; justify-content: center; text-align: center;"
     >
       <img
@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import AboutContent from './AboutContent'
+import AboutContent from '../components/AboutContent'
 export default {
   title: 'Home',
   components: {

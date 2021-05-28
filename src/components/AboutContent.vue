@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="container-fluid mt-4"
-    style="max-width:50rem"
-  >
+  <div>
     <about-card
       title="Create Courses"
       :img="require('../assets/aboutCourse.png')"

@@ -1,7 +1,5 @@
 <template>
-  <b-form-group
-    class="mb-0"
-  >
+  <div>
     <form-selectable-label
       v-model="driftModel"
       :options="driftModels"
@@ -10,13 +8,10 @@
       <b-input-group
         v-if="driftModel===1"
         append="%"
-        class="mb-2"
-        size="sm"
       >
         <b-form-input
           v-model="basic"
           type="number"
-          size="sm"
           required
           step="0.01"
           @change="basic = Number(basic) || 0; update();"
@@ -29,6 +24,7 @@
           :items="advanced"
           :fields="fields"
           fixed
+          small
         >
           <template #cell(onset)="row">
             <b-form-input
@@ -37,7 +33,6 @@
               required
               :min="onsetMin(row.index)"
               :max="onsetMax(row.index)"
-              size="sm"
               step="0.01"
               @change="onsetChange(row.item.onset, row.index)"
             />
@@ -47,7 +42,6 @@
               v-model="row.item.value"
               type="number"
               required
-              size="sm"
               step="0.01"
               @change="row.item.value = Number(row.item.value) || 0; update()"
             />
@@ -58,7 +52,6 @@
               class="form-control"
               :options="types"
               required
-              size="sm"
               @change="update"
             />
           </template>
@@ -69,7 +62,6 @@
             >
               <b-button
                 v-if="advanced.length > 1"
-                size="sm"
                 class="mr-1"
                 @click="delRow(row.index)"
               >
@@ -78,7 +70,6 @@
               <b-button
                 v-if="advanced.length -1 === row.index"
                 variant="success"
-                size="sm"
                 class="mr-1"
                 @click="advanced.push({type: 'linear'})"
               >
@@ -96,6 +87,7 @@
             ref="chart"
             :drift="value"
             :course-distance="courseDistance"
+            class="mt-1"
           />
         </div>
       </div>
@@ -111,7 +103,7 @@
       whereas a linear change gradually takes effect until the next breakpoint.
       See the docs for more help.
     </form-tip>
-  </b-form-group>
+  </div>
 </template>
 
 <script>
@@ -167,7 +159,8 @@ export default {
         },
         {
           key: 'action',
-          label: ''
+          label: '',
+          tdClass: 'actionButtonColumn'
         }
       ]
     }

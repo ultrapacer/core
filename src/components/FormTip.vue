@@ -1,5 +1,7 @@
 <template>
   <p class="form-tip">
-    <slot />
+    <small>
+      <slot />
+    </small>
   </p>
 </template>

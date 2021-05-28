@@ -29,7 +29,6 @@
         }"
       >
         <b-button
-          size="sm"
           class="mr-1"
           variant="success"
         >

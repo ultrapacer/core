@@ -1,6 +1,6 @@
 <template>
   <div
-    class="container-fluid mt-4"
+    class="primary-page"
     style="max-width:60rem"
   >
     <h1 class="h1 d-none d-md-block">
@@ -33,7 +33,7 @@
 <script>
 import api from '@/api'
 import moment from 'moment-timezone'
-import RaceTable from './RaceTable'
+import RaceTable from '../components/RaceTable'
 export default {
   title: 'Races',
   components: {

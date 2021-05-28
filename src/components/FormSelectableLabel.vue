@@ -1,20 +1,18 @@
 <template>
   <div
     role="group"
-    class="input-group mb-2 input-group-sm"
+    class="input-group"
   >
     <b-form-select
       v-model="val"
       class="input-group-prepend input-group-text"
       style="height:auto; width: auto; flex: inherit; background-color: rgb(233, 236, 239)"
       :options="options"
-      size="sm"
       required
-      small
       @change="change"
     />
     <div
-      class="form-control input-group-sm"
+      class="form-control input-group"
       style="height: auto"
     >
       <slot />

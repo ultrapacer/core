@@ -2,8 +2,6 @@
   <b-form-group>
     <b-input-group
       prepend="ID/Path"
-      class="mb-2"
-      size="sm"
     >
       <b-form-input
         v-model="stravaRouteId"
@@ -14,7 +12,6 @@
       <b-button
         variant="success"
         :disabled="!stravaRouteId || isNaN(Number(stravaRouteId))"
-        size="sm"
         @click="getStravaRoute (stravaRouteId)"
       >
         {{ stravaRouteName ? 'Reload' : 'Load' }}

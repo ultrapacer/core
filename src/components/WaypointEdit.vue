@@ -18,8 +18,6 @@
       >
         <b-input-group
           prepend="Name"
-          class="mb-2"
-          size="sm"
         >
           <b-form-input
             v-model="model.name"
@@ -34,8 +32,7 @@
           v-if="model.type != 'start' && model.type != 'finish'"
           prepend="Location"
           :append="$units.dist"
-          class="mb-2"
-          size="sm"
+          class="mt-1"
         >
           <b-form-input
             v-model="model.locUserUnit"
@@ -52,8 +49,7 @@
         </form-tip>
         <b-input-group
           prepend="Type"
-          class="mb-2"
-          size="sm"
+          class="mt-1"
         >
           <b-form-select
             v-model="model.type"
@@ -68,8 +64,7 @@
         </form-tip>
         <b-input-group
           prepend="Visibility"
-          class="mb-2"
-          size="sm"
+          class="mt-1"
         >
           <b-form-select
             v-model="model.tier"
@@ -85,8 +80,7 @@
           v-if="model.type !== 'finish'"
           prepend="Terrain"
           append="% (increase)"
-          class="mb-2"
-          size="sm"
+          class="mt-1"
         >
           <b-form-select
             v-model="model.terrainType"
@@ -122,8 +116,7 @@
         </form-tip>
         <b-input-group
           prepend="Notes"
-          class="mb-2"
-          size="sm"
+          class="mt-1"
         >
           <b-form-textarea
             v-model="model.description"

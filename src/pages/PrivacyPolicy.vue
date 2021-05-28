@@ -1,6 +1,6 @@
 <template>
-  <div class="container-fluid mt-4">
-    <h1 class="h1">
+  <div class="primary-page">
+    <h1 class="d-none d-md-block">
       Privacy Policy of ultraPacer
     </h1>
     <b-card>

@@ -55,16 +55,14 @@
     >
       <b-button
         v-if="isCollapsed(row.item)"
-        size="sm"
-        class="mr-1 tinyButton"
+        class="mr-1"
         @click="expandRow(row.item)"
       >
         &#9660;
       </b-button>
       <b-button
         v-else-if="isCollapseable(row.item)"
-        size="sm"
-        class="mr-1 tinyButton"
+        class="mr-1"
         @click="collapseRow(row.item)"
       >
         &#9650;

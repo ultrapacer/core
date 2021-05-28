@@ -18,11 +18,9 @@
         <b-input-group
           prepend="File"
           class="mb-2"
-          size="sm"
         >
           <b-form-file
             v-model="gpxFile"
-            size="sm"
             placeholder="Choose a GPX file..."
             accept=".gpx"
             no-drop
@@ -44,7 +42,6 @@
         >
           <b-button
             v-if="comparing"
-            size="sm"
             variant="warning"
             @click="stop()"
           >

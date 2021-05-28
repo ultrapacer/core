@@ -1,18 +1,14 @@
 <template>
   <b-input-group
     prepend="Heat"
-    class="mb-2"
-    size="sm"
   >
     <div
-      class="form-control input-group-sm"
+      class="form-control input-group"
       style="height: auto"
     >
       <b-input-group
         prepend="Base"
         append="%"
-        class="mb-2"
-        size="sm"
       >
         <b-form-input
           v-model="base"
@@ -30,8 +26,7 @@
       <b-input-group
         prepend="Max"
         append="%"
-        class="mb-2"
-        size="sm"
+        class="mt-1"
       >
         <b-form-input
           v-model="max"
@@ -52,6 +47,7 @@
           ref="chart"
           :heat-model="value"
           :sun="sun"
+          class="mt-1"
         />
       </div>
     </div>

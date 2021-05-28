@@ -7,7 +7,6 @@
         lg="6"
       >
         <h2
-          class="h2"
           style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
         >
           {{ course.name }}
@@ -28,7 +27,6 @@
             style="text-align:right"
           >
             <b-form-group
-              label-size="sm"
               label="Plan"
               label-cols="3"
               label-cols-lg="2"
@@ -37,7 +35,6 @@
                 v-model="plan"
                 type="number"
                 :options="plansSelect"
-                size="sm"
                 @change="calcPlan"
               />
             </b-form-group>
@@ -54,7 +51,6 @@
                 'Edit the selected pacing plan.'
               "
 
-              size="sm"
               @click="editPlan()"
             >
               <v-icon name="edit" />
@@ -64,7 +60,6 @@
                 'Create a new pacing plan for this course.'
               "
               variant="success"
-              size="sm"
               class="mr-n2"
               @click.prevent="newPlan()"
             >
@@ -81,7 +76,6 @@
             <b-dropdown
               right
               variant="primary"
-              size="sm"
             >
               <template #button-content>
                 <span class="d-none d-md-inline">
@@ -158,7 +152,6 @@
           ref="tables"
           v-model="tableTabIndex"
           content-class="mt-1"
-          small
         >
           <b-tab
             title="Segments"
@@ -360,29 +353,28 @@ import api from '@/api'
 import geo from '@/util/geo'
 import { string2sec } from '../util/time'
 import wputil from '../util/waypoints'
-import CourseEdit from './CourseEdit'
-import CourseCompare from './CourseCompare'
-import CourseShare from './CourseShare'
-import DeleteModal from './DeleteModal'
-import DownloadTrack from './DownloadTrack'
-import SegmentTable from './SegmentTable'
-import WaypointTable from './WaypointTable'
-import PlanDetails from './PlanDetails'
-import PlanEdit from './PlanEdit'
-import WaypointEdit from './WaypointEdit'
+import CourseEdit from '../components/CourseEdit'
+import CourseCompare from '../components/CourseCompare'
+import CourseShare from '../components/CourseShare'
+import DeleteModal from '../components/DeleteModal'
+import DownloadTrack from '../components/DownloadTrack'
+import SegmentTable from '../components/SegmentTable'
+import WaypointTable from '../components/WaypointTable'
+import PlanDetails from '../components/PlanDetails'
+import PlanEdit from '../components/PlanEdit'
+import WaypointEdit from '../components/WaypointEdit'
 import SunCalc from 'suncalc'
 import moment from 'moment-timezone'
-import html2pdf from 'html2pdf.js'
-
 const JSURL = require('@yaska-eu/jsurl2')
+let html2pdf // will lazy load later
 
 export default {
   title: 'Course',
   components: {
     CourseEdit,
     CourseCompare,
-    CourseMap: () => import(/* webpackPrefetch: true */ './CourseMap.vue'),
-    CourseProfile: () => import(/* webpackPrefetch: true */ './CourseProfile.vue'),
+    CourseMap: () => import(/* webpackPrefetch: true */ '../components/CourseMap.vue'),
+    CourseProfile: () => import(/* webpackPrefetch: true */ '../components/CourseProfile.vue'),
     CourseShare,
     DeleteModal,
     DownloadTrack,
@@ -1116,6 +1108,7 @@ export default {
       )
     },
     async print (component) {
+      const t = this.$logger()
       // save devicePixelRatio to restore later, set new one to 4
       // this is for resolution of print
       const oldPixelRatio = window.devicePixelRatio
@@ -1163,7 +1156,12 @@ export default {
         await this.$refs.profile.$refs.profile.update()
         await new Promise(resolve => setTimeout(resolve, 500))
       }
-
+      // lazy load the html2pdf module:
+      if (!html2pdf) {
+        this.$logger('Course|print importing html2pdf')
+        await import(/* webpackPrefetch: true */ 'html2pdf.js')
+          .then(mod => { html2pdf = mod.default })
+      }
       // execute printing:
       this.$nextTick(() => {
         html2pdf()
@@ -1212,6 +1210,7 @@ export default {
             if (component === 'Profile') {
               this.$nextTick(() => { this.$refs.profile.update() })
             }
+            this.$logger(`Course|print ${component}`, t)
           })
       })
     }

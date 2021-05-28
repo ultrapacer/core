@@ -24,7 +24,6 @@
           <b-form-file
             v-if="source.type==='gpx'"
             v-model="gpxFile"
-            size="sm"
             :placeholder="(source) ? source.name : 'Choose a GPX file...'"
             accept=".gpx"
             no-drop
@@ -51,8 +50,7 @@
         <div v-if="courseLoaded === true || model._id">
           <b-input-group
             prepend="Name"
-            class="mb-2"
-            size="sm"
+            class="mt-1"
           >
             <b-form-input
               v-model="model.name"
@@ -65,8 +63,7 @@
           </form-tip>
           <b-input-group
             prepend="Description"
-            class="mb-2"
-            size="sm"
+            class="mt-1"
           >
             <b-form-textarea
               v-model="model.description"
@@ -86,8 +83,7 @@
           </form-date-time>
           <b-form-checkbox
             v-model="model.override.enabled"
-            size="sm"
-            class="mb-2"
+            class="mt-1"
             :unchecked-value="false"
             @change="setDistGainLoss"
           >
@@ -102,8 +98,7 @@
           >
             <b-input-group
               prepend="Distance"
-              class="mb-2"
-              size="sm"
+              class="mt-1"
             >
               <b-form-input
                 v-model="distancef"
@@ -126,8 +121,7 @@
             </form-tip>
             <b-input-group
               prepend="Elevation Gain"
-              class="mb-2"
-              size="sm"
+              class="mt-1"
             >
               <b-form-input
                 v-model="gainf"
@@ -150,8 +144,7 @@
             </form-tip>
             <b-input-group
               prepend="Elevation Loss"
-              class="mb-2"
-              size="sm"
+              class="mt-1"
             >
               <b-form-input
                 v-model="lossf"
@@ -176,8 +169,7 @@
           <b-form-checkbox
             v-model="model.public"
             :value="true"
-            size="sm"
-            class="mb-2"
+            class="mt-1"
             :unchecked-value="false"
           >
             Visible to public
@@ -188,8 +180,7 @@
           <b-input-group
             v-if="model.public && $user.admin"
             prepend="Permalink"
-            class="mb-2"
-            size="sm"
+            class="mt-1"
           >
             <b-form-input
               v-model="model.link"

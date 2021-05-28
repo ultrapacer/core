@@ -17,13 +17,10 @@
       >
         <b-input-group
           prepend="Name"
-          class="mb-2"
-          size="sm"
         >
           <b-form-input
             v-model="model.name"
             type="text"
-            size="sm"
             required
           />
         </b-input-group>
@@ -32,14 +29,12 @@
         </form-tip>
         <b-input-group
           prepend="Pacing Method"
-          class="mb-2"
-          size="sm"
+          class="mt-1"
         >
           <b-form-select
             v-model="model.pacingMethod"
             type="number"
             :options="pacingMethods"
-            size="sm"
             required
           />
         </b-input-group>
@@ -48,8 +43,7 @@
         </form-tip>
         <b-input-group
           :prepend="targetLabel"
-          class="mb-2"
-          size="sm"
+          class="mt-1"
         >
           <b-form-input
             ref="planformtimeinput"
@@ -58,7 +52,6 @@
             type="text"
             min="0"
             :placeholder="targetPlaceholder"
-            size="sm"
             required
             @change="checkTargetFormat"
           />
@@ -68,8 +61,7 @@
         </form-tip>
         <b-input-group
           prepend="Aid Station Delay"
-          class="mb-2"
-          size="sm"
+          class="mt-1"
         >
           <b-form-input
             v-model="model.waypointDelayF"
@@ -79,7 +71,6 @@
             placeholder="mm:ss"
             :formatter="format_hhmm"
             lazy-formatter
-            size="sm"
             required
           />
         </b-input-group>
@@ -89,11 +80,10 @@
         </form-tip>
         <b-form-group
           v-if="Boolean(course.eventStart)"
-          :class="customStart ? 'mb-0' : 'mb-2'"
+          class="mt-1 mb-0"
         >
           <b-form-radio
             v-model="customStart"
-            size="sm"
             :value="false"
             @input="customStartDefaults"
           >
@@ -101,7 +91,6 @@
           </b-form-radio>
           <b-form-radio
             v-model="customStart"
-            size="sm"
             :value="true"
             @input="customStartDefaults"
           >
@@ -124,8 +113,7 @@
         <b-form-checkbox
           v-model="enableDrift"
           :value="true"
-          size="sm"
-          class="mb-2"
+          class="mt-1"
           :unchecked-value="false"
         >
           Apply pace drift
@@ -136,7 +124,7 @@
         <form-drift
           v-if="enableDrift"
           v-model="model.drift"
-          class="mb-0 pl-3"
+          class="mt-1 pl-3"
           :show-tips="showTips"
           :course-distance="course.distance"
         />
@@ -147,8 +135,7 @@
           <b-form-checkbox
             v-model="enableHeat"
             :value="true"
-            size="sm"
-            class="mb-2"
+            class="mt-1"
             :unchecked-value="false"
           >
             Apply heat factor
@@ -160,20 +147,18 @@
           <form-heat
             v-if="enableHeat"
             v-model="model.heatModel"
-            class="mb-0 pl-3"
+            class="mt-1 pl-3"
             :show-tips="showTips"
             :sun="event.sun"
           />
         </b-form-group>
         <b-input-group
           prepend="Notes"
-          class="mb-2"
-          size="sm"
+          class="mt-1"
         >
           <b-form-textarea
             v-model="model.description"
             rows="2"
-            size="sm"
           />
         </b-input-group>
         <form-tip v-if="showTips">

@@ -1,7 +1,6 @@
 <template>
   <div
-    class="container-fluid mt-4"
-    style="max-width:50rem"
+    class="primary-page container-fluid mt-4"
   >
     <h1 class="h1 d-none d-md-block">
       Documentation
