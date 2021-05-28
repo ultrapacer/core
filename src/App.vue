@@ -323,9 +323,9 @@ export default {
 .table-xs td, .table-xs th {
   font-size: 90%;
   line-height: 1.25;
-  .btn {
-    font-size: 80%;
-  }
+}
+.collapse-button {
+  font-size: 80% !important;
 }
 .coursetitlecolumn {
   text-overflow: ellipsis;
@@ -340,6 +340,11 @@ export default {
   }
   @media (min-width: 992px) {
     max-width: 400px
+  }
+}
+.show-all-cells {
+  th, td {
+    display: table-cell !important;
   }
 }
 </style>

@@ -55,14 +55,14 @@
     >
       <b-button
         v-if="isCollapsed(row.item)"
-        class="mr-1"
+        class="collapse-button mr-1"
         @click="expandRow(row.item)"
       >
         &#9660;
       </b-button>
       <b-button
         v-else-if="isCollapseable(row.item)"
-        class="mr-1"
+        class="collapse-button mr-1"
         @click="collapseRow(row.item)"
       >
         &#9650;
@@ -600,10 +600,5 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-}
-.show-all-cells {
-  th, td {
-    display: table-cell !important;
-  }
 }
 </style>

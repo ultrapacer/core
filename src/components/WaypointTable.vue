@@ -10,10 +10,16 @@
     small
     head-variant="light"
     no-border-collapse
-    :class="`mb-0 ${editing ? '' : ' table-xs'}${printing ? ' show-all-cells' : ''}`"
+    :class="`mb-0 table-xs${printing ? ' show-all-cells' : ''}`"
     :sticky-header="tableHeight ? tableHeight + 'px' : false"
     @row-clicked="toggleRowDetails"
   >
+    <template #head(location)>
+      Loc<span class="d-none d-xl-inline">ation</span> [{{ $units.dist }}]
+    </template>
+    <template #head(elevation)>
+      Elev<span class="d-none d-xl-inline">ation</span> [{{ $units.alt }}]
+    </template>
     <template #cell(actions)="row">
       <b-button
         class="mr-1"
@@ -133,8 +139,7 @@ export default {
           formatter: (value, key, item) => {
             return this.$waypointTypes[this.getWaypoint(item, key)]
           },
-          thClass: 'd-none d-md-table-cell',
-          tdClass: 'd-none d-md-table-cell'
+          class: 'd-none d-md-table-cell'
         },
         {
           key: 'location',
@@ -142,8 +147,7 @@ export default {
           formatter: (value, key, item) => {
             return this.$units.distf(this.getWaypoint(item, key), 2)
           },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          class: 'text-right'
         },
         {
           key: 'elevation',
@@ -152,8 +156,7 @@ export default {
             return this.$units.altf(this.getWaypoint(item, key), 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
-          thClass: 'd-none d-sm-table-cell text-right',
-          tdClass: 'd-none d-sm-table-cell text-right'
+          class: 'd-none d-sm-table-cell text-right'
         }
       ]
       if (this.showTerrainType && this.editing) {
@@ -174,7 +177,7 @@ export default {
             }
             return v
           },
-          class: 'd-none d-xl-table-cell text-center'
+          class: 'd-none d-lg-table-cell text-right'
         })
       }
       if (this.showTerrainFactor && this.editing) {
@@ -230,8 +233,7 @@ export default {
               return ''
             }
           },
-          thClass: 'text-right',
-          tdClass: 'text-right'
+          class: 'text-right'
         })
       }
       return f
@@ -290,10 +292,5 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-}
-.show-all-cells {
-  th, td {
-    display: table-cell !important;
-  }
 }
 </style>
