@@ -1201,6 +1201,16 @@ export default {
                 0.6
               )
 
+              // add URL
+              pdf.setFontSize(10)
+              pdf.setTextColor(128, 128, 128)
+              pdf.text(
+                window.location.href,
+                pdf.internal.pageSize.getWidth() - 0.5,
+                pdf.internal.pageSize.getHeight() - 0.32,
+                'right'
+              )
+
               // add logo to top right:
               pdf.addImage(logo, 'JPEG', pdf.internal.pageSize.getWidth() - 1, 0.2, 0.5, 0.5)
             }
