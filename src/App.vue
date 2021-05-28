@@ -298,11 +298,6 @@ export default {
   height: auto;
   padding: 0.05rem 0.3rem;
 }
-//.table-sm th {
-//  font-size: 0.9rem;
-//  padding-left: 0.15rem;
-//  padding-right: 0.15rem;
-//}
 .segment-table .b-table-details td {
   padding-top: 0 !important;
   padding-bottom: 0 !important
@@ -311,7 +306,6 @@ export default {
   padding-top: 56px;
 }
 .form-tip {
-  //margin-top: -0.4rem;
   color: #5e8351;
   margin-bottom: 0.5rem;
 }
@@ -328,9 +322,6 @@ export default {
   font-size: 80% !important;
 }
 .coursetitlecolumn {
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
   max-width: 150px;
   @media (min-width: 576px) {
     max-width: 200px;
@@ -346,5 +337,11 @@ export default {
   th, td {
     display: table-cell !important;
   }
+}
+th {
+  white-space: nowrap;
+}
+.mw-7rem {
+  max-width: 7rem;
 }
 </style>

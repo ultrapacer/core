@@ -126,7 +126,7 @@ export default {
       courseEditor: false,
       fields: [
         {
-          class: 'coursetitlecolumn',
+          class: 'text-truncate coursetitlecolumn',
           key: 'name',
           label: 'Name',
           sortable: true
@@ -144,8 +144,7 @@ export default {
           formatter: (value, key, item) => {
             return this.$units.altf(value, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
-          thClass: 'd-none d-sm-table-cell',
-          tdClass: 'd-none d-sm-table-cell'
+          class: 'd-none d-sm-table-cell'
         },
         {
           key: 'loss',

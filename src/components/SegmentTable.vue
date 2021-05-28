@@ -311,7 +311,7 @@ export default {
         f.unshift({
           key: 'name',
           label: 'End',
-          class: 'ellipsis',
+          class: 'text-truncate mw-7rem',
           formatter: (value, key, item) => {
             return this.rollup(item, 'waypoint2.name', 'last')
           }
@@ -321,7 +321,7 @@ export default {
         if (this.mode === 'segments') {
           f.push({
             key: 'time',
-            label: 'Moving Time',
+            label: 'Time',
             formatter: (value, key, item) => {
               return timeUtil.sec2string(this.rollup(item, key, 'sum'), '[h]:m:ss')
             }
@@ -593,12 +593,3 @@ export default {
   }
 }
 </script>
-
-<style>
-.ellipsis {
-  max-width:7.5rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-</style>

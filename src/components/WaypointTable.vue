@@ -14,12 +14,6 @@
     :sticky-header="tableHeight ? tableHeight + 'px' : false"
     @row-clicked="toggleRowDetails"
   >
-    <template #head(location)>
-      Loc<span class="d-none d-xl-inline">ation</span> [{{ $units.dist }}]
-    </template>
-    <template #head(elevation)>
-      Elev<span class="d-none d-xl-inline">ation</span> [{{ $units.alt }}]
-    </template>
     <template #cell(actions)="row">
       <b-button
         class="mr-1"
@@ -129,7 +123,7 @@ export default {
       const f = [
         {
           key: 'name',
-          class: 'ellipsis',
+          class: 'text-truncate mw-7rem',
           formatter: (value, key, item) => {
             return this.getWaypoint(item, key)
           }
@@ -143,7 +137,7 @@ export default {
         },
         {
           key: 'location',
-          label: 'Location [' + this.$units.dist + ']',
+          label: `Loc. [${this.$units.dist}]`,
           formatter: (value, key, item) => {
             return this.$units.distf(this.getWaypoint(item, key), 2)
           },
@@ -151,7 +145,7 @@ export default {
         },
         {
           key: 'elevation',
-          label: 'Elevation [' + this.$units.alt + ']',
+          label: `Elev. [${this.$units.alt}]`,
           formatter: (value, key, item) => {
             return this.$units.altf(this.getWaypoint(item, key), 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -286,11 +280,3 @@ export default {
   }
 }
 </script>
-<style>
-.ellipsis {
-  max-width:7.5rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-</style>
