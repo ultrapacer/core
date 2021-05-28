@@ -276,6 +276,7 @@
       </b-col>
     </b-row>
     <course-edit
+      v-if="owner"
       ref="courseEdit"
       @refresh="reloadCourse"
       @delete="deleteCourse"
@@ -288,7 +289,7 @@
       @delete="deletePlan"
     />
     <waypoint-edit
-      v-if="editing"
+      v-if="owner && editing"
       ref="wpEdit"
       :course="course"
       :points="points"
@@ -301,6 +302,7 @@
       ref="delModal"
     />
     <download-track
+      v-if="points.length"
       ref="download"
       :course="course"
       :plan="plan"
@@ -310,6 +312,7 @@
       :update-fn="updatePacing"
     />
     <course-compare
+      v-if="planAssigned"
       ref="courseCompare"
       :comparing="comparing"
       @stop="stopCompare"
@@ -353,16 +356,12 @@ import api from '@/api'
 import geo from '@/util/geo'
 import { string2sec } from '../util/time'
 import wputil from '../util/waypoints'
-import CourseEdit from '../components/CourseEdit'
-import CourseCompare from '../components/CourseCompare'
 import CourseShare from '../components/CourseShare'
 import DeleteModal from '../components/DeleteModal'
-import DownloadTrack from '../components/DownloadTrack'
 import SegmentTable from '../components/SegmentTable'
 import WaypointTable from '../components/WaypointTable'
 import PlanDetails from '../components/PlanDetails'
 import PlanEdit from '../components/PlanEdit'
-import WaypointEdit from '../components/WaypointEdit'
 import SunCalc from 'suncalc'
 import moment from 'moment-timezone'
 const JSURL = require('@yaska-eu/jsurl2')
@@ -371,18 +370,18 @@ let html2pdf // will lazy load later
 export default {
   title: 'Course',
   components: {
-    CourseEdit,
-    CourseCompare,
+    CourseEdit: () => import(/* webpackPrefetch: true */ '../components/CourseEdit.vue'),
+    CourseCompare: () => import(/* webpackPrefetch: true */ '../components/CourseCompare.vue'),
     CourseMap: () => import(/* webpackPrefetch: true */ '../components/CourseMap.vue'),
     CourseProfile: () => import(/* webpackPrefetch: true */ '../components/CourseProfile.vue'),
     CourseShare,
     DeleteModal,
-    DownloadTrack,
+    DownloadTrack: () => import(/* webpackPrefetch: true */ '../components/DownloadTrack.vue'),
     SegmentTable,
     WaypointTable,
     PlanDetails,
     PlanEdit,
-    WaypointEdit
+    WaypointEdit: () => import(/* webpackPrefetch: true */ '../components/WaypointEdit.vue')
   },
   filters: {
     commas (val) {
