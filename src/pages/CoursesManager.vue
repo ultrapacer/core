@@ -47,51 +47,46 @@
             &nbsp;
           </template>
           <template #cell(actions)="row">
-            <b-button
-              v-if="$user._id==row.item._user"
-              class="mr-1"
-              @click="editCourse(row.item)"
-            >
-              <v-icon name="edit" />
-              <span class="d-none d-md-inline">Edit</span>
-            </b-button>
-            <b-button
-              class="mr-1"
-              @click="deleteCourse(row.item)"
-            >
-              <v-icon name="trash" />
-              <span
+            <div>
+              <b-button
                 v-if="$user._id==row.item._user"
-                class="d-none d-md-inline"
+                class="mr-1"
+                @click="editCourse(row.item)"
               >
-                Del.
-              </span>
-              <span
-                v-else
-                class="d-none d-md-inline"
-              >Remove</span>
-            </b-button>
-            <router-link
-              :to="row.item.link ? {
-                name: 'Race',
-                params: {
-                  permalink: row.item.link
-                }
-              } : {
-                name: 'Course',
-                params: {
-                  course: row.item._id
-                }
-              }"
-            >
+                <v-icon name="edit" />
+                <span class="d-none d-md-inline">Edit</span>
+              </b-button>
               <b-button
                 class="mr-1"
-                variant="success"
+                @click="deleteCourse(row.item)"
               >
-                <v-icon name="arrow-right" />
-                <span class="d-none d-md-inline">Go!</span>
+                <v-icon name="trash" />
+                <span class="d-none d-md-inline">
+                  {{ $user._id==row.item._user ? 'Del' : 'Remove' }}
+                </span>
               </b-button>
-            </router-link>
+              <router-link
+                :to="row.item.link ? {
+                  name: 'Race',
+                  params: {
+                    permalink: row.item.link
+                  }
+                } : {
+                  name: 'Course',
+                  params: {
+                    course: row.item._id
+                  }
+                }"
+              >
+                <b-button
+                  class="mr-1"
+                  variant="success"
+                >
+                  <v-icon name="arrow-right" />
+                  <span class="d-none d-md-inline">Go!</span>
+                </b-button>
+              </router-link>
+            </div>
           </template>
         </b-table>
       </b-col>

@@ -155,12 +155,12 @@ function calcSegments (p, breaks, pacing) {
         if (hasTOD) {
           const startTod = (i < p.length - 1)
             ? interp(
-                p[i].loc,
-                p[i + 1].loc,
-                p[i].tod,
-                p[i + 1].tod,
-                s[j].start
-              )
+              p[i].loc,
+              p[i + 1].loc,
+              p[i].tod,
+              p[i + 1].tod,
+              s[j].start
+            )
             : p[i].tod
           factors.hF = nF.hF([p[i].tod, startTod], pacing.heatModel)
           factors.dark = nF.dark([p[i].tod, startTod], factors.tF, pacing.sun)

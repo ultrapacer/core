@@ -28,7 +28,7 @@
         :if="focusLL.length"
         :lat-lngs="focusLL"
         :weight="4"
-        :color="this.$colors.red2"
+        :color="$colors.red2"
       />
       <l-circle-marker
         v-for="waypoint in waypoints"

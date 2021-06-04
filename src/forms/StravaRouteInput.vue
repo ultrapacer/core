@@ -52,7 +52,7 @@
       >
         Distance:
       </b-col>
-      <b-col>{{ stravaRouteDistance }} {{ this.$units.dist }}</b-col>
+      <b-col>{{ stravaRouteDistance }} {{ $units.dist }}</b-col>
     </b-row>
     <b-row v-if="stravaRouteId">
       <b-col
