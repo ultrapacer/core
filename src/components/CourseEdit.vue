@@ -320,6 +320,7 @@ export default {
       this.newPointsFlag = false
       this.showTips = false
       this.moment = null
+      this.gpxFileInvalidMsg = ''
       if (course._id) {
         this.model = Object.assign({}, course)
         this.prevDist = course.distance
@@ -525,7 +526,7 @@ export default {
           geo.addLoc(this.gpxPoints)
           this.gpxPoints = geo.cleanUp(this.gpxPoints)
           this.stats = geo.calcStats(this.gpxPoints, true)
-          if (this.stats.gain === 0) {
+          if (this.$config.requireGPXElevation && this.stats.gain === 0) {
             this.gpxFileInvalidMsg = 'GPX file does not contain elevation data.'
             this.$status.processing = false
             return

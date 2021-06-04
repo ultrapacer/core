@@ -126,6 +126,9 @@ Vue.prototype.$units = {
     return (round === null) ? v : v.toFixed(round)
   }
 }
+Vue.prototype.$config = Vue.observable({
+  requireGPXElevation: true
+})
 Vue.use(LoggerPlugin)
 
 Vue.config.productionTip = false
