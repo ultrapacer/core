@@ -10,7 +10,6 @@ yarn-error.log*
 /test/e2e/reports/
 selenium-debug.log
 /uploads/
-package-lock.json
 desktop.ini
 
 # Editor directories and files
