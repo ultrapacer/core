@@ -134,7 +134,7 @@ export default {
   },
   computed: {
     hasTime () {
-      return this.event.start && this.plan
+      return Boolean(this.event.start && this.plan && Object.keys(this.plan).length)
     }
   },
   methods: {
