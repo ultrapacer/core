@@ -100,7 +100,7 @@
             Optional: specify a different date/time for this Plan.
           </form-tip>
         </b-form-group>
-        <form-date-time
+        <date-time-input
           v-if="customStart || !Boolean(course.eventStart)"
           v-model="moment"
           :class="(Boolean(course.eventStart)) ? 'pl-3' : ''"
@@ -109,7 +109,7 @@
           <template #date-tip>
             Optional: start date of your activity; many pacing factors will only be applied if a date and time are specified.
           </template>
-        </form-date-time>
+        </date-time-input>
         <b-form-checkbox
           v-model="enableDrift"
           :value="true"
@@ -121,7 +121,7 @@
         <form-tip v-if="showTips && !enableDrift">
           Optional: enable to add a linear change in speed throughout the race.
         </form-tip>
-        <form-drift
+        <drift-input
           v-if="enableDrift"
           v-model="model.drift"
           class="mt-1 pl-3"
@@ -144,7 +144,7 @@
             Optional: pace modifier for heat and sun exposure. Requires date
             and time to be specified.
           </form-tip>
-          <form-heat
+          <heat-input
             v-if="enableHeat"
             v-model="model.heatModel"
             class="mt-1 pl-3"
@@ -231,17 +231,17 @@
 import api from '@/api'
 import moment from 'moment-timezone'
 import { sec2string, string2sec } from '../util/time'
-import FormDateTime from './FormDateTime'
-import FormDrift from './FormDrift'
-import FormHeat from './FormHeat'
-import FormTip from './FormTip'
+import DateTimeInput from '../forms/DateTimeInput'
+import DriftInput from '../forms/DriftInput'
+import FormTip from '../forms/FormTip'
+import HeatInput from '../forms/HeatInput'
 import HelpDoc from '@/docs/plan.md'
 export default {
   components: {
-    FormDateTime,
-    FormDrift,
-    FormHeat,
+    DateTimeInput,
+    DriftInput,
     FormTip,
+    HeatInput,
     HelpDoc
   },
   filters: {

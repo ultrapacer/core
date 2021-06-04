@@ -16,7 +16,7 @@
         style="min-height: 100px"
         @submit.prevent=""
       >
-        <form-selectable-label
+        <selectable-label-input
           v-model="source.type"
           :options="sourceOptions"
           @input="sourceChange"
@@ -37,7 +37,7 @@
           <form-tip v-if="source.type==='gpx' && showTips">
             Required: ".gpx" format file exported from a GPS track or route builder.
           </form-tip>
-          <form-course-strava
+          <strava-route-input
             v-if="source.type==='strava-route'"
             v-model="source"
             :show-tips="showTips"
@@ -45,7 +45,7 @@
             @loadGPX="loadGPX"
             @change="courseLoaded=false"
           />
-        </form-selectable-label>
+        </selectable-label-input>
 
         <div v-if="courseLoaded === true || model._id">
           <b-input-group
@@ -73,14 +73,14 @@
           <form-tip v-if="showTips">
             Optional: description for your course or race.
           </form-tip>
-          <form-date-time
+          <date-time-input
             v-model="moment"
             :show-tips="showTips"
           >
             <template #date-tip>
               Optional: use for organized races. Plans made for this course can set thier own times.
             </template>
-          </form-date-time>
+          </date-time-input>
           <b-form-checkbox
             v-model="model.override.enabled"
             class="mt-1"
@@ -248,22 +248,22 @@
 <script>
 import api from '@/api'
 import geo from '@/util/geo'
-import FormCourseStrava from './FormCourseStrava'
-import FormDateTime from './FormDateTime'
-import FormSelectableLabel from './FormSelectableLabel'
-import FormTip from './FormTip'
+import DateTimeInput from '../forms/DateTimeInput'
+import FormTip from '../forms/FormTip'
 import HelpDoc from '@/docs/course.md'
+import SelectableLabelInput from '../forms/SelectableLabelInput'
+import StravaRouteInput from '../forms/StravaRouteInput'
 import moment from 'moment-timezone'
 import wputil from '@/util/waypoints'
 import { round } from '@/util/math'
 const gpxParse = require('gpx-parse')
 export default {
   components: {
+    DateTimeInput,
+    FormTip,
     HelpDoc,
-    FormCourseStrava,
-    FormDateTime,
-    FormSelectableLabel,
-    FormTip
+    StravaRouteInput,
+    SelectableLabelInput
   },
   data () {
     return {

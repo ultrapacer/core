@@ -181,7 +181,7 @@
 
 <script>
 import api from '@/api'
-import FormTip from './FormTip'
+import FormTip from '@/forms/FormTip'
 import HelpDoc from '@/docs/waypoint.md'
 import wputil from '../util/waypoints'
 export default {

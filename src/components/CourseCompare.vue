@@ -85,7 +85,7 @@
 <script>
 import geo from '@/util/geo'
 import moment from 'moment-timezone'
-import FormTip from './FormTip'
+import FormTip from '../forms/FormTip'
 const gpxParse = require('gpx-parse')
 export default {
   components: {

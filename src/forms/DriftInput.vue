@@ -1,6 +1,6 @@
 <template>
   <div>
-    <form-selectable-label
+    <selectable-label-input
       v-model="driftModel"
       :options="driftModels"
       @input="update"
@@ -91,7 +91,7 @@
           />
         </div>
       </div>
-    </form-selectable-label>
+    </selectable-label-input>
     <form-tip v-if="showTips && driftModel===1">
       Optional: linear change in speed throughout race. For
       example, 10% means you begin the race 10% faster than you finish.
@@ -107,15 +107,15 @@
 </template>
 
 <script>
-import DriftChart from './DriftChart.vue'
-import FormSelectableLabel from './FormSelectableLabel'
+import DriftChart from '../components/DriftChart.vue'
 import FormTip from './FormTip'
+import SelectableLabelInput from './SelectableLabelInput'
 import { adjust } from '../util/driftFactor.js'
 export default {
   components: {
     DriftChart,
-    FormSelectableLabel,
-    FormTip
+    FormTip,
+    SelectableLabelInput
   },
   props: {
     value: {

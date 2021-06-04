@@ -56,7 +56,7 @@
 
 <script>
 import { round } from '@/util/math'
-import HeatChart from './HeatChart.vue'
+import HeatChart from '../components/HeatChart.vue'
 import FormTip from './FormTip'
 export default {
   components: {
