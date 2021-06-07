@@ -100,6 +100,7 @@
                 <v-icon name="edit" />  Modify Course
               </b-dropdown-item>
               <b-dropdown-item
+                v-if="!owner"
                 @click="emailOwner"
               >
                 <v-icon name="envelope" />  Email {{ course.link ? 'Race' : 'Course' }} Owner

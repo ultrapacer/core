@@ -85,6 +85,9 @@
 
 <script>
 import api from '@/api'
+function capitalize (s) {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
 export default {
   props: {
     userId: {
@@ -126,14 +129,21 @@ export default {
     async send () {
       if (this.$status.processing) { return }
       this.$status.processing = true
-      await api.emailUser(
-        this.userId,
-        {
-          subject: `ultraPacer | ${this.subject}`,
-          text: this.$refs.message.textContent,
-          html: this.$refs.message.getInnerHTML(),
-          replyTo: this.replyTo
-        })
+      try {
+        await api.emailUser(
+          this.userId,
+          {
+            subject: `ultraPacer | ${this.subject}`,
+            text: this.$refs.message.textContent,
+            html: this.$refs.message.getInnerHTML(),
+            replyTo: this.replyTo
+          })
+        this.$ga.event(capitalize(this.type), 'email', this.subject)
+      } catch (error) {
+        const exception = error.message || error
+        this.$ga.exception(exception)
+        console.log(exception)
+      }
       this.$status.processing = false
       this.$refs.modal.hide()
     },
