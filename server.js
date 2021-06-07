@@ -21,7 +21,9 @@ const keynames = [
   'AUTH0_AUDIENCE',
   'STRAVA_CLIENT_ID',
   'STRAVA_CLIENT_SECRET',
-  'STRAVA_REFRESH_TOKEN'
+  'STRAVA_REFRESH_TOKEN',
+  'SMTP_USERNAME',
+  'SMTP_PASSWORD'
 ]
 try {
   keys = require('./config/keys')
@@ -51,6 +53,7 @@ try {
 
 function startUp () {
   const strava = require('./server/routes/strava')
+  const email = require('./server/routes/email')
   // connect to the database:
   mongoose.Promise = global.Promise
   mongoose.set('useFindAndModify', false)
@@ -84,6 +87,7 @@ function startUp () {
   app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes)
   app.use('/api/waypoint', checkJwt, waypointRoutes)
   app.use('/api/plan', checkJwt, planRoutes)
+  app.use('/api/email', checkJwt, email)
   app.use('/api/strava', strava)
 
   // unauthenticated api routes:

@@ -6,7 +6,24 @@
     <h1 class="h1 d-none d-md-block">
       Settings{{ $user.admin ? ' [Admin]' : '' }}
     </h1>
-    <b-card ref="settings">
+    <b-card>
+      <h4>User Information</h4>
+      <b-input-group
+        prepend="Email"
+      >
+        <b-form-input
+          v-model="$auth.profile.email"
+          type="email"
+          disabled
+          style="background-color:white"
+        />
+      </b-input-group>
+    </b-card>
+    <b-card
+      ref="settings"
+      class="mt-2"
+    >
+      <h4>User Settings</h4>
       <form @submit.prevent="saveSettings">
         <b-form-group label="Distance Units">
           <b-form-select

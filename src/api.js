@@ -132,5 +132,8 @@ export default {
   getStravaRouteGPX (id) {
     // return gpx file for Strava route ID
     return this.execute('get', `/api/strava/route/${id}/gpx`)
+  },
+  emailUser (id, data) {
+    return this.executeAuth('post', `/api/email/user/${id}`, data)
   }
 }

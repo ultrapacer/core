@@ -99,6 +99,11 @@
               >
                 <v-icon name="edit" />  Modify Course
               </b-dropdown-item>
+              <b-dropdown-item
+                @click="emailOwner"
+              >
+                <v-icon name="envelope" />  Email {{ course.link ? 'Race' : 'Course' }} Owner
+              </b-dropdown-item>
               <b-dropdown-item @click="download()">
                 <v-icon name="download" />
                 Download GPX/TCX Files
@@ -323,6 +328,14 @@
       :plan="plan"
       @setPublic="course.public=true"
     />
+    <email-user
+      v-if="$user.isAuthenticated && points.length"
+      ref="emailOwner"
+      :user-id="course._user"
+      type="course"
+      :subject="course.name"
+      :url="url"
+    />
     <vue-headful
       v-if="course.name"
       :description="description"
@@ -377,6 +390,7 @@ export default {
     CourseShare,
     DeleteModal,
     DownloadTrack: () => import(/* webpackPrefetch: true */ '../components/DownloadTrack.vue'),
+    EmailUser: () => import(/* webpackPrefetch: true */ '../components/EmailUser.vue'),
     SegmentTable,
     WaypointTable,
     PlanDetails,
@@ -413,7 +427,8 @@ export default {
       visibleWaypoints: [],
       showMenu: false,
       updatingWaypointTimeout: null,
-      updatingWaypointTimeoutID: null
+      updatingWaypointTimeoutID: null,
+      url: ''
     }
   },
   computed: {
@@ -606,6 +621,13 @@ export default {
           this.course = await api.getCourse(this.$route.params.course, 'course')
         }
         t = this.$logger('Course|api.getCourse', t)
+
+        if (this.course.link) {
+          this.url = window.location.host + this.$router.resolve({ name: 'Race', params: { permalink: this.course.link } }).href
+        } else if (this.course._id) {
+          this.url = window.location.host + this.$router.resolve({ name: 'Course', params: { course: this.course._id } }).href
+        }
+
         this.refreshVisibleWaypoints()
         await this.getPoints()
         this.$ga.event('Course', 'view', this.publicName)
@@ -641,6 +663,15 @@ export default {
           this.$logger('Course|created: showing plan from URL')
           this.$refs.planEdit.show(p)
         }
+      }
+      if (this.$route.query.after) {
+        const q = { ...this.$route.query }
+        const after = this.$route.query.after
+        delete q.after
+        this.$router.replace({ query: q })
+        setTimeout(() => {
+          this[after]()
+        }, 1000)
       }
       this.$logger('Course|initialize', t)
     },
@@ -1231,8 +1262,17 @@ export default {
             this.$logger(`Course|print ${component}`, t)
           })
       })
+    },
+    async emailOwner () {
+      if (this.$user.isAuthenticated) {
+        this.$refs.emailOwner.show()
+      } else {
+        const q = { ...this.$router.currentRoute.query }
+        q.after = 'emailOwner'
+        this.$router.replace({ query: q })
+        this.$parent.login()
+      }
     }
-
   }
 }
 </script>

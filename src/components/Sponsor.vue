@@ -180,37 +180,43 @@ export default {
         this.scrolling = setting.scrolling
 
         // wait until the ref is created before enabling the sponsor info
-        this.checker = setInterval(() => {
-          if (
-            this.$parent.$refs.routerView &&
+        if (!this.checker) {
+          this.checker = setInterval(() => {
+            if (
+              this.$parent.$refs.routerView &&
             (
               this.element === null ||
               this.$parent.$refs.routerView.$refs[this.element]
             ) && (
-              this.$parent.$refs.routerView.initializing === undefined ||
+                this.$parent.$refs.routerView.initializing === undefined ||
               !this.$parent.$refs.routerView.initializing
-            )
-          ) {
-            this.$logger('Sponsor|checker setting watched element')
-            this.enabled = true
-            clearInterval(this.checker)
-            if (this.element === null) {
-              this.el = this.$parent.$refs.routerView.$el
-            } else if (this.$parent.$refs.routerView.$refs[this.element].$el) {
-              this.el = this.$parent.$refs.routerView.$refs[this.element].$el
-            } else {
-              this.el = this.$parent.$refs.routerView.$refs[this.element]
-            }
-            this.addListeners()
-            this.checker2 = setInterval(() => {
-              if (!this.el.clientHeight) {
-                this.$logger('Sponsor|checker2 watched element removed, retrying')
-                clearInterval(this.checker2)
-                this.setUp()
+              )
+            ) {
+              this.$logger('Sponsor|checker setting watched element')
+              this.enabled = true
+              clearInterval(this.checker)
+              this.checker = null
+              if (this.element === null) {
+                this.el = this.$parent.$refs.routerView.$el
+              } else if (this.$parent.$refs.routerView.$refs[this.element].$el) {
+                this.el = this.$parent.$refs.routerView.$refs[this.element].$el
+              } else {
+                this.el = this.$parent.$refs.routerView.$refs[this.element]
               }
-            }, 1000)
-          }
-        }, 100)
+              this.addListeners()
+              if (!this.checker2) {
+                this.checker2 = setInterval(() => {
+                  if (!this.el.clientHeight) {
+                    this.$logger('Sponsor|checker2 watched element removed, retrying')
+                    clearInterval(this.checker2)
+                    this.checker2 = null
+                    this.setUp()
+                  }
+                }, 1000)
+              }
+            }
+          }, 100)
+        }
       } else {
         this.enabled = false
       }

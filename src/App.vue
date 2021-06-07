@@ -165,32 +165,15 @@ export default {
   },
   methods: {
     login () {
-      // this is kind of a hack for temp plans to go back to that
-      // location after login:
+      // make login return to current page
       const r = this.$router.currentRoute
-      if (
-        (r.name === 'Course' || r.name === 'Race') &&
-        Object.keys(r.query)[0] === 'plan'
-      ) {
-        const route = {
-          name: 'Course',
-          params: {
-            course: r.params.course
-          },
-          query: {
-            plan: r.query.plan
-          }
+      this.$auth.login({
+        route: {
+          name: r.name,
+          params: r.params,
+          query: r.query
         }
-        if (r.params.permalink) {
-          route.name = 'Race'
-          route.params.permalink = r.params.permalink
-        }
-        this.$auth.login({
-          route: route
-        })
-      } else {
-        this.$auth.login()
-      }
+      })
       this.$ga.event('User', 'login')
     },
     logout () {
