@@ -108,6 +108,7 @@ export default {
     mysource: function () {
       return {
         type: 'strava-route',
+        alt: 'strava-route',
         id: this.stravaRouteId,
         last_modified: this.stravaRouteDate,
         name: this.stravaRouteName

@@ -19,6 +19,7 @@ const keynames = [
   'MONGODB',
   'AUTH0_DOMAIN',
   'AUTH0_AUDIENCE',
+  'GOOGLE_API_KEY',
   'STRAVA_CLIENT_ID',
   'STRAVA_CLIENT_SECRET',
   'STRAVA_REFRESH_TOKEN',
@@ -52,8 +53,9 @@ try {
 }
 
 function startUp () {
-  const strava = require('./server/routes/strava')
+  const elevation = require('./server/routes/elevation')
   const email = require('./server/routes/email')
+  const strava = require('./server/routes/strava')
   // connect to the database:
   mongoose.Promise = global.Promise
   mongoose.set('useFindAndModify', false)
@@ -87,6 +89,7 @@ function startUp () {
   app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes)
   app.use('/api/waypoint', checkJwt, waypointRoutes)
   app.use('/api/plan', checkJwt, planRoutes)
+  app.use('/api/elevation', elevation)
   app.use('/api/email', checkJwt, email)
   app.use('/api/strava', strava)
 

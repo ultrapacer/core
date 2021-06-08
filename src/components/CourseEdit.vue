@@ -274,9 +274,7 @@ export default {
           distUnit: 'mi',
           elevUnit: 'ft'
         },
-        source: {
-          type: 'gpx'
-        }
+        source: { type: 'gpx' }
       },
       distUnits: [
         { value: 'mi', text: 'mi' },
@@ -299,9 +297,7 @@ export default {
       distancef: null,
       gainf: null,
       lossf: null,
-      source: {
-        type: 'gpx'
-      },
+      source: { type: 'gpx' },
       sourceOptions: [
         { value: 'gpx', text: 'GPX File' },
         { value: 'strava-route', text: 'Strava Route' }
@@ -491,7 +487,8 @@ export default {
           this.$logger('CourseEdit|GPX file read', t)
           const source = {
             type: 'gpx',
-            name: this.gpxFile.name.split('.')[0]
+            name: this.gpxFile.name.split('.')[0],
+            alt: 'gpx'
           }
           this.loadGPX(e.target.result, source)
         }
@@ -511,6 +508,7 @@ export default {
           throw error
         } else {
           this.$logger('CourseEdit|GPX parsed', t)
+          this.model.source = { ...source }
           this.gpxPoints = data.tracks[0].segments[0].map(p => {
             return {
               alt: p.elevation,
@@ -527,9 +525,20 @@ export default {
           this.gpxPoints = geo.cleanUp(this.gpxPoints)
           this.stats = geo.calcStats(this.gpxPoints, true)
           if (this.$config.requireGPXElevation && this.stats.gain === 0) {
-            this.gpxFileInvalidMsg = 'GPX file does not contain elevation data.'
-            this.$status.processing = false
-            return
+            const t2 = this.$logger('CourseEdit|loadGPX getting elevation data')
+            try {
+              await this.addElevationData(this.gpxPoints)
+              this.$ga.event('Course', 'addElevationData', this.gpxPoints.length)
+              this.$logger(`CourseEdit|loadGPX received elevation data for ${this.gpxPoints.length} points`, t2)
+              this.stats = geo.calcStats(this.gpxPoints, true)
+              this.model.source.alt = 'google'
+            } catch (err) {
+              this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
+              this.$logger('CourseEdit|loadGPX failed to get elevation data.', t2)
+              this.$ga.exception(err)
+              this.$status.processing = false
+              return
+            }
           }
           this.gpxFileInvalidMsg = ''
           if (!this.model.override || !this.model.override.enabled) {
@@ -538,7 +547,6 @@ export default {
             this.model.distance = this.stats.dist
             this.setDistGainLoss()
           }
-          this.model.source = { ...source }
           if (!this.model.name) {
             this.model.name = this.model.source.name
           }
@@ -606,7 +614,26 @@ export default {
       this.gpxFile = null
       this.gpxPoints = []
       this.courseLoaded = false
-      this.source = { type: val }
+      this.source = {
+        type: val,
+        alt: val
+      }
+    },
+    async addElevationData (points) {
+      const lls = points.map(p => {
+        return [
+          round(p.lat, 6),
+          round(p.lon, 6)
+        ]
+      })
+      const alts = await api.getElevation(lls)
+      if (lls.length === alts.length) {
+        points.forEach((p, i) => {
+          p.alt = alts[i]
+        })
+      } else {
+        throw new Error('Elevation data returned does not match.')
+      }
     }
   }
 }
