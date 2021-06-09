@@ -13,7 +13,14 @@
       {{ message }} to your name).
     </p>
     <p>
+      I do this on my own time and with my own resources. Donations help to cover some of my operating and coffee expenses.
+      <br>
       Would you sponsor ultraPacer on Patreon for as little as $1/month?
+    </p>
+    <p>
+      Thanks,
+      <br>
+      Danny
     </p>
 
     <template #modal-footer>
