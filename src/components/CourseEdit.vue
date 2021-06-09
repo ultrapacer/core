@@ -46,10 +46,10 @@
             @loadGPX="loadGPX"
             @change="courseLoaded=false"
           />
-        </selectable-label-input>
-        <div v-if="courseLoaded === true || model._id">
+
           <b-input-group
-            prepend="Elevation Data Source"
+            v-if="courseLoaded === true || model._id"
+            prepend="Elevation Data"
             class="mt-1"
           >
             <b-form-select
@@ -65,7 +65,7 @@
           </form-tip>
           <b-input-group
             v-if="courseLoaded === true && stats"
-            prepend="Source stats"
+            prepend="Stats"
             class="mt-1"
           >
             <div
@@ -79,7 +79,7 @@
                   lg="3"
                   class="text-right pr-0"
                 >
-                  Distance:
+                  Dist:
                 </b-col>
                 <b-col>{{ $units.distf(stats.dist, 2) | commas }}  {{ $units.dist }}</b-col>
               </b-row>
@@ -107,6 +107,8 @@
               </b-row>
             </div>
           </b-input-group>
+        </selectable-label-input>
+        <div v-if="courseLoaded === true || model._id">
           <b-input-group
             prepend="Name"
             class="mt-1"

@@ -28,14 +28,14 @@ to import the route into ultraPacer. Updates to the Strava route can later be
 carried over to ultraPacer with the Reload button. Note that the route must
 be set as "Public" in Strava.
 
-##### Elevation Data Source
+###### Elevation Data
 By default, ultraPacer will utilize elevation data from the GPX file (if
 present) or Strava Route. Alternatively, elevation can be sourced from Google
 or the Elevation API using this selection. If a file was used that does not
 contain elevation, the source will default to Google.
 
-##### Source Stats
-This box lists the length/gain/loss statistics of the source used.
+###### Source Stats
+This box lists the length/gain/loss statistics of the source(s) used.
 
 ##### Name & Description
 Type in a name (required) and description (optional).

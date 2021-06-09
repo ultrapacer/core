@@ -1,5 +1,5 @@
 <template>
-  <b-form-group>
+  <b-form-group style="width:100%">
     <b-input-group
       prepend="ID/Path"
     >
@@ -42,17 +42,6 @@
         Modified:
       </b-col>
       <b-col>{{ stravaRouteDate }}</b-col>
-    </b-row>
-    <b-row v-if="stravaRouteDistance">
-      <b-col
-        cols="4"
-        sm="3"
-        lg="3"
-        class="text-right pr-0"
-      >
-        Distance:
-      </b-col>
-      <b-col>{{ stravaRouteDistance }} {{ $units.dist }}</b-col>
     </b-row>
     <b-row v-if="stravaRouteId">
       <b-col
@@ -100,7 +89,6 @@ export default {
       stravaRouteId: null,
       stravaRouteName: null,
       stravaRouteDate: null,
-      stravaRouteDistance: null,
       stravaRouteInvalid: false
     }
   },
@@ -133,14 +121,12 @@ export default {
         this.stravaRouteName = route.name
         this.stravaRouteDate = route.updated_at
 
-        this.stravaRouteDistance = this.$units.distf(route.distance / 1000, 2)
         this.$emit('loadGPX', gpx, this.mysource)
       } catch (err) {
         console.log(err)
         this.stravaRouteName = null
         this.stravaRouteDate = null
 
-        this.stravaRouteDistance = null
         this.stravaRouteInvalid = true
         this.$status.processing = false
       }
