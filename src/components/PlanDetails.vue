@@ -12,11 +12,18 @@
       <span v-else>
         The <b>{{ course.name }}</b> course covers <b>{{ $units.distf(course.distance, 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.gain, 0) | commas }} {{ $units.alt }}</b> of climbing.
       </span>
-      <br>
+      <span
+        v-if="course.source.alt"
+        class="mb-0"
+      >
+        <br>
+        Elevation data is {{ elevationDatasets[course.source.alt] }}.
+      </span>
       <span
         v-if="userCount > 9"
         class="mb-0"
       >
+        <br>
         <b>{{ userCount }} runners</b> have ultraPacer plans for this course.
       </span>
     </b-list-group-item>
@@ -563,9 +570,6 @@ export default {
     HeatChart
   },
   filters: {
-    commas (val) {
-      return val.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-    },
     percentWithPace (val, np, units) {
       let str = `${(val > 0 ? '+' : '')}${(val * 100).toFixed(1)}% `
       if (np) {
@@ -619,6 +623,12 @@ export default {
   },
   data () {
     return {
+      elevationDatasets: {
+        gpx: 'from an uploaded GPX file',
+        'strava-route': 'sourced from Strava Routes',
+        google: 'sourced from Google',
+        'elevation-api': 'sourced from DEM-Net Elevation API by Xavier Fischer'
+      },
       methods: {
         time: 'Finish Time',
         pace: 'Average Pace',

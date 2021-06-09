@@ -154,9 +154,6 @@ import { round } from '../util/math'
 import timeUtil from '../util/time'
 export default {
   filters: {
-    commas (val) {
-      return val.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-    },
     formatTime (val) {
       if (!val) { return '' }
       return timeUtil.sec2string(val, '[h]:m:ss')

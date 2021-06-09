@@ -12,7 +12,7 @@
       <b-button
         variant="success"
         :disabled="!stravaRouteId || isNaN(Number(stravaRouteId))"
-        @click="getStravaRoute (stravaRouteId)"
+        @click="getStravaRoute"
       >
         {{ stravaRouteName ? 'Reload' : 'Load' }}
       </b-button>
@@ -123,12 +123,12 @@ export default {
     }
   },
   methods: {
-    async getStravaRoute (id) {
+    async getStravaRoute () {
       this.$status.processing = true
       try {
         const [route, gpx] = await Promise.all([
-          api.getStravaRoute(id),
-          api.getStravaRouteGPX(id)
+          this.$utils.timeout(api.getStravaRoute(this.stravaRouteId), 15000),
+          this.$utils.timeout(api.getStravaRouteGPX(this.stravaRouteId), 15000)
         ])
         this.stravaRouteName = route.name
         this.stravaRouteDate = route.updated_at

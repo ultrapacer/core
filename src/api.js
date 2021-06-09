@@ -125,8 +125,10 @@ export default {
   getTimeZone (lat, lon) {
     return this.execute('get', `/api/timezone?lat=${lat}&lon=${lon}`)
   },
-  getElevation (coordinates) {
-    return this.execute('post', '/api/elevation', coordinates)
+  getElevation (coordinates, source) {
+    let url = '/api/elevation'
+    if (source) url = `${url}/${source}`
+    return this.execute('post', url, coordinates)
   },
   getStravaRoute (id) {
     // return information for Strava route ID

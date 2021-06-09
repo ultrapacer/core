@@ -398,11 +398,6 @@ export default {
     PlanEdit,
     WaypointEdit: () => import(/* webpackPrefetch: true */ '../components/WaypointEdit.vue')
   },
-  filters: {
-    commas (val) {
-      return val.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-    }
-  },
   data () {
     return {
       initializing: true,

@@ -17,14 +17,14 @@
         @submit.prevent=""
       >
         <selectable-label-input
-          v-model="source.type"
+          v-model="model.source.type"
           :options="sourceOptions"
           @input="sourceChange"
         >
           <b-form-file
-            v-if="source.type==='gpx'"
+            v-if="model.source.type==='gpx'"
             v-model="gpxFile"
-            :placeholder="(source) ? source.name : 'Choose a GPX file...'"
+            :placeholder="(model.source) ? model.source.name : 'Choose a GPX file...'"
             accept=".gpx"
             no-drop
             :required="!Boolean(model.source)"
@@ -34,20 +34,79 @@
           <b-form-invalid-feedback :state="!Boolean(gpxFileInvalidMsg)">
             {{ gpxFileInvalidMsg }}
           </b-form-invalid-feedback>
-          <form-tip v-if="source.type==='gpx' && showTips">
+          <form-tip v-if="model.source.type==='gpx' && showTips">
             Required: ".gpx" format file exported from a GPS track or route builder.
           </form-tip>
           <strava-route-input
-            v-if="source.type==='strava-route'"
-            v-model="source"
+            v-if="model.source.type==='strava-route'"
+            ref="stravaRouteInput"
+            v-model="model.source"
             :show-tips="showTips"
             class="mb-0"
             @loadGPX="loadGPX"
             @change="courseLoaded=false"
           />
         </selectable-label-input>
-
         <div v-if="courseLoaded === true || model._id">
+          <b-input-group
+            prepend="Elevation Data Source"
+            class="mt-1"
+          >
+            <b-form-select
+              v-model="model.source.alt"
+              type="number"
+              :options="altSourceOptions"
+              required
+              @input="changeAltSource"
+            />
+          </b-input-group>
+          <form-tip v-if="model.source.type==='gpx' && showTips">
+            Required: data source for elevation.
+          </form-tip>
+          <b-input-group
+            v-if="courseLoaded === true && stats"
+            prepend="Source stats"
+            class="mt-1"
+          >
+            <div
+              class="form-control form-group p-1 mb-0"
+              style="height:auto"
+            >
+              <b-row>
+                <b-col
+                  cols="4"
+                  sm="3"
+                  lg="3"
+                  class="text-right pr-0"
+                >
+                  Distance:
+                </b-col>
+                <b-col>{{ $units.distf(stats.dist, 2) | commas }}  {{ $units.dist }}</b-col>
+              </b-row>
+              <b-row>
+                <b-col
+                  cols="4"
+                  sm="3"
+                  lg="3"
+                  class="text-right pr-0"
+                >
+                  Gain:
+                </b-col>
+                <b-col>{{ $units.altf(stats.gain, 0) | commas }}  {{ $units.alt }}</b-col>
+              </b-row>
+              <b-row>
+                <b-col
+                  cols="4"
+                  sm="3"
+                  lg="3"
+                  class="text-right pr-0"
+                >
+                  Loss:
+                </b-col>
+                <b-col>{{ -$units.altf(stats.loss, 0) | commas }}  {{ $units.alt }}</b-col>
+              </b-row>
+            </div>
+          </b-input-group>
           <b-input-group
             prepend="Name"
             class="mt-1"
@@ -87,7 +146,7 @@
             :unchecked-value="false"
             @change="setDistGainLoss"
           >
-            Override distance/gain/loss from GPX file
+            Override distance/gain/loss from source
           </b-form-checkbox>
           <form-tip v-if="showTips">
             Optional: enable to manually specify distance/elevation.
@@ -284,10 +343,12 @@ export default {
         { value: 'ft', text: 'ft' },
         { value: 'm', text: 'm' }
       ],
+      file: null,
       gpxFile: null,
       gpxFileInvalidMsg: '',
+      gpxFileNoElevFlag: false,
       gpxPoints: [],
-      model: {},
+      model: { source: {} },
       moment: null,
       points: [],
       prevDist: 0,
@@ -297,12 +358,28 @@ export default {
       distancef: null,
       gainf: null,
       lossf: null,
-      source: { type: 'gpx' },
       sourceOptions: [
         { value: 'gpx', text: 'GPX File' },
         { value: 'strava-route', text: 'Strava Route' }
       ],
       newPointsFlag: false // to track whether we need to upload new points
+    }
+  },
+  computed: {
+    altSourceOptions: function () {
+      const arr = []
+      if (this.model.source) {
+        if (this.model.source.type === 'strava-route') {
+          arr.push({ value: 'strava-route', text: 'Strava Route' })
+        } else if (this.model.source.alt === 'gpx' || (this.file && !this.gpxFileNoElevFlag)) {
+          arr.push({ value: 'gpx', text: 'GPX File' })
+        }
+        arr.push(
+          { value: 'google', text: 'Google' },
+          { value: 'elevation-api', text: 'Elevation API' }
+        )
+      }
+      return arr
     }
   },
   watch: {
@@ -318,7 +395,8 @@ export default {
       this.moment = null
       this.gpxFileInvalidMsg = ''
       if (course._id) {
-        this.model = Object.assign({}, course)
+        this.model = JSON.parse(JSON.stringify(course)) // deep clone course
+        if (!this.model.source.alt) this.$set(this.model.source, 'alt', this.model.source.type)
         this.prevDist = course.distance
         const tz = this.model.eventTimezone || moment.tz.guess()
         if (this.model.eventStart) {
@@ -327,14 +405,12 @@ export default {
           this.moment = moment(0).tz(tz)
         }
         this.model.override = { ...course.override }
-        this.source = { ...course.source }
         this.updateDistanceUnit(this.model.override.distUnit)
         this.updateElevUnit(this.model.override.elevUnit)
         this.courseLoaded = this.reloadPoints(course.reduced ? 'raw' : 'points')
       } else {
         this.moment = moment(0).tz(moment.tz.guess())
-        this.model = Object.assign({}, JSON.parse(JSON.stringify(this.defaults)))
-        this.source = { type: 'gpx' }
+        this.model = JSON.parse(JSON.stringify(this.defaults))
       }
       this.$refs.modal.show()
       this.$status.processing = false
@@ -469,7 +545,11 @@ export default {
       this.$refs.modal.hide()
     },
     clear () {
-      this.model = Object.assign({}, this.defaults)
+      this.gpxPoints = []
+      this.model = JSON.parse(JSON.stringify(this.defaults))
+      this.file = null
+      this.newPointsFlag = false
+      this.gpxFileNoElevFlag = false
     },
     async remove () {
       this.$emit('delete', this.model, async (err) => {
@@ -480,6 +560,7 @@ export default {
       })
     },
     async loadFile (f) {
+      this.file = f
       const t = this.$logger()
       this.$nextTick(async () => {
         const reader = new FileReader()
@@ -494,6 +575,7 @@ export default {
         }
         if (f.target.files.length) {
           this.$status.processing = true
+          this.gpxFileNoElevFlag = false
           reader.readAsText(f.target.files[0])
         }
       })
@@ -521,17 +603,22 @@ export default {
             this.$status.processing = false
             return
           }
+          if (this.gpxPoints.length > 100000) {
+            this.gpxFileInvalidMsg = 'File exceeds size limit of 100,000 points. If this is a valid file, contact me for help.'
+            this.$status.processing = false
+            return
+          }
           geo.addLoc(this.gpxPoints)
           this.gpxPoints = geo.cleanUp(this.gpxPoints)
           this.stats = geo.calcStats(this.gpxPoints, true)
           if (this.$config.requireGPXElevation && this.stats.gain === 0) {
+            this.gpxFileNoElevFlag = true
             const t2 = this.$logger('CourseEdit|loadGPX getting elevation data')
             try {
               await this.addElevationData(this.gpxPoints)
-              this.$ga.event('Course', 'addElevationData', this.gpxPoints.length)
+              this.$ga.event('Course', 'addElevationData')
               this.$logger(`CourseEdit|loadGPX received elevation data for ${this.gpxPoints.length} points`, t2)
               this.stats = geo.calcStats(this.gpxPoints, true)
-              this.model.source.alt = 'google'
             } catch (err) {
               this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
               this.$logger('CourseEdit|loadGPX failed to get elevation data.', t2)
@@ -541,12 +628,7 @@ export default {
             }
           }
           this.gpxFileInvalidMsg = ''
-          if (!this.model.override || !this.model.override.enabled) {
-            this.model.gain = this.stats.gain
-            this.model.loss = this.stats.loss
-            this.model.distance = this.stats.dist
-            this.setDistGainLoss()
-          }
+          this.updateModelGainLoss()
           if (!this.model.name) {
             this.model.name = this.model.source.name
           }
@@ -556,6 +638,42 @@ export default {
           this.$status.processing = false
         }
       })
+    },
+    changeAltSource: async function (val) {
+      if (this.gpxPoints.length) {
+        this.$set(this.model.source, 'alt', val)
+        if (val === 'strava-route') {
+          this.$refs.stravaRouteInput.getStravaRoute()
+        } else if (val === 'gpx') {
+          this.loadFile(this.file)
+        } else {
+          this.$status.processing = true
+          const t2 = this.$logger('CourseEdit|changeAltSource getting elevation data')
+          try {
+            await this.addElevationData(this.gpxPoints, val)
+            this.$ga.event('Course', 'addElevationData', val)
+            this.$logger(`CourseEdit|changeAltSource received elevation data for ${this.gpxPoints.length} points`, t2)
+            this.stats = geo.calcStats(this.gpxPoints, true)
+            this.updateModelGainLoss()
+          } catch (err) {
+            this.gpxFileInvalidMsg = 'Elevation data and data is not available.'
+            this.$logger('CourseEdit|changeAltSource failed to get elevation data.', t2)
+            this.$ga.exception(err)
+            this.$status.processing = false
+            return
+          }
+          this.$status.processing = false
+        }
+        this.newPointsFlag = true
+      }
+    },
+    updateModelGainLoss: function () {
+      if (!this.model.override || !this.model.override.enabled) {
+        this.model.gain = this.stats.gain
+        this.model.loss = this.stats.loss
+        this.model.distance = this.stats.dist
+        this.setDistGainLoss()
+      }
     },
     setDistGainLoss: async function (val = false) {
       this.model.override.distUnit = this.$units.dist
@@ -614,23 +732,25 @@ export default {
       this.gpxFile = null
       this.gpxPoints = []
       this.courseLoaded = false
-      this.source = {
-        type: val,
-        alt: val
-      }
+      delete this.model.source.name
+      this.model.source.alt = val
     },
-    async addElevationData (points) {
+    async addElevationData (points, source) {
       const lls = points.map(p => {
         return [
           round(p.lat, 6),
           round(p.lon, 6)
         ]
       })
-      const alts = await api.getElevation(lls)
-      if (lls.length === alts.length) {
+      const data = await this.$utils.timeout(
+        api.getElevation(lls, source),
+        15000
+      )
+      if (lls.length === data.alts.length) {
         points.forEach((p, i) => {
-          p.alt = alts[i]
+          p.alt = data.alts[i]
         })
+        this.$set(this.model.source, 'alt', data.source)
       } else {
         throw new Error('Elevation data returned does not match.')
       }

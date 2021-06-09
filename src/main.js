@@ -126,8 +126,17 @@ Vue.prototype.$units = {
     return (round === null) ? v : v.toFixed(round)
   }
 }
+Vue.prototype.$utils = {
+  timeout: (prom, time) => Promise.race([prom, new Promise((resolve, reject) => setTimeout(reject, time))])
+}
 Vue.prototype.$config = Vue.observable({
   requireGPXElevation: true
+})
+Vue.filter('commas', function (value) {
+  if (!value) {
+    return ''
+  }
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 })
 Vue.use(LoggerPlugin)
 
