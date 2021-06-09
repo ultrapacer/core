@@ -241,7 +241,7 @@ export default {
       this.working[target] = false
       this.ready[target] = true
       this.disableButtons = false
-      this.$ga.event('Course', 'download', this.course.public ? this.course.name : 'private')
+      this.$gtage(this.$gtag, 'Course', 'download', this.course.public ? this.course.name : 'private')
       this.$logger('DownloadGPX|generate', t)
     },
     writeGPXText (pnts, name) {

@@ -174,17 +174,17 @@ export default {
           query: r.query
         }
       })
-      this.$ga.event('User', 'login')
+      this.$gtage(this.$gtag, 'User', 'login')
     },
     logout () {
       this.$auth.logOut()
-      this.$ga.event('User', 'logout')
+      this.$gtage(this.$gtag, 'User', 'logout')
     },
     handleLoginEvent (data) {
       this.$user.isAuthenticated = data.loggedIn
       this.profile = data.profile
-      this.$ga.event('User', 'authenticated')
-      this.$ga.set({ dimension1: true })
+      this.$gtage(this.$gtag, 'User', 'authenticated')
+      this.$gtag.set({ dimension1: true })
       this.authInterval = window.setInterval(this.refreshAuth, 30000)
     },
     async getUser () {
@@ -195,10 +195,6 @@ export default {
       this.$units.setAlt(this.user.elevUnits)
       if (!this.user.email) {
         api.updateSettings(this.user._id, { email: this.$auth.profile.email })
-      }
-      if (this.user.admin) {
-        // ignore analytics metrics for admins
-        this.$ga.disable()
       }
     },
     async refreshAuth () {

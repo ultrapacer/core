@@ -114,7 +114,7 @@ export default {
         const doc = docs.find(x => x.path === collapseId)
         if (doc) {
           this.$title = `Docs: ${doc.name}`
-          this.$ga.page(path)
+          this.$gtag.pageview(path)
         }
       }
     })

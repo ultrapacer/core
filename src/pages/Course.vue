@@ -626,7 +626,7 @@ export default {
 
         this.refreshVisibleWaypoints()
         await this.getPoints()
-        this.$ga.event('Course', 'view', this.publicName)
+        this.$gtage(this.$gtag, 'Course', 'view', this.publicName)
         this.plans = this.course.plans
         this.syncCache(this.course)
         this.syncCache(this.plans)
@@ -634,7 +634,7 @@ export default {
           this.plan = this.plans.find(
             x => x._id === this.$route.params.plan
           )
-          this.$ga.event('Plan', 'view', this.publicName)
+          this.$gtage(this.$gtag, 'Plan', 'view', this.publicName)
         }
       } catch (err) {
         console.log(err)
@@ -741,7 +741,7 @@ export default {
           object: waypoint
         },
         async () => {
-          this.$ga.event('Waypoint', 'delete', this.publicName)
+          this.$gtage(this.$gtag, 'Waypoint', 'delete', this.publicName)
           // if we are editing a waypoint we deleted, remove it from the form
           if (this.waypoint._id === waypoint._id) {
             this.waypoint = {}
@@ -797,7 +797,7 @@ export default {
       }
     },
     async newPlan () {
-      this.$ga.event('Plan', 'add', this.publicName)
+      this.$gtage(this.$gtag, 'Plan', 'add', this.publicName)
       if (this.planAssigned) {
         const p = this.plan
         this.$refs.planEdit.show({
@@ -823,7 +823,7 @@ export default {
         },
         async () => {
           await api.deletePlan(plan._id)
-          this.$ga.event('Plan', 'delete', this.publicName)
+          this.$gtage(this.$gtag, 'Plan', 'delete', this.publicName)
           this.plans = await api.getPlans(this.course._id, this.$user._id)
           if (this.plan._id === plan._id) {
             if (this.plans.length) {
@@ -889,7 +889,7 @@ export default {
         }
         this.$router.push(route)
       }
-      this.$ga.event('Plan', 'view', this.publicName)
+      this.$gtage(this.$gtag, 'Plan', 'view', this.publicName)
       if (!this.useCache()) {
         this.busy = true
         this.$status.processing = true
@@ -1109,7 +1109,7 @@ export default {
           this.$status.processing = true
           const res = await geo.addActuals(this.points, actual)
           if (res.match) {
-            this.$ga.event('Course', 'compare', this.publicName, 1)
+            this.$gtage(this.$gtag, 'Course', 'compare', this.publicName, 1)
             this.comparing = true
             this.kilometers = geo.calcSplits({
               points: this.points,
@@ -1125,7 +1125,7 @@ export default {
             })
             this.updateSegments()
           } else {
-            this.$ga.event('Course', 'compare', this.publicName, 0)
+            this.$gtage(this.$gtag, 'Course', 'compare', this.publicName, 0)
             this.comparing = false
           }
           this.$status.processing = false
@@ -1242,7 +1242,7 @@ export default {
               pdf.addImage(logo, 'JPEG', pdf.internal.pageSize.getWidth() - 1, 0.2, 0.5, 0.5)
             }
           }).save().then(() => {
-            this.$ga.event(component, 'print', this.publicName)
+            this.$gtag.event('print', { event_category: component, event_label: this.publicName })
 
             // reset status:
             this.printing = false

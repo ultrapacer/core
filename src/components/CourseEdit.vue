@@ -496,7 +496,7 @@ export default {
           }
         })
         await api.updateCourse(this.model._id, updateModel)
-        this.$ga.event('Course', 'edit')
+        this.$gtag.event('edit', { event_category: 'Course' })
 
         // update all waypoints to fit updated course:
         const diff = this.model.distance - this.prevDist
@@ -539,7 +539,7 @@ export default {
         }
       } else {
         await api.createCourse(this.model)
-        this.$ga.event('Course', 'create')
+        this.$gtag.event('create', { event_category: 'Course' })
       }
       this.$status.processing = false
       await this.$emit('refresh')
@@ -556,7 +556,7 @@ export default {
     async remove () {
       this.$emit('delete', this.model, async (err) => {
         if (!err) {
-          this.$ga.event('Course', 'delete')
+          this.$gtag.event('delete', { event_category: 'Course' })
           this.$refs.modal.hide()
         }
       })
@@ -618,13 +618,12 @@ export default {
             const t2 = this.$logger('CourseEdit|loadGPX getting elevation data')
             try {
               await this.addElevationData(this.gpxPoints)
-              this.$ga.event('Course', 'addElevationData')
               this.$logger(`CourseEdit|loadGPX received elevation data for ${this.gpxPoints.length} points`, t2)
               this.stats = geo.calcStats(this.gpxPoints, true)
             } catch (err) {
               this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
               this.$logger('CourseEdit|loadGPX failed to get elevation data.', t2)
-              this.$ga.exception(err)
+              this.$gtag.exception({ description: err.message || err, fatal: false })
               this.$status.processing = false
               return
             }
@@ -653,14 +652,13 @@ export default {
           const t2 = this.$logger('CourseEdit|changeAltSource getting elevation data')
           try {
             await this.addElevationData(this.gpxPoints, val)
-            this.$ga.event('Course', 'addElevationData', val)
             this.$logger(`CourseEdit|changeAltSource received elevation data for ${this.gpxPoints.length} points`, t2)
             this.stats = geo.calcStats(this.gpxPoints, true)
             this.updateModelGainLoss()
           } catch (err) {
             this.gpxFileInvalidMsg = 'Elevation data and data is not available.'
             this.$logger('CourseEdit|changeAltSource failed to get elevation data.', t2)
-            this.$ga.exception(err)
+            this.$gtag.exception({ description: err.message || err, fatal: false })
             this.$status.processing = false
             return
           }
@@ -753,6 +751,7 @@ export default {
           p.alt = data.alts[i]
         })
         this.$set(this.model.source, 'alt', data.source)
+        this.$gtag.event('addElevationData', { event_category: 'Course', event_label: data.source })
       } else {
         throw new Error('Elevation data returned does not match.')
       }

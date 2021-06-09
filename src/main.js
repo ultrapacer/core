@@ -7,7 +7,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import AuthPlugin from './plugins/auth'
 import LoggerPlugin from './plugins/logger'
-import VueAnalytics from 'vue-analytics'
+import VueGtag from 'vue-gtag'
 import VuePageTitle from 'vue-page-title'
 import VueTheMask from 'vue-the-mask'
 import vueHeadful from 'vue-headful'
@@ -47,20 +47,14 @@ Vue.use(Loading, {
 })
 Vue.use(AuthPlugin)
 
-if (process.env.GOOGLE_ANALYTICS_KEY) {
-  const isBeta = window.location.origin.includes('appspot.com')
-  Vue.use(VueAnalytics, {
-    id: process.env.GOOGLE_ANALYTICS_KEY,
-    router,
-    ignoreRoutes: ['/callback'],
-    debug: {
-      sendHitTask: (process.env.NODE_ENV !== 'development' && !isBeta)
-    },
-    set: [
-      { field: 'dimension1', value: false }
-    ]
-  })
-}
+const testing = window.location.origin.includes('appspot.com') ||
+  window.location.origin.includes('localhost')
+Vue.use(VueGtag, {
+  enabled: !testing,
+  config: { id: process.env.GOOGLE_ANALYTICS_KEY },
+  onReady () { this.set({ dimension1: false }) },
+  pageTrackerExcludedRotues: ['/callback']
+}, router)
 
 Vue.use(VuePageTitle, {
   // prefix: 'My App - ',
@@ -129,15 +123,26 @@ Vue.prototype.$units = {
 Vue.prototype.$utils = {
   timeout: (prom, time) => Promise.race([prom, new Promise((resolve, reject) => setTimeout(reject, time))])
 }
+// this is a temp fix to reformat the old vue-analytics format to vue-gtag:
+Vue.prototype.$gtage = (gtag, category, action, label, value) => {
+  const o = { event_category: category }
+  if (label) o.event_label = label
+  if (value) o.value = value
+  gtag.event(action, o)
+}
 Vue.prototype.$config = Vue.observable({
-  requireGPXElevation: true
+  requireGPXElevation: true,
+  testing: testing
 })
+
+//  -----  VUE FILTERS  -----  //
 Vue.filter('commas', function (value) {
   if (!value) {
     return ''
   }
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 })
+
 Vue.use(LoggerPlugin)
 
 Vue.config.productionTip = false

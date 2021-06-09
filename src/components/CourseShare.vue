@@ -94,7 +94,7 @@ export default {
           text: `ultraPacer | ${this.name}`,
           url: this.url
         }).then(() => {
-          this.$ga.event('Course', 'share', this.course.name)
+          this.$gtage(this.$gtag, 'Course', 'share', this.course.name)
         })
           .catch(console.error)
       } else {

@@ -138,11 +138,10 @@ export default {
             html: this.$refs.message.getInnerHTML(),
             replyTo: this.replyTo
           })
-        this.$ga.event(capitalize(this.type), 'email', this.subject)
+        this.$gtag('email', { event_category: capitalize(this.type), event_label: this.subject })
       } catch (error) {
-        const exception = error.message || error
-        this.$ga.exception(exception)
-        console.log(exception)
+        this.$gtag.exception({ description: error.message || error, fatal: false })
+        console.log(error)
       }
       this.$status.processing = false
       this.$refs.modal.hide()

@@ -86,11 +86,11 @@
 export default {
   methods: {
     async goToPaypal () {
-      this.$ga.event('Paypal', 'visit')
+      this.$gtage(this.$gtag, 'Paypal', 'visit')
       this.$refs.paypalForm.submit()
     },
     async goToPatreon () {
-      this.$ga.event('Patreon', 'visit')
+      this.$gtage(this.$gtag, 'Patreon', 'visit')
       window.open('https://www.patreon.com/ultrapacer', '_blank')
     }
   }

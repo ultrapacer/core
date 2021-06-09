@@ -404,13 +404,13 @@ export default {
       if (this.$auth.isAuthenticated()) {
         if (this.model._id) {
           p = await api.updatePlan(this.model._id, this.model)
-          this.$ga.event('Plan', 'edit',
+          this.$gtage(this.$gtag, 'Plan', 'edit',
             this.course.public ? this.course.name : 'private'
           )
         } else {
           this.model._course = this.course._id
           p = await api.createPlan(this.model)
-          this.$ga.event('Plan', 'create',
+          this.$gtage(this.$gtag, 'Plan', 'create',
             this.course.public ? this.course.name : 'private'
           )
           if (String(p._user._id) !== String(this.course._user)) {
@@ -422,7 +422,7 @@ export default {
         p = { ...this.model }
         this.newPlanToastMsg = `Login or Signup to ultraPacer to save or share your new plan for "${this.course.name}".`
         this.$refs['toast-new-plan'].show()
-        this.$ga.event('Plan', 'temporary',
+        this.$gtage(this.$gtag, 'Plan', 'temporary',
           this.course.public ? this.course.name : 'private'
         )
       }

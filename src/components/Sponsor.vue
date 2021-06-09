@@ -143,7 +143,7 @@ export default {
       })
     },
     goToSponsor () {
-      this.$ga.event('Sponsor', 'click', this.sponsor.name)
+      this.$gtage(this.$gtag, 'Sponsor', 'click', this.sponsor.name)
       window.open(this.sponsor.href, '_blank')
     },
     setUp () {

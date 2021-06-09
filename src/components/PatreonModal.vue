@@ -93,7 +93,7 @@ export default {
           this.$logger('PatreonModal|initiate: not enough plans or courses')
         }
         if (showModal) {
-          this.$ga.event('Patreon', 'show')
+          this.$gtage(this.$gtag, 'Patreon', 'show')
           this.$refs.patreon.show()
         }
       } else {
@@ -116,16 +116,16 @@ export default {
     async goToPatreon () {
       window.open('https://www.patreon.com/ultrapacer', '_blank')
       this.setLastAnnoyed(3)
-      this.$ga.event('Patreon', 'visit')
+      this.$gtage(this.$gtag, 'Patreon', 'visit')
       this.$refs.patreon.hide()
     },
     async maybeLater () {
       this.setLastAnnoyed(14)
-      this.$ga.event('Patreon', 'later')
+      this.$gtage(this.$gtag, 'Patreon', 'later')
       this.$refs.patreon.hide()
     },
     async alreadyJoined () {
-      this.$ga.event('Patreon', 'joined')
+      this.$gtage(this.$gtag, 'Patreon', 'joined')
       api.updateSettings(
         this.$user._id,
         {
