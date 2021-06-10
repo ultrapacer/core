@@ -250,8 +250,10 @@ export default {
           $: {
             lat: round(p.lat, 8),
             lon: round(p.lon, 8)
-          },
-          ele: round(p.alt, 2)
+          }
+        }
+        if (!this.course.source || this.course.source.alt !== 'google') {
+          o.ele = round(p.alt, 2)
         }
         if (this.hasTime) {
           o.time = moment(this.event.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
@@ -289,8 +291,10 @@ export default {
             LatitudeDegrees: round(p.lat, 8),
             LongitudeDegrees: round(p.lon, 8)
           },
-          AltitudeMeters: round(p.alt, 2),
           DistanceMeters: round(p.loc * 1000, 2)
+        }
+        if (this.course.source && this.course.source.alt !== 'google') {
+          o.AltitudeMeters = round(p.alt, 2)
         }
         if (this.hasTime) {
           o.Time = moment(this.event.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
@@ -311,8 +315,10 @@ export default {
           Position: {
             LatitudeDegrees: round(s.waypoint2.lat, 8),
             LongitudeDegrees: round(s.waypoint2.lon, 8)
-          },
-          AltitudeMeters: round(s.waypoint2.elevation, 2)
+          }
+        }
+        if (this.course.source && this.course.source.alt !== 'google') {
+          o.AltitudeMeters = round(s.waypoint2.elevation, 2)
         }
         if (this.hasTime) {
           o.Time = moment(this.event.start).add(s.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')

@@ -1,10 +1,19 @@
 <template>
-  <line-chart
-    ref="profile"
-    :chart-data="chartData"
-    :options="chartOptions"
-    :style="printing ? 'width: 9.9in; height: 7.25in' : 'height: 300px'"
-  />
+  <div>
+    <line-chart
+      ref="profile"
+      :chart-data="chartData"
+      :options="chartOptions"
+      :style="printing ? 'width: 9.9in; height: 7.25in' : 'height: 300px'"
+    />
+    <div style=" width: 100%; display: flex; justify-content: flex-end;">
+      <img
+        v-if="course && course.source && course.source.alt === 'google'"
+        src="../assets/powered_by_google_on_white.png"
+        style="margin-top: -50px; position: absolute; padding-right: 38px;"
+      >
+    </div>
+  </div>
 </template>
 <script>
 import { wlslr } from '@/util/math'

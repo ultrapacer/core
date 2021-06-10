@@ -32,7 +32,9 @@ be set as "Public" in Strava.
 By default, ultraPacer will utilize elevation data from the GPX file (if
 present) or Strava Route. Alternatively, elevation can be sourced from Google
 or the Elevation API using this selection. If a file was used that does not
-contain elevation, the source will default to Google.
+contain elevation, the source will default to Google.\
+Note that if using Google elevation, elevations may not be exported in GPX
+files.
 
 ###### Source Stats
 This box lists the length/gain/loss statistics of the source(s) used.
