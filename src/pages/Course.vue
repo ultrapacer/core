@@ -1083,6 +1083,10 @@ export default {
       if (!this.$user.admin) { return }
       await api.updateCourse(this.course._id, { _user: _user })
     },
+    async setPermalink (link) {
+      if (!this.$user.admin) { return }
+      await api.updateCourse(this.course._id, { link: link })
+    },
     async stopCompare (cb) {
       this.comparing = false
       if (typeof cb === 'function') cb()
