@@ -352,16 +352,6 @@
     >
       ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, nighttime, and fatigue. To create a pace plan for this course, select the "New Pacing Plan" button on the top right. Happy running!
     </b-toast>
-    <b-toast
-      ref="toast-small-screen"
-      title="Small/mobile screen"
-      toaster="b-toaster-bottom-center"
-      solid
-      variant="info"
-      auto-hide-delay="6000"
-    >
-      Much of the data on this page is hidden on small screens. Select rows in tables to expand. Use a desktop or tablet for a better experience.
-    </b-toast>
   </div>
 </template>
 
@@ -649,8 +639,6 @@ export default {
       setTimeout(() => {
         if (!this.$user.isAuthenticated) {
           this.$refs['toast-welcome'].show()
-        } else if (screen.width < 992) {
-          this.$refs['toast-small-screen'].show()
         }
       }, 1000)
       if (this.$route.query.plan) {

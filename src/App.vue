@@ -94,6 +94,15 @@
     <router-view
       ref="routerView"
     />
+    <b-alert
+      v-model="smallScreenAlert"
+      class=" d-md-none position-fixed fixed-bottom m-0 rounded-0 pt-1 pb-1"
+      style="z-index: 1000"
+      variant="primary"
+      fade
+    >
+      Pro tip: ultraPacer is better on a desktop. Enjoy :]
+    </b-alert>
     <sponsor ref="sponsor" />
     <patreon-modal
       v-if="$user.isAuthenticated"
@@ -117,7 +126,8 @@ export default {
     return {
       user: {},
       authInterval: null,
-      spinner: {}
+      spinner: {},
+      smallScreenAlert: true
     }
   },
   computed: {
@@ -162,6 +172,7 @@ export default {
       this.$window.width = window.innerWidth
       this.$window.height = window.innerHeight
     })
+    setTimeout(() => { this.smallScreenAlert = false }, 4000)
   },
   methods: {
     login () {
