@@ -110,6 +110,25 @@ function startUp () {
     res.send(tz[0])
   })
 
+  //  this allows web components to be pathed in development
+  if (process.argv.includes('development')) {
+    app.get('/public/components/js/*', (req, res) => {
+      const a = req.url.split('/').slice(-1)[0]
+      res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+      res.header('Expires', '-1')
+      res.header('Pragma', 'no-cache')
+      res.sendFile(path.join(DIST_DIR, `../temp/js/${a}`))
+    })
+    app.get('/public/components/*.html', (req, res) => {
+      const a = req.url.split('/').slice(-1)[0]
+      res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+      res.header('Expires', '-1')
+      res.header('Pragma', 'no-cache')
+      res.sendFile(path.join(DIST_DIR, `../static/components/${a}`))
+    })
+  }
+  // end temporary
+
   app.get('/*', (req, res) => {
     res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
     res.header('Expires', '-1')

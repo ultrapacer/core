@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import AuthPlugin from './plugins/auth'
 import LoggerPlugin from './plugins/logger'
+import UnitsPlugin from './plugins/units'
 import VueGtag from 'vue-gtag'
 import VuePageTitle from 'vue-page-title'
 import VueTheMask from 'vue-the-mask'
@@ -43,7 +44,8 @@ Vue.use(Loading, {
   color: '#5e8351',
   loader: 'spinner',
   width: 100,
-  height: 100
+  height: 100,
+  zIndex: 1055
 })
 Vue.use(AuthPlugin)
 
@@ -57,7 +59,6 @@ Vue.use(VueGtag, {
 }, router)
 
 Vue.use(VuePageTitle, {
-  // prefix: 'My App - ',
   suffix: '- ultraPacer'
 })
 Vue.use(VueTheMask)
@@ -90,36 +91,7 @@ Vue.prototype.$window = Vue.observable({
   height: window.innerHeight,
   width: window.innerWidth
 })
-Vue.prototype.$units = {
-  dist: 'mi',
-  alt: 'ft',
-  distScale: 0.621371,
-  altScale: 3.28084,
-  set (dist, alt) {
-    this.setDist(dist)
-    this.setAlt(alt)
-  },
-  setDist (unit) {
-    this.dist = unit
-    this.distScale = (unit === 'mi') ? 0.621371 : 1
-  },
-  setAlt (unit) {
-    this.alt = unit
-    this.altScale = (unit === 'ft') ? 3.28084 : 1
-  },
-  distf (val, round = null) {
-    const v = val * this.distScale
-    return (round === null) ? v : v.toFixed(round)
-  },
-  altf (val, round = null) {
-    const v = val * this.altScale
-    return (round === null) ? v : v.toFixed(round)
-  },
-  pacef (val, round = null) {
-    const v = val / this.distScale
-    return (round === null) ? v : v.toFixed(round)
-  }
-}
+
 Vue.prototype.$utils = {
   timeout: (prom, time) => Promise.race([prom, new Promise((resolve, reject) => setTimeout(reject, time))])
 }
@@ -144,6 +116,7 @@ Vue.filter('commas', function (value) {
 })
 
 Vue.use(LoggerPlugin)
+Vue.use(UnitsPlugin)
 
 Vue.config.productionTip = false
 

@@ -69,7 +69,8 @@ const config = {
           {
             loader: 'postcss-loader',
             options: {
-              plugins: () => [autoprefixer()]
+              plugins: () => [autoprefixer()],
+              sourceMap: true
             }
           },
           'sass-loader'
@@ -138,6 +139,9 @@ const config = {
     proxy: {
       '/api': {
         target: 'http://localhost:8080'
+      },
+      '/public/components': {
+        target: 'http://localhost:8080'
       }
     }
   },
@@ -153,11 +157,19 @@ module.exports = (env, argv) => {
     config.output.filename = 'public/js/[name].[contenthash:8].js'
     config.output.chunkFilename = 'public/js/[name].[contenthash:8].js'
     config.plugins.push(
-      new CopyWebpackPlugin([{
-        from: path.resolve(__dirname, '../static'),
-        to: path.resolve(__dirname, '../dist/public'),
-        ignore: ['.*']
-      }])
+      new CopyWebpackPlugin([
+        {
+          from: path.resolve(__dirname, '../static'),
+          to: path.resolve(__dirname, '../dist/public'),
+          ignore: ['.*']
+        },
+        // copy over rendered web component javascript:
+        {
+          from: path.resolve(__dirname, '../temp'),
+          to: path.resolve(__dirname, '../dist/public/components'),
+          ignore: ['.*', '*.html']
+        }
+      ])
     )
 
     // compile sitemap with all documentation:

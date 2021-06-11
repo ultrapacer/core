@@ -36,6 +36,11 @@ module.exports = {
       name:"How to Print",
       path:'printing'
     },
+/*     {
+      file:"embeddables.md",
+      name:"Embedding uP on Your Website",
+      path:'embeddables'
+    }, */
     {
       file:"contributing.md",
       name:"Want to Contribute?",
