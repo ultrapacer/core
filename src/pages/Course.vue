@@ -1255,10 +1255,7 @@ export default {
       if (this.$user.isAuthenticated) {
         this.$refs.emailOwner.show()
       } else {
-        const q = { ...this.$router.currentRoute.query }
-        q.after = 'emailOwner'
-        this.$router.replace({ query: q })
-        this.$parent.login()
+        this.$parent.login({ after: 'emailOwner' })
       }
     }
   }

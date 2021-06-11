@@ -71,7 +71,7 @@
           <b-nav-item
             v-if="!$user.isAuthenticated"
             href="#"
-            @click.prevent="login"
+            @click.prevent="login()"
           >
             Login/Signup
           </b-nav-item>
@@ -175,17 +175,17 @@ export default {
     setTimeout(() => { this.smallScreenAlert = false }, 4000)
   },
   methods: {
-    login () {
+    login (query = {}) {
       // make login return to current page
-      const r = this.$router.currentRoute
-      this.$auth.login({
-        route: {
-          name: r.name,
-          params: r.params,
-          query: r.query
-        }
-      })
-      this.$gtage(this.$gtag, 'User', 'login')
+      const route = this.$router.currentRoute
+      const q = Object.assign({}, route.query, query)
+      const route2 = {
+        name: route.name,
+        params: route.params,
+        query: q
+      }
+      this.$gtag.event('login', { event_category: 'User' })
+      this.$auth.login({ route: route2 })
     },
     logout () {
       this.$auth.logOut()
