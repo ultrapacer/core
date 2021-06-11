@@ -323,4 +323,7 @@ th {
 .mw-7rem {
   max-width: 7rem;
 }
+.vld-overlay.is-full-page {
+  z-index: 1055 !important;
+}
 </style>
