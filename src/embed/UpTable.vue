@@ -1,7 +1,7 @@
 <template>
   <div
     ref="main"
-    class="vld-parent"
+    class="up-table-container vld-parent"
     :style="`min-height:150px; ${style}`"
   >
     <b-table
@@ -14,7 +14,7 @@
       small
       head-variant="light"
       no-border-collapse
-      class="table-xs mb-1"
+      class="up-table mb-1"
     />
     <loading
       :active.sync="isLoading"
@@ -27,16 +27,15 @@
       container="$refs.main"
     />
 
-    <div style="display: flex; justify-content: flex-end;">
+    <div class="up-table-link mb-2">
       <b-link
         :href="`https://ultrapacer.com/course/${courseId}`"
         target="_blank"
-        class="up-link mb-2"
       >
         pace this race with ultraPacer
         <img
           src="/public/img/logo-72x72.png"
-          style="height:24px"
+          class="up-table-logo"
         >
       </b-link>
     </div>
@@ -82,6 +81,12 @@ export default {
     }
   },
   computed: {
+    cols: function () {
+      let s = this.columns
+      s = s.replaceAll(' ', '') // remove any spaces
+      const arr = s.split(',')
+      return arr
+    },
     rows: function () {
       return this.course.waypoints.filter(x => x.tier < 3).map(wp => { return { _id: wp._id } })
     },
@@ -92,6 +97,7 @@ export default {
       return this.course.waypoints.findIndex(wp => wp.terrainFactor) >= 0
     },
     fields: function () {
+      const arr = []
       const f = [
         {
           key: 'name',
@@ -118,7 +124,16 @@ export default {
           class: 'text-right'
         }
       ]
-      return f
+      console.log(this.cols)
+      this.cols.forEach(c => {
+        const x = f.find(y => y.key === c)
+        if (x) arr.push(x)
+      })
+
+      // first column should not be right-aligned:
+      arr[0].class = arr[0].class.replace('text-right', '')
+      console.log(arr)
+      return arr
     }
   },
   async created () {
@@ -138,7 +153,7 @@ export default {
 <style>
 @import "~bootstrap/dist/css/bootstrap.css";
 @import "~vue-loading-overlay/dist/vue-loading.css";
-.table-xs td, .table-xs th {
+.up-table td, .up-table th {
   font-family: sans-serif;
   font-size: 80%;
   line-height: 1.25;
@@ -147,8 +162,13 @@ export default {
 .mw-7rem {
   max-width: 7rem;
 }
-.up-link {
+.up-table-link {
   font-family: sans-serif;
   font-size: 80%;
+  display: flex;
+  justify-content: space-evenly;
 }
+  .up-table-logo {
+    height: 24px;
+  }
 </style>
