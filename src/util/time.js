@@ -17,6 +17,8 @@ function sec2string (val, format) {
       return `${h}:${leftZero(m)}${String.fromCharCode(160)}${suf}`
     case 'h:mm:ss':
       return `${h}:${leftZero(m)}:${leftZero(s)}`
+    case 'hhh:mm:ss':
+      return `${leftZero(h, 3)}:${leftZero(m)}:${leftZero(s)}`
     case '[h]:m:ss':
       if (h) {
         return `${h}:${leftZero(m)}:${leftZero(s)}`
@@ -37,9 +39,9 @@ function string2sec (val) {
   return s
 }
 
-function leftZero (val) {
-  if (val < 10) {
-    return `0${val}`
+function leftZero (val, len = 2) {
+  if (val < 10 ** (len - 1)) {
+    return `${'0'.repeat(len - String(val).length)}${val}`
   } else {
     return val
   }

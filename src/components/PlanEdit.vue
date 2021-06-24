@@ -307,7 +307,7 @@ export default {
       ) {
         return 'mm:ss'
       } else {
-        return 'hh:mm:ss'
+        return `${'h'.repeat(this.hoursDigits)}:mm:ss`
       }
     },
     targetMask: function () {
@@ -317,11 +317,15 @@ export default {
       ) {
         return '##:##'
       } else {
-        return '##:##:##'
+        return `${'#'.repeat(this.hoursDigits)}:##:##`
       }
     },
     targetPopover: function () {
       return `${this.targetLabel}: enter target as ${this.targetPlaceholder}`
+    },
+    hoursDigits: function () {
+      // for courses longer than 250 km, hours field takes up to 3 digits
+      return this.course.distance > 250 ? 3 : 2
     }
   },
   watch: {
@@ -354,7 +358,7 @@ export default {
           s = s / this.$units.distScale
           this.model.pacingTargetF = sec2string(s, 'mm:ss')
         } else {
-          this.model.pacingTargetF = sec2string(s, 'hh:mm:ss')
+          this.model.pacingTargetF = sec2string(s, `${'h'.repeat(this.hoursDigits)}:mm:ss`)
         }
       } else {
         this.model.pacingTargetF = ''
