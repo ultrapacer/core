@@ -77,9 +77,12 @@ courseRoutes.route('/').get(async function (req, res) {
 // UPDATE
 courseRoutes.route('/:id').put(async function (req, res) {
   try {
-    const user = await User.findOne({ auth0ID: req.user.sub }).select('admin').exec()
-    const course = await Course.findById(req.params.id).populate('_user').exec()
-    if (user.admin || course._user.auth0ID === req.user.sub) {
+    const [user, course] = await Promise.all([
+      User.findOne({ auth0ID: req.user.sub }).select('admin').exec(),
+      Course.findById(req.params.id).select('_user').exec()
+    ])
+    if (user.admin || course._user === user._id) {
+      // define available fields
       const fields1 = [ // these are benign fields
         'name', 'description', 'public', 'source'
       ]
@@ -92,15 +95,26 @@ courseRoutes.route('/:id').put(async function (req, res) {
         fields1.push('_user', 'link')
       }
       const fields = [...fields1, ...fields2]
+
+      // initialize variables
+      const update = {}
       let clearCache = false
+
+      // loop through available fields and assign applicable ones to update
       fields.forEach(f => {
         if (req.body[f] !== undefined) {
-          course[f] = req.body[f]
+          update[f] = req.body[f]
           if (fields2.includes(f)) clearCache = true
         }
       })
-      await course.save()
+
+      // update database
+      await course.updateOne(update)
+
+      // clear cache if signficant changes
       if (clearCache) await course.clearCache()
+
+      // respond to request
       res.json('Update complete')
     } else {
       res.status(403).send('No permission')
