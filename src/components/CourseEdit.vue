@@ -166,8 +166,8 @@
                 type="number"
                 required
                 step="0.01"
-                :min="round((stats ? stats.dist : model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 0.9, 2)"
-                :max="round((stats ? stats.dist : model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 1.1, 2)"
+                :min="$math.round((stats ? stats.dist : model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 0.9, 2)"
+                :max="$math.round((stats ? stats.dist : model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 1.1, 2)"
                 @input="updateDistance"
               />
               <b-form-select
@@ -189,8 +189,8 @@
                 type="number"
                 required
                 step="0"
-                :min="round((stats ? stats.gain : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
-                :max="round((stats ? stats.gain : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
+                :min="$math.round((stats ? stats.gain : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
+                :max="$math.round((stats ? stats.gain : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
                 @input="updateGain"
               />
               <b-form-select
@@ -212,8 +212,8 @@
                 type="number"
                 required
                 step="0"
-                :min="round(-(stats ? stats.loss : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
-                :max="round(-(stats ? stats.loss : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
+                :min="$math.round(-(stats ? stats.loss : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
+                :max="$math.round(-(stats ? stats.loss : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
                 @input="updateLoss"
               />
               <b-form-select
@@ -308,7 +308,6 @@
 
 <script>
 import api from '@/api'
-import geo from '@/util/geo'
 import DateTimeInput from '../forms/DateTimeInput'
 import FormTip from '../forms/FormTip'
 import HelpDoc from '@/docs/course.md'
@@ -316,7 +315,6 @@ import SelectableLabelInput from '../forms/SelectableLabelInput'
 import StravaRouteInput from '../forms/StravaRouteInput'
 import moment from 'moment-timezone'
 import wputil from '@/util/waypoints'
-import { round } from '@/util/math'
 const gpxParse = require('gpx-parse')
 export default {
   components: {
@@ -425,9 +423,9 @@ export default {
     },
     async reloadPoints (field) {
       const arr = await api.getCourseField(this.model._id, field)
-      this.gpxPoints = geo.arraysToObjects(arr)
-      geo.addLoc(this.gpxPoints)
-      this.stats = geo.calcStats(this.gpxPoints, true)
+      this.gpxPoints = this.$core.arraysToObjects(arr)
+      this.$core.addLoc(this.gpxPoints)
+      this.stats = this.$core.calcStats(this.gpxPoints, true)
       this.courseLoaded = true
       return true
     },
@@ -439,7 +437,7 @@ export default {
       let points = []
       if (this.newPointsFlag && this.gpxPoints.length) {
         points = this.gpxPoints
-        this.points = geo.reduce(points, this.model.distance)
+        this.points = this.$core.reduce(points, this.model.distance)
 
         // reformat points for upload
         this.model.reduced = this.points.length !== points.length
@@ -447,10 +445,10 @@ export default {
           this.model.points = this.points.map(x => {
             return [
               x.loc,
-              round(x.lat, 6),
-              round(x.lon, 6),
-              round(x.alt, 2),
-              round(x.grade, 4)
+              this.$math.round(x.lat, 6),
+              this.$math.round(x.lon, 6),
+              this.$math.round(x.alt, 2),
+              this.$math.round(x.grade, 4)
             ]
           })
           this.model.raw = points.map(x => {
@@ -500,7 +498,7 @@ export default {
 
         // update all waypoints to fit updated course:
         const diff = this.model.distance - this.prevDist
-        const scaleWaypoints = round(diff, 4) !== 0
+        const scaleWaypoints = this.$math.round(diff, 4) !== 0
         if (scaleWaypoints || this.newPointsFlag) {
           const waypoints = await api.getWaypoints(this.model._id)
           // if the distance changed locations by new length
@@ -610,16 +608,16 @@ export default {
             this.$status.processing = false
             return
           }
-          geo.addLoc(this.gpxPoints)
-          this.gpxPoints = geo.cleanUp(this.gpxPoints)
-          this.stats = geo.calcStats(this.gpxPoints, true)
+          this.$core.addLoc(this.gpxPoints)
+          this.gpxPoints = this.$core.cleanUp(this.gpxPoints)
+          this.stats = this.$core.calcStats(this.gpxPoints, true)
           if (this.$config.requireGPXElevation && this.stats.gain === 0) {
             this.gpxFileNoElevFlag = true
             const t2 = this.$logger('CourseEdit|loadGPX getting elevation data')
             try {
               await this.addElevationData(this.gpxPoints)
               this.$logger(`CourseEdit|loadGPX received elevation data for ${this.gpxPoints.length} points`, t2)
-              this.stats = geo.calcStats(this.gpxPoints, true)
+              this.stats = this.$core.calcStats(this.gpxPoints, true)
             } catch (err) {
               this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
               this.$logger('CourseEdit|loadGPX failed to get elevation data.', t2)
@@ -653,7 +651,7 @@ export default {
           try {
             await this.addElevationData(this.gpxPoints, val)
             this.$logger(`CourseEdit|changeAltSource received elevation data for ${this.gpxPoints.length} points`, t2)
-            this.stats = geo.calcStats(this.gpxPoints, true)
+            this.stats = this.$core.calcStats(this.gpxPoints, true)
             this.updateModelGainLoss()
           } catch (err) {
             this.gpxFileInvalidMsg = 'Elevation data and data is not available.'
@@ -699,7 +697,7 @@ export default {
       this.model.distance = val / ((this.model.override.distUnit === 'mi') ? 0.621371 : 1)
     },
     async updateDistanceUnit (val) {
-      this.distancef = round(this.model.distance * ((val === 'mi') ? 0.621371 : 1), 2)
+      this.distancef = this.$math.round(this.model.distance * ((val === 'mi') ? 0.621371 : 1), 2)
     },
     updateGain: function (val) {
       this.model.gain = val / ((this.model.override.elevUnit === 'ft') ? 3.28084 : 1)
@@ -708,8 +706,8 @@ export default {
       this.model.loss = -val / ((this.model.override.elevUnit === 'ft') ? 3.28084 : 1)
     },
     async updateElevUnit (val) {
-      this.gainf = round(this.model.gain * ((val === 'ft') ? 3.28084 : 1), 0)
-      this.lossf = -round(this.model.loss * ((val === 'ft') ? 3.28084 : 1), 0)
+      this.gainf = this.$math.round(this.model.gain * ((val === 'ft') ? 3.28084 : 1), 0)
+      this.lossf = -this.$math.round(this.model.loss * ((val === 'ft') ? 3.28084 : 1), 0)
     },
     async defaultTimezone (lat, lon) {
       const tz = await api.getTimeZone(lat, lon)
@@ -718,9 +716,6 @@ export default {
       } else {
         this.moment = moment(0).tz(tz)
       }
-    },
-    round: function (val, dec) {
-      return round(val, dec)
     },
     showHelp () {
       this.$refs.help.show()
@@ -738,8 +733,8 @@ export default {
     async addElevationData (points, source) {
       const lls = points.map(p => {
         return [
-          round(p.lat, 6),
-          round(p.lon, 6)
+          this.$math.round(p.lat, 6),
+          this.$math.round(p.lon, 6)
         ]
       })
       const data = await this.$utils.timeout(

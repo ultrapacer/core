@@ -37,9 +37,6 @@ const WaypointSchema = new Schema({
     type: String,
     default: null
   },
-  segmentNotes: {
-    type: String
-  },
   pointsIndex: {
     type: Number,
     default: 0

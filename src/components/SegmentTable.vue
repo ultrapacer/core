@@ -47,7 +47,7 @@
       {{ sec2string(segments[segments.length - 1].tod, 'am/pm') }}
     </template>
     <template #foot(pace)>
-      {{ $units.pacef(pacing.pace) | formatTime }}
+      {{ $units.pacef(plan.pacing.pace) | formatTime }}
     </template>
     <template
       v-if="mode==='segments'"
@@ -150,7 +150,6 @@
 </template>
 
 <script>
-import { round } from '../util/math'
 import timeUtil from '../util/time'
 export default {
   filters: {
@@ -168,9 +167,9 @@ export default {
       type: Array,
       required: true
     },
-    pacing: {
+    plan: {
       type: Object,
-      required: true
+      default () { return null }
     },
     busy: {
       type: Boolean,
@@ -210,14 +209,14 @@ export default {
       let arr = this.segments.map((s, i) => { return { _index: i } })
       if (this.mode === 'segments') {
         arr = arr.filter((r, i) =>
-          this.segments[i].waypoint2.tier === 1 ||
+          this.segments[i].waypoint.tier === 1 ||
           this.visibleSubWaypoints.findIndex(vi => vi === i) >= 0
         )
       }
       return arr
     },
     planAssigned: function () {
-      return Boolean(this.pacing.time)
+      return Boolean(this.plan && this.plan.pacing && this.plan.pacing.time)
     },
     fieldsInTable: function () {
       // specify fields to show in table or in details based on size breaks
@@ -228,14 +227,14 @@ export default {
       if (this.mode === 'segments') {
         fieldsInTable.grade = 'xl'
         fieldsInTable.loss = 'xl'
-        if (this.pacing.time) {
+        if (this.planAssigned) {
           fieldsInTable.gain = 'sm'
           fieldsInTable.time = 'md'
           fieldsInTable.pace = 'sm'
         }
       } else {
         fieldsInTable.grade = 'md'
-        if (this.pacing.time) {
+        if (this.planAssigned) {
           fieldsInTable.loss = 'sm'
         }
       }
@@ -266,10 +265,7 @@ export default {
           key: 'gain',
           label: `Gain [${this.$units.alt}]`,
           formatter: (value, key, item) => {
-            let scale = 1
-            if (this.pacing.scales) {
-              scale = this.pacing.scales.gain
-            }
+            const scale = this.course.scales ? this.course.scales.gain : 1
             return this.$units.altf(this.rollup(item, key, 'sum') * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           }
@@ -278,10 +274,7 @@ export default {
           key: 'loss',
           label: 'Loss [' + this.$units.alt + ']',
           formatter: (value, key, item) => {
-            let scale = 1
-            if (this.pacing.scales) {
-              scale = this.pacing.scales.loss
-            }
+            const scale = this.course.scales ? this.course.scales.loss : 1
             return this.$units.altf(this.rollup(item, key, 'sum') * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           }
@@ -290,9 +283,12 @@ export default {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
-            const gs = this.pacing.scales ? this.pacing.scales.gain : 1
-            const ls = this.pacing.scales ? this.pacing.scales.loss : 1
-            const g = (this.rollup(item, 'gain', 'sum') * gs + this.rollup(item, 'loss', 'sum') * ls) / this.rollup(item, 'len', 'sum') / 10
+            const gs = this.course.scales ? this.course.scales.gain : 1
+            const ls = this.course.scales ? this.course.scales.loss : 1
+            const l = this.mode === 'segments'
+              ? this.rollup(item, 'len', 'sum')
+              : 1 / this.$units.distScale
+            const g = (this.rollup(item, 'gain', 'sum') * gs + this.rollup(item, 'loss', 'sum') * ls) / l / 10
             return (g).toFixed(1) + '%'
           }
         }
@@ -310,7 +306,7 @@ export default {
           label: 'End',
           class: 'text-truncate mw-7rem',
           formatter: (value, key, item) => {
-            return this.rollup(item, 'waypoint2.name', 'last')
+            return this.rollup(item, 'waypoint.name', 'last')
           }
         })
       }
@@ -392,10 +388,10 @@ export default {
     },
     collapseableIds: function () {
       return this.segments.filter((s, i) =>
-        i < this.segments.length - 1 &&
-        s.waypoint1.tier === 1 &&
-        this.segments[i + 1].waypoint1.tier > 1
-      ).map(s => { return s.waypoint1._id })
+        i > 0 &&
+        this.segments[i - 1].waypoint.tier === 1 &&
+        s.waypoint.tier > 1
+      ).map(s => { return s.waypoint._id })
     }
   },
   watch: {
@@ -418,7 +414,7 @@ export default {
       const fs = []
       Object.keys(this.factorLables).forEach(k => {
         const f = this.rollup(row, `factors.${k}`, 'weightedAvg')
-        if (round(f, 4) !== 1) {
+        if (this.$math.round(f, 4) !== 1) {
           fs.push({
             name: k,
             value: f
@@ -443,13 +439,13 @@ export default {
     },
     isCollapseable: function (row) {
       // return whether to show the collapse row button
-      if (this.segments[row._index].waypoint2.tier !== 1) return false
-      const last1 = this.segments.filter((s, i) => i < row._index && s.waypoint2.tier === 1).pop()
-      const last2 = this.segments.filter((s, i) => i < row._index && s.waypoint2.tier === 2).pop()
-      return (last2 !== undefined) && (last1 === undefined || last2.waypoint2.location > last1.waypoint2.location)
+      if (this.segments[row._index].waypoint.tier !== 1) return false
+      const last1 = this.segments.filter((s, i) => i < row._index && s.waypoint.tier === 1).pop()
+      const last2 = this.segments.filter((s, i) => i < row._index && s.waypoint.tier === 2).pop()
+      return (last2 !== undefined) && (last1 === undefined || last2.waypoint.location > last1.waypoint.location)
     },
     isChild: function (row) {
-      return this.segments[row._index].waypoint2.tier === 2
+      return this.segments[row._index].waypoint.tier === 2
     },
     clear: async function () {
       this.clearing = true
@@ -465,7 +461,7 @@ export default {
       this.segments.forEach((s, i) => {
         if (i > prev && i < row._index) {
           this.visibleSubWaypoints.push(i)
-          wps.push(s.waypoint2._id)
+          wps.push(s.waypoint._id)
         }
       })
       this.$emit('show', wps)
@@ -474,13 +470,13 @@ export default {
     collapseRow: function (row) {
       let prev
       for (prev = row._index - 1; prev >= 0; prev--) {
-        if (prev < 0) { break } else if (this.segments[prev].waypoint2.tier === 1) { break }
+        if (prev < 0) { break } else if (this.segments[prev].waypoint.tier === 1) { break }
       }
       const wps = []
       this.segments.forEach((s, i) => {
         if (i > prev && i < row._index) {
           this.visibleSubWaypoints = this.visibleSubWaypoints.filter(vi => vi !== i)
-          wps.push(s.waypoint2._id)
+          wps.push(s.waypoint._id)
         }
       })
       this.$emit('hide', wps)
@@ -491,10 +487,13 @@ export default {
         this.$set(r, '_showDetails', false)
       })
       this.$set(row, '_showDetails', !row._showDetails)
+      const len = this.mode === 'segments'
+        ? this.rollup(row, 'len', 'sum')
+        : 1 / this.$units.distScale
       this.$emit(
         'select',
         this.mode,
-        [this.rollup(row, 'start', 'first'), this.getSegment(row, 'end')]
+        [this.getSegment(row, 'end') - len, this.getSegment(row, 'end')]
       )
       if (!row._showDetails) {
         this.$emit('select', this.mode, [])
@@ -545,20 +544,18 @@ export default {
     sec2string: function (s, f) {
       return timeUtil.sec2string(s, f)
     },
-    round: function (v, t) {
-      return round(v, t)
-    },
     spannedWaypoints: function (s) {
       return this.course.waypoints.filter(wp =>
-        round(wp.location, 4) > round(s.start, 4) &&
-        round(wp.location, 4) <= round(s.end, 4) && (
+        this.$math.round(wp.location, 4) > this.$math.round(s.end - s.len, 4) &&
+        this.$math.round(wp.location, 4) <= this.$math.round(s.end, 4) && (
           wp.description ||
         this.waypointDelay(wp))
       )
     },
     waypointDelay: function (wp) {
-      const d = this.pacing.delays.find(d =>
-        round(d.loc, 4) === round(wp.location, 4)
+      if (!this.planAssigned || !this.plan.pacing.delays.length) return 0
+      const d = this.plan.pacing.delays.find(d =>
+        this.$math.round(d.loc, 4) === this.$math.round(wp.location, 4)
       )
       return (d) ? d.delay : 0
     },
@@ -581,7 +578,7 @@ export default {
       const segment = this.getSegment(item)
       let res = false
       Object.keys(segment.factors).forEach(k => {
-        if (round(segment.factors[k], 4) !== 1) {
+        if (this.$math.round(segment.factors[k], 4) !== 1) {
           res = true
         }
       })

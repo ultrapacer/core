@@ -2,6 +2,17 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 const Waypoint = require('./Waypoint')
 const Plan = require('./Plan')
+const core = require('../../core')
+const { logger } = require('../../core/logger')
+
+const splitFields = {
+  end: Number,
+  alt: Number,
+  gain: Number,
+  loss: Number,
+  grade: Number,
+  factors: {}
+}
 
 // Define collection and schema for Posts
 const CourseSchema = new Schema({
@@ -75,7 +86,28 @@ const CourseSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Waypoint'
   }],
-  cache: {}
+  splits: {
+    miles: {
+      type: [splitFields],
+      default: []
+    },
+    kilometers: {
+      type: [splitFields],
+      default: []
+    },
+    segments: {
+      type: [{
+        waypoint: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Waypoint'
+        },
+        len: Number,
+        ...splitFields
+      }],
+      default: []
+    }
+  },
+  scales: {}
 }, {
   collection: 'courses'
 })
@@ -101,11 +133,50 @@ CourseSchema.methods.addData = async function (user = null, plan = null) {
 }
 
 CourseSchema.methods.clearCache = async function () {
-  console.log(`Clearing cache for course ${this._id}`)
-  await Promise.all([
-    this.updateOne({ cache: null }),
-    Plan.updateMany({ _course: this }, { cache: null })
+  logger(`Course|clearCache: clearing cache for course ${this._id}`)
+  await this.updateOne({ splits: undefined })
+}
+
+CourseSchema.methods.updateCache = async function () {
+  const t = logger(`Course|updateCache: updating cache for course ${this._id}`)
+  const [waypoints, course] = await Promise.all([
+    await Waypoint.find({ _course: this }).sort('location').exec(),
+    await mongoose.model('Course').findOne({ _id: this._id }).select('points').exec()
   ])
+  this.waypoints = waypoints
+  const { points, scales } = core.processPoints(
+    core.arraysToObjects(course.points),
+    this.distance,
+    this.gain,
+    this.loss
+  )
+  this.scales = scales
+
+  // get terrrain factors:
+  const tFs = core.segments.createTerrainFactors(waypoints)
+
+  // add splits:
+  const data = { tFs: tFs }
+  this.splits.segments = core.segments.createSegments(points, { ...data, waypoints: waypoints })
+  this.splits.miles = core.segments.createSplits(points, 'miles', data)
+  this.splits.kilometers = core.segments.createSplits(points, 'kilometers', data)
+
+  // then update model:
+  await this.updateOne({
+    scales: this.scales,
+    splits: this.splits
+  })
+  logger('Course|updateCache', t)
+}
+
+CourseSchema.methods.hasCache = function () {
+  return Boolean(
+    this.scales && this.scales.gain && this.scales.loss &&
+    this.splits &&
+    this.splits.segments && this.splits.segments.length &&
+    this.splits.miles && this.splits.miles.length &&
+    this.splits.kilometers && this.splits.kilometers.length
+  )
 }
 
 CourseSchema.pre('remove', function () {

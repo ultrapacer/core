@@ -6,7 +6,7 @@ import router from './router'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import AuthPlugin from './plugins/auth'
-import LoggerPlugin from './plugins/logger'
+import { logger } from '../core/logger'
 import UnitsPlugin from './plugins/units'
 import VueGtag from 'vue-gtag'
 import VuePageTitle from 'vue-page-title'
@@ -35,8 +35,10 @@ import 'vue-awesome/icons/trash'
 import VIcon from 'vue-awesome/components/Icon'
 import './custom.scss'
 
-// eslint-disable-next-line no-unused-vars
-import geo from '@/util/geo'
+import Core from '../core'
+import math from '../core/math'
+Vue.prototype.$core = Core
+Vue.prototype.$math = math
 
 Vue.component('VIcon', VIcon)
 Vue.component('VueHeadful', vueHeadful)
@@ -115,7 +117,7 @@ Vue.filter('commas', function (value) {
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 })
 
-Vue.use(LoggerPlugin)
+Vue.prototype.$logger = logger
 Vue.use(UnitsPlugin)
 
 Vue.config.productionTip = false

@@ -1,4 +1,3 @@
-// src/plugins/logger.js
 function leftZero (val) {
   if (val < 10) {
     return `0${val}`
@@ -12,9 +11,14 @@ function timeStr (t) {
           leftZero(t.getSeconds()) + '.' +
           leftZero(Math.round(t.getMilliseconds() / 10))
 }
-const isBeta = window.location.origin.includes('appspot.com') || window.location.origin.includes('localhost')
-export function logger (message = null, prev = null) {
-  if (process.env.NODE_ENV === 'development' || isBeta) {
+let verbose = false
+try {
+  verbose = window.location.origin.includes('appspot.com') || window.location.origin.includes('localhost')
+} catch (err) {
+  verbose = true
+}
+function logger (message = null, prev = null) {
+  if (verbose) {
     const t = new Date()
     if (message) {
       if (prev) {
@@ -28,8 +32,4 @@ export function logger (message = null, prev = null) {
   }
 }
 
-export default {
-  install (Vue) {
-    Vue.prototype.$logger = logger
-  }
-}
+exports.logger = logger

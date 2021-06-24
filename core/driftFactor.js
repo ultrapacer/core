@@ -48,7 +48,5 @@ function adjust (drift, length) {
   return (area / length)
 }
 
-module.exports = {
-  driftFactor: driftFactor,
-  adjust: adjust
-}
+exports.driftFactor = driftFactor
+exports.adjust = adjust

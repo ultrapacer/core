@@ -83,7 +83,6 @@
 </template>
 
 <script>
-import geo from '@/util/geo'
 import moment from 'moment-timezone'
 import FormTip from '../forms/FormTip'
 const gpxParse = require('gpx-parse')
@@ -122,7 +121,7 @@ export default {
       this.$status.processing = true
       this.$nextTick(async () => {
         if (this.gpxPoints.length) {
-          geo.addLoc(this.gpxPoints)
+          this.$core.addLoc(this.gpxPoints)
         }
         const result = await this.cb(this.gpxPoints)
         if (result.match) {

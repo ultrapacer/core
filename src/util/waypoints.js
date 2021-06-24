@@ -1,5 +1,5 @@
 /* eslint new-cap: 0 */
-import { getLatLonAltFromDistance } from './geo'
+import { getLatLonAltFromDistance } from '../../core'
 const sgeo = require('sgeo')
 
 function updateLLA (waypoint, points) {

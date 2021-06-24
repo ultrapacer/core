@@ -11,7 +11,7 @@
 
 <script>
 import PlanChart from './PlanChart.js'
-import { adjust } from '../util/driftFactor.js'
+import { adjust } from '../../core/driftFactor'
 export default {
   components: {
     PlanChart

@@ -168,7 +168,7 @@
               ref="segmentTable"
               :course="course"
               :segments="segments"
-              :pacing="pacing"
+              :plan="plan"
               :busy="busy"
               :mode="'segments'"
               :show-actual="comparing"
@@ -187,7 +187,7 @@
               ref="splitTable"
               :course="course"
               :segments="splits"
-              :pacing="pacing"
+              :plan="plan"
               :busy="busy"
               :mode="'splits'"
               :show-actual="comparing"
@@ -202,7 +202,7 @@
             <waypoint-table
               ref="waypointTable"
               :course="course"
-              :segments="segments"
+              :segments="planAssigned && pacingSplitsReady ? plan.splits.segments : course.splits.segments"
               :editing="editing"
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"
@@ -234,7 +234,7 @@
             </b-row>
           </b-tab>
           <b-tab
-            v-if="pacing.factors"
+            v-if="course.splits.kilometers"
             title="Details"
             :style="tableHeight ? {maxHeight: tableHeight + 'px', overflowY: 'auto'} : {}"
           >
@@ -242,11 +242,10 @@
               ref="planDetails"
               :course="course"
               :points="points"
-              :kilometers="kilometers"
+              :terrain-factors="terrainFactors"
               :event="event"
               :plan="plan"
-              :pacing="pacing"
-              :busy="busy"
+              :busy="initializing"
               :visible="tableTabIndex===3"
             />
           </b-tab>
@@ -266,7 +265,7 @@
           :course="course"
           :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
           :points="points"
-          :sun-events="pacing.sunEventsByLoc"
+          :sun-events="plan.pacing ? plan.pacing.sunEventsByLoc: []"
           :show-actual="comparing"
           :focus="focus"
           @waypointClick="waypointClick"
@@ -314,7 +313,7 @@
       :plan="plan"
       :event="event"
       :points="points"
-      :segments="segments"
+      :segments="course.splits.segments"
       :update-fn="updatePacing"
     />
     <course-compare
@@ -357,7 +356,6 @@
 
 <script>
 import api from '@/api'
-import geo from '@/util/geo'
 import { string2sec } from '../util/time'
 import wputil from '../util/waypoints'
 import CourseShare from '../components/CourseShare'
@@ -400,12 +398,8 @@ export default {
       plans: [],
       points: [],
       printing: false,
-      segments: [],
-      miles: [],
-      kilometers: [],
       scales: {},
       waypoint: {},
-      pacing: {},
       focus: [],
       tableTabIndex: 0,
       tableTabNames: ['Segments', 'Splits', 'Waypoints', 'Details'],
@@ -507,11 +501,25 @@ export default {
         !this.plan._id
       )
     },
+    segments: function () {
+      const type = this.planAssigned && this.pacingSplitsReady ? 'plan' : 'course'
+      return this[type].splits.segments
+    },
+    pacingSplitsReady: function () {
+      return Boolean(
+        this.plan &&
+        this.plan.splits &&
+        this.plan.splits.miles && this.plan.splits.miles.length &&
+        this.plan.splits.kilometers && this.plan.splits.kilometers.length &&
+        this.plan.splits.segments && this.plan.splits.segments.length
+      )
+    },
     splits: function () {
+      const type = this.planAssigned && this.pacingSplitsReady ? 'plan' : 'course'
       if (this.$units.dist === 'km') {
-        return this.kilometers
+        return this[type].splits.kilometers
       } else {
-        return this.miles
+        return this[type].splits.miles
       }
     },
     terrainFactors: function () {
@@ -561,6 +569,8 @@ export default {
     editing: function (val) {
       // update after disabling editing
       if (!val && this.updateFlag) {
+        this.createSplits()
+        this.clearPlanSplits()
         this.updatePacing()
       }
     },
@@ -568,13 +578,9 @@ export default {
       this.focus = []
       // if editing and navigating away from waypoint table, recalc
       if (this.updateFlag && this.tableTabIndex !== 2) {
+        this.createSplits()
+        this.clearPlanSplits()
         this.updatePacing()
-      }
-    },
-    updateFlag: function (val) {
-      // when update flag transitions to true, clear cached data
-      if (val) {
-        this.clearCache()
       }
     }
   },
@@ -615,11 +621,16 @@ export default {
         }
 
         this.refreshVisibleWaypoints()
-        await this.getPoints()
         this.$gtage(this.$gtag, 'Course', 'view', this.publicName)
-        this.plans = this.course.plans
-        this.syncCache(this.course)
-        this.syncCache(this.plans)
+        this.plans = this.course.plans || []
+
+        // match waypoints in cached segments w/ actual objects
+        this.course.splits.segments.forEach(s => {
+          s.waypoint = this.course.waypoints.find(
+            wp => wp._id === (s.waypoint._id || s.waypoint)
+          )
+        })
+
         if (this.$route.params.plan) {
           this.plan = this.plans.find(
             x => x._id === this.$route.params.plan
@@ -632,7 +643,11 @@ export default {
         return
       }
       this.$title = this.course.name
-      this.useCache()
+      if (this.planAssigned) {
+        await this.getPoints()
+      } else {
+        this.getPoints()
+      }
       this.initializing = false
       this.busy = false
       this.$status.processing = false
@@ -666,24 +681,21 @@ export default {
         'points'
       )
       t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
-      this.points = geo.arraysToObjects(pnts)
-      geo.addLoc(this.points, this.course.distance)
-      this.points = geo.cleanUp(this.points)
-      geo.addGrades(this.points)
-      const stats = geo.calcStats(this.points, false)
-      this.scales = {
-        gain: this.course.gain / stats.gain,
-        loss: this.course.loss / stats.loss,
-        grade: (this.course.gain - this.course.loss) / (stats.gain - stats.loss)
-      }
-      this.points.forEach((x, i) => {
-        this.points[i].grade = this.points[i].grade * this.scales.grade
-      })
+      this.points = this.$core.arraysToObjects(pnts)
+      const { points, scales } = this.$core.processPoints(
+        this.points,
+        this.course.distance,
+        this.course.gain,
+        this.course.loss
+      )
+      this.points = points
+      this.scales = scales
+
       // refresh LLA's from course points:
       this.course.waypoints.forEach(wp => {
         wputil.updateLLA(wp, this.points)
       })
-      if (!this.pacing.factors) {
+      if (this.planAssigned) {
         await this.updatePacing()
       }
       this.$logger('Course|getPoints: complete', t)
@@ -695,7 +707,6 @@ export default {
     async reloadCourse () {
       this.focus = []
       await this.initialize()
-      await this.updatePacing()
     },
     async deleteCourse (course, cb) {
       this.$refs.delModal.show(
@@ -741,6 +752,7 @@ export default {
           if (index > -1) {
             this.course.waypoints.splice(index, 1)
           }
+          this.setUpdateFlag()
         },
         (err) => {
           if (typeof (cb) === 'function') {
@@ -833,13 +845,11 @@ export default {
     async refreshPlans (plan, callback) {
       if (this.$auth.isAuthenticated()) {
         this.plans = await api.getPlans(this.course._id, this.$user._id)
-        this.syncCache(this.plans)
         this.plan = this.plans.find(p => p._id === plan._id)
       } else {
         this.plan = { ...plan }
         this.plans = [this.plan]
       }
-      delete this.plan.cache
       await this.calcPlan()
       if (typeof callback === 'function') callback()
     },
@@ -878,7 +888,7 @@ export default {
         this.$router.push(route)
       }
       this.$gtage(this.$gtag, 'Plan', 'view', this.publicName)
-      if (!this.useCache()) {
+      if (!this.pacingSplitsReady) {
         this.busy = true
         this.$status.processing = true
         setTimeout(() => { this.updatePacing() }, 10)
@@ -894,7 +904,6 @@ export default {
       // deselect the current plan
       if (!this.planAssigned) { return }
       this.plan = {}
-      this.pacing = {}
       const route = {
         name: 'Course',
         params: {
@@ -906,14 +915,60 @@ export default {
         route.params.permalink = this.course.link
       }
       this.$router.push(route)
-      if (!this.useCache()) {
-        this.busy = true
-        this.$status.processing = true
-        setTimeout(() => { this.updatePacing() }, 10)
-      } else {
-        this.$refs.profile.update()
-      }
+      this.$refs.profile.update()
       this.$logger('Course|clearPlan')
+    },
+    createSplits: async function () {
+      const t = this.$logger('go1')
+      this.course.splits.segments = await this.$core.segments.createSegments(
+        this.points,
+        {
+          waypoints: this.course.waypoints,
+          tFs: this.terrainFactors
+        }
+      )
+      const units = ['kilometers', 'miles']
+      units.forEach(async (unit) => {
+        this.course.splits[unit] = await this.$core.segments.createSplits(
+          this.points,
+          unit,
+          {
+            tFs: this.terrainFactors
+          }
+        )
+      })
+      this.$logger('Course|createSplits', t)
+    },
+    createPlanSplits: async function () {
+      const t = this.$logger()
+      if (!this.plan.splits) { this.$set(this.plan, 'splits', {}) }
+      const segments = await this.$core.segments.createSegments(
+        this.points,
+        {
+          waypoints: this.course.waypoints,
+          ...this.plan.pacing,
+          startTime: this.event.startTime
+        }
+      )
+      this.$set(this.plan.splits, 'segments', segments)
+      const units = ['kilometers', 'miles']
+      units.forEach(async (unit) => {
+        const s = await this.$core.segments.createSplits(
+          this.points,
+          unit,
+          {
+            ...this.plan.pacing,
+            startTime: this.event.startTime
+          }
+        )
+        this.$set(this.plan.splits, unit, s)
+      })
+      this.$logger('Course|createPlanSplits', t)
+    },
+    clearPlanSplits: function () {
+      this.plans.forEach(p => {
+        p.splits = {}
+      })
     },
     async updatePacing () {
       const t = this.$logger()
@@ -921,11 +976,11 @@ export default {
       this.busy = true
       this.updateFlag = false
       this.$status.processing = true
-      const result = geo.calcPacing({
+      const result = this.$core.calcPacing({
         course: this.course,
         plan: this.plan,
         points: this.points,
-        pacing: this.pacing,
+        pacing: this.plan.pacing,
         event: this.event,
         delays: this.delays,
         heatModel: this.heatModel,
@@ -933,52 +988,10 @@ export default {
         terrainFactors: this.terrainFactors
       })
       this.points = result.points
-      this.pacing = result.pacing
+      this.$set(this.plan, 'pacing', result.pacing) // use $set to make reactive
 
       // update splits and segments
-      this.kilometers = geo.calcSplits({
-        points: this.points,
-        pacing: this.pacing,
-        event: this.event,
-        unit: 'kilometers'
-      })
-      this.miles = geo.calcSplits({
-        points: this.points,
-        pacing: this.pacing,
-        event: this.event,
-        unit: 'miles'
-      })
-      this.updateSegments()
-
-      // save cached data:
-      if (this.$user.isAuthenticated) {
-        const cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
-        if (this.planAssigned) {
-          this.plan.cache = {}
-          cacheFields.forEach(f => {
-            this.plan.cache[f] = this[f]
-          })
-          if (this.planAssigned && this.planOwner) {
-            this.$logger('Course|updatePacing: saving plan cache')
-            api.updatePlanCache(
-              this.plan._id,
-              { cache: this.plan.cache }
-            )
-          }
-        } else {
-          this.course.cache = {}
-          cacheFields.forEach(f => {
-            this.course.cache[f] = this[f]
-          })
-          if (this.owner) {
-            this.$logger('Course|updatePacing: saving course cache')
-            api.updateCourseCache(
-              this.course._id,
-              { cache: this.course.cache }
-            )
-          }
-        }
-      }
+      await this.createPlanSplits()
 
       // update profile chart
       if (this.$refs.profile) {
@@ -988,27 +1001,6 @@ export default {
       this.busy = false
       this.$status.processing = false
       this.$logger('Course|updatePacing', t)
-    },
-    updateSegments: function () {
-      const t = this.$logger()
-      const breaks = []
-      const wps = []
-      this.course.waypoints.forEach(x => {
-        if (x.tier < 3) {
-          breaks.push(x.location)
-          wps.push(x)
-        }
-      })
-      const arr = geo.calcSegments(this.points, breaks, this.pacing)
-      arr.forEach((x, i) => {
-        arr[i].waypoint1 = wps[i]
-        arr[i].waypoint2 = wps[i + 1]
-        if (this.planAssigned && this.event.startTime !== null) {
-          arr[i].tod = (x.elapsed + this.event.startTime)
-        }
-      })
-      this.segments = arr
-      this.$logger('Course|updateSegments', t)
     },
     updateFocus: function (type, focus) {
       this.focus = focus
@@ -1031,47 +1023,6 @@ export default {
           this.visibleWaypoints.splice(i, 1)
         }
       })
-    },
-    clearCache: function () {
-      this.plans.forEach(p => {
-        p.cache = null
-      })
-      this.$logger('Course|clearCache')
-    },
-    syncCache: function (obj) {
-      // makes the waypoints in the cached data the same objects as waypoints
-      if (!Array.isArray(obj)) { obj = [obj] }
-      obj.forEach(x => {
-        if (x.cache) {
-          x.cache.segments.forEach(s => {
-            s.waypoint1 = this.course.waypoints.find(
-              wp => wp._id === s.waypoint1._id
-            )
-            s.waypoint2 = this.course.waypoints.find(
-              wp => wp._id === s.waypoint2._id
-            )
-          })
-        }
-      })
-    },
-    useCache: function () {
-      const type = (this.planAssigned) ? 'plan' : 'course'
-      // if cache data is stored, assign it
-      const cacheFields = ['pacing', 'segments', 'miles', 'kilometers']
-      if (
-        this[type].cache &&
-        this[type].cache.pacing.scales !== undefined &&
-        this[type].cache.segments[0].factors.dark !== null // ignore caches before 2020-02-21
-      ) {
-        this.$logger(`Course|useCache: using cached ${type} data`)
-        cacheFields.forEach(f => {
-          this[f] = this[type].cache[f]
-        })
-        return true
-      } else {
-        this.$logger(`Course|useCache: no cached ${type} data`)
-        return false
-      }
     },
     setUpdateFlag: function () {
       this.updateFlag = true
@@ -1099,23 +1050,11 @@ export default {
             await this.updatePacing()
           }
           this.$status.processing = true
-          const res = await geo.addActuals(this.points, actual)
+          const res = await this.$core.addActuals(this.points, actual)
           if (res.match) {
             this.$gtage(this.$gtag, 'Course', 'compare', this.publicName, 1)
             this.comparing = true
-            this.kilometers = geo.calcSplits({
-              points: this.points,
-              pacing: this.pacing,
-              event: this.event,
-              unit: 'kilometers'
-            })
-            this.miles = geo.calcSplits({
-              points: this.points,
-              pacing: this.pacing,
-              event: this.event,
-              unit: 'miles'
-            })
-            this.updateSegments()
+            this.createPlanSplits()
           } else {
             this.$gtage(this.$gtag, 'Course', 'compare', this.publicName, 0)
             this.comparing = false

@@ -84,7 +84,6 @@
 
 <script>
 import api from '@/api'
-import { defaults } from '../util/normFactor'
 export default {
   title: 'Settings',
   data () {
@@ -111,7 +110,7 @@ export default {
           text: 'Meters'
         }
       ],
-      altModel: Object.assign({}, defaults.alt),
+      altModel: Object.assign({}, this.$core.normFactor.defaults.alt),
       model: {}
     }
   },

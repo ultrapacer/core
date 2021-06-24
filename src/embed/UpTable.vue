@@ -47,11 +47,11 @@ import Vue from 'vue'
 import Loading from 'vue-loading-overlay'
 
 import UnitsPlugin from '@/plugins/units'
-import LoggerPlugin from '@/plugins/logger'
+import { logger } from '../../core/logger'
 import api from '@/api-external'
 import { BLink, BTable } from 'bootstrap-vue'
+Vue.prototype.$logger = logger
 Vue.use(UnitsPlugin)
-Vue.use(LoggerPlugin)
 export default {
   components: {
     BLink, BTable, Loading
@@ -72,12 +72,17 @@ export default {
     columns: {
       type: String,
       default: 'name,location,elevation'
+    },
+    mode: {
+      type: String,
+      default: 'segments'
     }
   },
   data () {
     return {
       course: { waypoints: [] },
-      isLoading: true
+      isLoading: true,
+      segments: []
     }
   },
   computed: {
@@ -88,64 +93,189 @@ export default {
       return arr
     },
     rows: function () {
-      return this.course.waypoints.filter(x => x.tier < 3).map(wp => { return { _id: wp._id } })
-    },
-    showTerrainType: function () {
-      return this.course.waypoints.findIndex(wp => wp.terrainType) >= 0
-    },
-    showTerrainFactor: function () {
-      return this.course.waypoints.findIndex(wp => wp.terrainFactor) >= 0
+      let arr = this.segments.map((s, i) => { return { _index: i } })
+      if (this.mode === 'segments') {
+        arr = arr.filter((r, i) =>
+          this.segments[i].waypoint.tier === 1
+        )
+      }
+      return arr
     },
     fields: function () {
       const arr = []
-      const f = [
-        {
-          key: 'name',
-          class: 'text-truncate mw-7rem',
+      const availableFields = {
+        location: {
+          key: 'end',
+          label: `${this.mode === 'segments' ? 'Loc' : 'Split'} [${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            return this.getWaypoint(item, key)
-          }
-        },
-        {
-          key: 'location',
-          label: `Loc. [${this.$units.dist}]`,
-          formatter: (value, key, item) => {
-            return this.$units.distf(this.getWaypoint(item, key), 2)
+            return this.$units.distf(this.rollup(item, key, 'last'), 2)
           },
           class: 'text-right'
         },
-        {
-          key: 'elevation',
+        elevation: {
+          key: 'alt',
           label: `Elev. [${this.$units.alt}]`,
           formatter: (value, key, item) => {
-            return this.$units.altf(this.getWaypoint(item, key), 0)
+            return this.$units.altf(this.rollup(item, key, 'last'), 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+          },
+          class: 'text-right'
+        },
+        gain: {
+          key: 'gain',
+          label: `Gain [${this.$units.alt}]`,
+          formatter: (value, key, item) => {
+            const scale = this.course.scales.gain || 1
+            return this.$units.altf(this.rollup(item, key, 'sum') * scale, 0)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+          },
+          class: 'text-right'
+        },
+        loss: {
+          key: 'loss',
+          label: 'Loss [' + this.$units.alt + ']',
+          formatter: (value, key, item) => {
+            const scale = this.course.scales.loss || 1
+            return this.$units.altf(this.rollup(item, key, 'sum') * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'text-right'
         }
-      ]
-      console.log(this.cols)
+      }
+      if (this.mode === 'segments') {
+        availableFields.name = {
+          key: 'name',
+          label: 'End',
+          formatter: (value, key, item) => {
+            return this.rollup(item, 'waypoint.name', 'last')
+          },
+          class: 'text-truncate mw-7rem'
+        }
+        availableFields.distance = {
+          key: 'len',
+          label: `Dist. [${this.$units.dist}]`,
+          formatter: (value, key, item) => {
+            return this.$units.distf(this.rollup(item, key, 'sum'), 2)
+          },
+          class: 'text-right'
+        }
+      }
       this.cols.forEach(c => {
-        const x = f.find(y => y.key === c)
-        if (x) arr.push(x)
+        if (availableFields[c]) arr.push(availableFields[c])
       })
 
       // first column should not be right-aligned:
       arr[0].class = arr[0].class.replace('text-right', '')
-      console.log(arr)
+
+      // add padding between columns with right then left align
+      arr.forEach((x, i) => {
+        if (
+          i < arr.length - 1 &&
+          x.class.includes('text-right') &&
+          !arr[i + 1].class.includes('text-right')
+        ) {
+          arr[i].class += ' pr-3'
+          arr[i + 1].class += 'pl-3'
+        }
+      })
       return arr
     }
   },
   async created () {
-    this.$logger('getting course')
-    this.course = await api.getCourse(this.courseId, 'course')
+    const t = this.$logger()
+    if (this.units === 'metric') {
+      this.$units.setDist('km')
+      this.$units.setAlt('m')
+    }
+    let mode = ''
+    switch (this.mode) {
+      case 'segments':
+        mode = this.mode
+        break
+      case 'splits':
+        switch (this.units) {
+          case 'english':
+            mode = 'miles'
+            break
+          case 'metric':
+            mode = 'kilometers'
+        }
+    }
+    this.course = await api.getUpTable(this.courseId, mode)
+    switch (this.mode) {
+      case 'segments':
+        this.segments = this.course.splits.segments
+        // match waypoints in cached segments w/ actual objects
+        this.segments.forEach(s => {
+          s.waypoint = this.course.waypoints.find(
+            wp => wp._id === (s.waypoint._id || s.waypoint)
+          )
+        })
+        console.log(this.segments)
+        break
+      case 'splits':
+        switch (this.units) {
+          case 'english':
+            this.segments = this.course.splits.miles
+            break
+          case 'metric':
+            this.segments = this.course.splits.kilometers
+        }
+    }
     this.isLoading = false
+    this.$logger('UpTable|created: complete', t)
   },
   methods: {
     getWaypoint: function (row, field = null) {
       // return the waypoint object/field associated with a row
       const wp = this.course.waypoints.find(wp => wp._id === row._id)
       return (field) ? wp[field] : wp
+    },
+    parseField: function (obj, field) {
+      const arr = field.split('.')
+      switch (arr.length) {
+        case 1:
+          return obj[field]
+        case 2:
+          return obj[arr[0]][arr[1]]
+      }
+    },
+    getSegment: function (row, field = null) {
+      // return the segment object/field associated with a row
+      const s = this.segments[row._index]
+      return (field) ? this.parseField(s, field) : s
+    },
+    rollup: function (row, field, method) {
+      const ri = this.rows.findIndex(r => r._index === row._index)
+      if (
+        this.mode === 'segments' &&
+        ((ri === 0 && row._index > 0) ||
+        (ri > 0 && row._index - this.rows[ri - 1]._index > 1))
+      ) {
+        const prev = (ri > 0) ? this.rows[ri - 1]._index : -1
+        const subs = this.segments.filter((s, i) => i > prev && i <= row._index)
+        switch (method) {
+          case 'sum': {
+            return subs.reduce((v, x) => { return v + this.parseField(x, field) }, 0)
+          }
+          case 'first': {
+            return this.parseField(subs[0], field)
+          }
+          case 'last': {
+            return this.parseField(subs[subs.length - 1], field)
+          }
+          case 'weightedAvg': {
+            let v = 0
+            let t = 0
+            subs.forEach(s => {
+              v += s.len * this.parseField(s, field)
+              t += s.len
+            })
+            return v / t
+          }
+        }
+      } else {
+        return this.getSegment(row, field)
+      }
     }
   }
 }
@@ -168,7 +298,7 @@ export default {
   display: flex;
   justify-content: space-evenly;
 }
-  .up-table-logo {
-    height: 24px;
-  }
+.up-table-logo {
+  height: 24px;
+}
 </style>

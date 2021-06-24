@@ -1,9 +1,9 @@
 /* eslint new-cap: 0 */
-import nF from './normFactor'
-import { interp, round, wlslr } from './math'
-import { logger } from '../plugins/logger'
+const nF = require('./normFactor')
+const { interp, round, wlslr } = require('./math')
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
+const { logger } = require('./logger')
 
 function calcStats (points, smooth = true) {
   // return course { gain, loss, dist }
@@ -34,6 +34,42 @@ function calcStats (points, smooth = true) {
   }
 }
 
+function interpp (p1, p2, s) {
+  const p = {
+    loc: s.end,
+    grade: p1.grade
+  }
+  const fs = ['alt']
+  const hasTOD = typeof (p1.tod) !== 'undefined' && typeof (p2.tod) !== 'undefined'
+  if (hasTOD) { fs.push('tod') }
+  fs.forEach(f => {
+    p[f] = interp(
+      p1.loc,
+      p2.loc,
+      p1[f],
+      p2[f],
+      s.end
+    )
+  })
+  return p
+}
+
+function facts (a, b, data) {
+  const hasTOD = typeof (a.tod) !== 'undefined' && typeof (b.tod) !== 'undefined'
+  return {
+    gF: nF.gF(a.grade),
+    aF: nF.aF([a.alt, b.alt], data.altModel),
+    tF: nF.tF([a.loc, b.loc], data.terrainFactors),
+    hF: hasTOD && data.heatModel ? nF.hF([a.tod, b.tod], data.heatModel) : 1,
+    dF: nF.dF(
+      [a.loc, b.loc],
+      data.drift,
+      data.distance
+    ),
+    dark: hasTOD && data.sun ? nF.dark([a.tod, b.tod], nF.tF([a.loc, b.loc], data.terrainFactors), data.sun) : 1
+  }
+}
+
 function calcSegments (p, breaks, pacing) {
   // p: points array of {loc, lat, lon, alt}
   // breaks: array of [loc,loc,...] to break on
@@ -49,13 +85,11 @@ function calcSegments (p, breaks, pacing) {
   for (i = 1, il = breaks.length; i < il; i++) {
     len = breaks[i] - breaks[i - 1]
     s.push({
-      start: breaks[i - 1],
       end: breaks[i],
-      len: 0,
+      len: len,
       gain: 0,
       loss: 0,
-      alt1: alts[i - 1], // starting altitude
-      alt2: alts[i], // ending altitude
+      alt: alts[i], // ending altitude
       grade: (alts[i] - alts[i - 1]) / len / 10,
       time: 0,
       delay: 0,
@@ -70,18 +104,23 @@ function calcSegments (p, breaks, pacing) {
       }
     })
   }
-  let delta = 0
-  let j = 0
-  let j0 = 0
-  let delta0 = 0
-  let delays = (pacing) ? [...pacing.delays] : []
+  const opts = {
+    altModel: pacing.altModel,
+    terrainFactors: pacing.tFs,
+    distance: cLen,
+    drift: pacing.drift,
+    sun: pacing.sun,
+    heatModel: pacing.heatModel
+  }
+  const delays = (pacing && pacing.delays) ? [...pacing.delays] : []
   function getDelay (a, b) {
     if (!delays.length) { return 0 }
     while (delays.length && delays[0].loc < a) {
       delays.shift()
     }
     if (delays.length && delays[0].loc < b) {
-      return delays[0].delay
+      const d = delays.shift()
+      return d.delay
     }
     return 0
   }
@@ -94,127 +133,60 @@ function calcSegments (p, breaks, pacing) {
     dF: 0 // drift factor
   }
   const fk = Object.keys(factors)
-  const hasTOD = (p[0].tod !== undefined)
-  for (i = 1, il = p.length; i < il; i++) {
-    j = s.findIndex(x => x.start < p[i].loc && x.end >= p[i].loc)
-    if (j > j0) {
-      // interpolate
-      delta0 = interp(
-        p[i - 1].loc,
-        p[i].loc,
-        p[i - 1].alt,
-        p[i].alt,
-        s[j].start
-      ) - p[i - 1].alt
-      delta = p[i].alt - p[i - 1].alt - delta0
-    } else {
-      delta = p[i].alt - p[i - 1].alt
-      delta0 = 0
-    }
-    if (j >= 0) {
-      (delta < 0) ? s[j].loss += delta : s[j].gain += delta
-    }
-    if (j0 >= 0) {
-      (delta0 < 0) ? s[j0].loss += delta0 : s[j0].gain += delta0
-    }
-    if (pacing && typeof (pacing.np) !== 'undefined') {
-      factors.gF = nF.gradeFactor((p[i].alt - p[i - 1].alt) / p[i].dloc / 10)
-      if (j > j0) {
-        if (j0 >= 0) {
-          len = s[j].start - p[i - 1].loc
-          factors.dF = nF.driftFactor([p[i - 1].loc, s[j].start], pacing.drift, cLen)
-          factors.aF = nF.altFactor([p[i - 1].alt, s[j].alt1], pacing.altModel)
-          factors.tF = nF.tF([p[i - 1].loc, s[j].start], pacing.tFs)
-          if (hasTOD) {
-            const startTod = interp(
-              p[i - 1].loc,
-              p[i].loc,
-              p[i - 1].tod,
-              p[i].tod,
-              s[j].start
-            )
-            factors.hF = nF.hF([p[i - 1].tod, startTod], pacing.heatModel)
-            factors.dark = nF.dark([p[i - 1].tod, startTod], factors.tF, pacing.sun)
-          } else {
-            factors.hF = 1
-            factors.dark = 1
-          }
-          let f = 1
-          fk.forEach(k => {
-            s[j0].factors[k] += factors[k] * len
-            f = f * factors[k]
-          })
-          s[j0].time += pacing.np * f * len
-          s[j0].len += len
-          s[j0].delay += getDelay(p[i - 1].loc, s[j].start)
-        }
-        len = p[i].loc - s[j].start
-        factors.dF = nF.driftFactor([p[i].loc, s[j].start], pacing.drift, cLen)
-        factors.aF = nF.altFactor([p[i].alt, s[j].alt1], pacing.altModel)
-        factors.tF = nF.tF([p[i].loc, s[j].start], pacing.tFs)
-        if (hasTOD) {
-          const startTod = (i < p.length - 1)
-            ? interp(
-              p[i].loc,
-              p[i + 1].loc,
-              p[i].tod,
-              p[i + 1].tod,
-              s[j].start
-            )
-            : p[i].tod
-          factors.hF = nF.hF([p[i].tod, startTod], pacing.heatModel)
-          factors.dark = nF.dark([p[i].tod, startTod], factors.tF, pacing.sun)
-        } else {
-          factors.hF = 1
-          factors.dark = 1
-        }
-        let f = 1
-        fk.forEach(k => {
-          s[j].factors[k] += factors[k] * len
-          f = f * factors[k]
-        })
-        s[j].time += pacing.np * f * len
-        s[j].len += len
-        s[j].delay += getDelay(s[j].start, p[i].loc)
-      } else if (j >= 0) {
-        factors.dF = nF.driftFactor([p[i - 1].loc, p[i].loc], pacing.drift, cLen)
-        factors.aF = nF.altFactor([p[i - 1].alt, p[i].alt], pacing.altModel)
-        factors.tF = nF.tF([p[i - 1].loc, p[i].loc], pacing.tFs)
-        if (hasTOD) {
-          factors.hF = nF.hF([p[i - 1].tod, p[i].tod], pacing.heatModel)
-          factors.dark = nF.dark([p[i - 1].tod, p[i].tod], factors.tF, pacing.sun)
-        } else {
-          factors.hF = 1
-          factors.dark = 1
-        }
-        let f = 1
-        fk.forEach(k => {
-          s[j].factors[k] += factors[k] * p[i].dloc
-          f = f * factors[k]
-        })
-        s[j].time += pacing.np * f * p[i].dloc
-        s[j].len += p[i].dloc
-        s[j].delay += getDelay(p[i - 1].loc, p[i].loc)
+  const hasPacing = Boolean(pacing && typeof (pacing.np) !== 'undefined')
+
+  i = 1
+  for (let k = 0; k < s.length; k++) {
+    const s1 = s[k] // current segment
+    while (i < p.length && p[i - 1].loc <= s1.end) {
+      const p1 = p[i - 1]
+      const p2 = p[i]
+      let arr = []
+
+      // if segment ends between p1 & p2, calc two chunks:
+      if (p2.loc > s1.end && k < s.length - 1) {
+        const p3 = interpp(p1, p2, s1)
+        arr = [
+          { s: s1, p: [p1, p3] },
+          { s: s[k + 1], p: [p3, p2] }
+        ]
+      } else {
+        arr = [{ s: s1, p: [p1, p2] }]
       }
+      arr.forEach(a => {
+        const delta = a.p[1].alt - a.p[0].alt
+        a.s[delta > 0 ? 'gain' : 'loss'] += delta
+        const fs = facts(a.p[0], a.p[1], opts)
+        const len = a.p[1].loc - a.p[0].loc
+        let f = 1
+        fk.forEach(key => {
+          a.s.factors[key] += fs[key] * len
+          f = f * fs[key]
+        })
+        if (hasPacing) {
+          a.s.time += pacing.np * f * len
+          a.s.delay += getDelay(a.p[0].loc, a.s.end)
+        }
+      })
+      i++
     }
-    j0 = j
   }
+
   // normalize each factor by length and sum elapsed time
   let elapsed = 0
   s.forEach((x, i) => {
     Object.keys(s[i].factors).forEach(key => {
       s[i].factors[key] = x.factors[key] / x.len
     })
-    elapsed += x.time + x.delay
-    s[i].elapsed = elapsed
+
+    if (hasPacing) {
+      elapsed += x.time + x.delay
+      s[i].elapsed = elapsed
+    }
   })
   if (hasActuals) {
-    delays = (pacing) ? [...pacing.delays] : []
-    delays.forEach(d => {
-
-    })
     s.forEach((seg, i) => {
-      const p1 = p.find(point => point.loc >= seg.start)
+      const p1 = p.find(point => point.loc >= seg.end - seg.len)
       let p2 = {}
       if (i === s.length - 1) {
         p2 = p[p.length - 1]
@@ -326,7 +298,7 @@ function cleanUp (points) {
   return points
 }
 
-export function pointWLSQ (points, locs, gt) {
+function pointWLSQ (points, locs, gt) {
   // p: points array of {loc, lat, lon, alt}
   // locs: array of locations (km)
   // gt: grade smoothing threshold
@@ -384,7 +356,7 @@ function getElevation (points, location) {
   }
 }
 
-export function getLatLonAltFromDistance (points, location, start) {
+function getLatLonAltFromDistance (points, location, start) {
   // if the start index is passed, make sure you go the right direction:
   let i0 = Math.min(start, points.length - 1) || 0
   if (i0 > 0 && (points[i0].loc > location)) {
@@ -466,7 +438,7 @@ export function getLatLonAltFromDistance (points, location, start) {
   }
 }
 
-export function reduce (points, distance = null) {
+function reduce (points, distance = null) {
   // reduce density of points for processing
   // correct distance
 
@@ -518,7 +490,7 @@ export function reduce (points, distance = null) {
   }
 }
 
-export function calcPacing (data) {
+function calcPacing (data) {
   const t = logger()
   // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel, scales }
   let hasPlan = false
@@ -550,19 +522,17 @@ export function calcPacing (data) {
     terrainFactors: data.terrainFactors
   })
 
-  let kSplits = calcSplits({
-    points: points,
-    pacing: pacing,
-    event: data.event,
-    unit: 'kilometers'
-  })
+  // locations for sensitivity test:
+  const tests = []
+  for (let i = 1; i <= 10; i++) {
+    tests.push(Math.floor(i * (points.length - 1) / 10))
+  }
 
   // iterate solution:
   if (hasPlan && data.event.startTime !== null) {
-    let lastSplits = kSplits.map(x => { return x.time })
-    let elapsed = kSplits[kSplits.length - 1].elapsed
+    let lastTest = []
     let i
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 20; i++) {
       pacing = iteratePaceCalc({
         course: data.course,
         plan: data.plan,
@@ -574,26 +544,14 @@ export function calcPacing (data) {
         scales: data.scales,
         terrainFactors: data.terrainFactors
       })
-      kSplits = calcSplits({
-        points: points,
-        pacing: pacing,
-        event: data.event,
-        unit: 'kilometers'
-      })
-      let hasChanged = false
-      const newSplits = kSplits.map(x => { return x.time })
-      for (let j = 0; j < newSplits.length; j++) {
-        if (Math.abs(newSplits[j] - lastSplits[j]) >= 1) {
-          hasChanged = true
-          break
-        }
-      }
+      const newTest = tests.map(x => { return points[x].elapsed })
       if (
-        !hasChanged &&
-        Math.abs(elapsed - kSplits[kSplits.length - 1].elapsed) < 1
-      ) { break }
-      lastSplits = kSplits.map(x => { return x.time })
-      elapsed = kSplits[kSplits.length - 1].elapsed
+        lastTest.length &&
+        newTest.findIndex((x, j) => Math.abs(x - lastTest[j]) > 0.5) < 0
+      ) {
+        break
+      }
+      lastTest = [...newTest]
     }
     logger(`geo.iteratePaceCalc: ${i + 2} iterations`, t)
     const s = calcSunTime({
@@ -625,7 +583,6 @@ function iteratePaceCalc (data) {
     min: { gF: 100, aF: 100, tF: 100, hF: 100, dark: 100, dF: 100 }
   }
   const p = data.points
-  const hasTOD = (p[0].tod !== undefined)
   let fs = {}
   let elapsed = 0
   const hasPacingData = plan && data.pacing && data.pacing.np
@@ -651,24 +608,10 @@ function iteratePaceCalc (data) {
     }
     return 0
   }
-
+  const opts = { altModel: data.course.altModel, terrainFactors: data.terrainFactors, distance: data.course.distance, drift: data.plan.drift, sun: data.event.sun, heatModel: data.heatModel }
   for (let j = 1, jl = p.length; j < jl; j++) {
     // determine pacing factor for point
-    fs = {
-      gF: p[j].dloc ? nF.gF((p[j].alt - p[j - 1].alt) / p[j].dloc / 10) : 1,
-      aF: nF.aF([p[j - 1].alt, p[j].alt], data.course.altModel),
-      tF: nF.tF([p[j - 1].loc, p[j].loc], data.terrainFactors),
-      hF: (plan && p[1].tod) ? nF.hF([p[j - 1].tod, p[j].tod], data.heatModel) : 1,
-      dF: nF.dF(
-        [p[j - 1].loc, p[j].loc],
-        plan ? data.plan.drift : 0,
-        data.course.distance
-      ),
-      dark: 1
-    }
-    if (hasTOD) {
-      fs.dark = nF.dark([p[j - 1].tod, p[j].tod], fs.tF, data.event.sun)
-    }
+    fs = facts(p[j - 1], p[j], opts)
     let f = 1 // combined segment factor
     Object.keys(fs).forEach(k => {
       factors[k] += fs[k] * p[j].dloc
@@ -741,37 +684,6 @@ function iteratePaceCalc (data) {
   return pacing
 }
 
-export function calcSplits (data) {
-  // data = {points, event, pacing, unit}
-  const distScale = (data.unit === 'kilometers') ? 1 : 0.621371
-  const tot = data.points[data.points.length - 1].loc * distScale
-  const breaks = [0]
-  let i = 1
-  while (i < tot) {
-    breaks.push(i / distScale)
-    i++
-  }
-  if (tot / distScale > breaks[breaks.length - 1]) {
-    breaks.push(tot / distScale)
-  }
-
-  // remove last break if it's negligible
-  if (
-    breaks.length > 1 &&
-    breaks[breaks.length - 1] - breaks[breaks.length - 2] < 0.0001
-  ) {
-    breaks.pop()
-  }
-
-  const arr = calcSegments(data.points, breaks, data.pacing)
-  if (data.event.startTime !== null && data.points[0].elapsed !== undefined) {
-    arr.forEach((x, i) => {
-      arr[i].tod = (x.elapsed + data.event.startTime)
-    })
-  }
-  return arr
-}
-
 function calcSunTime (data) {
   // data = {points, event}
 
@@ -814,7 +726,7 @@ function calcSunTime (data) {
   return s
 }
 
-export async function addActuals (points, actual) {
+async function addActuals (points, actual) {
   // interpolate actual array to points lat/lon and add actual elapsed & loc
   const t = logger()
   actual = actual.map(p => {
@@ -888,7 +800,7 @@ export async function addActuals (points, actual) {
   }
 }
 
-export function arraysToObjects (arr) {
+function arraysToObjects (arr) {
   if (!arr.length) return []
   if (arr[0].length === 3) {
     return arr.map(p => {
@@ -910,18 +822,36 @@ export function arraysToObjects (arr) {
   }
 }
 
-export default {
-  addLoc: addLoc,
-  addGrades: addGrades,
-  calcStats: calcStats,
-  calcSegments: calcSegments,
-  cleanUp: cleanUp,
-  getElevation: getElevation,
-  getLatLonAltFromDistance: getLatLonAltFromDistance,
-  pointWLSQ: pointWLSQ,
-  reduce: reduce,
-  calcPacing: calcPacing,
-  calcSplits: calcSplits,
-  addActuals: addActuals,
-  arraysToObjects: arraysToObjects
+function processPoints (points, distance, gain, loss) {
+  addLoc(points, distance)
+  points = cleanUp(points)
+  addGrades(points)
+  const stats = calcStats(points, false)
+  const scales = {
+    gain: gain / stats.gain,
+    loss: loss / stats.loss,
+    grade: (gain - loss) / (stats.gain - stats.loss)
+  }
+  points.forEach((x) => {
+    x.grade *= (x.grade > 0 ? scales.gain : scales.loss)
+  })
+
+  return {
+    points: points,
+    scales: scales
+  }
 }
+
+exports.addLoc = addLoc
+exports.addGrades = addGrades
+exports.calcStats = calcStats
+exports.calcSegments = calcSegments
+exports.cleanUp = cleanUp
+exports.getElevation = getElevation
+exports.getLatLonAltFromDistance = getLatLonAltFromDistance
+exports.pointWLSQ = pointWLSQ
+exports.reduce = reduce
+exports.calcPacing = calcPacing
+exports.addActuals = addActuals
+exports.arraysToObjects = arraysToObjects
+exports.processPoints = processPoints

@@ -208,14 +208,14 @@ export default {
           formatter: (value, key, item) => {
             try {
               if (this.rows.findIndex(r => r._id === item._id) === 0) {
-                const s = this.segments.find(s => s.waypoint1._id === item._id)
+                const s = this.segments[0]
                 if (s.tod !== undefined) {
                   return timeUtil.sec2string(s.tod - s.elapsed, 'am/pm')
                 } else {
                   return timeUtil.sec2string(0, '[h]:m:ss')
                 }
               } else {
-                const s = this.segments.find(s => s.waypoint2._id === item._id)
+                const s = this.segments.find(s => s.waypoint._id === item._id)
                 if (s.tod !== undefined) {
                   return timeUtil.sec2string(s.tod, 'am/pm')
                 } else {

@@ -115,7 +115,7 @@
         >
           Total Time:
         </b-col>
-        <b-col><b>{{ sec2string(pacing.time, '[h]:m:ss') }}</b></b-col>
+        <b-col><b>{{ sec2string(plan.pacing.time, '[h]:m:ss') }}</b></b-col>
       </b-row>
       <b-row>
         <b-col
@@ -127,7 +127,7 @@
         >
           Moving Time:
         </b-col>
-        <b-col><b>{{ sec2string(pacing.time - pacing.delay, '[h]:m:ss') }}</b></b-col>
+        <b-col><b>{{ sec2string(plan.pacing.time - plan.pacing.delay, '[h]:m:ss') }}</b></b-col>
       </b-row>
       <b-row v-if="event.startTime">
         <b-col
@@ -151,7 +151,7 @@
         >
           Finish Time:
         </b-col>
-        <b-col><b>{{ sec2string((event.startTime + pacing.time) % 86400, 'am/pm') }}</b></b-col>
+        <b-col><b>{{ sec2string((event.startTime + plan.pacing.time) % 86400, 'am/pm') }}</b></b-col>
       </b-row>
     </b-list-group-item>
     <b-list-group-item v-if="showPaceInfo">
@@ -168,7 +168,7 @@
         >
           Average:
         </b-col>
-        <b-col><b>{{ sec2string(fPace(pacing.pace), 'mm:ss') }}</b> *</b-col>
+        <b-col><b>{{ sec2string(fPace(plan.pacing.pace), 'mm:ss') }}</b> *</b-col>
       </b-row>
       <b-row>
         <b-col
@@ -180,7 +180,7 @@
         >
           Normalized:
         </b-col>
-        <b-col><b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *,**</b-col>
+        <b-col><b>{{ sec2string(fPace(plan.pacing.np), 'mm:ss') }}</b> *,**</b-col>
       </b-row>
       <b-row>
         <b-col
@@ -192,7 +192,7 @@
         >
           Overall:
         </b-col>
-        <b-col><b>{{ sec2string(fPace(pacing.time / course.distance), 'mm:ss') }}</b></b-col>
+        <b-col><b>{{ sec2string(fPace(plan.pacing.time / course.distance), 'mm:ss') }}</b></b-col>
       </b-row>
       <b-row>
         <b-col
@@ -208,7 +208,7 @@
         </b-col>
       </b-row>
     </b-list-group-item>
-    <b-list-group-item v-if="showPaceInfo && pacing.delay">
+    <b-list-group-item v-if="showPaceInfo && plan.pacing.delay">
       <h5 class="mb-1">
         Aid Station Delays
       </h5>
@@ -246,7 +246,7 @@
         >
           Total Delay:
         </b-col>
-        <b-col><b>{{ sec2string(pacing.delay, '[h]:m:ss') }}</b></b-col>
+        <b-col><b>{{ sec2string(plan.pacing.delay, '[h]:m:ss') }}</b></b-col>
       </b-row>
     </b-list-group-item>
     <b-list-group-item v-if="showPaceInfo && plan.drift">
@@ -300,7 +300,7 @@
         >
           Average Pace:
         </b-col>
-        <b-col><b>{{ sec2string(fPace(pacing.np), 'mm:ss') }}</b> *</b-col>
+        <b-col><b>{{ sec2string(fPace(plan.pacing.np), 'mm:ss') }}</b> *</b-col>
       </b-row>
       <b-row>
         <b-col
@@ -338,22 +338,22 @@
         /><b-col>
           <p class="mb-1">
             Overall Grade Factor:
-            <b>{{ pacing.factors.gF - 1 | percentWithPace(pacing.np, $units) }}</b>
+            <b>{{ gradeFactor - 1 | percentWithPace(plan, $units) }}</b>
           </p>
           <p class="mb-1">
             Steepest Climb:
             <b>{{ maxGrade.toFixed(1) }}%</b> grade
-            [<b>{{ gF(maxGrade) - 1 | percentWithPace(pacing.np, $units) }}</b>]
+            [<b>{{ gF(maxGrade) - 1 | percentWithPace(plan, $units) }}</b>]
           </p>
           <p class="mb-1">
             Steepest Descent:
             <b>{{ minGrade.toFixed(1) }}%</b> grade
-            [<b>{{ gF(minGrade) - 1 | percentWithPace(pacing.np, $units) }}</b>]
+            [<b>{{ gF(minGrade) - 1 | percentWithPace(plan, $units) }}</b>]
           </p>
         </b-col>
       </b-row>
     </b-list-group-item>
-    <b-list-group-item v-if="round(pacing.factors.aF, 3) > 1">
+    <b-list-group-item v-if="$math.round(altitudeFactor, 3) > 1">
       <h5 class="mb-1">
         Altitude Effects
       </h5>
@@ -364,24 +364,24 @@
         /><b-col>
           <p class="mb-1">
             Average Altitude Factor:
-            <b>{{ pacing.factors.aF - 1 | percentWithPace(pacing.np, $units) }}</b>
+            <b>{{ altitudeFactor - 1 | percentWithPace(plan, $units) }}</b>
           </p>
           <p class="mb-1">
             Highest Altitude Factor:
-            <b>{{ aF(maxAltitude) - 1 | percentWithPace(pacing.np, $units) }}</b>
+            <b>{{ aF(maxAltitude) - 1 | percentWithPace(plan, $units) }}</b>
             at
             <b>{{ $units.altf(maxAltitude, 0) | commas }} {{ $units.alt }}</b>
           </p>
           <p class="mb-1">
             Lowest Altitude Factor:
-            <b>{{ aF(minAltitude) - 1 | percentWithPace(pacing.np, $units) }}</b>
+            <b>{{ aF(minAltitude) - 1 | percentWithPace(plan, $units) }}</b>
             at
             <b>{{ $units.altf(minAltitude, 0) | commas }} {{ $units.alt }}</b>
           </p>
         </b-col>
       </b-row>
     </b-list-group-item>
-    <b-list-group-item v-if="round(pacing.factors.tF, 3) > 1">
+    <b-list-group-item v-if="$math.round(terrainFactor, 3) > 1">
       <h5 class="mb-1">
         Terrain Effects
       </h5>
@@ -392,24 +392,24 @@
         /><b-col>
           <p class="mb-1">
             Overall Terrain Factor:
-            <b>{{ pacing.factors.tF - 1 | percentWithPace(pacing.np, $units) }}</b>
+            <b>{{ terrainFactor - 1 | percentWithPace(plan, $units) }}</b>
           </p>
           <p class="mb-1">
             Hardest Terrain:
-            <b>{{ pacing.fstats.max.tF - 1 | percentWithPace(pacing.np, $units) }}</b>
+            <b>{{ maxTF | percentWithPace(plan, $units) }}</b>
             over
             <b>{{ $units.distf(maxTFdist, 2) }} {{ $units.dist }}</b>
           </p>
           <p class="mb-1">
             Easiest Terrain:
-            <b>{{ pacing.fstats.min.tF - 1 | percentWithPace(pacing.np, $units) }}</b>
+            <b>{{ minTF | percentWithPace(plan, $units) }}</b>
             over
             <b>{{ $units.distf(minTFdist, 2) }} {{ $units.dist }}</b>
           </p>
         </b-col>
       </b-row>
     </b-list-group-item>
-    <b-list-group-item v-if="round(pacing.factors.hF, 3) > 1">
+    <b-list-group-item v-if="showPaceInfo && $math.round(plan.pacing.factors.hF, 3) > 1">
       <h5 class="mb-1">
         Heat Effects
       </h5>
@@ -421,7 +421,7 @@
           <heat-chart
             :heat-model="plan.heatModel"
             :sun="event.sun"
-            :kilometers="kilometers"
+            :kilometers="plan.splits.kilometers"
           />
         </b-container>
       </b-row>
@@ -432,20 +432,20 @@
         /><b-col>
           <p class="mb-1">
             Average Heat Factor:
-            <b>{{ pacing.factors.hF - 1 | percentWithPace(pacing.np, $units) }}</b>
+            <b>{{ plan.pacing.factors.hF - 1 | percentWithPace(plan, $units) }}</b>
           </p>
           <p class="mb-1">
             Highest Heat Factor:
-            <b>{{ pacing.fstats.max.hF - 1 | percentWithPace(pacing.np, $units) }}</b>
+            <b>{{ plan.pacing.fstats.max.hF - 1 | percentWithPace(plan, $units) }}</b>
           </p>
           <p class="mb-1">
             Lowest Heat Factor:
-            <b>{{ pacing.fstats.min.hF - 1 | percentWithPace(pacing.np, $units) }}</b>
+            <b>{{ plan.pacing.fstats.min.hF - 1 | percentWithPace(plan, $units) }}</b>
           </p>
         </b-col>
       </b-row>
     </b-list-group-item>
-    <b-list-group-item v-if="showPaceInfo && round(pacing.factors.dark, 3) > 1">
+    <b-list-group-item v-if="showPaceInfo && $math.round(plan.pacing.factors.dark, 3) > 1">
       <h5 class="mb-1">
         Darkness Effects
       </h5>
@@ -460,7 +460,7 @@
           Avg. Factor:
         </b-col>
         <b-col>
-          <b>{{ pacing.factors.dark - 1 | percentWithPace(pacing.np, $units) }}</b>
+          <b>{{ plan.pacing.factors.dark - 1 | percentWithPace(plan, $units) }}</b>
         </b-col>
       </b-row>
       <b-row>
@@ -475,8 +475,8 @@
         </b-col>
         <b-col>
           <b>
-            {{ sec2string(pacing.sunTime.day, 'hh:mm:ss') }}&nbsp;
-            ({{ $units.distf(pacing.sunDist.day, 2) }} {{ $units.dist }})
+            {{ sec2string(plan.pacing.sunTime.day, 'hh:mm:ss') }}&nbsp;
+            ({{ $units.distf(plan.pacing.sunDist.day, 2) }} {{ $units.dist }})
           </b>
         </b-col>
       </b-row>
@@ -492,8 +492,8 @@
         </b-col>
         <b-col>
           <b>
-            {{ sec2string(pacing.sunTime.twilight, 'hh:mm:ss') }}&nbsp;
-            ({{ $units.distf(pacing.sunDist.twilight, 2) }} {{ $units.dist }})
+            {{ sec2string(plan.pacing.sunTime.twilight, 'hh:mm:ss') }}&nbsp;
+            ({{ $units.distf(plan.pacing.sunDist.twilight, 2) }} {{ $units.dist }})
           </b>
         </b-col>
       </b-row>
@@ -509,39 +509,39 @@
         </b-col>
         <b-col>
           <b>
-            {{ sec2string(pacing.sunTime.dark, 'hh:mm:ss') }}&nbsp;
-            ({{ $units.distf(pacing.sunDist.dark, 2) }} {{ $units.dist }})
+            {{ sec2string(plan.pacing.sunTime.dark, 'hh:mm:ss') }}&nbsp;
+            ({{ $units.distf(plan.pacing.sunDist.dark, 2) }} {{ $units.dist }})
           </b>
         </b-col>
       </b-row>
     </b-list-group-item>
     <b-list-group-item>
       <p
-        v-if="showPaceInfo && !pacing.delay"
+        v-if="showPaceInfo && !plan.pacing.delay"
         class="mb-1"
       >
         No Delays
       </p>
       <p
-        v-if="pacing.factors.aF <= 1"
+        v-if="$math.round(altitudeFactor, 3) <= 1"
         class="mb-1"
       >
         No Altitude Effects
       </p>
       <p
-        v-if="pacing.factors.tF <= 1"
+        v-if="$math.round(terrainFactor, 3) <= 1"
         class="mb-1"
       >
         No Terrain Effects
       </p>
       <p
-        v-if="showPaceInfo && pacing.factors.hF <= 1"
+        v-if="showPaceInfo && $math.round(plan.pacing.factors.hF, 3) <= 1"
         class="mb-1"
       >
         No Heat Effects
       </p>
       <p
-        v-if="showPaceInfo && pacing.factors.dark <= 1"
+        v-if="showPaceInfo && $math.round(plan.pacing.factors.dark, 3) <= 1"
         class="mb-1"
       >
         No Darkness Effects
@@ -560,8 +560,6 @@
 import api from '@/api'
 import moment from 'moment-timezone'
 import { sec2string } from '../util/time'
-import { aF, dF, gF } from '../util/normFactor'
-import { round } from '../util/math'
 import DriftChart from './DriftChart.vue'
 import HeatChart from './HeatChart.vue'
 export default {
@@ -570,13 +568,13 @@ export default {
     HeatChart
   },
   filters: {
-    percentWithPace (val, np, units) {
+    percentWithPace (val, plan, units) {
       let str = `${(val > 0 ? '+' : '')}${(val * 100).toFixed(1)}% `
-      if (np) {
+      if (plan && plan.pacing && plan.pacing.np) {
         if (val !== 0) {
           const fact = val > 0 ? 1 : -1
           val = fact * val
-          const dPace = val * np / units.distScale
+          const dPace = val * plan.pacing.np / units.distScale
           str = `${str} (${sec2string(dPace, '[h]:m:ss')} min/${units.dist})`
         }
       }
@@ -590,14 +588,10 @@ export default {
   props: {
     plan: {
       type: Object,
-      required: true
+      default () { return null }
     },
     points: {
       type: Array,
-      required: true
-    },
-    pacing: {
-      type: Object,
       required: true
     },
     course: {
@@ -608,13 +602,13 @@ export default {
       type: Object,
       required: true
     },
-    kilometers: {
-      type: Array,
-      default: () => { return null }
-    },
     busy: {
       type: Boolean,
       default: false
+    },
+    terrainFactors: {
+      type: Array,
+      required: true
     },
     visible: {
       type: Boolean,
@@ -660,10 +654,10 @@ export default {
       }
     },
     startPace: function () {
-      return this.pacing.np * dF(0, this.plan.drift, this.course.distance)
+      return this.plan.pacing.np * this.$core.nF.dF(0, this.plan.drift, this.course.distance)
     },
     endPace: function () {
-      return this.pacing.np * dF(this.course.distance, this.plan.drift, this.course.distance)
+      return this.plan.pacing.np * this.$core.nF.dF(this.course.distance, this.plan.drift, this.course.distance)
     },
     maxAltitude: function () {
       const m = Math.max.apply(
@@ -693,9 +687,23 @@ export default {
       )
       return min
     },
+    maxTF: function () {
+      const max = Math.max.apply(
+        Math,
+        this.terrainFactors.map(x => { return x.tF })
+      )
+      return max / 100
+    },
+    minTF: function () {
+      const min = Math.min.apply(
+        Math,
+        this.terrainFactors.map(x => { return x.tF })
+      )
+      return min / 100
+    },
     maxTFdist: function () {
-      const da = this.pacing.tFs.map(x => {
-        if (round(x.tF / 100, 2) === round(this.pacing.fstats.max.tF - 1, 2)) {
+      const da = this.terrainFactors.map(x => {
+        if (this.$math.round(x.tF / 100, 2) === this.$math.round(this.maxTF, 2)) {
           return x.end - x.start
         } else {
           return 0
@@ -705,8 +713,8 @@ export default {
       return d
     },
     minTFdist: function () {
-      const da = this.pacing.tFs.map(x => {
-        if (round(x.tF / 100, 2) === round(this.pacing.fstats.min.tF - 1, 2)) {
+      const da = this.terrainFactors.map(x => {
+        if (this.$math.round(x.tF / 100, 2) === this.$math.round(this.minTF, 2)) {
           return x.end - x.start
         } else {
           return 0
@@ -716,24 +724,20 @@ export default {
       return d
     },
     showPaceInfo: function () {
-      if (this.plan && this.plan.name && this.pacing && this.pacing.time) {
-        return true
-      } else {
-        return false
-      }
+      return Boolean(this.plan && this.plan.pacing && this.plan.pacing.time)
     },
     normString: function () {
       const a = ['grade']
-      if (round(this.pacing.factors.aF, 3) > 1) {
+      if (this.$math.round(this.altitudeFactor, 3) > 1) {
         a.push('altitude')
       }
-      if (round(this.pacing.factors.tF, 3) > 1) {
+      if (this.$math.round(this.terrainFactor, 3) > 1) {
         a.push('terrain')
       }
-      if (this.showPaceInfo && round(this.pacing.factors.hF, 3) > 1) {
+      if (this.showPaceInfo && this.$math.round(this.plan.pacing.factors.hF, 3) > 1) {
         a.push('heat')
       }
-      if (this.showPaceInfo && round(this.pacing.factors.dark, 3) > 1) {
+      if (this.showPaceInfo && this.$math.round(this.plan.pacing.factors.dark, 3) > 1) {
         a.push('darkness')
       }
       if (a.length === 1) {
@@ -745,23 +749,42 @@ export default {
         const str = a.join(', ')
         return `${str}, & ${last}`
       }
+    },
+    gradeFactor: function () {
+      return this.reducer('gF')
+    },
+    terrainFactor: function () {
+      return this.reducer('tF')
+    },
+    altitudeFactor: function () {
+      return this.reducer('aF')
+    },
+    segments: function () {
+      if (this.showPaceInfo && this.plan && this.plan.splits && this.plan.splits.segments) {
+        return this.plan.splits.segments
+      } else {
+        return this.course.splits.segments
+      }
     }
   },
   async created () {
     this.userCount = await api.courseUserCount(this.course._id)
   },
   methods: {
+    reducer: function (field) {
+      const tot = this.segments.reduce((v, x) => {
+        return v + (x.len * x.factors[field])
+      }, 0)
+      return tot / this.course.distance
+    },
     fPace: function (p) {
       return p / this.$units.distScale
-    },
-    round: function (v, t) {
-      return round(v, t)
     },
     sec2string: function (s, f) {
       return sec2string(s, f)
     },
-    gF: function (grade) { return gF(grade) },
-    aF: function (alt) { return aF(alt, this.course.altModel) }
+    gF: function (grade) { return this.$core.nF.gF(grade) },
+    aF: function (alt) { return this.$core.nF.aF(alt, this.course.altModel) }
   }
 }
 </script>

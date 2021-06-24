@@ -76,15 +76,9 @@
 </template>
 
 <script>
-import { defaults } from '@/util/normFactor'
 import { docs } from '@/docs/.config.js'
 export default {
   title: 'Docs',
-  data () {
-    return {
-      defaults: defaults
-    }
-  },
   computed: {
     Documents () {
       return docs.map(x => {

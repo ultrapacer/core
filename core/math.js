@@ -6,6 +6,36 @@ function interp (x0, x1, y0, y1, x) {
   return y0 + (x - x0) / (x1 - x0) * (y1 - y0)
 }
 
+function interpArray (xs, ys, x2s) {
+  // interpolate an array to another
+  // xs: array of x's, ordered small to large
+  // ys: array of corresponding y's
+  // x2s: array of new x's to interpolate on
+
+  let i = 0
+  let j = 0
+  const y2s = []
+  for (i = 0; i < x2s.length; i++) {
+    if (x2s[i] < xs[j]) {
+      y2s.push(ys[j])
+    } else {
+      while (j < xs.length - 1 && xs[j + 1] <= x2s[i]) { j++ }
+      if (j === xs.length - 1 || x2s[i] === xs[j]) {
+        y2s.push(ys[j])
+      } else {
+        y2s.push(interp(
+          xs[j],
+          xs[j + 1],
+          ys[j],
+          ys[j + 1],
+          x2s[i]
+        ))
+      }
+    }
+  }
+  return y2s
+}
+
 function linearRegression (xyr) {
   let i
   let x
@@ -75,9 +105,8 @@ function wlslr (x1s, y1s, x2s, th) {
   return mbs
 }
 
-module.exports = {
-  linearRegression: linearRegression,
-  round: round,
-  interp: interp,
-  wlslr: wlslr
-}
+exports.linearRegression = linearRegression
+exports.round = round
+exports.interp = interp
+exports.interpArray = interpArray
+exports.wlslr = wlslr

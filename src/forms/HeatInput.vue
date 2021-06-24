@@ -55,7 +55,6 @@
 </template>
 
 <script>
-import { round } from '@/util/math'
 import HeatChart from '../components/HeatChart.vue'
 import FormTip from './FormTip'
 export default {
@@ -120,8 +119,8 @@ export default {
       let v = null
       if (this.base > 0 || this.max > 0) {
         v = {
-          baseline: round(this.base, 1),
-          max: round(this.max, 1)
+          baseline: this.$math.round(this.base, 1),
+          max: this.$math.round(this.max, 1)
         }
       }
       this.$emit(

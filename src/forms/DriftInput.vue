@@ -110,7 +110,7 @@
 import DriftChart from '../components/DriftChart.vue'
 import FormTip from './FormTip'
 import SelectableLabelInput from './SelectableLabelInput'
-import { adjust } from '../util/driftFactor.js'
+import { adjust } from '../../core/driftFactor'
 export default {
   components: {
     DriftChart,

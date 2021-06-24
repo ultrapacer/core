@@ -16,7 +16,6 @@
   </div>
 </template>
 <script>
-import { wlslr } from '@/util/math'
 import LineChart from './LineChart.js'
 import timeUtil from '../util/time'
 
@@ -227,7 +226,7 @@ export default {
     },
     comparePoints: function () {
       if (this.showActual) {
-        const mbs = wlslr(
+        const mbs = this.$math.wlslr(
           this.points.map(p => { return p.loc }),
           this.points.map(p => { return p.elapsed - p.actual.elapsed }),
           this.xs,
@@ -307,7 +306,7 @@ export default {
     updateChartProfile: function () {
       this.$logger('CourseProfile|updateChartProfile')
       const chartProfile = []
-      let mbs = wlslr(
+      let mbs = this.$math.wlslr(
         this.points.map(p => { return p.loc }),
         this.points.map(p => { return p.alt }),
         this.xs,
@@ -321,7 +320,7 @@ export default {
       })
 
       const chartGrade = []
-      mbs = wlslr(
+      mbs = this.$math.wlslr(
         this.points.map(p => { return p.loc }),
         this.points.map(p => { return p.alt }),
         this.xs,

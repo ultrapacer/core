@@ -331,6 +331,9 @@ export default {
     },
     enableDrift: function (val) {
       if (!val) this.model.drift = null
+    },
+    enableHeat: function (val) {
+      if (!val) this.model.heatModel = null
     }
   },
   methods: {

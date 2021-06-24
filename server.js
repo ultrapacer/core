@@ -9,6 +9,7 @@ const courseRoutes = require('./server/routes/courseRoutes')
 const waypointRoutes = require('./server/routes/waypointRoutes')
 const planRoutes = require('./server/routes/planRoutes')
 const publicRoutes = require('./server/routes/publicRoutes')
+const external = require('./server/routes/external')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
 const geoTz = require('geo-tz')
@@ -92,6 +93,7 @@ function startUp () {
   app.use('/api/elevation', elevation)
   app.use('/api/email', checkJwt, email)
   app.use('/api/strava', strava)
+  app.use('/api/external', external)
 
   // unauthenticated api routes:
   app.use('/api-public', publicRoutes)

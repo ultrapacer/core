@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { logger } from './plugins/logger'
+import { logger } from '../core/logger'
 
 const client = axios.create({
   json: true
@@ -17,7 +17,7 @@ export default {
       return req.data
     })
   },
-  async getCourse (id) {
-    return this.execute('get', `${host}/api-public/course/${id}`)
+  async getUpTable (id, type) {
+    return this.execute('get', `${host}/api/external/up-table/${id}/${type}`)
   }
 }

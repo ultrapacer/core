@@ -46,8 +46,7 @@ const PlanSchema = new Schema({
   waypointDelay: {
     type: Number,
     default: 60
-  },
-  cache: {}
+  }
 }, {
   collection: 'plans'
 })

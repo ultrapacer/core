@@ -167,6 +167,7 @@ courseRoutes.route(['/:_id', '/link/:link']).get(async function (req, res) {
     ])
     if (course.public || course._user.auth0ID === req.user.sub) {
       await course.addData(user, null)
+      if (!course.hasCache()) { await course.updateCache() }
       course._user = course._user._id // don't return all user data, just id
       res.json(course)
     } else {
@@ -186,6 +187,7 @@ courseRoutes.route('/plan/:_id').get(async function (req, res) {
     const course = plan._course
     if (course.public || plan._user.auth0ID === req.user.sub) {
       await course.addData(plan._user, req.params._id)
+      if (!course.hasCache()) { await course.updateCache() }
       course._user = course._user._id // don't return all user data, just id
       res.json(course)
     } else {
@@ -265,25 +267,6 @@ courseRoutes.route('/:course/plans/:user_id').get(async function (req, res) {
     }
   } catch (err) {
     console.log(err)
-    res.status(400).send(err)
-  }
-})
-
-//  UPDATE CACHE
-courseRoutes.route('/:id/cache').put(async function (req, res) {
-  try {
-    const [user, course] = await Promise.all([
-      User.findOne({ auth0ID: req.user.sub }).exec(),
-      Course.findById(req.params.id).select('_user').exec()
-    ])
-    if (user.equals(course._user)) {
-      course.cache = req.body.cache
-      course.save()
-      res.json('Cached')
-    } else {
-      res.status(403).send('No permission')
-    }
-  } catch (err) {
     res.status(400).send(err)
   }
 })

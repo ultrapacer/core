@@ -64,8 +64,6 @@
 /* eslint new-cap: 0 */
 import moment from 'moment-timezone'
 import api from '@/api'
-import geo from '@/util/geo'
-import { round, interp } from '@/util/math'
 import DownloadTrackButton from './DownloadTrackButton'
 const sgeo = require('sgeo')
 const xml2js = require('xml2js')
@@ -166,8 +164,8 @@ export default {
           if (!this.raw.length) { // download raw data:
             this.raw = await api.getCourseField(this.course._id, 'raw')
           }
-          pnts = geo.arraysToObjects(this.raw)
-          pnts = geo.addLoc(pnts, this.course.distance)
+          pnts = this.$core.arraysToObjects(this.raw)
+          pnts = this.$core.addLoc(pnts, this.course.distance)
           if (this.hasTime) { // interpolate times from distances in pnts
             const red = this.points.map(p => { return { ...p } })
             let lastelapsed = 0
@@ -178,7 +176,7 @@ export default {
               if (p.loc === red[0].loc || red.length === 1) {
                 p.elapsed = red[0].elapsed
               } else if (p.loc > red[0].loc && p.loc < red[1].loc) {
-                p.elapsed = interp(
+                p.elapsed = this.$math.interp(
                   red[0].loc,
                   red[1].loc,
                   red[0].elapsed,
@@ -186,7 +184,7 @@ export default {
                   p.loc
                 )
               }
-              p.elapsed = round(p.elapsed, 3)
+              p.elapsed = this.$math.round(p.elapsed, 3)
               p.delapsed = p.elapsed - lastelapsed
               lastelapsed = p.elapsed
             })
@@ -195,12 +193,12 @@ export default {
           }
         } else {
           pnts = this.points.map(p => { return { ...p } })
-          pnts = geo.addLoc(pnts, this.course.distance)
+          pnts = this.$core.addLoc(pnts, this.course.distance)
         }
       } else {
         // LOW RESOLUTION (adjust odd points lat/lon to correct distance)
         pnts = this.points.map(p => { return { ...p } })
-        pnts = geo.addLoc(pnts, this.course.distance) // update locations
+        pnts = this.$core.addLoc(pnts, this.course.distance) // update locations
         pnts.forEach((p, i) => {
           if (
             i % 2 === 0 &&
@@ -227,7 +225,7 @@ export default {
             }
           }
         })
-        pnts = geo.addLoc(pnts, this.course.distance)
+        pnts = this.$core.addLoc(pnts, this.course.distance)
       }
 
       let name = `uP-${this.course.name}${(this.plan.name ? ('-' + this.plan.name) : '')}${(this.course.reduced ? ('-' + resolution) : '')}`
@@ -248,12 +246,12 @@ export default {
       const trkpts = pnts.map(p => {
         const o = {
           $: {
-            lat: round(p.lat, 8),
-            lon: round(p.lon, 8)
+            lat: this.$math.round(p.lat, 8),
+            lon: this.$math.round(p.lon, 8)
           }
         }
         if (!this.course.source || this.course.source.alt !== 'google') {
-          o.ele = round(p.alt, 2)
+          o.ele = this.$math.round(p.alt, 2)
         }
         if (this.hasTime) {
           o.time = moment(this.event.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
@@ -288,13 +286,13 @@ export default {
       const trackpoints = pnts.map(p => {
         const o = {
           Position: {
-            LatitudeDegrees: round(p.lat, 8),
-            LongitudeDegrees: round(p.lon, 8)
+            LatitudeDegrees: this.$math.round(p.lat, 8),
+            LongitudeDegrees: this.$math.round(p.lon, 8)
           },
-          DistanceMeters: round(p.loc * 1000, 2)
+          DistanceMeters: this.$math.round(p.loc * 1000, 2)
         }
         if (this.course.source && this.course.source.alt !== 'google') {
-          o.AltitudeMeters = round(p.alt, 2)
+          o.AltitudeMeters = this.$math.round(p.alt, 2)
         }
         if (this.hasTime) {
           o.Time = moment(this.event.start).add(p.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')
@@ -302,23 +300,23 @@ export default {
         return o
       })
       const lap = {
-        DistanceMeters: round(pnts[pnts.length - 1].loc * 1000, 2),
+        DistanceMeters: this.$math.round(pnts[pnts.length - 1].loc * 1000, 2),
         Intensity: 'Active'
       }
       if (this.hasTime) {
-        lap.TotalTimeSeconds = round(pnts[pnts.length - 1].elapsed, 3)
+        lap.TotalTimeSeconds = this.$math.round(pnts[pnts.length - 1].elapsed, 3)
       }
-      const coursepoints = this.segments.filter(s => s.waypoint2.tier < 3).map(s => {
+      const coursepoints = this.segments.filter(s => s.waypoint.tier < 3).map(s => {
         const o = {
-          Name: s.waypoint2.name,
+          Name: s.waypoint.name,
           PointType: 'Generic',
           Position: {
-            LatitudeDegrees: round(s.waypoint2.lat, 8),
-            LongitudeDegrees: round(s.waypoint2.lon, 8)
+            LatitudeDegrees: this.$math.round(s.waypoint.lat, 8),
+            LongitudeDegrees: this.$math.round(s.waypoint.lon, 8)
           }
         }
         if (this.course.source && this.course.source.alt !== 'google') {
-          o.AltitudeMeters = round(s.waypoint2.elevation, 2)
+          o.AltitudeMeters = this.$math.round(s.waypoint.elevation, 2)
         }
         if (this.hasTime) {
           o.Time = moment(this.event.start).add(s.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')

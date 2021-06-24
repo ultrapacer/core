@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import axios from 'axios'
-import { logger } from './plugins/logger'
+import { logger } from '../core/logger'
 
 const client = axios.create({
   json: true
@@ -86,9 +86,6 @@ export default {
   copyCourse (id) {
     return this.executeAuth('put', `/api/course/${id}/copy`)
   },
-  updateCourseCache (id, data) {
-    return this.executeAuth('put', `/api/course/${id}/cache`, data)
-  },
   getWaypoints (courseID) {
     return this.executeAuth('get', `/api/course/${courseID}/waypoints`)
   },
@@ -112,9 +109,6 @@ export default {
   },
   deletePlan (id) {
     return this.executeAuth('delete', `/api/plan/${id}`)
-  },
-  updatePlanCache (id, data) {
-    return this.executeAuth('put', `/api/plan/${id}/cache`, data)
   },
   isPublic (type, id) {
     return this.execute('get', `/api-public/ispublic/${type}/${id}`)

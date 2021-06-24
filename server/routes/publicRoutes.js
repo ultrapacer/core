@@ -17,6 +17,7 @@ publicRoutes.route(['/course/:_id', '/course/link/:link']).get(async function (r
     }
     const course = await Course.findOne(q).select(['-points', '-raw']).exec()
     await course.addData()
+    if (!course.hasCache()) { await course.updateCache() }
     res.json(course)
   } catch (err) {
     console.log(err)
@@ -32,6 +33,7 @@ publicRoutes.route('/course/plan/:_id').get(async function (req, res) {
       .exec()
     if (plan._course.public) {
       await plan._course.addData(plan._user, req.params._id)
+      if (!plan._course.hasCache()) { await plan._course.updateCache() }
       res.json(plan._course)
     } else {
       res.status(403).send('No permission')

@@ -10,9 +10,7 @@
 </template>
 
 <script>
-import { round, interp } from '@/util/math'
 import PlanChart from './PlanChart.js'
-import { heatFactor } from '../util/heatFactor.js'
 export default {
   components: {
     PlanChart
@@ -42,7 +40,7 @@ export default {
         this.kilometers.forEach(x => {
           p.push({
             loc: x.end,
-            tod: x.tod % 86400
+            tod: this.kilometers[0].tod + x.elapsed
           })
         })
         return p
@@ -108,10 +106,10 @@ export default {
       return o
     },
     start: function () {
-      return round(this.sun.rise, 0) + 1800
+      return this.$math.round(this.sun.rise, 0) + 1800
     },
     stop: function () {
-      return round(this.sun.set, 0) + 3600
+      return this.$math.round(this.sun.set, 0) + 3600
     },
     model: function () {
       let m = []
@@ -149,7 +147,7 @@ export default {
           for (let i = 1; i < 50; i++) {
             m.push({
               x: (this.start + (i * ((this.stop - this.start) / 50))),
-              y: round((heatFactor(this.start + (i * ((this.stop - this.start) / 50)), model) - 1) * 100, 4)
+              y: this.$math.round((this.$core.nF.hF(this.start + (i * ((this.stop - this.start) / 50)), model) - 1) * 100, 4)
             })
           }
 
@@ -169,86 +167,34 @@ export default {
       return m
     },
     modelByDistance: function () {
-      const m = []
-      if (this.heatModel) {
-        // if we have distance / time-of-day pairs, map it to distance
-        if (this.showDistance) {
-          // interpolate heat factor for distance 0
-          let j = this.model.findIndex(p => p.x > this.ps[0].tod) - 1
-          m.push({
-            x: 0,
-            y: interp(
-              this.model[j].x,
-              this.model[j + 1].x,
-              this.model[j].y,
-              this.model[j + 1].y,
-              this.ps[0].tod
-            )
-          })
-
-          // figure out if we have multiple days (rollovers)
-          const rollovers = []
-          let ri = 0
-          while (ri !== -1 && ri < this.ps.length - 1) {
-            ri = this.ps.findIndex((p, k) => k > 0 && this.ps[k - 1].tod > p.tod && k > ri)
-            if (ri >= 0) {
-              rollovers.push(ri)
-            }
-          }
-          let lastr = 0
-          let nextr = rollovers[0] - 1 || this.ps.length - 1
-
-          // map curved sections to interpolated distances for each day
-          let i = 0
-          for (let r = 0; r <= rollovers.length; r++) {
-            const df = this.model.filter(p =>
-              p.x > this.ps[lastr].tod &&
-              p.x < this.ps[nextr].tod &&
-              p.x !== 24 * 3600
-            )
-            i = lastr
-            lastr = Math.min(nextr + 1, this.ps.length - 1)
-            nextr = rollovers[r + 1] - 1 || this.ps.length - 1
-            //
-            df.forEach(p => {
-              while (i < this.ps.length - 1 && this.ps[i + 1].tod <= p.x) {
-                i += 1
-              }
-              m.push({
-                x: interp(
-                  this.ps[i].tod,
-                  this.ps[i + 1].tod,
-                  this.ps[i].loc,
-                  this.ps[i + 1].loc,
-                  p.x
-                ),
-                y: p.y
-              })
+      let m = []
+      if (this.heatModel && this.showDistance) {
+        const rollovers = Math.floor(this.ps[this.ps.length - 1].tod / 86400, 1)
+        let model2 = this.model
+        for (let r = 0; r < rollovers; r++) {
+          model2 = [...model2.filter((m, i) => i < model2.length - 1),
+            ...this.model.filter((m, i) => i > 0).map((m) => {
+              return { x: m.x + 24 * 3600 * (r + 1), y: m.y }
             })
-          }
-
-          // interpolate heat factor for final distance
-          j = this.model.findIndex(p => p.x > this.ps[this.ps.length - 1].tod) - 1
-          m.push({
-            x: this.ps[this.ps.length - 1].loc,
-            y: interp(
-              this.model[j].x,
-              this.model[j + 1].x,
-              this.model[j].y,
-              this.model[j + 1].y,
-              this.ps[this.ps.length - 1].tod
-            )
-          })
+          ]
         }
+        const i2 = model2.findIndex(m => m.x > this.ps[this.ps.length - 1].tod)
+        model2 = model2.filter((m, i) => i <= i2)
+
+        const locs = this.$math.interpArray(
+          this.ps.map(x => { return x.tod }),
+          this.ps.map(x => { return x.loc }),
+          model2.map(x => { return x.x })
+        )
+        m = locs.map((x, i) => { return { x: x, y: model2[i].y } })
       }
       return m
     },
     xys: function () {
-      let xys = []
       if (this.heatModel) {
         if (this.showDistance) {
           // format distance units:
-          xys = this.modelByDistance.map(x => {
+          return this.modelByDistance.map(x => {
             const y = { ...x }
             y.x = this.$units.distf(y.x)
             return y
@@ -256,18 +202,19 @@ export default {
         } else {
           // (no distance / time of day pairs)
           // format seconds to hours
-          xys = this.model.map(x => {
+          return this.model.map(x => {
             const y = { ...x }
             y.x = y.x / 3600
             return y
           })
         }
+      } else {
+        return []
       }
-      return xys
     },
     radii: function () {
-      const min = Math.min(...this.xys.map(x => { return round(x.y, 4) }))
-      const radii = this.xys.map(x => { return round(x.y, 4) === min ? 3 : 0 })
+      const min = Math.min(...this.xys.map(x => { return this.$math.round(x.y, 4) }))
+      const radii = this.xys.map(x => { return this.$math.round(x.y, 4) === min ? 3 : 0 })
       radii[0] = 3
       radii[radii.length - 1] = 3
       return radii
