@@ -210,7 +210,6 @@ export default {
             wp => wp._id === (s.waypoint._id || s.waypoint)
           )
         })
-        console.log(this.segments)
         break
       case 'splits':
         switch (this.units) {
