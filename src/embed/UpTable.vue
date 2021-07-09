@@ -29,7 +29,7 @@
 
     <div class="up-table-link mb-2">
       <b-link
-        :href="`https://ultrapacer.com/course/${courseId}`"
+        :href="`https://ultrapacer.com/${link}`"
         target="_blank"
       >
         pace this race with ultraPacer
@@ -144,7 +144,7 @@ export default {
       if (this.mode === 'segments') {
         availableFields.name = {
           key: 'name',
-          label: 'End',
+          label: 'Waypoint',
           formatter: (value, key, item) => {
             return this.rollup(item, 'waypoint.name', 'last')
           },
@@ -178,6 +178,13 @@ export default {
         }
       })
       return arr
+    },
+    link: function () {
+      if (this.course && this.course._id) {
+        return this.course.link ? `race/${this.course.link}` : `course/${this.course._id}`
+      } else {
+        return ''
+      }
     }
   },
   async created () {

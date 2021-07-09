@@ -36,6 +36,7 @@ routes.route('/up-table/:_id/:mode').get(async function (req, res) {
     const select = [
       'distance',
       'gain',
+      'link',
       'loss',
       'scales',
       `splits.${req.params.mode}`
