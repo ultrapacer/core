@@ -81,7 +81,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
       User.findOne({ auth0ID: req.user.sub }).select('admin').exec(),
       Course.findById(req.params.id).select('_user').exec()
     ])
-    if (user.admin || course._user === user._id) {
+    if (user.admin || user.equals(course._user)) {
       // define available fields
       const fields1 = [ // these are benign fields
         'name', 'description', 'public', 'source'
