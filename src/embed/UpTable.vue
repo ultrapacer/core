@@ -59,7 +59,7 @@ export default {
   props: {
     courseId: {
       type: String,
-      default: '5f35347d239d4e000799eabe'
+      required: true
     },
     style: {
       type: String,
@@ -181,6 +181,9 @@ export default {
     }
   },
   async created () {
+    if (!this.courseId) {
+      throw new Error('Course not specified.')
+    }
     const t = this.$logger()
     if (this.units === 'metric') {
       this.$units.setDist('km')

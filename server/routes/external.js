@@ -2,13 +2,36 @@
 const express = require('express')
 const routes = express.Router()
 const Course = require('../models/Course')
+const ObjectId = require('mongoose').Types.ObjectId
+
+function isValidObjectId (id) {
+  if (ObjectId.isValid(id)) {
+    if ((String)(new ObjectId(id)) === id) { return true }
+    return false
+  }
+  return false
+}
 
 // GET COURSE PUBLIC
 routes.route('/up-table/:_id/:mode').get(async function (req, res) {
   try {
+    // search by link or id (if valid id):
+    const q = [{
+      link: req.params._id
+    }]
+    if (isValidObjectId(req.params._id)) {
+      q.push({ _id: req.params._id })
+    }
+
     const query = {
-      _id: req.params._id,
-      public: true
+      $and: [
+        {
+          public: true
+        },
+        {
+          $or: q
+        }
+      ]
     }
     const select = [
       'distance',
