@@ -34,7 +34,7 @@
       >
         pace this race with ultraPacer
         <img
-          src="/public/img/logo-72x72.png"
+          src="https://ultrapacer.com/public/img/logo-72x72.png"
           class="up-table-logo"
         >
       </b-link>
