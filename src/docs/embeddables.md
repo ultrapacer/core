@@ -30,7 +30,9 @@ Addional options include:
       columns=...
     />
 ```
-*course-id* is required.
+*course-id* is required. This is the unique code or race name from the URL:\
+https:\//ultrapacer.com/course/**course-id** or
+https:\//ultrapacer.com/race/**course-id**
 
 *style* is standard html styling. For example, limit the height and width
 of the table:
