@@ -6,6 +6,7 @@ import router from './router'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import AuthPlugin from './plugins/auth'
+import api from './api'
 import { logger } from '../core/logger'
 import UnitsPlugin from './plugins/units'
 import VueGtag from 'vue-gtag'
@@ -117,6 +118,7 @@ Vue.filter('commas', function (value) {
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 })
 
+Vue.prototype.$api = api
 Vue.prototype.$logger = logger
 Vue.use(UnitsPlugin)
 
