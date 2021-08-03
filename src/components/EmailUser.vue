@@ -138,7 +138,7 @@ export default {
             html: this.$refs.message.getInnerHTML(),
             replyTo: this.replyTo
           })
-        this.$gtag('email', { event_category: capitalize(this.type), event_label: this.subject })
+        this.$gtag.event('email', { event_category: capitalize(this.type), event_label: this.subject })
       } catch (error) {
         this.$gtag.exception({ description: error.message || error, fatal: false })
         console.log(error)
