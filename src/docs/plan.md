@@ -29,10 +29,14 @@ After selecting the method, enter the target value in the *Elapsed time*,
 *Average pace*, or *Normalized pace* field as appropriate.
 
 ##### Aid Station Delay
-Enter the dwell time you plan to spend at each Aid Station. This time also
-applies to Waypoints designated as "Water Sources".\
-Other Waypoint types such as "Junctions" or "Landmarks" do not include this
-delay.
+Enter the typical dwell time you plan to spend at each Aid Station. This time
+also applies to Waypoints designated as "Water Sources".\
+Other Waypoint types such as "Junctions" or "Landmarks" do not include the
+typical delay.
+Unique delays for specific waypoints may be set in the Waypoints tab
+by clicking on specific waypoints, for
+example, if you are planning a short catnap somewhere or more involved
+crewing/resupply in certain locations.
 
 ##### Start Date/Time/Timezone
 Date and time fields are optional but recommended. By entering the start time,

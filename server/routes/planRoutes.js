@@ -24,16 +24,24 @@ planRoutes.route('/').post(async function (req, res) {
 //  UPDATE
 planRoutes.route('/:id').put(async function (req, res) {
   try {
-    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    const plan = await Plan.findById(req.params.id).exec()
-    if (user.equals(plan._user)) {
-      const fields = ['name', 'description', 'pacingMethod', 'pacingTarget',
-        'drift', 'heatModel', 'waypointDelay', 'eventStart', 'eventTimezone']
+    const [user, plan] = await Promise.all([
+      User.findOne({ auth0ID: req.user.sub }).select('admin').exec(),
+      Plan.findById(req.params.id).select('_user').exec()
+    ])
+    if (user.admin || user.equals(plan._user)) {
+      const fields = [
+        'name', 'description', 'pacingMethod', 'pacingTarget',
+        'drift', 'heatModel', 'waypointDelay', 'waypointDelays',
+        'eventStart', 'eventTimezone'
+      ]
+      const update = {}
       fields.forEach(f => {
-        plan[f] = req.body[f]
+        if (req.body[f] !== undefined) {
+          update[f] = req.body[f]
+        }
       })
-      await plan.save()
-      res.json(plan)
+      await plan.updateOne(update)
+      res.json('Update complete')
     } else {
       res.status(403).send('No permission')
     }

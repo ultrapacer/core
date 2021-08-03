@@ -75,8 +75,9 @@
           />
         </b-input-group>
         <form-tip v-if="showTips">
-          Optional: aid station delay or time spent at each aid station. Also
-          applies to water sources.
+          Optional: typical aid station delay or time spent at each aid station. Also
+          applies to water sources. Unique delays for specific waypoints may be set in the
+          Waypoints tab.
         </form-tip>
         <b-form-group
           v-if="Boolean(course.eventStart)"
@@ -410,7 +411,8 @@ export default {
       let p = {}
       if (this.$auth.isAuthenticated()) {
         if (this.model._id) {
-          p = await api.updatePlan(this.model._id, this.model)
+          await api.updatePlan(this.model._id, this.model)
+          p._id = this.model._id
           this.$gtage(this.$gtag, 'Plan', 'edit',
             this.course.public ? this.course.name : 'private'
           )

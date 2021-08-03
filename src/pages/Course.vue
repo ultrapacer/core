@@ -202,14 +202,17 @@
             <waypoint-table
               ref="waypointTable"
               :course="course"
+              :plan="plan"
               :segments="planAssigned && pacingSplitsReady ? plan.splits.segments : course.splits.segments"
               :editing="editing"
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"
               :table-height="tableHeight && printing !== 'Waypoints' ? tableHeight - (owner ? 42 : 0) : 0"
+              :visible="tableTabIndex===2"
               :printing="printing==='Waypoints'"
               :class="printing==='Waypoints' ? 'pr-2' : ''"
               @updateWaypointLocation="updateWaypointLocation"
+              @updateWaypointDelay="updateWaypointDelay"
             />
             <b-row
               v-if="owner"
@@ -540,25 +543,37 @@ export default {
       return tFs
     },
     delays: function () {
-      const t = this.$logger()
-      if (!this.course.waypoints) { return [] }
-      if (!this.course.waypoints.length) { return [] }
-      if (!this.planAssigned) { return [] }
-      const wps = this.course.waypoints
-      const wpdelay = (this.planAssigned) ? this.plan.waypointDelay : 0
       const d = []
-      wps.forEach((x, i) => {
-        if (x.type === 'aid' || x.type === 'water') {
-          wps[i].delay = wpdelay
-          d.push({
-            loc: x.location,
-            delay: x.delay
-          })
-        } else {
-          wps[i].delay = 0
-        }
-      })
-      this.$logger('compute-delays', t)
+      try {
+        const t = this.$logger()
+        if (!this.course.waypoints) { return [] }
+        if (!this.course.waypoints.length) { return [] }
+        if (!this.planAssigned) { return [] }
+        const wps = this.course.waypoints
+        const wpds = this.plan.waypointDelays || []
+        wps.forEach((x, i) => {
+          const wpd = wpds.find(wpd => String(wpd.waypoint) === String(x._id))
+          if (wpd) {
+            wps[i].delay = wpd.delay
+            d.push({
+              loc: x.location,
+              delay: x.delay
+            })
+          } else if (x.type === 'aid' || x.type === 'water') {
+            wps[i].delay = this.plan.waypointDelay || 0
+            d.push({
+              loc: x.location,
+              delay: x.delay
+            })
+          } else {
+            wps[i].delay = 0
+          }
+        })
+        this.$logger('delays', t)
+      } catch (error) {
+        console.log(error)
+        this.$gtag.exception({ description: `Course|delays: ${error.toString()}`, fatal: false })
+      }
       return d
     },
     publicName: function () {
@@ -775,6 +790,30 @@ export default {
         api.updateWaypoint(waypoint._id, waypoint)
       }, 2000)
       this.setUpdateFlag()
+    },
+    updateWaypointDelay (_id, delay) {
+      try {
+        this.$logger('Course|updateWaypointDelay')
+        if (!this.plan || !this.plan.waypointDelays) return
+        if (delay === null) {
+          this.plan.waypointDelays = this.plan.waypointDelays.filter(wpd => String(wpd.waypoint) !== String(_id))
+        } else {
+          const wpd = this.plan.waypointDelays.find(wpd => String(wpd.waypoint) === String(_id))
+          if (wpd) {
+            wpd.delay = delay
+          } else {
+            this.plan.waypointDelays.push({ waypoint: _id, delay: delay })
+          }
+        }
+        this.$api.updatePlan(this.plan._id, { waypointDelays: this.plan.waypointDelays })
+      } catch (error) {
+        console.log(error)
+        this.$gtag.exception({
+          description: `Course|updateWaypointDelay: ${error.toString()}`,
+          fatal: false
+        })
+      }
+      this.updatePacing()
     },
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)

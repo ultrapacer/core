@@ -46,6 +46,19 @@ const PlanSchema = new Schema({
   waypointDelay: {
     type: Number,
     default: 60
+  },
+  waypointDelays: {
+    type: [{
+      waypoint: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Waypoint'
+      },
+      delay: {
+        type: Number,
+        default: 0
+      }
+    }],
+    default: []
   }
 }, {
   collection: 'plans'

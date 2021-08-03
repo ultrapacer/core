@@ -35,7 +35,7 @@ import 'vue-awesome/icons/share-alt'
 import 'vue-awesome/icons/trash'
 import VIcon from 'vue-awesome/components/Icon'
 import './custom.scss'
-
+import { sec2string } from './util/time'
 import Core from '../core'
 import math from '../core/math'
 Vue.prototype.$core = Core
@@ -116,6 +116,12 @@ Vue.filter('commas', function (value) {
     return ''
   }
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+})
+Vue.filter('timef', function (value, format) {
+  if (isNaN(value)) {
+    return ''
+  }
+  return sec2string(value, format)
 })
 
 Vue.prototype.$api = api
