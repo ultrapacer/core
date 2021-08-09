@@ -8,8 +8,20 @@
     </h1>
     <b-card>
       <h4>User Information</h4>
+
+      <b-input-group
+        prepend="Membership"
+      >
+        <b-form-input
+          v-model="membership"
+          disabled
+          style="background-color:white"
+        />
+      </b-input-group>
+
       <b-input-group
         prepend="Email"
+        class="mt-1"
       >
         <b-form-input
           v-model="$auth.profile.email"
@@ -83,7 +95,6 @@
 </template>
 
 <script>
-import api from '@/api'
 export default {
   title: 'Settings',
   data () {
@@ -111,6 +122,7 @@ export default {
         }
       ],
       altModel: Object.assign({}, this.$core.normFactor.defaults.alt),
+      membership: 'free',
       model: {}
     }
   },
@@ -131,19 +143,25 @@ export default {
       } else {
         this.model.altModel = this.altModel
       }
-      await api.updateSettings(this.$user._id, this.model)
-      await api.getUser()
+      await this.$api.updateUser(this.$user._id, this.model)
+      await this.$api.getUser()
       await this.$parent.getUser()
       this.$status.processing = false
       this.$router.go(-1)
     },
     async populateForm () {
       this.$status.loading = true
-      const user = await api.getUser()
+      const user = await this.$api.getUser()
       this.model = Object.assign({}, user)
       if (user.altModel !== null) {
         this.customAltModel = true
         this.altModel = Object.assign({}, user.altModel)
+      }
+      const s = this.$user.membership.method
+      if (this.$user.membership.active && s) {
+        this.membership = s.charAt(0).toUpperCase() + s.slice(1)
+      } else {
+        this.membership = 'Free'
       }
       this.$status.loading = false
     }

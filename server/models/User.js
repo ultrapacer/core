@@ -25,8 +25,31 @@ const UserSchema = new Schema({
     default: null
   },
   membership: {
-    type: Object,
-    default: null
+    type: {
+      active: {
+        type: 'Boolean',
+        default: false
+      },
+      status: { type: 'String' }, // temporary until updated
+      method: {
+        // eg, patreon, paypal, lifetime, etc
+        type: 'String'
+      },
+      last_annoyed: {
+        type: Date
+      },
+      next_annoy: {
+        type: Date
+      },
+      patreon: {
+        email: {
+          type: 'String'
+        }
+      }
+    },
+    default: {
+      active: false
+    }
   },
   last_login: {
     type: Date,

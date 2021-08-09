@@ -39,7 +39,7 @@ export default {
   getUserStats () {
     return this.executeAuth('get', '/api/user/stats')
   },
-  updateSettings (id, data) {
+  updateUser (id, data) {
     return this.executeAuth('put', `/api/user/${id}`, data)
   },
   getCourses () {
@@ -134,5 +134,8 @@ export default {
   },
   emailUser (id, data) {
     return this.executeAuth('post', `/api/email/user/${id}`, data)
+  },
+  patreonPatronsRefresh () {
+    return this.executeAuth('get', '/api/patreon/patrons/refresh')
   }
 }

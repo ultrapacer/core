@@ -13,6 +13,7 @@ const external = require('./server/routes/external')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
 const geoTz = require('geo-tz')
+const patreon = require('./server/routes/patreon')
 
 // load keys from either ./config/keys.js file or from google cloud secrets:
 let keys = {}
@@ -21,6 +22,8 @@ const keynames = [
   'AUTH0_DOMAIN',
   'AUTH0_AUDIENCE',
   'GOOGLE_API_KEY',
+  'PATREON_ACCESS_TOKEN',
+  'PATREON_CAMPAIGN',
   'STRAVA_CLIENT_ID',
   'STRAVA_CLIENT_SECRET',
   'STRAVA_REFRESH_TOKEN',
@@ -92,6 +95,7 @@ function startUp () {
   app.use('/api/plan', checkJwt, planRoutes)
   app.use('/api/elevation', elevation)
   app.use('/api/email', checkJwt, email)
+  app.use('/api/patreon', checkJwt, patreon)
   app.use('/api/strava', strava)
   app.use('/api/external', external)
 

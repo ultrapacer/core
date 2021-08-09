@@ -68,7 +68,11 @@ Vue.use(VueTheMask)
 Vue.prototype.$user = Vue.observable({
   _id: null,
   isAuthenticated: false,
-  admin: false
+  admin: false,
+  email: '',
+  membership: {
+    active: false
+  }
 })
 Vue.prototype.$colors = {
   blue1: '#033E75', // dark blue

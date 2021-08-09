@@ -29,6 +29,7 @@
     "mongoose": "^5.12.13",
     "node-fetch": "^2.6.1",
     "nodemailer": "^6.6.1",
+    "patreon": "^0.4.1",
     "pretty-data": "^0.40.0",
     "sgeo": "0.0.5",
     "vue": "^2.6.13",

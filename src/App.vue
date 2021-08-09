@@ -112,7 +112,6 @@
 </template>
 
 <script>
-import api from '@/api'
 import MenuSocial from './components/MenuSocial'
 import Sponsor from './components/Sponsor'
 export default {
@@ -199,13 +198,15 @@ export default {
       this.authInterval = window.setInterval(this.refreshAuth, 30000)
     },
     async getUser () {
-      this.user = await api.getUser()
+      this.user = await this.$api.getUser()
       this.$user._id = this.user._id
       this.$user.admin = this.user.admin
+      this.$user.email = this.user.email
+      this.$user.membership = this.user.membership
       this.$units.setDist(this.user.distUnits)
       this.$units.setAlt(this.user.elevUnits)
       if (!this.user.email) {
-        api.updateSettings(this.user._id, { email: this.$auth.profile.email })
+        this.$api.updateUser(this.user._id, { email: this.$auth.profile.email })
       }
     },
     async refreshAuth () {

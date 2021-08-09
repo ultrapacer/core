@@ -22,6 +22,34 @@
       <br>
       Danny
     </p>
+    <div v-if="showPatreonEmail">
+      <p class="text-danger">
+        Patreon information not found. Please enter the email address associated with your Patreon account. Contact me if you have problems with this step.
+      </p>
+      <form
+        ref="patreon-email-form"
+        @submit.prevent=""
+      >
+        <b-input-group
+          prepend="Email"
+          class="pl-4"
+        >
+          <b-form-input
+            v-model="newPatreonEmail"
+            type="email"
+            required
+          />
+          <b-input-group-append v-if="patreonEmailValid">
+            <b-button
+              variant="outline-success"
+              @click="updatePatreonEmail"
+            >
+              Save
+            </b-button>
+          </b-input-group-append>
+        </b-input-group>
+      </form>
+    </div>
 
     <template #modal-footer>
       <b-button
@@ -47,14 +75,28 @@
 </template>
 
 <script>
-import api from '@/api'
 import moment from 'moment'
 export default {
   data () {
     return {
-      delay: 20000,
+      delay: 2000,
       timeout: null,
-      message: ''
+      message: '',
+      showPatreonEmail: false,
+      patreonEmail: '',
+      newPatreonEmail: ''
+    }
+  },
+  computed: {
+    patreonEmailValid: function () {
+      if (
+        !this.showPatreonEmail ||
+        this.newPatreonEmail === this.patreonEmail
+      ) {
+        return false
+      } else {
+        return Boolean(this.$refs['patreon-email-form'].checkValidity())
+      }
     }
   },
   mounted () {
@@ -67,37 +109,42 @@ export default {
   },
   methods: {
     async initiate () {
-      if (!this.$user.isAuthenticated) return
+      try {
+        if (!this.$user.isAuthenticated) return
 
-      // get user
-      const user = await api.getUser()
-      const m = user.membership || {}
-      if (m.status === 'member') {
-        this.$logger('PatreonModal|initiate: already a member')
-        return
-      }
+        if (this.$user.membership.active) {
+          this.$logger('PatreonModal|initiate: already a member.')
+          return
+        }
 
-      const next = moment(m.next_annoy || 0)
-      const d = moment().diff(next, 'days')
-      if (d >= 0) {
+        const next = moment(this.$user.membership.next_annoy || 0)
+        const d = moment().diff(next, 'days')
+        if (d >= 0) {
         // get user stats
-        const userstats = await api.getUserStats()
-        let showModal = false
-        if (userstats.courses >= 2) {
-          showModal = true
-          this.message = `${this.casualNumber(userstats.courses)} courses`
-        } else if (userstats.plans >= 2) {
-          showModal = true
-          this.message = `${this.casualNumber(userstats.plans)} plans`
+          const userstats = await this.$api.getUserStats()
+          let showModal = false
+          if (userstats.courses >= 2) {
+            showModal = true
+            this.message = `${this.casualNumber(userstats.courses)} courses`
+          } else if (userstats.plans >= 2) {
+            showModal = true
+            this.message = `${this.casualNumber(userstats.plans)} plans`
+          } else {
+            this.$logger('PatreonModal|initiate: not enough plans or courses')
+          }
+          if (showModal) {
+            this.$gtage(this.$gtag, 'Patreon', 'show')
+            this.$refs.patreon.show()
+          }
         } else {
-          this.$logger('PatreonModal|initiate: not enough plans or courses')
+          this.$logger(`PatreonModal|initiate: remind again in ${-d} days`)
         }
-        if (showModal) {
-          this.$gtage(this.$gtag, 'Patreon', 'show')
-          this.$refs.patreon.show()
-        }
-      } else {
-        this.$logger(`PatreonModal|initiate: remind again in ${-d} days`)
+      } catch (error) {
+        console.log(error)
+        this.$gtag.exception({
+          description: `PatreonModal|initiate: ${error.toString()}`,
+          fatal: false
+        })
       }
     },
     casualNumber (num) {
@@ -125,31 +172,73 @@ export default {
       this.$refs.patreon.hide()
     },
     async alreadyJoined () {
-      this.$gtage(this.$gtag, 'Patreon', 'joined')
-      api.updateSettings(
-        this.$user._id,
-        {
-          membership: {
-            status: 'member',
-            last_annoyed: moment().toDate()
+      this.$status.processing = true
+      try {
+        await this.$api.patreonPatronsRefresh()
+        await this.$parent.getUser()
+
+        if (this.$user.membership.active) {
+          this.$gtage(this.$gtag, 'Patreon', 'joined')
+          this.$api.updateUser(
+            this.$user._id,
+            { 'membership.last_annoyed': moment().toDate() }
+          )
+          this.$logger('PatreonModal| Updated to member')
+          this.$refs.patreon.hide()
+        } else {
+          if (this.$user.membership.patreon && this.$user.membership.patreon.email) {
+            this.patreonEmail = this.$user.membership.patreon.email
+          } else {
+            this.patreonEmail = this.$user.email
           }
+          this.newPatreonEmail = this.patreonEmail
+          this.showPatreonEmail = true
         }
-      )
-      this.$logger('PatreonModal| Updated to member')
-      this.$refs.patreon.hide()
+      } catch (error) {
+        console.log(error)
+        this.$gtag.exception({
+          description: `PatreonModal|updatePatreonEmail: ${error.toString()}`,
+          fatal: false
+        })
+      }
+      this.$status.processing = false
     },
     async setLastAnnoyed (delay) {
-      await api.updateSettings(
-        this.$user._id,
-        {
-          membership: {
-            status: 'nonmember',
-            last_annoyed: moment().toDate(),
-            next_annoy: moment().add(delay, 'days').toDate()
+      try {
+        await this.$api.updateUser(
+          this.$user._id,
+          {
+            'membership.last_annoyed': moment().toDate(),
+            'membership.next_annoy': moment().add(delay, 'days').toDate()
           }
-        }
-      )
+        )
+      } catch (error) {
+        console.log(error)
+        this.$gtag.exception({
+          description: `PatreonModal|setLastAnnoyed: ${error.toString()}`,
+          fatal: false
+        })
+      }
       this.$logger('PatreonModal| Updated last_annoyed')
+    },
+    async updatePatreonEmail () {
+      this.$status.processing = true
+      try {
+        await this.$api.updateUser(
+          this.$user._id,
+          {
+            'membership.patreon': { email: this.newPatreonEmail }
+          }
+        )
+        this.alreadyJoined()
+      } catch (error) {
+        console.log(error)
+        this.$gtag.exception({
+          description: `PatreonModal|updatePatreonEmail: ${error.toString()}`,
+          fatal: false
+        })
+        this.$status.processing = false
+      }
     }
   }
 }
