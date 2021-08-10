@@ -140,6 +140,9 @@ const config = {
       '/api': {
         target: 'http://localhost:8080'
       },
+      '/tasks': {
+        target: 'http://localhost:8080'
+      },
       '/public/components': {
         target: 'http://localhost:8080'
       }

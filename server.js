@@ -60,6 +60,7 @@ function startUp () {
   const elevation = require('./server/routes/elevation')
   const email = require('./server/routes/email')
   const strava = require('./server/routes/strava')
+  const mailer = require('./server/tasks/mailer')
   // connect to the database:
   mongoose.Promise = global.Promise
   mongoose.set('useFindAndModify', false)
@@ -98,6 +99,8 @@ function startUp () {
   app.use('/api/patreon', checkJwt, patreon)
   app.use('/api/strava', strava)
   app.use('/api/external', external)
+
+  app.use('/tasks/mailer', mailer)
 
   // unauthenticated api routes:
   app.use('/api-public', publicRoutes)

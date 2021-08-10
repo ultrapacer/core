@@ -1,0 +1,5 @@
+cron:
+- description: "weekly good luck email"
+  url: /tasks/mailer/good-luck
+  schedule: every wednesday 14:00
+  timezone: America/Los_Angeles
