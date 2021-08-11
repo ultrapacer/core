@@ -94,4 +94,29 @@ router.route('/good-luck').get(async function (req, res) {
   }
 })
 
+router.route('/test/good-luck').get(async function (req, res) {
+  const html = await renderEmail([
+    { _course: { name: 'hundo' }, day: 'Saturday' },
+    { _course: { name: '5k' }, day: 'Sunday' }
+  ])
+  res.send(html)
+})
+
+async function renderEmail (userplans) {
+  const context = {
+    title: 'Good luck!'
+  }
+  const app = new Vue({
+    data: {
+      userplans: userplans
+    },
+    template: fs.readFileSync(path.join(__dirname, '../templates/weekend.vue'), 'utf-8')
+  })
+  let res = ''
+  await renderer.renderToString(app, context, (err, html) => {
+    res = html
+  })
+  return res
+}
+
 module.exports = router
