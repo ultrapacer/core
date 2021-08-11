@@ -7,7 +7,9 @@ const Plan = require('../models/Plan')
 const Vue = require('vue')
 const fs = require('fs')
 const path = require('path')
-const renderer = require('vue-server-renderer').createRenderer()
+const renderer = require('vue-server-renderer').createRenderer({
+  template: fs.readFileSync(path.join(__dirname, '../templates/email.html'), 'utf-8')
+})
 
 // create reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({
@@ -79,7 +81,6 @@ router.route('/good-luck').get(async function (req, res) {
           text: `Good luck this weekend with ${userplans[0]._course.name}!`,
           html: html
         })
-        res.send(html)
         if (err) {
           console.log(err)
         }

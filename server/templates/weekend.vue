@@ -12,7 +12,7 @@
         <b style="box-sizing:border-box;font-weight:bolder;">{{ plan._course.name }}</b> on {{ plan.day }}
       </li>
     </ul>
-    <a href="https://ultrapacer.com/courses" style="box-sizing:border-box;text-decoration:none;display:inline-block;font-weight:400;text-align:center;vertical-align:middle;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border-width:1px;border-style:solid;transition:color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;color:#fff;background-color:#28a745;border-color:#28a745;padding-top:.5rem;padding-bottom:.5rem;padding-right:1rem;padding-left:1rem;font-size:1.25rem;line-height:1.5;border-radius:.3rem;margin-top:1.5rem!important;" target="_blank">
+    <a href="https://ultrapacer.com/courses" style="box-sizing:border-box;text-decoration:none;display:inline-block;font-weight:400;text-align:center;vertical-align:middle;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border-width:1px;border-style:solid;transition:color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;color:#fff;background-color:#5e8351;border-color:#5e8351;padding-top:.5rem;padding-bottom:.5rem;padding-right:1rem;padding-left:1rem;font-size:1.25rem;line-height:1.5;border-radius:.3rem;margin-top:1.5rem!important;" target="_blank">
       View your plans on ultraPacer
     </a>
   </div>

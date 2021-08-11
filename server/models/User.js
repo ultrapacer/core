@@ -51,6 +51,10 @@ const UserSchema = new Schema({
       active: false
     }
   },
+  notifications: {
+    type: 'Object',
+    default: {}
+  },
   last_login: {
     type: Date,
     default: null

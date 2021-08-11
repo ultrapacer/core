@@ -6,8 +6,8 @@
   "private": true,
   "scripts": {
     "dev": "webpack-dev-server --mode development --hot --config build/webpack.config.js",
-    "lint": "eslint --ext .js,.vue,.md server.js src server config build core",
-    "lintfix": "eslint --ext .js,.vue,.md --fix server.js src server config build core",
+    "lint": "eslint --ext .js,.vue,.md,.html server.js src server config build core",
+    "lintfix": "eslint --ext .js,.vue,.md,.html --fix server.js src server config build core",
     "prebuild": "npm run buildcomponent1 && npm run buildcomponent2",
     "build": "webpack --mode production --config build/webpack.config.js",
     "buildcomponent1": "vue-cli-service build  --target wc-async --name up-table --no-clean ./src/embed/UpTable.vue --dest temp/js",
