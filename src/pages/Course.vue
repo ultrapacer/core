@@ -638,6 +638,9 @@ export default {
         this.refreshVisibleWaypoints()
         this.$gtage(this.$gtag, 'Course', 'view', this.publicName)
         this.plans = this.course.plans || []
+        if (!this.plans.length) {
+          this.newPlan()
+        }
 
         // match waypoints in cached segments w/ actual objects
         this.course.splits.segments.forEach(s => {
@@ -651,9 +654,27 @@ export default {
             x => x._id === this.$route.params.plan
           )
           this.$gtage(this.$gtag, 'Plan', 'view', this.publicName)
+        } else if (this.plans.length) {
+          const lastViewed = Math.max.apply(
+            Math,
+            this.plans.map(p => { return p.last_viewed ? moment(p.last_viewed).unix() : 0 })
+          )
+          if (lastViewed) {
+            this.plan = this.plans.find(
+              p => p.last_viewed && lastViewed === moment(p.last_viewed).unix()
+            )
+          } else {
+            this.plan = this.plans[0]
+          }
         }
-      } catch (err) {
-        console.log(err)
+      } catch (error) {
+        console.log(error)
+        this.$gtag.exception({
+          description: `Course|initialize: ${error.toString()}`,
+          fatal: true
+        })
+        this.$status.processing = false
+        this.$status.loading = false
         this.$router.push({ path: '/' })
         return
       }
@@ -907,8 +928,13 @@ export default {
             }
           })
         }
-        if (this.owner) {
-          api.selectCoursePlan(this.course._id, { plan: this.plan._id })
+        if (this.$user._id === this.plan._user) {
+          this.$api.updatePlan(
+            this.plan._id,
+            {
+              last_viewed: new Date()
+            }
+          )
         }
       } else {
         const route = {

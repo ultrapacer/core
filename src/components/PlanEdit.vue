@@ -265,7 +265,7 @@ export default {
     return {
       defaults: {
         pacingMethod: 'time',
-        waypointDelay: 60,
+        waypointDelay: 120,
         drift: null,
         heatModel: null
       },

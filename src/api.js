@@ -77,9 +77,6 @@ export default {
   updateCourse (id, data) {
     return this.executeAuth('put', `/api/courses/${id}`, data)
   },
-  selectCoursePlan (id, data) {
-    return this.executeAuth('put', `/api/course/${id}/plan`, data)
-  },
   deleteCourse (id) {
     return this.executeAuth('delete', `/api/courses/${id}`)
   },

@@ -59,6 +59,10 @@ const PlanSchema = new Schema({
       }
     }],
     default: []
+  },
+  last_viewed: {
+    type: Date,
+    default: null
   }
 }, {
   collection: 'plans'

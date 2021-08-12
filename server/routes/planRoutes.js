@@ -32,7 +32,7 @@ planRoutes.route('/:id').put(async function (req, res) {
       const fields = [
         'name', 'description', 'pacingMethod', 'pacingTarget',
         'drift', 'heatModel', 'waypointDelay', 'waypointDelays',
-        'eventStart', 'eventTimezone'
+        'eventStart', 'eventTimezone', 'last_viewed'
       ]
       const update = {}
       fields.forEach(f => {
