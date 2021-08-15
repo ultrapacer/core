@@ -21,6 +21,24 @@ planRoutes.route('/').post(async function (req, res) {
   }
 })
 
+// GET PLAN
+planRoutes.route('/:id').get(async function (req, res) {
+  try {
+    const [plan, user] = await Promise.all([
+      Plan.findById(req.params.id).populate([{ path: '_course', select: 'public' }]).exec(),
+      User.findOne({ auth0ID: req.user.sub }).select('admin').exec()
+    ])
+    if (plan._course.public || user.admin || user.equals(plan._user)) {
+      res.json(plan)
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
 //  UPDATE
 planRoutes.route('/:id').put(async function (req, res) {
   try {

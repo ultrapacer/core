@@ -6,6 +6,16 @@ import auth from './auth/authService'
 import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import api from '@/api'
 
+// this avoids redundant navigation error if pushing/replacing a URL
+const originalPush = Router.prototype.push
+Router.prototype.push = function push (location) {
+  return originalPush.call(this, location).catch(err => err)
+}
+const originalReplace = Router.prototype.replace
+Router.prototype.replace = function replace (location) {
+  return originalReplace.call(this, location).catch(err => err)
+}
+
 Vue.use(Router)
 
 function lazyLoad (view) {
@@ -70,6 +80,7 @@ const router = new Router({
       component: lazyLoad('Course')
     },
     {
+      // this is an old path and is depreciated; use Race or Course with plan query
       path: '/course/plan/:plan',
       name: 'Plan',
       component: lazyLoad('Course')

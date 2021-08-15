@@ -95,6 +95,13 @@ export default {
   deleteWaypoint (id) {
     return this.executeAuth('delete', `/api/waypoint/${id}`)
   },
+  async getPlan (id) {
+    if (Vue.prototype.$auth.isAuthenticated()) {
+      return this.executeAuth('get', `/api/plan/${id}`)
+    } else {
+      return this.execute('get', `/api-public/plan/${id}`)
+    }
+  },
   getPlans (courseID, userID) {
     return this.executeAuth('get', `/api/course/${courseID}/plans/${userID}`)
   },

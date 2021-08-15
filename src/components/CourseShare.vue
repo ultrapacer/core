@@ -72,21 +72,13 @@ export default {
         this.name = `${this.name}: ${this.plan.name}`
       }
 
-      const route = {
-        name: 'Course',
-        params: {
-          course: this.course._id
-        }
+      const route = this.course.link
+        ? { name: 'Race', params: { permalink: this.course.link } }
+        : { name: 'Course', params: { course: this.course._id } }
+      if (this.type === 'plan') {
+        route.query = { plan: this.plan._id }
       }
-      if (this.type === 'course' && this.course.link) {
-        route.name = 'Race'
-        route.params.permalink = this.course.link
-      } else if (this.type === 'plan') {
-        route.name = 'Plan'
-        route.params.plan = this.plan._id
-      }
-      const path = this.$router.resolve(route).href
-      this.url = `https://ultrapacer.com${path}`
+      this.url = `https://ultrapacer.com${this.$router.resolve(route).href}`
 
       if (navigator.share) {
         navigator.share({

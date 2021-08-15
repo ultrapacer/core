@@ -371,6 +371,7 @@ export default {
     toggleRowDetails: function (row) {
       try {
         if (!this.editing && !this.planAssigned) return
+        if (this.plan._user !== this.$user._id) return
 
         // hide other rows showing details:
         this.rows.filter(r =>

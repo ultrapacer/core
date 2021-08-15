@@ -476,14 +476,21 @@ export default {
       return hM
     },
     plansSelect: function () {
-      const p = []
-      for (let i = 0, il = this.plans.length; i < il; i++) {
-        p.push({
-          value: this.plans[i],
-          text: this.plans[i].name
-        })
+      const groupPlans = this.plans.length > 1 && this.plans.findIndex(p => p._user !== this.plans[0]._user) >= 0
+      if (groupPlans) {
+        return [
+          {
+            label: 'My Plans',
+            options: this.plans.filter((p, i) => i < this.plans.length - 1).map(p => { return { value: p, text: p.name } })
+          },
+          {
+            label: 'Plans by others',
+            options: this.plans.filter((p, i) => i === this.plans.length - 1).map(p => { return { value: p, text: p.name } })
+          }
+        ]
+      } else {
+        return this.plans.map(p => { return { value: p, text: p.name } })
       }
-      return p
     },
     owner: function () {
       return (
@@ -614,6 +621,7 @@ export default {
       t = this.$logger('Course|initialize - auth initiated', t)
       try {
         if (this.$route.params.plan) {
+          // this is depreciated; plan id should now in a query item
           this.course = await api.getCourse(this.$route.params.plan, 'plan')
         } else if (this.$route.params.permalink) {
           this.course = await api.getCourseFields(
@@ -629,18 +637,20 @@ export default {
         }
         t = this.$logger('Course|api.getCourse', t)
 
-        if (this.course.link) {
-          this.url = window.location.host + this.$router.resolve({ name: 'Race', params: { permalink: this.course.link } }).href
-        } else if (this.course._id) {
-          this.url = window.location.host + this.$router.resolve({ name: 'Course', params: { course: this.course._id } }).href
+        // reformat url
+        const route = this.course.link
+          ? { name: 'Race', params: { permalink: this.course.link } }
+          : { name: 'Course', params: { course: this.course._id } }
+        this.url = `https://ultrapacer.com${this.$router.resolve(route).href}`
+        route.query = this.$route.query
+        if (this.$route.params.plan && !route.query.plan) {
+          route.query.plan = this.$route.params.plan
         }
+        this.$router.replace(route)
 
         this.refreshVisibleWaypoints()
         this.$gtage(this.$gtag, 'Course', 'view', this.publicName)
         this.plans = this.course.plans || []
-        if (!this.plans.length) {
-          this.newPlan()
-        }
 
         // match waypoints in cached segments w/ actual objects
         this.course.splits.segments.forEach(s => {
@@ -649,11 +659,21 @@ export default {
           )
         })
 
-        if (this.$route.params.plan) {
-          this.plan = this.plans.find(
-            x => x._id === this.$route.params.plan
+        if (this.$route.query.plan && this.$route.query.plan.length <= 24) {
+          let plan = this.plans.find(
+            x => x._id === this.$route.query.plan
           )
-          this.$gtage(this.$gtag, 'Plan', 'view', this.publicName)
+          if (plan) {
+            this.plan = plan
+          } else {
+            try {
+              plan = await this.$api.getPlan(this.$route.query.plan)
+              this.plan = plan
+              this.plans.push(plan)
+            } catch (error) {
+              console.log(error)
+            }
+          }
         } else if (this.plans.length) {
           const lastViewed = Math.max.apply(
             Math,
@@ -666,6 +686,11 @@ export default {
           } else {
             this.plan = this.plans[0]
           }
+        }
+
+        // if no plans, show new plan dialog
+        if (!this.plans.length) {
+          this.newPlan()
         }
       } catch (error) {
         console.log(error)
@@ -692,13 +717,17 @@ export default {
           this.$refs['toast-welcome'].show()
         }
       }, 1000)
-      if (this.$route.query.plan) {
+
+      // if temp plan in URL, show it:
+      if (this.$route.query.plan && this.$route.query.plan.length > 24) {
         const p = JSURL.tryParse(this.$route.query.plan, null)
         if (p) {
           this.$logger('Course|created: showing plan from URL')
           this.$refs.planEdit.show(p)
         }
       }
+
+      // if the url has an "after" action, strip it off and execute it
       if (this.$route.query.after) {
         const q = { ...this.$route.query }
         const after = this.$route.query.after
@@ -708,6 +737,7 @@ export default {
           this[after]()
         }, 1000)
       }
+
       this.$logger('Course|initialize', t)
     },
     async getPoints () {
@@ -732,7 +762,7 @@ export default {
         wputil.updateLLA(wp, this.points)
       })
       if (this.planAssigned) {
-        await this.updatePacing()
+        await this.calcPlan()
       }
       this.$logger('Course|getPoints: complete', t)
       this.$status.loading = false
@@ -917,16 +947,8 @@ export default {
       const t = this.$logger()
       if (!this.planAssigned) { return }
       if (this.plan._id) {
-        if (
-          this.$router.currentRoute.name !== 'Plan' ||
-          this.$router.currentRoute.params.plan !== this.plan._id
-        ) {
-          this.$router.push({
-            name: 'Plan',
-            params: {
-              plan: this.plan._id
-            }
-          })
+        if (this.$route.query.plan !== this.plan._id) {
+          this.$router.push({ query: { plan: this.plan._id } })
         }
         if (this.$user._id === this.plan._user) {
           this.$api.updatePlan(
@@ -937,20 +959,7 @@ export default {
           )
         }
       } else {
-        const route = {
-          name: 'Course',
-          params: {
-            course: this.course._id
-          },
-          query: {
-            plan: JSURL.stringify(this.plan)
-          }
-        }
-        if (this.course.link) {
-          route.name = 'Race'
-          route.params.permalink = this.course.link
-        }
-        this.$router.push(route)
+        this.$router.push({ query: { plan: JSURL.stringify(this.plan) } })
       }
       this.$gtage(this.$gtag, 'Plan', 'view', this.publicName)
       if (!this.pacingSplitsReady) {
@@ -969,17 +978,9 @@ export default {
       // deselect the current plan
       if (!this.planAssigned) { return }
       this.plan = {}
-      const route = {
-        name: 'Course',
-        params: {
-          course: this.course._id
-        }
-      }
-      if (this.course.link) {
-        route.name = 'Race'
-        route.params.permalink = this.course.link
-      }
-      this.$router.push(route)
+      const q = { ...this.$route.query }
+      delete q.plan
+      this.$router.push({ query: q })
       this.$refs.profile.update()
       this.$logger('Course|clearPlan')
     },

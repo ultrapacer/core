@@ -113,6 +113,23 @@ publicRoutes.route('/ispublic/:type/:id').get(async function (req, res) {
   }
 })
 
+// GET PLAN
+publicRoutes.route('/plan/:id').get(async function (req, res) {
+  try {
+    const plan = await Plan.findById(req.params.id)
+      .populate([{ path: '_course', select: 'public' }])
+      .exec()
+    if (plan._course.public) {
+      res.json(plan)
+    } else {
+      res.status(403).send('No permission')
+    }
+  } catch (err) {
+    console.log(err)
+    res.status(400).send(err)
+  }
+})
+
 // GET RACES
 publicRoutes.route('/races').get(async function (req, res) {
   try {
