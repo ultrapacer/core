@@ -738,8 +738,8 @@ export default {
         ]
       })
       const data = await this.$utils.timeout(
-        api.getElevation(lls, source),
-        15000
+        this.$api.getElevation(lls, source),
+        15000 + lls.length
       )
       if (lls.length === data.alts.length) {
         points.forEach((p, i) => {

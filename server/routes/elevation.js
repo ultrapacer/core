@@ -63,6 +63,7 @@ router.route(['/', '/:source']).post(async function (req, res) {
       const results = config[source].results(data)
       alts.push(...results)
     }
+    console.log(`${packets} packet${packets > 1 ? 'es' : ''} received.`)
     res.json({
       source: source,
       alts: alts
