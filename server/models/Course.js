@@ -190,6 +190,11 @@ CourseSchema.methods.updateCache = async function () {
     scales: this.scales,
     splits: this.splits
   })
+
+  // now replace site objects in segments splits with string:
+  this.splits.segments.forEach(s => {
+    s.waypoint.site = s.waypoint.site._id
+  })
   logger('Course|updateCache', t)
 }
 CourseSchema.methods.hasCache = function () {

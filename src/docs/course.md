@@ -52,7 +52,14 @@ time can be selected.
 Optionally, you can override the distance and elevation calculated from the .gpx
 file loaded. Use these if you *know* the course should be a certain distance or
 amount of vertical and you believe the .gpx file is incorrect, or if you want a
-50k to work out to exactly 50k, for example.
+50k to work out to exactly 50k, for example.\
+Note that if using the "Loop course" option below, overrides are for a single
+loop.
+
+##### Loop course
+If the course loops the same track multiple times, upload a GPX/route for a
+single loop and set the number of loops. Waypoints for the first loop are
+repeated on each loop.
 
 ##### Visible to Public
 If you intend to share the course with others, this option needs to be enabled.

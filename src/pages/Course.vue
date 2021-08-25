@@ -648,7 +648,7 @@ export default {
         // match waypoints in cached segments w/ actual objects
         this.course.splits.segments.forEach(s => {
           const wp = this.waypoints.find(
-            wp => wp.site._id === s.waypoint.site._id && wp.loop === s.waypoint.loop
+            wp => wp.site._id === s.waypoint.site && wp.loop === s.waypoint.loop
           )
           if (wp) s.waypoint = wp
         })
