@@ -847,7 +847,8 @@ export default {
 
         // remove old record if it exists:
         this.plan.waypointDelays = this.plan.waypointDelays.filter(
-          wpd => !(wpd.waypoint === waypoint.site._id && wpd.loop === waypoint.loop))
+          wpd => !(wpd.site === waypoint.site._id && wpd.loop === waypoint.loop)
+        )
 
         // add in new one:
         if (delay !== null) {

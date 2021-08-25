@@ -389,6 +389,7 @@ export default {
     },
     waypointDelayClear: function (item) {
       this.$emit('updateWaypointDelay', item, null)
+      this.waypointDelayF = timeUtil.sec2string(this.plan.waypointDelay, 'hh:mm:ss')
     },
     waypointDelayChange: function (item) {
       this.$emit('updateWaypointDelay', item, this.waypointDelay)
