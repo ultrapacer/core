@@ -4,6 +4,7 @@ const { interp, round, wlslr } = require('./math')
 const sgeo = require('sgeo')
 const gpxParse = require('gpx-parse')
 const { logger } = require('./logger')
+const { Segment } = require('./segments')
 
 function calcStats (points, smooth = true) {
   // return course { gain, loss, dist }
@@ -84,7 +85,7 @@ function calcSegments (p, breaks, pacing) {
   const hasActuals = (p[0].actual !== undefined)
   for (i = 1, il = breaks.length; i < il; i++) {
     len = breaks[i] - breaks[i - 1]
-    s.push({
+    s.push(new Segment({
       end: breaks[i],
       len: len,
       gain: 0,
@@ -102,7 +103,7 @@ function calcSegments (p, breaks, pacing) {
         dark: 0,
         dF: 0
       }
-    })
+    }))
   }
   const opts = {
     altModel: pacing.altModel,
@@ -608,7 +609,7 @@ function iteratePaceCalc (data) {
     }
     return 0
   }
-  const opts = { altModel: data.course.altModel, terrainFactors: data.terrainFactors, distance: data.course.distance, drift: data.plan.drift, sun: data.event.sun, heatModel: data.heatModel }
+  const opts = { altModel: data.course.altModel, terrainFactors: data.terrainFactors, distance: data.course.totalDistance(), drift: data.plan.drift, sun: data.event.sun, heatModel: data.heatModel }
   for (let j = 1, jl = p.length; j < jl; j++) {
     // determine pacing factor for point
     fs = facts(p[j - 1], p[j], opts)
@@ -631,9 +632,9 @@ function iteratePaceCalc (data) {
     }
   }
   Object.keys(factors).forEach(k => {
-    factors[k] = round(factors[k] / data.course.distance, 4)
+    factors[k] = round(factors[k] / data.course.totalDistance(), 4)
   })
-  const normFactor = (tot / data.course.distance)
+  const normFactor = (tot / data.course.totalDistance())
 
   delay = 0
   let time = 0
@@ -649,16 +650,16 @@ function iteratePaceCalc (data) {
     // calculate time, pace, and normalized pace:
     if (data.plan.pacingMethod === 'time') {
       time = data.plan.pacingTarget
-      pace = (time - delay) / data.course.distance
+      pace = (time - delay) / data.course.totalDistance()
       np = pace / normFactor
     } else if (data.plan.pacingMethod === 'pace') {
       pace = data.plan.pacingTarget
-      time = pace * data.course.distance + delay
+      time = pace * data.course.totalDistance() + delay
       np = pace / normFactor
     } else if (data.plan.pacingMethod === 'np') {
       np = data.plan.pacingTarget
       pace = np * normFactor
-      time = pace * data.course.distance + delay
+      time = pace * data.course.totalDistance() + delay
     }
   }
 
@@ -842,6 +843,87 @@ function processPoints (points, distance, gain, loss) {
   }
 }
 
+function createTerrainFactors (waypoints) {
+  const l = logger()
+  if (!waypoints.length) { return [] }
+  const wps = waypoints.sort((a, b) => a.loc() - b.loc())
+  let tF = wps[0].terrainFactor()
+  const tFs = wps.filter((x, i) => i < wps.length - 1).map((x, i) => {
+    if (x.terrainFactor() !== null) { tF = x.terrainFactor() }
+    return {
+      start: x.loc(),
+      end: wps[i + 1].loc(),
+      tF: tF
+    }
+  })
+  logger('segments|createTerrainFactors complete', l)
+  return tFs
+}
+
+function createSegments (points, data = null) {
+  const l = logger()
+  // break on non-hidden waypoints:
+  const wps = data.waypoints.filter(x => x.tier() < 3).sort((a, b) => a.loc() - b.loc())
+
+  // get array of location breaks:
+  const breaks = wps.map(x => { return x.loc() })
+
+  // determine all the stuff
+  const segments = calcSegments(points, breaks, data)
+
+  // map in _index and waypoints
+  segments.forEach((x, i) => {
+    x._index = i
+    x.waypoint = wps[i + 1]
+  })
+
+  // map in time:
+  addTOD(segments, points, data.startTime)
+
+  logger(`segments|createSegments complete (${segments.length} segments)`, l)
+  return segments
+}
+
+function createSplits (points, units, data = null) {
+  const l = logger()
+  const distScale = (units === 'kilometers') ? 1 : 0.621371
+  const tot = points[points.length - 1].loc * distScale
+  const breaks = [0]
+  let i = 1
+  while (i < tot) {
+    breaks.push(i / distScale)
+    i++
+  }
+  if (tot / distScale > breaks[breaks.length - 1]) {
+    breaks.push(tot / distScale)
+  }
+
+  // remove last break if it's negligible
+  if (
+    breaks.length > 1 &&
+    breaks[breaks.length - 1] - breaks[breaks.length - 2] < 0.0001
+  ) {
+    breaks.pop()
+  }
+
+  // get the stuff
+  const splits = calcSegments(points, breaks, data)
+
+  // map in time:
+  addTOD(splits, points, data.startTime)
+
+  logger(`segments|createSplits complete (${splits.length} ${units})`, l)
+  return splits
+}
+
+function addTOD (segments, points, startTime = null) {
+  if (startTime !== null && points[0].elapsed !== undefined) {
+    segments.forEach((x) => {
+      x.tod = (x.elapsed + startTime) % 86400
+    })
+  }
+}
+
 exports.addLoc = addLoc
 exports.addGrades = addGrades
 exports.calcStats = calcStats
@@ -855,3 +937,6 @@ exports.calcPacing = calcPacing
 exports.addActuals = addActuals
 exports.arraysToObjects = arraysToObjects
 exports.processPoints = processPoints
+exports.createSegments = createSegments
+exports.createSplits = createSplits
+exports.createTerrainFactors = createTerrainFactors

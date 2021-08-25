@@ -198,6 +198,10 @@ export default {
       type: Array,
       required: true
     },
+    waypoints: {
+      type: Array,
+      required: true
+    },
     terrainFactors: {
       type: Array,
       required: true
@@ -261,17 +265,9 @@ export default {
     terrainTypePlaceholder: function () {
       // 1 - use previous type specified
       // 2 - none (blank)
-      if (!this.course.waypoints.length) return ''
-      const wp = this.course.waypoints.filter(x =>
-        x._id !== this.model._id &&
-        x.location < this.model.location &&
-        x.terrainType
-      )
-      if (wp.length) {
-        return wp[wp.length - 1].terrainType
-      } else {
-        return ''
-      }
+      if (!this.model.location) return ''
+      const waypoint = new this.$core.waypoints.Waypoint({ location: this.model.location })
+      return waypoint.terrainType(this.waypoints) || ''
     },
     terrainFactorPlaceholder: function () {
       // 1 - if a new type is specified, use default for that type
@@ -285,17 +281,9 @@ export default {
         const tt = this.terrainTypes.find(x => x.name === this.model.terrainType)
         if (tt) return String(tt.factor)
       }
-      if (!this.course.waypoints.length) return ''
-      const wp = this.course.waypoints.filter(x =>
-        x._id !== this.model._id &&
-        x.location < this.model.location &&
-        x.terrainFactor !== null
-      )
-      if (wp.length) {
-        return String(wp[wp.length - 1].terrainFactor)
-      } else {
-        return ''
-      }
+      if (!this.model.location) return ''
+      const waypoint = new this.$core.waypoints.Waypoint({ location: this.model.location })
+      return String(waypoint.terrainFactor(this.waypoints) || '')
     }
   },
   methods: {

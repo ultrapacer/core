@@ -1,76 +1,83 @@
-const { calcSegments } = require('./geo')
+const math = require('./math')
 
-function addTOD (segments, points, startTime = null) {
-  if (startTime !== null && points[0].elapsed !== undefined) {
-    segments.forEach((x) => {
-      x.tod = (x.elapsed + startTime) % 86400
+class Segment {
+  constructor (obj) {
+    Object.keys(obj).forEach(k => {
+      this[k] = obj[k]
     })
   }
-}
 
-function createTerrainFactors (waypoints) {
-  if (!waypoints.length) { return [] }
-  let tF = waypoints[0].terrainFactor
-  const tFs = waypoints.filter((x, i) => i < waypoints.length - 1).map((x, i) => {
-    if (x.terrainFactor !== null) { tF = x.terrainFactor }
-    return {
-      start: x.location,
-      end: waypoints[i + 1].location,
-      tF: tF
-    }
-  })
-  return tFs
-}
-
-function createSegments (points, data = null) {
-  // break on non-hidden waypoints:
-  const wps = data.waypoints.filter(x => x.tier < 3)
-
-  // get array of location breaks:
-  const breaks = wps.map(x => { return x.location })
-
-  // determine all the stuff
-  const segments = calcSegments(points, breaks, data)
-
-  // map in waypoints:
-  segments.forEach((x, i) => { x.waypoint = wps[i + 1] })
-
-  // map in time:
-  addTOD(segments, points, data.startTime)
-
-  return segments
-}
-
-function createSplits (points, units, data = null) {
-  const distScale = (units === 'kilometers') ? 1 : 0.621371
-  const tot = points[points.length - 1].loc * distScale
-  const breaks = [0]
-  let i = 1
-  while (i < tot) {
-    breaks.push(i / distScale)
-    i++
+  name () {
+    return this.waypoint ? this.waypoint.name() : ''
   }
-  if (tot / distScale > breaks[breaks.length - 1]) {
-    breaks.push(tot / distScale)
+}
+const factors = ['gF', 'tF', 'aF', 'hF', 'dF', 'dark']
+
+// SuperSegment class contains multiple segments
+class SuperSegment {
+  constructor (segments = []) {
+    this.segments = segments
   }
 
-  // remove last break if it's negligible
-  if (
-    breaks.length > 1 &&
-    breaks[breaks.length - 1] - breaks[breaks.length - 2] < 0.0001
-  ) {
-    breaks.pop()
+  last () {
+    // return last segment object
+    return this.segments[this.segments.length - 1]
   }
 
-  // get the stuff
-  const splits = calcSegments(points, breaks, data)
+  sum (f) {
+    // return sum field "f" of segments
+    return this.segments.reduce((v, s) => { return v + s[f] }, 0)
+  }
 
-  // map in time:
-  addTOD(splits, points, data.startTime)
+  end () {
+    return this.last().end
+  }
 
-  return splits
+  name () {
+    return this.last().waypoint.name()
+  }
+
+  len () {
+    return this.sum('len')
+  }
+
+  gain () {
+    return this.sum('gain')
+  }
+
+  loss () {
+    return this.sum('loss')
+  }
+
+  time () {
+    return this.sum('time')
+  }
+
+  elapsed () {
+    return this.last().elapsed
+  }
+
+  actualElapsed () {
+    const v = this.last().actualElapsed
+    return isNaN(v) ? null : v
+  }
+
+  tod () {
+    return this.last().tod
+  }
+
+  factors () {
+    return factors.map(f => {
+      const v = this.segments.reduce((v, s) => { return v + s.len * s.factors[f] }, 0)
+      const t = this.len()
+
+      return {
+        name: f,
+        value: v / t
+      }
+    }).filter(f => math.round(f.value, 4) !== 1)
+  }
 }
 
-exports.createSegments = createSegments
-exports.createSplits = createSplits
-exports.createTerrainFactors = createTerrainFactors
+exports.Segment = Segment
+exports.SuperSegment = SuperSegment

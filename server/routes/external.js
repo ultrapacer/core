@@ -39,11 +39,12 @@ routes.route('/up-table/:_id/:mode').get(async function (req, res) {
       'link',
       'loss',
       'scales',
+      'loops',
       `splits.${req.params.mode}`
     ]
     const course = await Course.findOne(query).select(select).exec()
     await course.addData()
-    if (!course.splits[req.params.mode].length) { await course.updateCache() }
+    if (!course.hasCache()) { await course.updateCache() }
     res.json(course)
   } catch (err) {
     console.log(err)

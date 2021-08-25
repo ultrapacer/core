@@ -66,6 +66,8 @@ export default {
       sponsor: null,
       refTop: 0,
       refBottom: 0,
+      refHeight: 0,
+      refWidth: 0,
       refLeft: 0,
       refRight: 0,
       scrollTop: 0
@@ -85,8 +87,11 @@ export default {
         right: this.align === 'right'
       }
     },
+    refValid: function () {
+      return Boolean(this.el && this.refWidth && this.refHeight)
+    },
     roomBelow: function () {
-      if (this.scrollTop && !this.scrolling) { return false }
+      if (this.scrollTop && !this.scrolling) return false
       return this.$window.height - this.refBottom + (this.scrolling ? 0 : this.scrollTop) > 130
     },
     roomLeft: function () {
@@ -96,7 +101,7 @@ export default {
       return this.$window.width - this.refRight > 250
     },
     fixed: function () {
-      if (this.el === null) { return false }
+      if (!this.refValid) return false
       return (this.align === 'left' && this.roomLeft) ||
         (this.align === 'right' && this.roomRight) ||
         (!this.$status.loading && this.roomBelow && (!this.scrolling || this.scrollTop === 0))
@@ -203,17 +208,19 @@ export default {
               } else {
                 this.el = this.$parent.$refs.routerView.$refs[this.element]
               }
-              this.addListeners()
-              if (!this.checker2) {
-                this.checker2 = setInterval(() => {
-                  if (!this.el.clientHeight) {
-                    this.$logger('Sponsor|checker2 watched element removed, retrying')
-                    clearInterval(this.checker2)
-                    this.checker2 = null
-                    this.setUp()
-                  }
-                }, 1000)
+              if (this.checker2) {
+                clearInterval(this.checker2)
+                this.checker2 = null
               }
+              this.addListeners()
+              this.checker2 = setInterval(() => {
+                if (!this.el.clientHeight) {
+                  this.$logger('Sponsor|checker2 watched element removed, retrying')
+                  clearInterval(this.checker2)
+                  this.checker2 = null
+                  this.setUp()
+                }
+              }, 1000)
             }
           }, 100)
         }
@@ -225,7 +232,9 @@ export default {
       if (this.el !== null) {
         this.refTop = this.el.getBoundingClientRect().top
         this.refBottom = this.refTop + this.el.clientHeight
+        this.refHeight = this.el.clientHeight
         this.refLeft = this.el.getBoundingClientRect().left
+        this.refWidth = this.el.clientWidth
         this.refRight = this.refLeft + this.el.clientWidth
       }
     },

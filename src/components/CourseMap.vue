@@ -31,19 +31,19 @@
         :color="$colors.red2"
       />
       <l-circle-marker
-        v-for="waypoint in waypoints"
-        :key="waypoint._id"
-        :lat-lng="[waypoint.lat, waypoint.lon]"
+        v-for="wp in waypoints2"
+        :key="wp.site._id+'_'+wp.loop"
+        :lat-lng="[wp.lat(), wp.lon()]"
         :radius="6"
         :fill="true"
-        :color="markerColors[waypoint.type] || 'black'"
-        :fill-color="markerColors[waypoint.type] || 'white'"
+        :color="markerColors[wp.type()] || 'black'"
+        :fill-color="markerColors[wp.type()] || 'white'"
         :fill-opacity="0.5"
       >
         <l-popup>
-          <b>{{ $waypointTypes[waypoint.type] }}</b><br>
-          {{ waypoint.name }}
-          [{{ $units.distf(waypoint.location, 1) }} {{ $units.dist }}]
+          <b>{{ $waypointTypes[wp.type()] }}</b><br>
+          {{ wp.name() }}
+          [{{ waypointLocation(wp.site) }} {{ $units.dist }}]
         </l-popup>
       </l-circle-marker>
     </l-map>
@@ -53,6 +53,9 @@
 <script>
 import { LMap, LControlLayers, LTileLayer, LPolyline, LCircleMarker, LPopup } from 'vue2-leaflet'
 import 'leaflet/dist/leaflet.css'
+function uniqueBy (a, cond) {
+  return a.filter((e, i) => a.findIndex(e2 => cond(e, e2)) === i)
+}
 export default {
   components: {
     LMap,
@@ -153,33 +156,44 @@ export default {
       }
       return hm
     },
+    pointsllls: function () {
+      return this.points.map(p => {
+        return {
+          loc: p.loc,
+          lat: p.lat,
+          lon: p.lon
+        }
+      })
+    },
     points2: function () {
       // this is a combination of the track points and the waypoints (in case
       // waypoints are between points
       const arr = [
-        ...this.points.map(p => {
-          return {
-            loc: p.loc,
-            lat: p.lat,
-            lon: p.lon
-          }
-        }),
-        ...this.waypoints.map(wp => {
-          return {
-            loc: wp.location,
-            lat: wp.lat,
-            lon: wp.lon
-          }
-        })
+        ...this.pointsllls,
+        ...this.waypoints2llls
       ].sort((a, b) => b.loc - a.loc)
       return arr
+    },
+    waypoints2: function () {
+      return uniqueBy(this.waypoints, (o1, o2) => o1.site._id === o2.site._id)
+    },
+    waypoints2llls: function () {
+      return this.waypoints2.map(wp => {
+        return {
+          loc: wp.type() === 'finish' ? this.course.distance : wp.loc() % this.course.distance,
+          lat: wp.lat(),
+          lon: wp.lon()
+        }
+      })
     }
   },
   watch: {
     focus: function (val) {
       if (val.length) {
+        const lower = val[0] % this.course.distance
+        const upper = val[1] % this.course.distance || this.course.distance
         const points = this.points2.filter(p =>
-          p.loc >= val[0] && p.loc <= val[1]
+          p.loc >= lower && p.loc <= upper
         )
         const res = this.getLLs(points)
         this.focusLL = res.ll
@@ -224,6 +238,13 @@ export default {
           { lat: xmax, lng: ymax }
         ]
       }
+    },
+    waypointLocation (site) {
+      const wps = this.waypoints.filter(wp => wp.site._id === site._id)
+      if (this.course.loops > 1 && site.type === 'start') {
+        wps.push(this.waypoints.find(wp => wp.type() === 'finish'))
+      }
+      return wps.map(wp => { return this.$units.distf(wp.loc(), 1) }).join(' & ')
     },
     updateMaxZoom (val) {
       this.maxZoom = this.tileProviders.find(x => x.name === val.name)['max-zoom']

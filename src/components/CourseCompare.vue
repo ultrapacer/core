@@ -121,7 +121,7 @@ export default {
       this.$status.processing = true
       this.$nextTick(async () => {
         if (this.gpxPoints.length) {
-          this.$core.addLoc(this.gpxPoints)
+          this.$core.geo.addLoc(this.gpxPoints)
         }
         const result = await this.cb(this.gpxPoints)
         if (result.match) {

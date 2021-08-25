@@ -58,10 +58,10 @@ export default {
     this.upcomingRaces = races.filter(r =>
       moment(r.eventStart).isAfter(moment(), 'day') ||
       moment(r.eventStart).isSame(moment(), 'day')
-    )
+    ).map(c => { return new this.$core.courses.Course(c) })
     this.pastRaces = races.filter(r =>
       moment(r.eventStart).isBefore(moment(), 'day')
-    )
+    ).map(c => { return new this.$core.courses.Course(c) })
     this.upcomingRaces.sort((a, b) =>
       moment(a.eventStart).format('YYYYMMDD') - moment(b.eventStart).format('YYYYMMDD')
     )

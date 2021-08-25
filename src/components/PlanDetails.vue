@@ -10,7 +10,7 @@
         {{ course.description }}
       </span>
       <span v-else>
-        The <b>{{ course.name }}</b> course covers <b>{{ $units.distf(course.distance, 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.gain, 0) | commas }} {{ $units.alt }}</b> of climbing.
+        The <b>{{ course.name }}</b> course covers <b>{{ $units.distf(course.totalDistance(), 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.totalGain(), 0) | commas }} {{ $units.alt }}</b> of climbing.
       </span>
       <span
         v-if="course.source.alt"
@@ -192,7 +192,7 @@
         >
           Overall:
         </b-col>
-        <b-col><b>{{ sec2string(fPace(plan.pacing.time / course.distance), 'mm:ss') }}</b></b-col>
+        <b-col><b>{{ sec2string(fPace(plan.pacing.time / course.totalDistance()), 'mm:ss') }}</b></b-col>
       </b-row>
       <b-row>
         <b-col
@@ -234,7 +234,7 @@
         >
           Quantity:
         </b-col>
-        <b-col><b>{{ aidStationCount }} stop<span v-if="aidStationCount>1">s</span></b></b-col>
+        <b-col><b>{{ plan.pacing.delays.length }} stop<span v-if="aidStationCount>1">s</span></b></b-col>
       </b-row>
       <b-row>
         <b-col
@@ -260,7 +260,7 @@
         <b-container style="max-width: 400px">
           <drift-chart
             :drift="plan.drift"
-            :course-distance="course.distance"
+            :course-distance="course.totalDistance()"
           />
         </b-container>
       </b-row>
@@ -654,10 +654,10 @@ export default {
       }
     },
     startPace: function () {
-      return this.plan.pacing.np * this.$core.nF.dF(0, this.plan.drift, this.course.distance)
+      return this.plan.pacing.np * this.$core.nF.dF(0, this.plan.drift, this.course.totalDistance())
     },
     endPace: function () {
-      return this.plan.pacing.np * this.$core.nF.dF(this.course.distance, this.plan.drift, this.course.distance)
+      return this.plan.pacing.np * this.$core.nF.dF(this.course.totalDistance(), this.plan.drift, this.course.totalDistance())
     },
     maxAltitude: function () {
       const m = Math.max.apply(
@@ -772,10 +772,11 @@ export default {
   },
   methods: {
     reducer: function (field) {
+      if (!this.segments.length || !this.segments[0].factors) return 0
       const tot = this.segments.reduce((v, x) => {
         return v + (x.len * x.factors[field])
       }, 0)
-      return tot / this.course.distance
+      return tot / this.course.totalDistance()
     },
     fPace: function (p) {
       return p / this.$units.distScale

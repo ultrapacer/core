@@ -14,8 +14,11 @@ const splitFields = {
   factors: {}
 }
 
-// Define collection and schema for Posts
 const CourseSchema = new Schema({
+  schema_version: {
+    type: Number,
+    default: 1
+  },
   _user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
@@ -96,18 +99,32 @@ const CourseSchema = new Schema({
       default: []
     },
     segments: {
-      type: [{
-        waypoint: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Waypoint'
-        },
-        len: Number,
-        ...splitFields
-      }],
+      type: [
+        {
+          waypoint: {
+            site: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: 'Waypoint'
+            },
+            loop: {
+              type: Number,
+              default: 1
+            }
+          },
+          len: Number,
+          _index: Number,
+          ...splitFields
+        }
+      ],
       default: []
     }
   },
-  scales: {}
+  scales: {},
+  loops: {
+    type: Number,
+    default: 1,
+    set: v => Math.round(v >= 1 ? v : 1) // ensure integer >= 1
+  }
 }, {
   collection: 'courses'
 })
@@ -144,22 +161,29 @@ CourseSchema.methods.updateCache = async function () {
     await mongoose.model('Course').findOne({ _id: this._id }).select('points').exec()
   ])
   this.waypoints = waypoints
-  const { points, scales } = core.processPoints(
-    core.arraysToObjects(course.points),
-    this.distance,
-    this.gain,
-    this.loss
+  const pnts = course.points
+
+  const loops = this.loops || 1
+  core.points.loopPoints(pnts, loops)
+
+  const { points, scales } = core.geo.processPoints(
+    core.geo.arraysToObjects(pnts),
+    this.distance * loops,
+    this.gain * loops,
+    this.loss * loops
   )
   this.scales = scales
 
+  const wpls = core.waypoints.loopedWaypoints(waypoints, loops, this.distance)
+
   // get terrrain factors:
-  const tFs = core.segments.createTerrainFactors(waypoints)
+  const tFs = core.geo.createTerrainFactors(wpls)
 
   // add splits:
   const data = { tFs: tFs }
-  this.splits.segments = core.segments.createSegments(points, { ...data, waypoints: waypoints })
-  this.splits.miles = core.segments.createSplits(points, 'miles', data)
-  this.splits.kilometers = core.segments.createSplits(points, 'kilometers', data)
+  this.splits.segments = core.geo.createSegments(points, { ...data, waypoints: wpls })
+  this.splits.miles = core.geo.createSplits(points, 'miles', data)
+  this.splits.kilometers = core.geo.createSplits(points, 'kilometers', data)
 
   // then update model:
   await this.updateOne({
@@ -168,12 +192,12 @@ CourseSchema.methods.updateCache = async function () {
   })
   logger('Course|updateCache', t)
 }
-
 CourseSchema.methods.hasCache = function () {
   return Boolean(
     this.scales && this.scales.gain && this.scales.loss &&
     this.splits &&
     this.splits.segments && this.splits.segments.length &&
+    this.splits.segments[0].waypoint.loop && // for migration in aug 2021
     this.splits.miles && this.splits.miles.length &&
     this.splits.kilometers && this.splits.kilometers.length
   )

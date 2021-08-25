@@ -101,7 +101,7 @@ export default {
                   return ''
                 }
               },
-              max: this.$units.distf(this.course.distance) + 0.01
+              max: this.$units.distf(this.course.totalDistance()) + 0.01
             }
           }],
           yAxes: [{
@@ -222,7 +222,7 @@ export default {
       return cF
     },
     xs: function () {
-      return Array(this.pmax + 1).fill(0).map((e, i) => i++ * this.course.distance / this.pmax)
+      return Array(this.pmax + 1).fill(0).map((e, i) => i++ * this.course.totalDistance() / this.pmax)
     },
     comparePoints: function () {
       if (this.showActual) {
@@ -230,7 +230,7 @@ export default {
           this.points.map(p => { return p.loc }),
           this.points.map(p => { return p.elapsed - p.actual.elapsed }),
           this.xs,
-          2 * this.course.distance / this.pmax
+          2 * this.course.totalDistance() / this.pmax
         )
         const arr = []
         this.xs.forEach((x, i) => {
@@ -249,34 +249,33 @@ export default {
     chartWaypoints: function () {
       this.$logger('CourseProfile|chartWaypoints')
       if (!this.waypoints.length) { return [] }
-      const len = this.waypoints.length
       return {
         data: this.waypoints.map(wp => {
           return {
-            x: this.$units.distf(wp.location),
-            y: this.$units.altf(wp.elevation),
+            x: this.$units.distf(wp.loc()),
+            y: this.$units.altf(wp.alt()),
             label:
-              wp.name + ' [' +
-              this.$units.distf(wp.location, 1) +
+              wp.name() + ' [' +
+              this.$units.distf(wp.loc(), 1) +
               this.$units.dist + ']',
-            title: this.$waypointTypes[wp.type],
-            _id: wp._id
+            title: this.$waypointTypes[wp.type()],
+            _id: wp.site._id
           }
         }),
         backgroundColor: this.waypoints.map(wp => {
           return this.transparentize(
-            this.chartColors[this.markerStyles.color[wp.type] || 'white']
+            this.chartColors[this.markerStyles.color[wp.type()] || 'white']
           )
         }),
         borderColor: this.waypoints.map(wp => {
-          return this.chartColors[this.markerStyles.color[wp.type] || 'black']
+          return this.chartColors[this.markerStyles.color[wp.type()] || 'black']
         }),
-        borderWidth: Array(len).fill(2),
+        borderWidth: Array(this.waypoints.length).fill(2),
         fill: false,
         pointRadius: this.waypoints.map(wp => {
-          return this.markerStyles.pointRadius[wp.type] || 6
+          return this.markerStyles.pointRadius[wp.type()] || 6
         }),
-        pointStyle: Array(len).fill('circle'),
+        pointStyle: Array(this.waypoints.length).fill('circle'),
         pointHoverRadius: 10,
         showLine: false
       }
@@ -310,7 +309,7 @@ export default {
         this.points.map(p => { return p.loc }),
         this.points.map(p => { return p.alt }),
         this.xs,
-        this.course.distance / this.pmax / 5
+        this.course.totalDistance() / this.pmax / 5
       )
       this.xs.forEach((x, i) => {
         chartProfile.push({
@@ -324,7 +323,7 @@ export default {
         this.points.map(p => { return p.loc }),
         this.points.map(p => { return p.alt }),
         this.xs,
-        5 * this.course.distance / this.pmax
+        5 * this.course.totalDistance() / this.pmax
       )
       this.xs.forEach((x, i) => {
         chartGrade.push({

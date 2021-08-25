@@ -168,6 +168,7 @@
               ref="segmentTable"
               :course="course"
               :segments="segments"
+              :waypoints="waypoints"
               :plan="plan"
               :busy="busy"
               :mode="'segments'"
@@ -177,8 +178,6 @@
               :printing="printing==='Segments'"
               :class="printing==='Segments' ? 'pr-2' : ''"
               @select="updateFocus"
-              @show="waypointShow"
-              @hide="waypointHide"
             />
           </b-tab>
           <b-tab title="Splits">
@@ -187,6 +186,7 @@
               ref="splitTable"
               :course="course"
               :segments="splits"
+              :waypoints="waypoints"
               :plan="plan"
               :busy="busy"
               :mode="'splits'"
@@ -202,6 +202,7 @@
             <waypoint-table
               ref="waypointTable"
               :course="course"
+              :waypoints="waypoints"
               :plan="plan"
               :segments="planAssigned && pacingSplitsReady ? plan.splits.segments : course.splits.segments"
               :editing="editing"
@@ -211,6 +212,7 @@
               :visible="tableTabIndex===2"
               :printing="printing==='Waypoints'"
               :class="printing==='Waypoints' ? 'pr-2' : ''"
+              @setUpdateFlag="setUpdateFlag"
               @updateWaypointLocation="updateWaypointLocation"
               @updateWaypointDelay="updateWaypointDelay"
             />
@@ -266,7 +268,7 @@
           ref="profile"
           :printing="printing==='Profile'"
           :course="course"
-          :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
+          :waypoints="waypoints.filter(wp=>wp.visible)"
           :points="points"
           :sun-events="plan.pacing ? plan.pacing.sunEventsByLoc: []"
           :show-actual="comparing"
@@ -277,8 +279,8 @@
           v-if="points.length"
           ref="map"
           :course="course"
-          :waypoints="course.waypoints.filter(wp=>waypointShowMode(wp))"
-          :points="points"
+          :waypoints="waypoints.filter(wp=>wp.visible)"
+          :points="points.filter(p=>p.loc<=course.distance)"
           :focus="focus"
         />
       </b-col>
@@ -300,6 +302,7 @@
       v-if="owner && editing"
       ref="wpEdit"
       :course="course"
+      :waypoints="waypoints"
       :points="points"
       :terrain-factors="terrainFactors"
       @refresh="refreshWaypoints"
@@ -310,7 +313,7 @@
       ref="delModal"
     />
     <download-track
-      v-if="points.length"
+      v-if="points.length & course.splits"
       ref="download"
       :course="course"
       :plan="plan"
@@ -332,7 +335,7 @@
       @setPublic="course.public=true"
     />
     <email-user
-      v-if="$user.isAuthenticated && points.length"
+      v-if="$user.isAuthenticated && course._user && points.length"
       ref="emailOwner"
       :user-id="course._user"
       type="course"
@@ -407,7 +410,6 @@ export default {
       tableTabIndex: 0,
       tableTabNames: ['Segments', 'Splits', 'Waypoints', 'Details'],
       updateFlag: false,
-      visibleWaypoints: [],
       showMenu: false,
       updatingWaypointTimeout: null,
       updatingWaypointTimeoutID: null,
@@ -533,55 +535,28 @@ export default {
       }
     },
     terrainFactors: function () {
-      const l = this.$logger()
-      if (!this.course.waypoints) { return [] }
-      if (!this.course.waypoints.length) { return [] }
-      const wps = this.course.waypoints
-      let tF = wps[0].terrainFactor
-      const tFs = wps.filter((x, i) => i < wps.length - 1).map((x, i) => {
-        if (x.terrainFactor !== null) { tF = x.terrainFactor }
-        return {
-          start: x.location,
-          end: wps[i + 1].location,
-          tF: tF
-        }
-      })
-      this.$logger('terrainFactors', l)
-      return tFs
+      if (!this.waypoints.length) { return [] }
+      return this.$core.geo.createTerrainFactors(this.waypoints)
+    },
+    waypoints: function () {
+      if (!this.course.waypoints || !this.course.waypoints.length) return []
+      return this.$core.waypoints.loopedWaypoints(this.course.waypoints, this.course.loops, this.course.distance)
     },
     delays: function () {
-      const d = []
+      if (!this.waypoints.length || !this.planAssigned) return []
+      this.$logger('Course|delays')
       try {
-        const t = this.$logger()
-        if (!this.course.waypoints) { return [] }
-        if (!this.course.waypoints.length) { return [] }
-        if (!this.planAssigned) { return [] }
-        const wps = this.course.waypoints
-        const wpds = this.plan.waypointDelays || []
-        wps.forEach((x, i) => {
-          const wpd = wpds.find(wpd => String(wpd.waypoint) === String(x._id))
-          if (wpd) {
-            wps[i].delay = wpd.delay
-            d.push({
-              loc: x.location,
-              delay: x.delay
-            })
-          } else if (x.type === 'aid' || x.type === 'water') {
-            wps[i].delay = this.plan.waypointDelay || 0
-            d.push({
-              loc: x.location,
-              delay: x.delay
-            })
-          } else {
-            wps[i].delay = 0
+        return this.waypoints.map(wp => {
+          return {
+            loc: wp.loc(),
+            delay: wp.delay(this.plan.waypointDelay, this.plan.waypointDelays || [])
           }
-        })
-        this.$logger('delays', t)
+        }).filter(d => d.delay > 0)
       } catch (error) {
         console.log(error)
         this.$gtag.exception({ description: `Course|delays: ${error.toString()}`, fatal: false })
+        return []
       }
-      return d
     },
     publicName: function () {
       return this.course.public ? this.course.name : 'private'
@@ -592,8 +567,14 @@ export default {
       // update after disabling editing
       if (!val && this.updateFlag) {
         this.createSplits()
-        this.clearPlanSplits()
-        this.updatePacing()
+        if (this.planAssigned) {
+          this.clearPlanSplits()
+          this.updatePacing()
+        }
+        this.updateFlag = false
+      }
+      if (val) {
+        this.waypoints.filter(wp => !wp.visible).forEach(wp => { wp.show() })
       }
     },
     tableTabIndex: function (val) {
@@ -601,8 +582,18 @@ export default {
       // if editing and navigating away from waypoint table, recalc
       if (this.updateFlag && this.tableTabIndex !== 2) {
         this.createSplits()
-        this.clearPlanSplits()
-        this.updatePacing()
+        if (this.planAssigned) {
+          this.clearPlanSplits()
+          this.updatePacing()
+        }
+        this.updateFlag = false
+      }
+      if (!this.editing) {
+        if (val === 2) {
+          this.waypoints.filter(wp => wp.tier() <= 2).forEach(wp => { wp.show() })
+        } else {
+          this.waypoints.filter(wp => wp.tier() > 1).forEach(wp => { wp.hide() })
+        }
       }
     }
   },
@@ -622,19 +613,22 @@ export default {
       try {
         if (this.$route.params.plan) {
           // this is depreciated; plan id should now in a query item
-          this.course = await api.getCourse(this.$route.params.plan, 'plan')
+          this.course = new this.$core.courses.Course(await api.getCourse(this.$route.params.plan, 'plan'))
         } else if (this.$route.params.permalink) {
-          this.course = await api.getCourseFields(
+          this.course = new this.$core.courses.Course(await api.getCourseFields(
             this.$route.params.permalink,
             'link',
             ['name', 'distance', 'gain'],
             false
-          )
+          ))
           this.$title = this.course.name
-          this.course = await api.getCourse(this.$route.params.permalink, 'link')
+          this.course = new this.$core.courses.Course(await api.getCourse(this.$route.params.permalink, 'link'))
         } else {
-          this.course = await api.getCourse(this.$route.params.course, 'course')
+          this.course = new this.$core.courses.Course(await api.getCourse(this.$route.params.course, 'course'))
         }
+
+        if (!this.course.loops) this.course.loops = 1
+
         t = this.$logger('Course|api.getCourse', t)
 
         // reformat url
@@ -648,15 +642,15 @@ export default {
         }
         this.$router.replace(route)
 
-        this.refreshVisibleWaypoints()
         this.$gtage(this.$gtag, 'Course', 'view', this.publicName)
         this.plans = this.course.plans || []
 
         // match waypoints in cached segments w/ actual objects
         this.course.splits.segments.forEach(s => {
-          s.waypoint = this.course.waypoints.find(
-            wp => wp._id === (s.waypoint._id || s.waypoint)
+          const wp = this.waypoints.find(
+            wp => wp.site._id === s.waypoint.site._id && wp.loop === s.waypoint.loop
           )
+          if (wp) s.waypoint = wp
         })
 
         if (this.$route.query.plan && this.$route.query.plan.length <= 24) {
@@ -747,12 +741,17 @@ export default {
         'points'
       )
       t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
-      this.points = this.$core.arraysToObjects(pnts)
-      const { points, scales } = this.$core.processPoints(
+
+      // if looped course, repeat points array
+      if (!this.course.loops) this.course.loops = 1
+      this.$core.points.loopPoints(pnts, this.course.loops)
+
+      this.points = this.$core.geo.arraysToObjects(pnts)
+      const { points, scales } = this.$core.geo.processPoints(
         this.points,
-        this.course.distance,
-        this.course.gain,
-        this.course.loss
+        this.course.totalDistance(),
+        this.course.totalGain(),
+        this.course.totalLoss()
       )
       this.points = points
       this.scales = scales
@@ -828,11 +827,10 @@ export default {
         }
       )
     },
-    updateWaypointLocation (_id, loc) {
-      const waypoint = this.course.waypoints.find(wp => wp._id === _id)
+    updateWaypointLocation (waypoint, loc) {
       waypoint.location = loc
       wputil.updateLLA(waypoint, this.points)
-      wputil.sortWaypointsByDistance(this.course.waypoints)
+      // wputil.sortWaypointsByDistance(this.course.waypoints)
       if (String(waypoint._id) === this.updatingWaypointTimeoutID) {
         clearTimeout(this.updatingWaypointTimeout)
       }
@@ -842,20 +840,21 @@ export default {
       }, 2000)
       this.setUpdateFlag()
     },
-    updateWaypointDelay (_id, delay) {
+    updateWaypointDelay (waypoint, delay) {
       try {
         this.$logger('Course|updateWaypointDelay')
         if (!this.plan || !this.plan.waypointDelays) return
-        if (delay === null) {
-          this.plan.waypointDelays = this.plan.waypointDelays.filter(wpd => String(wpd.waypoint) !== String(_id))
-        } else {
-          const wpd = this.plan.waypointDelays.find(wpd => String(wpd.waypoint) === String(_id))
-          if (wpd) {
-            wpd.delay = delay
-          } else {
-            this.plan.waypointDelays.push({ waypoint: _id, delay: delay })
-          }
+
+        // remove old record if it exists:
+        this.plan.waypointDelays = this.plan.waypointDelays.filter(
+          wpd => !(wpd.waypoint === waypoint.site._id && wpd.loop === waypoint.loop))
+
+        // add in new one:
+        if (delay !== null) {
+          this.plan.waypointDelays.push({ site: waypoint.site._id, loop: waypoint.loop, delay: delay })
         }
+
+        // update database
         this.$api.updatePlan(this.plan._id, { waypointDelays: this.plan.waypointDelays })
       } catch (error) {
         console.log(error)
@@ -864,27 +863,13 @@ export default {
           fatal: false
         })
       }
-      this.updatePacing()
+      this.$status.processing = true
+      setTimeout(() => { this.updatePacing() }, 10)
     },
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
-      this.refreshVisibleWaypoints()
       this.setUpdateFlag()
       if (typeof callback === 'function') callback()
-    },
-    async refreshVisibleWaypoints () {
-      this.visibleWaypoints = this.course.waypoints
-        .filter(x => x.type === 'start' || x.tier === 1)
-        .map(x => { return x._id })
-    },
-    waypointShowMode (wp) {
-      if (this.editing && this.tableTabIndex === 2) {
-        return true
-      } else if (this.tableTabIndex === 2) {
-        return wp.tier <= 2
-      } else {
-        return this.visibleWaypoints.includes(wp._id)
-      }
     },
     async newPlan () {
       this.$gtage(this.$gtag, 'Plan', 'add', this.publicName)
@@ -985,17 +970,17 @@ export default {
       this.$logger('Course|clearPlan')
     },
     createSplits: async function () {
-      const t = this.$logger('go1')
-      this.course.splits.segments = await this.$core.segments.createSegments(
+      const t = this.$logger()
+      this.course.splits.segments = await this.$core.geo.createSegments(
         this.points,
         {
-          waypoints: this.course.waypoints,
+          waypoints: this.waypoints,
           tFs: this.terrainFactors
         }
       )
       const units = ['kilometers', 'miles']
       units.forEach(async (unit) => {
-        this.course.splits[unit] = await this.$core.segments.createSplits(
+        this.course.splits[unit] = await this.$core.geo.createSplits(
           this.points,
           unit,
           {
@@ -1008,10 +993,10 @@ export default {
     createPlanSplits: async function () {
       const t = this.$logger()
       if (!this.plan.splits) { this.$set(this.plan, 'splits', {}) }
-      const segments = await this.$core.segments.createSegments(
+      const segments = await this.$core.geo.createSegments(
         this.points,
         {
-          waypoints: this.course.waypoints,
+          waypoints: this.waypoints,
           ...this.plan.pacing,
           startTime: this.event.startTime
         }
@@ -1019,7 +1004,7 @@ export default {
       this.$set(this.plan.splits, 'segments', segments)
       const units = ['kilometers', 'miles']
       units.forEach(async (unit) => {
-        const s = await this.$core.segments.createSplits(
+        const s = await this.$core.geo.createSplits(
           this.points,
           unit,
           {
@@ -1042,7 +1027,7 @@ export default {
       this.busy = true
       this.updateFlag = false
       this.$status.processing = true
-      const result = this.$core.calcPacing({
+      const result = this.$core.geo.calcPacing({
         course: this.course,
         plan: this.plan,
         points: this.points,
@@ -1075,21 +1060,6 @@ export default {
       this.tableTabIndex = 2
       this.$refs.waypointTable.selectWaypoint(id)
     },
-    waypointShow: function (arr) {
-      arr.forEach(_id => {
-        if (!this.visibleWaypoints.includes(_id)) {
-          this.visibleWaypoints.push(_id)
-        }
-      })
-    },
-    waypointHide: function (arr) {
-      arr.forEach(_id => {
-        const i = this.visibleWaypoints.findIndex(x => x === _id)
-        if (i >= 0) {
-          this.visibleWaypoints.splice(i, 1)
-        }
-      })
-    },
     setUpdateFlag: function () {
       this.updateFlag = true
     },
@@ -1116,7 +1086,7 @@ export default {
             await this.updatePacing()
           }
           this.$status.processing = true
-          const res = await this.$core.addActuals(this.points, actual)
+          const res = await this.$core.geo.addActuals(this.points, actual)
           if (res.match) {
             this.$gtage(this.$gtag, 'Course', 'compare', this.publicName, 1)
             this.comparing = true

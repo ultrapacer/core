@@ -69,7 +69,7 @@ courseRoutes.route('/').get(async function (req, res) {
     ]
   }
   const courses = await Course.find(q)
-    .select(['name', 'distance', 'gain', 'loss', 'link', '_user'])
+    .select(['name', 'distance', 'gain', 'loss', 'loops', 'link', '_user'])
     .exec()
   res.json(courses)
 })
@@ -89,7 +89,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
       const fields2 = [ // these are important fields (requiring clearing cache)
         'eventStart', 'eventTimezone',
         'override', 'points', 'reduced', 'raw',
-        'distance', 'gain', 'loss'
+        'distance', 'gain', 'loss', 'loops'
       ]
       if (user.admin) {
         fields1.push('_user', 'link')

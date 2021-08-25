@@ -148,7 +148,7 @@
             :unchecked-value="false"
             @change="setDistGainLoss"
           >
-            Override distance/gain/loss from source
+            Override distance/gain/loss from source <span v-if="loopEnabled">(single loop)</span>
           </b-form-checkbox>
           <form-tip v-if="showTips">
             Optional: enable to manually specify distance/elevation.
@@ -226,6 +226,34 @@
             <form-tip v-if="showTips">
               Required (if Override is enabled): specify descent/loss and units.
             </form-tip>
+          </b-form-group>
+          <b-form-checkbox
+            v-model="loopEnabled"
+            class="mt-1"
+            :unchecked-value="false"
+            @change="enableLoop"
+          >
+            Loop course
+          </b-form-checkbox>
+          <form-tip v-if="showTips">
+            Optional: enable to loop course track multiple times.
+          </form-tip>
+          <b-form-group
+            v-if="loopEnabled"
+            class="mb-0 pl-3"
+          >
+            <b-input-group
+              prepend="Loops"
+              class="mt-1"
+            >
+              <b-form-input
+                v-model="model.loops"
+                type="number"
+                step="1"
+                min="2"
+                required
+              />
+            </b-input-group>
           </b-form-group>
           <b-form-checkbox
             v-model="model.public"
@@ -348,6 +376,7 @@ export default {
       gpxFileInvalidMsg: '',
       gpxFileNoElevFlag: false,
       gpxPoints: [],
+      loopEnabled: false,
       model: { source: {} },
       moment: null,
       points: [],
@@ -408,9 +437,11 @@ export default {
         this.updateDistanceUnit(this.model.override.distUnit)
         this.updateElevUnit(this.model.override.elevUnit)
         this.courseLoaded = this.reloadPoints(course.reduced ? 'raw' : 'points')
+        this.loopEnabled = this.model.loops > 1
       } else {
         this.moment = moment(0).tz(moment.tz.guess())
         this.model = JSON.parse(JSON.stringify(this.defaults))
+        this.loopEnabled = false
       }
       this.$refs.modal.show()
       this.$status.processing = false
@@ -423,9 +454,9 @@ export default {
     },
     async reloadPoints (field) {
       const arr = await api.getCourseField(this.model._id, field)
-      this.gpxPoints = this.$core.arraysToObjects(arr)
-      this.$core.addLoc(this.gpxPoints)
-      this.stats = this.$core.calcStats(this.gpxPoints, true)
+      this.gpxPoints = this.$core.geo.arraysToObjects(arr)
+      this.$core.geo.addLoc(this.gpxPoints)
+      this.stats = this.$core.geo.calcStats(this.gpxPoints, true)
       this.courseLoaded = true
       return true
     },
@@ -437,7 +468,7 @@ export default {
       let points = []
       if (this.newPointsFlag && this.gpxPoints.length) {
         points = this.gpxPoints
-        this.points = this.$core.reduce(points, this.model.distance)
+        this.points = this.$core.geo.reduce(points, this.model.distance)
 
         // reformat points for upload
         this.model.reduced = this.points.length !== points.length
@@ -481,7 +512,8 @@ export default {
           'distance',
           'gain',
           'loss',
-          'override'
+          'override',
+          'loops'
         ]
 
         // only include new points info if we have a new course source:
@@ -608,16 +640,16 @@ export default {
             this.$status.processing = false
             return
           }
-          this.$core.addLoc(this.gpxPoints)
-          this.gpxPoints = this.$core.cleanUp(this.gpxPoints)
-          this.stats = this.$core.calcStats(this.gpxPoints, true)
+          this.$core.geo.addLoc(this.gpxPoints)
+          this.gpxPoints = this.$core.geo.cleanUp(this.gpxPoints)
+          this.stats = this.$core.geo.calcStats(this.gpxPoints, true)
           if (this.$config.requireGPXElevation && this.stats.gain === 0) {
             this.gpxFileNoElevFlag = true
             const t2 = this.$logger('CourseEdit|loadGPX getting elevation data')
             try {
               await this.addElevationData(this.gpxPoints)
               this.$logger(`CourseEdit|loadGPX received elevation data for ${this.gpxPoints.length} points`, t2)
-              this.stats = this.$core.calcStats(this.gpxPoints, true)
+              this.stats = this.$core.geo.calcStats(this.gpxPoints, true)
             } catch (err) {
               this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
               this.$logger('CourseEdit|loadGPX failed to get elevation data.', t2)
@@ -651,7 +683,7 @@ export default {
           try {
             await this.addElevationData(this.gpxPoints, val)
             this.$logger(`CourseEdit|changeAltSource received elevation data for ${this.gpxPoints.length} points`, t2)
-            this.stats = this.$core.calcStats(this.gpxPoints, true)
+            this.stats = this.$core.geo.calcStats(this.gpxPoints, true)
             this.updateModelGainLoss()
           } catch (err) {
             this.gpxFileInvalidMsg = 'Elevation data and data is not available.'
@@ -750,6 +782,9 @@ export default {
       } else {
         throw new Error('Elevation data returned does not match.')
       }
+    },
+    enableLoop (val) {
+      this.model.loops = val ? 2 : 1
     }
   }
 }

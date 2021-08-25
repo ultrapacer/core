@@ -165,7 +165,10 @@ export default {
             this.raw = await api.getCourseField(this.course._id, 'raw')
           }
           pnts = this.$core.arraysToObjects(this.raw)
-          pnts = this.$core.addLoc(pnts, this.course.distance)
+          this.$core.points.loopPoints(pnts, this.course.loops)
+
+          pnts = this.$core.geo.addLoc(pnts, this.course.totalDistance())
+
           if (this.hasTime) { // interpolate times from distances in pnts
             const red = this.points.map(p => { return { ...p } })
             let lastelapsed = 0
@@ -193,12 +196,12 @@ export default {
           }
         } else {
           pnts = this.points.map(p => { return { ...p } })
-          pnts = this.$core.addLoc(pnts, this.course.distance)
+          pnts = this.$core.geo.addLoc(pnts, this.course.totalDistance())
         }
       } else {
         // LOW RESOLUTION (adjust odd points lat/lon to correct distance)
         pnts = this.points.map(p => { return { ...p } })
-        pnts = this.$core.addLoc(pnts, this.course.distance) // update locations
+        pnts = this.$core.geo.addLoc(pnts, this.course.totalDistance()) // update locations
         pnts.forEach((p, i) => {
           if (
             i % 2 === 0 &&
@@ -225,7 +228,7 @@ export default {
             }
           }
         })
-        pnts = this.$core.addLoc(pnts, this.course.distance)
+        pnts = this.$core.geo.addLoc(pnts, this.course.totalDistance())
       }
 
       let name = `uP-${this.course.name}${(this.plan.name ? ('-' + this.plan.name) : '')}${(this.course.reduced ? ('-' + resolution) : '')}`
@@ -306,17 +309,17 @@ export default {
       if (this.hasTime) {
         lap.TotalTimeSeconds = this.$math.round(pnts[pnts.length - 1].elapsed, 3)
       }
-      const coursepoints = this.segments.filter(s => s.waypoint.tier < 3).map(s => {
+      const coursepoints = this.segments.filter(s => s.waypoint.tier() < 3).map(s => {
         const o = {
-          Name: s.waypoint.name,
+          Name: s.waypoint.name(),
           PointType: 'Generic',
           Position: {
-            LatitudeDegrees: this.$math.round(s.waypoint.lat, 8),
-            LongitudeDegrees: this.$math.round(s.waypoint.lon, 8)
+            LatitudeDegrees: this.$math.round(s.waypoint.lat(), 8),
+            LongitudeDegrees: this.$math.round(s.waypoint.lon(), 8)
           }
         }
         if (this.course.source && this.course.source.alt !== 'google') {
-          o.AltitudeMeters = this.$math.round(s.waypoint.elevation, 2)
+          o.AltitudeMeters = this.$math.round(s.waypoint.alt(), 2)
         }
         if (this.hasTime) {
           o.Time = moment(this.event.start).add(s.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')

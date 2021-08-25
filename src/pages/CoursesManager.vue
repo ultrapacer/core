@@ -130,14 +130,14 @@ export default {
           key: 'distance',
           sortable: true,
           formatter: (value, key, item) => {
-            return this.$units.distf(value, 2)
+            return this.$units.distf(item.totalDistance(), 2)
           }
         },
         {
           key: 'gain',
           sortable: true,
           formatter: (value, key, item) => {
-            return this.$units.altf(value, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(item.totalGain(), 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'd-none d-sm-table-cell'
         },
@@ -145,7 +145,7 @@ export default {
           key: 'loss',
           sortable: true,
           formatter: (value, key, item) => {
-            return this.$units.altf(value, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(item.totalLoss(), 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-sm-table-cell',
           tdClass: 'd-none d-sm-table-cell'
@@ -176,12 +176,13 @@ export default {
   methods: {
     async refreshCourses (callback) {
       this.$status.processing = true
-      this.courses = await api.getCourses()
-      this.courses.sort((a, b) => {
+      const courses = await api.getCourses()
+      courses.sort((a, b) => {
         if (a.name.toLowerCase() < b.name.toLowerCase()) { return -1 }
         if (a.name.toLowerCase() > b.name.toLowerCase()) { return 1 }
         return 0
       })
+      this.courses = courses.map(c => { return new this.$core.courses.Course(c) })
       if (typeof callback === 'function') callback()
       this.$status.processing = false
     },

@@ -3,7 +3,7 @@
     ref="table"
     :items="rows"
     :fields="fields"
-    primary-key="_id"
+    primary-key="site._id+'_'loop"
     hover
     selectable
     select-mode="single"
@@ -17,15 +17,15 @@
     <template #cell(actions)="row">
       <b-button
         class="mr-1"
-        @click="editFn(getWaypoint(row.item))"
+        @click="editFn(row.item.site)"
       >
         <v-icon name="edit" />
         <span class="d-none d-xl-inline">Edit</span>
       </b-button>
       <b-button
-        v-if="getWaypoint(row.item, 'type') !== 'start' && getWaypoint(row.item, 'type') !== 'finish'"
+        v-if="row.item.type() !== 'start' && row.item.type() !== 'finish'"
         class="mr-1"
-        @click="delFn(getWaypoint(row.item))"
+        @click="delFn(row.item.site)"
       >
         <v-icon name="trash" />
         <span class="d-none d-xl-inline">Delete</span>
@@ -64,14 +64,13 @@
               <b-form-radio
                 v-model="waypointDelayCustom"
                 :value="false"
-                @input="waypointDelayEnable"
+                @change="waypointDelayClear(row.item)"
               >
                 Use typical delay ({{ waypointDelayTypical | timef('[h]:m:ss') }})
               </b-form-radio>
               <b-form-radio
                 v-model="waypointDelayCustom"
                 :value="true"
-                @input="waypointDelayEnable"
               >
                 Use unique delay<span v-if="waypointDelayCustom">, defined below:</span>
               </b-form-radio>
@@ -92,7 +91,7 @@
               <b-input-group-append v-if="waypointDelayValid">
                 <b-button
                   variant="outline-success"
-                  @click="waypointDelayChange"
+                  @click="waypointDelayChange(row.item)"
                 >
                   Save
                 </b-button>
@@ -137,6 +136,10 @@ export default {
       type: Array,
       required: true
     },
+    waypoints: {
+      type: Array,
+      required: true
+    },
     tableHeight: {
       type: Number,
       default: 0
@@ -148,7 +151,7 @@ export default {
   },
   data () {
     return {
-      detailsId: null,
+      currentWaypoint: {},
       shiftButtons: [
         { value: -1, display: '<<<' },
         { value: -0.1, display: '<<' },
@@ -164,18 +167,13 @@ export default {
   },
   computed: {
     rows: function () {
-      const wps = this.course.waypoints.filter(x => this.editing || x.tier < 3)
-      return wps.map(
-        wp => {
-          return { _id: wp._id, _showDetails: wp._id === this.detailsId }
-        }
-      )
+      return this.waypoints.filter(x => (this.editing && (x.loop === 1 || x.type() === 'finish')) || (!this.editing && x.tier() < 3)).sort((a, b) => a.loc() - b.loc())
     },
     showTerrainType: function () {
-      return this.course.waypoints.findIndex(wp => wp.terrainType) >= 0
+      return this.waypoints.findIndex(wp => wp.terrainType()) >= 0
     },
     showTerrainFactor: function () {
-      return this.course.waypoints.findIndex(wp => wp.terrainFactor) >= 0
+      return this.waypoints.findIndex(wp => wp.terrainFactor()) >= 0
     },
     planAssigned: function () {
       return Boolean(Object.entries(this.plan).length) && Boolean(this.plan._id)
@@ -189,13 +187,13 @@ export default {
           key: 'name',
           class: 'text-truncate mw-7rem',
           formatter: (value, key, item) => {
-            return this.getWaypoint(item, key)
+            return item.name()
           }
         },
         {
           key: 'type',
           formatter: (value, key, item) => {
-            return this.$waypointTypes[this.getWaypoint(item, key)]
+            return this.$waypointTypes[item.type()]
           },
           class: 'd-none d-md-table-cell'
         },
@@ -203,7 +201,11 @@ export default {
           key: 'location',
           label: `Loc. [${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            return this.$units.distf(this.getWaypoint(item, key), 2)
+            if (this.editing && item.type() === 'finish') {
+              return this.$units.distf(this.course.distance, 2)
+            } else {
+              return this.$units.distf(item.loc(), 2)
+            }
           },
           class: 'text-right'
         },
@@ -211,7 +213,7 @@ export default {
           key: 'elevation',
           label: `Elev. [${this.$units.alt}]`,
           formatter: (value, key, item) => {
-            return this.$units.altf(this.getWaypoint(item, key), 0)
+            return this.$units.altf(item.alt(), 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'd-none d-sm-table-cell text-right'
@@ -222,18 +224,8 @@ export default {
           key: 'terrainType',
           label: 'Terrain',
           formatter: (value, key, item) => {
-            if (this.getWaypoint(item, 'type') === 'finish') { return '' }
-            let v = this.getWaypoint(item, key)
-            if (v === null) {
-              // if waypoint doesn't have a value, show previous
-              const i = this.course.waypoints.findIndex(wp => wp._id === item._id)
-              const wp = this.course.waypoints.filter((wp, j) =>
-                j < i &&
-                wp.terrainType
-              ).pop()
-              v = (wp) ? wp.terrainType : ''
-            }
-            return v
+            if (item.type() === 'finish') { return '' }
+            return item.terrainType(this.waypoints) || ''
           },
           class: 'd-none d-lg-table-cell text-right'
         })
@@ -243,17 +235,8 @@ export default {
           key: 'terrainFactor',
           label: 'Factor',
           formatter: (value, key, item) => {
-            if (this.getWaypoint(item, 'type') === 'finish') { return '' }
-            let v = this.getWaypoint(item, key)
-            if (v === null) {
-              // if waypoint doesn't have a value, show previous
-              const i = this.course.waypoints.findIndex(wp => wp._id === item._id)
-              const wp = this.course.waypoints.filter((wp, j) =>
-                j < i &&
-                wp.terrainFactor !== null
-              ).pop()
-              v = (wp) ? wp.terrainFactor : 0
-            }
+            if (item.type() === 'finish') { return '' }
+            const v = item.terrainFactor(this.waypoints) || 0
             return `+${v}%`
           },
           class: 'd-none d-lg-table-cell text-center'
@@ -266,13 +249,13 @@ export default {
           tdClass: 'actionButtonColumn'
         })
       } else {
-        if (this.segments[0].time) {
+        if (this.segments.length && this.segments[0].time) {
           f.push({
             key: 'time',
             label: 'Time',
             formatter: (value, key, item) => {
               try {
-                if (this.rows.findIndex(r => r._id === item._id) === 0) {
+                if (this.rows.findIndex(r => r.site._id === item.site._id && r.loop === item.loop) === 0) {
                   const s = this.segments[0]
                   if (s.tod !== undefined) {
                     return timeUtil.sec2string(s.tod - s.elapsed, 'am/pm')
@@ -280,7 +263,7 @@ export default {
                     return timeUtil.sec2string(0, '[h]:m:ss')
                   }
                 } else {
-                  const s = this.segments.find(s => s.waypoint._id === item._id)
+                  const s = this.segments.find(s => s.waypoint.site._id === item.site._id && s.waypoint.loop === item.loop)
                   if (s.tod !== undefined) {
                     return timeUtil.sec2string(s.tod, 'am/pm')
                   } else {
@@ -300,16 +283,7 @@ export default {
             key: 'delay',
             label: 'Delay',
             formatter: (value, key, item) => {
-              let v = 0
-              const wpd = this.plan.waypointDelays.find(wpd => String(wpd.waypoint) === String(item._id))
-              if (wpd) {
-                v = wpd.delay
-              } else {
-                const wp = this.course.waypoints.find(wp => wp._id === item._id)
-                if (wp.type === 'aid' || wp.type === 'water') {
-                  v = this.plan.waypointDelay || 0
-                }
-              }
+              const v = item.delay(this.plan.waypointDelay, this.plan.waypointDelays)
               if (v) {
                 return timeUtil.sec2string(v, '[h]:m:ss')
               } else {
@@ -334,7 +308,7 @@ export default {
       if (this.waypointDelay === null || isNaN(this.waypointDelay)) {
         return false
       }
-      const wpd = this.plan.waypointDelays.find(wpd => String(wpd.waypoint) === String(this.detailsId))
+      const wpd = this.plan.waypointDelays.find(wpd => wpd.site === this.currentWaypoint.site._id && wpd.loop === this.currentWaypoint.loop)
       if (wpd) {
         return wpd.delay !== this.waypointDelay
       } else {
@@ -346,7 +320,6 @@ export default {
     editing: function (val) {
       // hide details fields when editing is turned off
       if (val === false) {
-        this.detailsId = null
         this.rows.forEach(r => {
           this.$set(r, '_showDetails', false)
         })
@@ -363,40 +336,32 @@ export default {
     }
   },
   methods: {
-    getWaypoint: function (row, field = null) {
-      // return the waypoint object/field associated with a row
-      const wp = this.course.waypoints.find(wp => wp._id === row._id)
-      return (field) ? wp[field] : wp
-    },
-    toggleRowDetails: function (row) {
+    toggleRowDetails: function (item) {
       try {
-        if (!this.editing && !this.planAssigned) return
-        if (this.plan._user !== this.$user._id) return
+        if ((item.type() === 'start' && item.loop === 1) || item.type() === 'finish') return
+
+        // curent visible state:
+        const show = !item._showDetails
 
         // hide other rows showing details:
-        this.rows.filter(r =>
-          r._showDetails && r._id !== row._id
-        ).forEach(r => {
+        this.rows.filter(r => r._showDetails).forEach(r => {
           this.$set(r, '_showDetails', false)
         })
 
-        // show details if not start or finish:
-        const waypoint = this.getWaypoint(row)
-        if (waypoint.type !== 'start' && waypoint.type !== 'finish') {
-          this.$set(row, '_showDetails', !row._showDetails)
-        }
-        this.detailsId = (row._showDetails) ? row._id : null
+        const planReady = this.planAssigned && this.plan._user === this.$user._id
 
-        // set waypoint delay inputs:
-        if (!this.editing && this.detailsId) {
-          const wpd = this.plan.waypointDelays.find(wpd => String(wpd.waypoint) === String(this.detailsId))
-          this.waypointDelayF = null
-          this.waypointDelayCustom = Boolean(wpd)
-          this.waypointDelayTypical = waypoint.type === 'aid' || waypoint.type === 'water' ? this.plan.waypointDelay : 0
-          if (wpd) {
-            this.waypointDelayF = timeUtil.sec2string(wpd.delay, 'hh:mm:ss')
-          } else if (this.plan.waypointDelay) {
-            if (waypoint.type === 'aid' || waypoint.type === 'water') {
+        if (show && (this.editing || planReady)) {
+          this.$set(item, '_showDetails', true)
+          this.currentWaypoint = item
+          if (!this.editing && planReady) {
+          // set waypoint delay inputs:
+            const wpd = this.plan.waypointDelays.find(wpd => wpd.site === item.site._id && wpd.loop === item.loop)
+            this.waypointDelayF = null
+            this.waypointDelayCustom = Boolean(wpd)
+            this.waypointDelayTypical = item.hasTypicalDelay() ? this.plan.waypointDelay : 0
+            if (wpd) {
+              this.waypointDelayF = timeUtil.sec2string(wpd.delay, 'hh:mm:ss')
+            } else if (this.plan.waypointDelay && item.hasTypicalDelay()) {
               this.waypointDelayF = timeUtil.sec2string(this.plan.waypointDelay, 'hh:mm:ss')
             }
           }
@@ -409,27 +374,24 @@ export default {
         })
       }
     },
-    shiftWaypoint: function (row, delta) {
-      const waypoint = this.getWaypoint(row)
-      let loc = waypoint.location + delta / this.$units.distScale
+    shiftWaypoint: function (item, delta) {
+      let loc = item.site.location + delta / this.$units.distScale
       if (loc < 0.01 / this.$units.distScale) {
         loc = 0.01
       } else if (loc >= this.course.distance) {
         loc = this.course.distance - (0.01 / this.$units.distScale)
       }
-      this.$emit('updateWaypointLocation', row._id, loc)
+      this.$emit('updateWaypointLocation', item.site, loc)
     },
     selectWaypoint: function (id) {
       const i = this.rows.findIndex(x => x._id === id)
       this.$refs.table.selectRow(i)
     },
-    waypointDelayEnable: function (val) {
-      if (!val && this.plan.waypointDelays.findIndex(wpd => String(wpd.waypoint) === String(this.detailsId)) >= 0) {
-        this.$emit('updateWaypointDelay', this.detailsId, null)
-      }
+    waypointDelayClear: function (item) {
+      this.$emit('updateWaypointDelay', item, null)
     },
-    waypointDelayChange: function () {
-      this.$emit('updateWaypointDelay', this.detailsId, this.waypointDelay)
+    waypointDelayChange: function (item) {
+      this.$emit('updateWaypointDelay', item, this.waypointDelay)
     }
   }
 }

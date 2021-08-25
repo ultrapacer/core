@@ -50,6 +50,10 @@ import UnitsPlugin from '@/plugins/units'
 import { logger } from '../../core/logger'
 import api from '@/api-external'
 import { BLink, BTable } from 'bootstrap-vue'
+import { Course } from '../../core/courses'
+import { loopedWaypoints } from '../../core/waypoints'
+import { Segment, SuperSegment } from '../../core/segments'
+
 Vue.prototype.$logger = logger
 Vue.use(UnitsPlugin)
 export default {
@@ -93,22 +97,42 @@ export default {
       return arr
     },
     rows: function () {
-      let arr = this.segments.map((s, i) => { return { _index: i } })
-      if (this.mode === 'segments') {
-        arr = arr.filter((r, i) =>
-          this.segments[i].waypoint.tier === 1
+      if (this.mode === 'splits') {
+        return this.segments.map(s => { return new SuperSegment([s]) })
+      } else {
+        if (!this.segments || !this.segments.length || !this.segments[0].waypoint) return []
+        let segs = []
+        const rs = []
+        this.segments.forEach((s, i) => {
+          segs.push(s)
+          if (s.waypoint.tier() === 1) {
+            rs.push(new SuperSegment(segs))
+            segs = []
+          }
+        })
+        rs.unshift(
+          new SuperSegment([
+            new Segment({
+              waypoint: this.waypoints[0],
+              gain: 0,
+              loss: 0,
+              end: 0,
+              len: 0
+            })
+          ])
         )
+        return rs
       }
-      return arr
     },
     fields: function () {
+      if (this.mode === 'segments' && (!this.rows.length || !this.rows[0].segments.length || !this.rows[0].segments[0].waypoint)) return []
       const arr = []
       const availableFields = {
         location: {
           key: 'end',
           label: `${this.mode === 'segments' ? 'Loc' : 'Split'} [${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            return this.$units.distf(this.rollup(item, key, 'last'), 2)
+            return this.$units.distf(item.end(), 2)
           },
           class: 'text-right'
         },
@@ -116,7 +140,8 @@ export default {
           key: 'alt',
           label: `Elev. [${this.$units.alt}]`,
           formatter: (value, key, item) => {
-            return this.$units.altf(this.rollup(item, key, 'last'), 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(item.last().waypoint.alt(), 0)
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'text-right'
         },
@@ -125,7 +150,7 @@ export default {
           label: `Gain [${this.$units.alt}]`,
           formatter: (value, key, item) => {
             const scale = this.course.scales.gain || 1
-            return this.$units.altf(this.rollup(item, key, 'sum') * scale, 0)
+            return this.$units.altf(item.gain() * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'text-right'
@@ -135,7 +160,7 @@ export default {
           label: 'Loss [' + this.$units.alt + ']',
           formatter: (value, key, item) => {
             const scale = this.course.scales.loss || 1
-            return this.$units.altf(this.rollup(item, key, 'sum') * scale, 0)
+            return this.$units.altf(item.loss() * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'text-right'
@@ -146,7 +171,7 @@ export default {
           key: 'name',
           label: 'Waypoint',
           formatter: (value, key, item) => {
-            return this.rollup(item, 'waypoint.name', 'last')
+            return item.name()
           },
           class: 'text-truncate mw-7rem'
         }
@@ -154,7 +179,7 @@ export default {
           key: 'len',
           label: `Dist. [${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            return this.$units.distf(this.rollup(item, key, 'sum'), 2)
+            return this.$units.distf(item.len(), 2)
           },
           class: 'text-right'
         }
@@ -185,6 +210,10 @@ export default {
       } else {
         return ''
       }
+    },
+    waypoints: function () {
+      if (!this.course.waypoints || !this.course.waypoints.length) return []
+      return loopedWaypoints(this.course.waypoints, this.course.loops, this.course.distance)
     }
   },
   async created () {
@@ -210,15 +239,16 @@ export default {
             mode = 'kilometers'
         }
     }
-    this.course = await api.getUpTable(this.courseId, mode)
+    this.course = new Course(await api.getUpTable(this.courseId, mode))
     switch (this.mode) {
       case 'segments':
         this.segments = this.course.splits.segments
         // match waypoints in cached segments w/ actual objects
-        this.segments.forEach(s => {
-          s.waypoint = this.course.waypoints.find(
-            wp => wp._id === (s.waypoint._id || s.waypoint)
+        this.course.splits.segments.forEach(s => {
+          const wp = this.waypoints.find(
+            wp => wp.site._id === s.waypoint.site._id && wp.loop === s.waypoint.loop
           )
+          if (wp) s.waypoint = wp
         })
         break
       case 'splits':
@@ -232,60 +262,6 @@ export default {
     }
     this.isLoading = false
     this.$logger('UpTable|created: complete', t)
-  },
-  methods: {
-    getWaypoint: function (row, field = null) {
-      // return the waypoint object/field associated with a row
-      const wp = this.course.waypoints.find(wp => wp._id === row._id)
-      return (field) ? wp[field] : wp
-    },
-    parseField: function (obj, field) {
-      const arr = field.split('.')
-      switch (arr.length) {
-        case 1:
-          return obj[field]
-        case 2:
-          return obj[arr[0]][arr[1]]
-      }
-    },
-    getSegment: function (row, field = null) {
-      // return the segment object/field associated with a row
-      const s = this.segments[row._index]
-      return (field) ? this.parseField(s, field) : s
-    },
-    rollup: function (row, field, method) {
-      const ri = this.rows.findIndex(r => r._index === row._index)
-      if (
-        this.mode === 'segments' &&
-        ((ri === 0 && row._index > 0) ||
-        (ri > 0 && row._index - this.rows[ri - 1]._index > 1))
-      ) {
-        const prev = (ri > 0) ? this.rows[ri - 1]._index : -1
-        const subs = this.segments.filter((s, i) => i > prev && i <= row._index)
-        switch (method) {
-          case 'sum': {
-            return subs.reduce((v, x) => { return v + this.parseField(x, field) }, 0)
-          }
-          case 'first': {
-            return this.parseField(subs[0], field)
-          }
-          case 'last': {
-            return this.parseField(subs[subs.length - 1], field)
-          }
-          case 'weightedAvg': {
-            let v = 0
-            let t = 0
-            subs.forEach(s => {
-              v += s.len * this.parseField(s, field)
-              t += s.len
-            })
-            return v / t
-          }
-        }
-      } else {
-        return this.getSegment(row, field)
-      }
-    }
   }
 }
 </script>
