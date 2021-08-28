@@ -17,7 +17,7 @@
           @change="basic = Number(basic) || 0; update();"
         />
       </b-input-group>
-      <div>
+      <div style="width: 100%">
         <b-table
           v-if="driftModel===2"
           class="tinytable"

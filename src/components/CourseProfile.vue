@@ -344,7 +344,6 @@ export default {
       return window.Color(color).alpha(alpha).rgbString()
     },
     updateBackgroundRules: function () {
-      if (!this.sunEvents.length) { return [] }
       // format distance unit for day/night background:
       this.chartOptions.backgroundRules = this.sunEvents.map(br => {
         const br2 = { ...br }

@@ -5,128 +5,89 @@
         class="d-none d-md-block"
         md="12"
         lg="6"
+        xl="5"
       >
-        <h2
-          style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+        <h3
+          style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center"
         >
           {{ course.name }}
-        </h2>
+        </h3>
       </b-col>
       <b-col
-        v-if="!initializing"
+        v-if="!$status.loading"
         cols="12"
         lg="6"
+        xl="7"
         data-nosnippet
       >
         <b-row no-gutters>
           <b-col
-            v-if="plansSelect.length"
-            cols="7"
-            sm="9"
-            md="7"
-            style="text-align:right"
+            cols="12"
+            class="mb-1"
+            style="  align-items: flex-end;    display: flex;   "
           >
-            <b-form-group
-              label="Plan"
-              label-cols="3"
-              label-cols-lg="2"
+            <!-- MODE SELECT --->
+            <b-dropdown
+              v-if="modes.length>1"
+              right
+              variant="primary"
+              class="mr-1"
             >
-              <b-form-select
-                v-model="plan"
-                type="number"
-                :options="plansSelect"
-                @change="calcPlan"
-              />
-            </b-form-group>
-          </b-col>
-          <b-col
-            :cols="plansSelect.length ? '3': '10'"
-            :sm="plansSelect.length ? '2': '11'"
-            :md="plansSelect.length ? '2': '9'"
-            class="pl-2"
-          >
-            <b-button
-              v-if="plansSelect.length && planOwner"
-              v-b-popover.hover.blur.bottomright.d250.v-info="
-                'Edit the selected pacing plan.'
-              "
+              <template #button-content>
+                <v-icon :name="modeIcons[mode]" />  {{ modeNames[mode] }}
+              </template>
+              <b-dropdown-item
+                v-for="m in modes"
+                :key="m"
+                :variant="mode===m ? 'primary' : ''"
+                @click="mode=m"
+              >
+                <span :style="mode===m ? 'font-weight:bold' : ''">
+                  <v-icon :name="modeIcons[m]" />  {{ modeButtons[m] }} View
+                </span>
+              </b-dropdown-item>
+            </b-dropdown>
 
-              @click="editPlan()"
+            <div
+              class="mr-1"
+              style="flex-grow:1;  display: flex;  min-width: 0 "
             >
-              <v-icon name="edit" />
-            </b-button>
-            <b-button
-              v-b-popover.hover.blur.bottomright.d250.v-info="
-                'Create a new pacing plan for this course.'
-              "
-              variant="success"
-              class="mr-n2"
-              @click.prevent="newPlan()"
-            >
-              <v-icon name="plus" />
-              <span v-if="!plansSelect.length">New Pacing Plan</span>
-            </b-button>
-          </b-col>
-          <b-col
-            cols="2"
-            sm="1"
-            md="3"
-            style="text-align:right"
-          >
+              <!-- NEW PLAN BUTTON --->
+              <b-button
+                v-if="mode==='plan' && !plans.length && !plansByOthers.length"
+                variant="primary"
+                class="mr-1"
+                style="max-width: 100%; margin-left:auto"
+                @click.prevent="newPlan()"
+              >
+                <v-icon name="plus" />  New Plan
+              </b-button>
+
+              <!-- PLAN SELECT --->
+              <course-plan-select
+                v-if="mode!=='edit' && (plans.length || plansByOthers.length)"
+                :plan="plan"
+                :plans="plans"
+                :plans-by-others="plansByOthers"
+                class="mr-1"
+                style="max-width: 100%; margin-left:auto"
+                @select="selectPlan"
+                @new="newPlan"
+              />
+            </div>
+
+            <!-- ACTIONS SELECT --->
             <b-dropdown
               right
               variant="primary"
+              text="Actions"
             >
-              <template #button-content>
-                <span class="d-none d-md-inline">
-                  Options
-                </span>
-              </template>
               <b-dropdown-item
-                @click="$refs.courseShare.init()"
+                v-for="(action, i) in actions.filter(a=>!Boolean(a.disabled))"
+                :key="'action_'+i"
+                @click="action.click()"
               >
-                <v-icon name="share-alt" />  Share this Course
-              </b-dropdown-item>
-              <b-dropdown-item
-                v-if="planAssigned && plan._id"
-                @click="$refs.courseShare.init('plan')"
-              >
-                <v-icon name="share-alt" />  Share this Plan
-              </b-dropdown-item>
-              <b-dropdown-item
-                v-if="owner"
-                @click="editCourse()"
-              >
-                <v-icon name="edit" />  Modify Course
-              </b-dropdown-item>
-              <b-dropdown-item
-                v-if="!owner"
-                @click="emailOwner"
-              >
-                <v-icon name="envelope" />  Email {{ course.link ? 'Race' : 'Course' }} Owner
-              </b-dropdown-item>
-              <b-dropdown-item @click="download()">
-                <v-icon name="download" />
-                Download GPX/TCX Files
-              </b-dropdown-item>
-              <b-dropdown-item
-                v-if="planAssigned"
-                @click="loadCompare()"
-              >
-                <v-icon name="running" />
-                Compare to Activity
-              </b-dropdown-item>
-              <b-dropdown-item
-                @click="print(tableTabNames[tableTabIndex])"
-              >
-                <v-icon name="print" />
-                Print {{ tableTabNames[tableTabIndex] }}{{ tableTabIndex === 3 ? ' Page' : ' Table' }}
-              </b-dropdown-item>
-              <b-dropdown-item
-                @click="print('Profile')"
-              >
-                <v-icon name="print" />
-                Print Profile Chart
+                <v-icon :name="action.icon" />  {{ action.text }}
               </b-dropdown-item>
             </b-dropdown>
           </b-col>
@@ -134,7 +95,7 @@
       </b-col>
     </b-row>
     <div
-      v-if="initializing"
+      v-if="$status.loading"
       class="d-flex justify-content-center mb-3"
       data-nosnippet
     >
@@ -142,11 +103,11 @@
         {{ course.description }}
       </span>
       <span v-else-if="course.name">
-        The {{ course.name }} course covers <b>{{ $units.distf(course.distance, 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.gain, 0) | commas }} {{ $units.alt }}</b> of climbing.
+        The {{ course.name }} course covers <b>{{ $units.distf(course.totalDistance(), 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.totalGain(), 0) | commas }} {{ $units.alt }}</b> of climbing.
       </span>
     </div>
     <b-row
-      v-if="!initializing"
+      v-if="!$status.loading"
       data-nosnippet
     >
       <b-col
@@ -170,7 +131,7 @@
               :segments="segments"
               :waypoints="waypoints"
               :plan="plan"
-              :busy="busy"
+              :busy="$status.processing"
               :mode="'segments'"
               :show-actual="comparing"
               :table-height="printing==='Segments' ? 0 : tableHeight"
@@ -188,7 +149,7 @@
               :segments="splits"
               :waypoints="waypoints"
               :plan="plan"
-              :busy="busy"
+              :busy="$status.processing"
               :mode="'splits'"
               :show-actual="comparing"
               :table-height="printing==='Splits' ? 0 : tableHeight"
@@ -205,7 +166,7 @@
               :waypoints="waypoints"
               :plan="plan"
               :segments="planAssigned && pacingSplitsReady ? plan.splits.segments : course.splits.segments"
-              :editing="editing"
+              :editing="mode==='edit'"
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"
               :table-height="tableHeight && printing !== 'Waypoints' ? tableHeight - (owner ? 42 : 0) : 0"
@@ -222,20 +183,13 @@
             >
               <div style="flex: 1 1 auto">
                 <b-button
-                  v-if="editing"
+                  v-if="mode==='edit'"
                   variant="success"
                   @click.prevent="newWaypoint()"
                 >
                   <v-icon name="plus" /><span>New Waypoint</span>
                 </b-button>
               </div>
-              <b-button
-                :variant="editing ? 'outline-primary' : 'secondary'"
-                @click.prevent="editing=!editing"
-              >
-                <v-icon :name="editing ? 'edit' : 'lock'" />
-                <span>editing: {{ editing ? 'on' : 'off' }}</span>
-              </b-button>
             </b-row>
           </b-tab>
           <b-tab
@@ -250,7 +204,7 @@
               :terrain-factors="terrainFactors"
               :event="event"
               :plan="plan"
-              :busy="initializing"
+              :busy="$status.loading"
               :visible="tableTabIndex===3"
             />
           </b-tab>
@@ -268,7 +222,7 @@
           ref="profile"
           :printing="printing==='Profile'"
           :course="course"
-          :waypoints="waypoints.filter(wp=>wp.visible)"
+          :waypoints="waypoints.filter(wp=>mode==='edit'||wp.visible)"
           :points="points"
           :sun-events="plan.pacing ? plan.pacing.sunEventsByLoc: []"
           :show-actual="comparing"
@@ -279,7 +233,7 @@
           v-if="points.length"
           ref="map"
           :course="course"
-          :waypoints="waypoints.filter(wp=>wp.visible)"
+          :waypoints="waypoints.filter(wp=>mode==='edit'||wp.visible)"
           :points="points.filter(p=>p.loc<=course.distance)"
           :focus="focus"
         />
@@ -299,7 +253,7 @@
       @delete="deletePlan"
     />
     <waypoint-edit
-      v-if="owner && editing"
+      v-if="owner && mode==='edit'"
       ref="wpEdit"
       :course="course"
       :waypoints="waypoints"
@@ -313,7 +267,7 @@
       ref="delModal"
     />
     <download-track
-      v-if="points.length & course.splits"
+      v-if="points.length && course.splits"
       ref="download"
       :course="course"
       :plan="plan"
@@ -370,6 +324,8 @@ import SegmentTable from '../components/SegmentTable'
 import WaypointTable from '../components/WaypointTable'
 import PlanDetails from '../components/PlanDetails'
 import PlanEdit from '../components/PlanEdit'
+import CoursePlanSelect from '../components/CoursePlanSelect'
+import isbot from 'isbot'
 import SunCalc from 'suncalc'
 import moment from 'moment-timezone'
 const JSURL = require('@yaska-eu/jsurl2')
@@ -381,6 +337,7 @@ export default {
     CourseEdit: () => import(/* webpackPrefetch: true */ '../components/CourseEdit.vue'),
     CourseCompare: () => import(/* webpackPrefetch: true */ '../components/CourseCompare.vue'),
     CourseMap: () => import(/* webpackPrefetch: true */ '../components/CourseMap.vue'),
+    CoursePlanSelect,
     CourseProfile: () => import(/* webpackPrefetch: true */ '../components/CourseProfile.vue'),
     CourseShare,
     DeleteModal,
@@ -394,14 +351,16 @@ export default {
   },
   data () {
     return {
-      initializing: true,
-      busy: true,
-      editing: false,
       saving: false,
       comparing: false,
       course: {},
+      mode: 'plan',
+      modeNames: { edit: 'Editing', plan: 'Planning', execute: 'Execution', analyze: 'Post-Race' },
+      modeButtons: { edit: 'Course Editing', plan: 'Pace Planning', execute: 'Execution', analyze: 'Post-Race' },
+      modeIcons: { edit: 'edit', plan: 'clock', execute: 'running', analyze: 'chart-line' },
       plan: {},
       plans: [],
+      plansByOthers: [],
       points: [],
       printing: false,
       scales: {},
@@ -417,6 +376,59 @@ export default {
     }
   },
   computed: {
+    actions: function () {
+      return [
+        {
+          text: 'Modify Plan',
+          disabled: this.mode === 'edit' || !this.planAssigned || !this.planOwner,
+          icon: 'edit',
+          click: () => { this.editPlan() }
+        }, {
+          text: 'New Plan',
+          disabled: this.mode === 'edit',
+          icon: 'plus',
+          click: () => { this.newPlan() }
+        }, {
+          text: 'Modify Course',
+          disabled: !this.owner,
+          icon: 'edit',
+          click: () => { this.editCourse() }
+        }, {
+          text: 'Share Course',
+          icon: 'share-alt',
+          click: () => { this.$refs.courseShare.init() }
+        }, {
+          text: 'Share Plan',
+          disabled: !this.planAssigned || !this.plan._id,
+          icon: 'share-alt',
+          click: () => { this.$refs.courseShare.init('plan') }
+        }, {
+          text: `Email ${this.course.link ? 'Race' : 'Course'} Owner`,
+          disabled: this.owner,
+          icon: 'envelope',
+          click: () => { this.emailOwner() }
+        }, {
+          text: 'Download GPX/TCX Files',
+          icon: 'download',
+          click: () => { this.download() }
+        }, {
+          text: 'Compare to Activity',
+          disabled: !this.planAssigned,
+          icon: 'running',
+          click: () => { this.loadCompare() }
+        }, {
+          text: `Print ${this.tableTabNames[this.tableTabIndex]}${this.tableTabIndex === 3 ? ' Page' : ' Table'}`,
+          disabled: this.mode === 'edit',
+          icon: 'print',
+          click: () => { this.print(this.tableTabNames[this.tableTabIndex]) }
+        }, {
+          text: 'Print Profile Chart',
+          disabled: this.mode === 'edit',
+          icon: 'print',
+          click: () => { this.print('Profile') }
+        }
+      ]
+    },
     tableHeight: function () {
       if (this.$window.width < 992) return 0
       return (this.$window.height - 173)
@@ -426,6 +438,13 @@ export default {
         return this.course.description
       } else {
         return `The ${this.$title} course covers ${this.$units.distf(this.course.distance, 1)} ${this.$units.dist} with ${this.$units.altf(this.course.gain, 0)} ${this.$units.alt} of climbing. Ready?`
+      }
+    },
+    modes: function () {
+      if (this.owner) {
+        return ['edit', 'plan']//, 'execute']
+      } else {
+        return ['plan']//, 'execute']
       }
     },
     title: function () {
@@ -476,23 +495,6 @@ export default {
       hM.start = this.event.sun.rise + 1800
       hM.stop = this.event.sun.set + 3600
       return hM
-    },
-    plansSelect: function () {
-      const groupPlans = this.plans.length > 1 && this.plans.findIndex(p => p._user !== this.plans[0]._user) >= 0
-      if (groupPlans) {
-        return [
-          {
-            label: 'My Plans',
-            options: this.plans.filter((p, i) => i < this.plans.length - 1).map(p => { return { value: p, text: p.name } })
-          },
-          {
-            label: 'Plans by others',
-            options: this.plans.filter((p, i) => i === this.plans.length - 1).map(p => { return { value: p, text: p.name } })
-          }
-        ]
-      } else {
-        return this.plans.map(p => { return { value: p, text: p.name } })
-      }
     },
     owner: function () {
       return (
@@ -563,9 +565,9 @@ export default {
     }
   },
   watch: {
-    editing: function (val) {
+    mode: function (val) {
       // update after disabling editing
-      if (!val && this.updateFlag) {
+      if (this.mode !== 'edit' && this.updateFlag) {
         this.createSplits()
         if (this.planAssigned) {
           this.clearPlanSplits()
@@ -573,8 +575,13 @@ export default {
         }
         this.updateFlag = false
       }
-      if (val) {
+      if (this.mode === 'edit') {
+        this.clearPlan()
         this.waypoints.filter(wp => !wp.visible).forEach(wp => { wp.show() })
+        this.tableTabIndex = 2
+      } else {
+        this.waypoints.filter(wp => wp.tier() > 1).forEach(wp => { wp.hide() })
+        this.selectRecentPlan(() => { this.newPlan() })
       }
     },
     tableTabIndex: function (val) {
@@ -588,13 +595,6 @@ export default {
         }
         this.updateFlag = false
       }
-      if (!this.editing) {
-        if (val === 2) {
-          this.waypoints.filter(wp => wp.tier() <= 2).forEach(wp => { wp.show() })
-        } else {
-          this.waypoints.filter(wp => wp.tier() > 1).forEach(wp => { wp.hide() })
-        }
-      }
     }
   },
   async created () {
@@ -602,7 +602,6 @@ export default {
   },
   methods: {
     async initialize () {
-      this.initializing = true
       this.$status.processing = true
       this.$status.loading = true
       let t = this.$logger()
@@ -652,40 +651,6 @@ export default {
           )
           if (wp) s.waypoint = wp
         })
-
-        if (this.$route.query.plan && this.$route.query.plan.length <= 24) {
-          let plan = this.plans.find(
-            x => x._id === this.$route.query.plan
-          )
-          if (plan) {
-            this.plan = plan
-          } else {
-            try {
-              plan = await this.$api.getPlan(this.$route.query.plan)
-              this.plan = plan
-              this.plans.push(plan)
-            } catch (error) {
-              console.log(error)
-            }
-          }
-        } else if (this.plans.length) {
-          const lastViewed = Math.max.apply(
-            Math,
-            this.plans.map(p => { return p.last_viewed ? moment(p.last_viewed).unix() : 0 })
-          )
-          if (lastViewed) {
-            this.plan = this.plans.find(
-              p => p.last_viewed && lastViewed === moment(p.last_viewed).unix()
-            )
-          } else {
-            this.plan = this.plans[0]
-          }
-        }
-
-        // if no plans, show new plan dialog
-        if (!this.plans.length) {
-          this.newPlan()
-        }
       } catch (error) {
         console.log(error)
         this.$gtag.exception({
@@ -698,28 +663,51 @@ export default {
         return
       }
       this.$title = this.course.name
-      if (this.planAssigned) {
-        await this.getPoints()
+      this.$status.loading = false
+      await this.getPoints()
+
+      if (this.$route.query.plan) {
+        if (this.$route.query.plan.length <= 24) {
+          let plan = this.plans.find(
+            x => x._id === this.$route.query.plan
+          )
+          if (plan) {
+            this.selectPlan(plan)
+          } else {
+            try {
+              plan = await this.$api.getPlan(this.$route.query.plan)
+              if (this.plan._user === this.$user._id) {
+                this.plans.push(plan)
+              } else {
+                this.plansByOthers.push(plan)
+              }
+              this.selectPlan(plan)
+            } catch (error) {
+              console.log(error)
+            }
+          }
+        } else {
+          const p = JSURL.tryParse(this.$route.query.plan, null)
+          if (p) {
+            this.$logger('Course|created: showing plan from URL')
+            this.$refs.planEdit.show(p)
+          }
+        }
       } else {
-        this.getPoints()
+        this.selectRecentPlan(() => {
+          setTimeout(() => {
+            if (!isbot(navigator.userAgent) && this.mode !== 'edit') {
+              this.newPlan()
+            }
+          }, 2000)
+        })
       }
-      this.initializing = false
-      this.busy = false
       this.$status.processing = false
       setTimeout(() => {
         if (!this.$user.isAuthenticated) {
           this.$refs['toast-welcome'].show()
         }
       }, 1000)
-
-      // if temp plan in URL, show it:
-      if (this.$route.query.plan && this.$route.query.plan.length > 24) {
-        const p = JSURL.tryParse(this.$route.query.plan, null)
-        if (p) {
-          this.$logger('Course|created: showing plan from URL')
-          this.$refs.planEdit.show(p)
-        }
-      }
 
       // if the url has an "after" action, strip it off and execute it
       if (this.$route.query.after) {
@@ -767,6 +755,7 @@ export default {
       this.$status.loading = false
     },
     async editCourse () {
+      if (this.mode !== 'edit') { this.mode = 'edit' }
       this.$refs.courseEdit.show(this.course)
     },
     async reloadCourse () {
@@ -900,15 +889,9 @@ export default {
         async () => {
           await api.deletePlan(plan._id)
           this.$gtage(this.$gtag, 'Plan', 'delete', this.publicName)
+          await this.clearPlan()
           this.plans = await api.getPlans(this.course._id, this.$user._id)
-          if (this.plan._id === plan._id) {
-            if (this.plans.length) {
-              this.plan = this.plans[0]
-              await this.calcPlan()
-            } else {
-              this.clearPlan()
-            }
-          }
+          this.selectRecentPlan(() => { setTimeout(() => { this.newPlan() }, 1000) })
         },
         (err) => {
           if (typeof (cb) === 'function') {
@@ -929,6 +912,11 @@ export default {
       await this.calcPlan()
       if (typeof callback === 'function') callback()
     },
+    async selectPlan (plan) {
+      this.$logger(`Course|selectPlan: ${plan.name} selected.`)
+      this.plan = plan
+      this.calcPlan()
+    },
     async calcPlan () {
       const t = this.$logger()
       if (!this.planAssigned) { return }
@@ -937,10 +925,11 @@ export default {
           this.$router.push({ query: { plan: this.plan._id } })
         }
         if (this.$user._id === this.plan._user) {
+          this.plan.last_viewed = new Date()
           this.$api.updatePlan(
             this.plan._id,
             {
-              last_viewed: new Date()
+              last_viewed: this.plan.last_viewed
             }
           )
         }
@@ -949,7 +938,6 @@ export default {
       }
       this.$gtage(this.$gtag, 'Plan', 'view', this.publicName)
       if (!this.pacingSplitsReady) {
-        this.busy = true
         this.$status.processing = true
         setTimeout(() => { this.updatePacing() }, 10)
       } else {
@@ -969,6 +957,28 @@ export default {
       this.$router.push({ query: q })
       this.$refs.profile.update()
       this.$logger('Course|clearPlan')
+    },
+    async selectRecentPlan (noPlanFunction) {
+      this.$logger('Course|selectRecentPlan')
+      if (this.plans.length) {
+        const lastViewed = Math.max.apply(
+          Math,
+          this.plans.map(p => { return p.last_viewed ? moment(p.last_viewed).unix() : 0 })
+        )
+        if (lastViewed) {
+          this.selectPlan(
+            this.plans.find(
+              p => p.last_viewed && lastViewed === moment(p.last_viewed).unix()
+            )
+          )
+        } else {
+          this.selectPlan(this.plans[0])
+        }
+      } else if (this.plansByOthers.length) {
+        this.selectPlan(this.plansByOthers[0])
+      } else {
+        noPlanFunction()
+      }
     },
     createSplits: async function () {
       const t = this.$logger()
@@ -1025,7 +1035,6 @@ export default {
     async updatePacing () {
       const t = this.$logger()
       // update splits, segments, and pacing
-      this.busy = true
       this.updateFlag = false
       this.$status.processing = true
       const result = this.$core.geo.calcPacing({
@@ -1050,7 +1059,6 @@ export default {
         this.$refs.profile.update()
       }
 
-      this.busy = false
       this.$status.processing = false
       this.$logger('Course|updatePacing', t)
     },

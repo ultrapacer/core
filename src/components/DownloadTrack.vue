@@ -164,7 +164,7 @@ export default {
           if (!this.raw.length) { // download raw data:
             this.raw = await api.getCourseField(this.course._id, 'raw')
           }
-          pnts = this.$core.arraysToObjects(this.raw)
+          pnts = this.$core.geo.arraysToObjects(this.raw)
           this.$core.points.loopPoints(pnts, this.course.loops)
 
           pnts = this.$core.geo.addLoc(pnts, this.course.totalDistance())
