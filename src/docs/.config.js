@@ -17,6 +17,11 @@ module.exports = {
       path:'plans'
     },
     {
+      file:"post-race.md",
+      name:"Post-race: compare to your plan",
+      path:'post-race'
+    },
+    {
       file:"race_add.md",
       name:"Add my Course to Races page",
       path:'race'
