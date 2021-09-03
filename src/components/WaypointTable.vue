@@ -6,7 +6,6 @@
     primary-key="site._id+'_'loop"
     hover
     selectable
-    select-mode="single"
     small
     head-variant="light"
     no-border-collapse
@@ -360,20 +359,19 @@ export default {
     }
   },
   methods: {
+    collapseAll: function () {
+      this.$refs.table.clearSelected()
+      this.rows.filter(r => r._showDetails).forEach(r => {
+        this.$set(r, '_showDetails', false)
+      })
+    },
     toggleRowDetails: function (item) {
       try {
-        if ((item.type() === 'start' && item.loop === 1) || item.type() === 'finish') return
-
         // curent visible state:
         const show = !item._showDetails
-
-        // hide other rows showing details:
-        this.rows.filter(r => r._showDetails).forEach(r => {
-          this.$set(r, '_showDetails', false)
-        })
-
+        this.collapseAll()
+        if ((item.type() === 'start' && item.loop === 1) || item.type() === 'finish') return
         const planReady = this.planAssigned && this.plan._user === this.$user._id
-
         if (show && (this.$course.view === 'edit' || planReady)) {
           this.$set(item, '_showDetails', true)
           this.currentWaypoint = item
@@ -389,6 +387,7 @@ export default {
               this.waypointDelayF = timeUtil.sec2string(this.plan.waypointDelay, 'hh:mm:ss')
             }
           }
+          this.$nextTick(() => { this.$refs.table.selectRow(this.rows.findIndex(row => row === item)) })
         }
       } catch (error) {
         console.log(error)
@@ -407,9 +406,15 @@ export default {
       }
       this.$emit('updateWaypointLocation', item.site, loc)
     },
-    selectWaypoint: function (id) {
-      const i = this.rows.findIndex(x => x._id === id)
-      this.$refs.table.selectRow(i)
+    selectWaypoint: function (waypoints) {
+      this.collapseAll()
+      if (!Array.isArray(waypoints)) {
+        waypoints = [waypoints]
+      }
+      waypoints.forEach(waypoint => {
+        const i = this.rows.findIndex(wp => wp === waypoint)
+        this.$nextTick(() => { this.$refs.table.selectRow(i) })
+      })
     },
     waypointDelayClear: function (item) {
       this.$emit('updateWaypointDelay', item, null)

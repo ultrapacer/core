@@ -236,6 +236,7 @@
           :waypoints="waypoints.filter(wp=>$course.view==='edit'||wp.visible)"
           :points="points.filter(p=>p.loc<=course.distance)"
           :focus="focus"
+          @waypointClick="waypointClick"
         />
       </b-col>
     </b-row>
@@ -444,16 +445,16 @@ export default {
     views: function () {
       return [
         {
-          view: 'plan',
-          text: 'Pace Planning',
-          button: 'Planning',
-          icon: 'clock'
-        }, {
           view: 'edit',
           text: 'Course Editing',
           button: 'Editing',
           disabled: !this.owner,
           icon: 'edit'
+        }, {
+          view: 'plan',
+          text: 'Pace Planning',
+          button: 'Planning',
+          icon: 'clock'
         }, {
           view: 'execute',
           text: 'Race Day',
@@ -1100,9 +1101,9 @@ export default {
     updateFocus: function (type, focus) {
       this.focus = focus
     },
-    waypointClick: function (id) {
+    waypointClick: function (waypoint) {
       this.tableTabIndex = 2
-      this.$refs.waypointTable.selectWaypoint(id)
+      this.$refs.waypointTable.selectWaypoint(waypoint)
     },
     setUpdateFlag: function () {
       this.updateFlag = true

@@ -39,6 +39,7 @@
         :color="markerColors[wp.type()] || 'black'"
         :fill-color="markerColors[wp.type()] || 'white'"
         :fill-opacity="0.5"
+        @click="waypointClick(wp, $event)"
       >
         <l-popup>
           <b>{{ $waypointTypes[wp.type()] }}</b><br>
@@ -248,6 +249,14 @@ export default {
     },
     updateMaxZoom (val) {
       this.maxZoom = this.tileProviders.find(x => x.name === val.name)['max-zoom']
+    },
+    waypointClick (waypoint, event) {
+      if (this.course.loops > 1) {
+        this.$emit('waypointClick', this.waypoints.filter(wp => wp.site === waypoint.site))
+      } else {
+        this.$emit('waypointClick', waypoint)
+      }
+      setTimeout(() => { event.target.closePopup() }, 2000)
     }
   }
 }

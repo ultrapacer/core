@@ -259,7 +259,7 @@ export default {
               this.$units.distf(wp.loc(), 1) +
               this.$units.dist + ']',
             title: this.$waypointTypes[wp.type()],
-            _id: wp.site._id
+            waypoint: wp
           }
         }),
         backgroundColor: this.waypoints.map(wp => {
@@ -299,8 +299,7 @@ export default {
     click: function (point, event) {
       if (!event.length) { return }
       const item = event[0]
-      const id = this.chartWaypoints.data[item._index]._id
-      this.$emit('waypointClick', id)
+      this.$emit('waypointClick', this.chartWaypoints.data[item._index].waypoint)
     },
     updateChartProfile: function () {
       this.$logger('CourseProfile|updateChartProfile')
