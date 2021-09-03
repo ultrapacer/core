@@ -111,6 +111,12 @@ export default {
     stop: function () {
       return this.$math.round(this.sun.set, 0) + 3600
     },
+    chartModel: function () {
+      const model = { ...this.heatModel }
+      model.start = this.start
+      model.stop = this.stop
+      return model
+    },
     model: function () {
       let m = []
       if (this.heatModel) {
@@ -126,11 +132,6 @@ export default {
             }
           ]
         } else {
-          // set up the heat mode object
-          const model = { ...this.heatModel }
-          model.start = this.start
-          model.stop = this.stop
-
           // first point of model (midnight)
           m = [
             {
@@ -147,7 +148,7 @@ export default {
           for (let i = 1; i < 50; i++) {
             m.push({
               x: (this.start + (i * ((this.stop - this.start) / 50))),
-              y: this.$math.round((this.$core.nF.hF(this.start + (i * ((this.stop - this.start) / 50)), model) - 1) * 100, 4)
+              y: this.$math.round((this.$core.nF.hF(this.start + (i * ((this.stop - this.start) / 50)), this.chartModel) - 1) * 100, 4)
             })
           }
 
@@ -168,25 +169,37 @@ export default {
     },
     modelByDistance: function () {
       let m = []
-      if (this.heatModel && this.showDistance) {
-        const rollovers = Math.floor(this.ps[this.ps.length - 1].tod / 86400, 1)
-        let model2 = this.model
-        for (let r = 0; r < rollovers; r++) {
-          model2 = [...model2.filter((m, i) => i < model2.length - 1),
-            ...this.model.filter((m, i) => i > 0).map((m) => {
-              return { x: m.x + 24 * 3600 * (r + 1), y: m.y }
+      try {
+        if (this.heatModel && this.showDistance) {
+          const rollovers = Math.floor(this.ps[this.ps.length - 1].tod / 86400, 1)
+          let model2 = this.model
+          for (let r = 0; r < rollovers; r++) {
+            model2 = [...model2.filter((m, i) => i < model2.length - 1),
+              ...this.model.filter((m, i) => i > 0).map((m) => {
+                return { x: m.x + 24 * 3600 * (r + 1), y: m.y }
+              })
+            ]
+          }
+          const i1 = model2.findIndex(m => m.x >= this.ps[0].tod)
+          const i2 = model2.findIndex(m => m.x > this.ps[this.ps.length - 1].tod)
+          model2 = model2.filter((m, i) => i >= i1 && i <= i2)
+          if (model2[0].x > this.ps[0].tod) {
+            model2.unshift({
+              x: this.ps[0].tod,
+              y: (this.$core.nF.hF(this.ps[0].tod, this.chartModel) - 1) * 100
             })
-          ]
-        }
-        const i2 = model2.findIndex(m => m.x > this.ps[this.ps.length - 1].tod)
-        model2 = model2.filter((m, i) => i <= i2)
+          }
 
-        const locs = this.$math.interpArray(
-          this.ps.map(x => { return x.tod }),
-          this.ps.map(x => { return x.loc }),
-          model2.map(x => { return x.x })
-        )
-        m = locs.map((x, i) => { return { x: x, y: model2[i].y } })
+          const locs = this.$math.interpArray(
+            this.ps.map(x => { return x.tod }),
+            this.ps.map(x => { return x.loc }),
+            model2.map(x => { return x.x })
+          )
+          m = locs.map((x, i) => { return { x: x, y: model2[i].y } })
+        }
+      } catch (error) {
+        console.log(error)
+        this.$gtag.exception({ description: `HeatChart|modelByDistance: ${error.toString()}`, fatal: false })
       }
       return m
     },
