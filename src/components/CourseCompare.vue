@@ -5,6 +5,7 @@
       centered
       title="Compare to Activity (Beta)"
       @ok="handleOk"
+      @hide="handleHide"
     >
       <form
         ref="compareform"
@@ -21,7 +22,7 @@
         >
           <b-form-file
             v-model="gpxFile"
-            placeholder="Choose a GPX file..."
+            :placeholder="filename && comparing ? filename : 'Choose a GPX file...'"
             accept=".gpx"
             no-drop
             required
@@ -98,12 +99,14 @@ export default {
   },
   data () {
     return {
+      filename: '',
       gpxFile: null,
       gpxFileInvalidMsg: '',
       gpxPoints: [],
       cb: null,
       faildist: 0,
-      showTips: false
+      showTips: false,
+      startTime: null
     }
   },
   methods: {
@@ -117,13 +120,17 @@ export default {
         this.load()
       }
     },
+    handleHide (bvModalEvt) {
+      const cancelEvents = ['esc', 'cancel', 'headerclose', 'backdrop']
+      if (cancelEvents.includes(bvModalEvt.trigger)) this.$emit('cancel')
+    },
     async load () {
       this.$status.processing = true
       this.$nextTick(async () => {
         if (this.gpxPoints.length) {
           this.$core.geo.addLoc(this.gpxPoints)
         }
-        const result = await this.cb(this.gpxPoints)
+        const result = await this.cb(this.gpxPoints, this.startTime)
         if (result.match) {
           this.$refs.modal.hide()
         } else {
@@ -138,18 +145,20 @@ export default {
       this.$nextTick(async () => {
         const reader = new FileReader()
         reader.onload = e => {
+          this.filename = this.gpxFile.name
+          this.$logger(`CourseCompare|loadGPX : loaded ${this.filename} loaded.`)
           gpxParse.parseGpx(e.target.result, (error, data) => {
             if (error) {
               this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
               throw error
             } else {
-              const startTime = moment(data.tracks[0].segments[0][0].time)
+              this.startTime = moment(data.tracks[0].segments[0][0].time)
               this.gpxPoints = data.tracks[0].segments[0].map(p => {
                 return {
                   alt: p.elevation,
                   lat: p.lat,
                   lon: p.lon,
-                  elapsed: moment(p.time).diff(startTime, 'seconds')
+                  elapsed: moment(p.time).diff(this.startTime, 'seconds')
                 }
               })
               this.gpxFileInvalidMsg = ''

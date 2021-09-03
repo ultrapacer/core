@@ -132,7 +132,7 @@ export default {
   },
   computed: {
     hasTime () {
-      return Boolean(this.event.start && this.plan && Object.keys(this.plan).length)
+      return Boolean(this.event.hasTOD() && this.plan && Object.keys(this.plan).length)
     }
   },
   methods: {

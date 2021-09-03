@@ -12,6 +12,7 @@ function sec2string (val, format) {
     case 'hh:mm':
       return `${leftZero(h)}:${leftZero(m)}`
     case 'am/pm':
+      while (h < 0) { h += 24 }
       suf = (h % 24 < 12) ? 'AM' : 'PM'
       h = h % 12 || 12
       return `${h}:${leftZero(m)}${String.fromCharCode(160)}${suf}`

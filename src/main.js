@@ -100,6 +100,9 @@ Vue.prototype.$window = Vue.observable({
   height: window.innerHeight,
   width: window.innerWidth
 })
+Vue.prototype.$course = Vue.observable({
+  view: 'plan'
+})
 
 Vue.prototype.$utils = {
   timeout: (prom, time) => Promise.race([prom, new Promise((resolve, reject) => setTimeout(reject, time))])

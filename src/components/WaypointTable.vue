@@ -32,7 +32,7 @@
       </b-button>
     </template>
     <template #row-details="row">
-      <b-card v-if="editing">
+      <b-card v-if="$course.view==='edit'">
         <b-row class="mb-2">
           <b-col sm="4">
             Adjust Location:
@@ -112,9 +112,9 @@ export default {
       type: Object,
       required: true
     },
-    editing: {
-      type: Boolean,
-      default: false
+    event: {
+      type: Object,
+      required: true
     },
     editFn: {
       type: Function,
@@ -127,6 +127,10 @@ export default {
     plan: {
       type: Object,
       default: () => { return {} }
+    },
+    points: {
+      type: Array,
+      required: true
     },
     printing: {
       type: Boolean,
@@ -167,7 +171,10 @@ export default {
   },
   computed: {
     rows: function () {
-      return this.waypoints.filter(x => (this.editing && (x.loop === 1 || x.type() === 'finish')) || (!this.editing && x.tier() < 3)).sort((a, b) => a.loc() - b.loc())
+      return this.waypoints.filter(x => (
+        this.$course.view === 'edit' && (x.loop === 1 || x.type() === 'finish')) ||
+        (this.$course.view !== 'edit' && x.tier() < 3)
+      ).sort((a, b) => a.loc() - b.loc())
     },
     showTerrainType: function () {
       return this.waypoints.findIndex(wp => wp.terrainType()) >= 0
@@ -201,7 +208,7 @@ export default {
           key: 'location',
           label: `Loc. [${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            if (this.editing && item.type() === 'finish') {
+            if (this.$course.view === 'edit' && item.type() === 'finish') {
               return this.$units.distf(this.course.distance, 2)
             } else {
               return this.$units.distf(item.loc(), 2)
@@ -219,63 +226,63 @@ export default {
           class: 'd-none d-sm-table-cell text-right'
         }
       ]
-      if (this.showTerrainType && this.editing) {
-        f.push({
-          key: 'terrainType',
-          label: 'Terrain',
-          formatter: (value, key, item) => {
-            if (item.type() === 'finish') { return '' }
-            return item.terrainType(this.waypoints) || ''
-          },
-          class: 'd-none d-lg-table-cell text-right'
-        })
-      }
-      if (this.showTerrainFactor && this.editing) {
-        f.push({
-          key: 'terrainFactor',
-          label: 'Factor',
-          formatter: (value, key, item) => {
-            if (item.type() === 'finish') { return '' }
-            const v = item.terrainFactor(this.waypoints) || 0
-            return `+${v}%`
-          },
-          class: 'd-none d-lg-table-cell text-center'
-        })
-      }
-      if (this.editing) {
+      if (this.$course.view === 'edit') {
+        if (this.showTerrainType) {
+          f.push({
+            key: 'terrainType',
+            label: 'Terrain',
+            formatter: (value, key, item) => {
+              if (item.type() === 'finish') { return '' }
+              return item.terrainType(this.waypoints) || ''
+            },
+            class: 'd-none d-lg-table-cell text-right'
+          })
+        }
+        if (this.showTerrainFactor) {
+          f.push({
+            key: 'terrainFactor',
+            label: 'Factor',
+            formatter: (value, key, item) => {
+              if (item.type() === 'finish') { return '' }
+              const v = item.terrainFactor(this.waypoints) || 0
+              return `+${v}%`
+            },
+            class: 'd-none d-lg-table-cell text-center'
+          })
+        }
         f.push({
           key: 'actions',
           label: '',
           tdClass: 'actionButtonColumn'
         })
       } else {
-        if (this.segments.length && this.segments[0].time) {
+        f.push({
+          key: this.event.hasTOD() ? 'tod' : 'elapsed',
+          label: 'Time',
+          formatter: (value, key, item) => {
+            const v = item.elapsed(this.segments)
+            return v !== undefined
+              ? this.event.hasTOD()
+                ? timeUtil.sec2string(v + this.event.startTime, 'am/pm')
+                : timeUtil.sec2string(v, '[h]:m:ss')
+              : ''
+          },
+          class: 'text-right'
+        })
+        if (this.$course.view === 'analyze') {
           f.push({
-            key: 'time',
-            label: 'Time',
+            key: this.event.hasTOD() ? 'actualTOD' : 'actualElapsed',
+            label: 'Actual',
             formatter: (value, key, item) => {
-              try {
-                if (this.rows.findIndex(r => r.site._id === item.site._id && r.loop === item.loop) === 0) {
-                  const s = this.segments[0]
-                  if (s.tod !== undefined) {
-                    return timeUtil.sec2string(s.tod - s.elapsed, 'am/pm')
-                  } else {
-                    return timeUtil.sec2string(0, '[h]:m:ss')
-                  }
-                } else {
-                  const s = this.segments.find(s => s.waypoint.site._id === item.site._id && s.waypoint.loop === item.loop)
-                  if (s.tod !== undefined) {
-                    return timeUtil.sec2string(s.tod, 'am/pm')
-                  } else {
-                    return timeUtil.sec2string(s.elapsed, '[h]:m:ss')
-                  }
-                }
-              } catch (err) {
-                console.log(err)
-                return ''
-              }
+              const v = item.actualElapsed(this.segments)
+              return v !== undefined
+                ? this.event.hasTOD()
+                  ? timeUtil.sec2string(v + this.event.startTime, 'am/pm')
+                  : timeUtil.sec2string(v, '[h]:m:ss')
+                : ''
             },
-            class: 'text-right'
+            class: 'text-right',
+            variant: 'success'
           })
         }
         if (this.showDelay) {
@@ -292,6 +299,23 @@ export default {
             },
             class: 'd-none d-lg-table-cell text-right'
           })
+          if (this.$course.view === 'analyze') {
+            f.push({
+              key: 'actualDelay',
+              label: 'Actual',
+              formatter: (value, key, item) => {
+                try {
+                  const v = item.actualDelay(this.points)
+                  return v >= 10 ? timeUtil.sec2string(v, '[h]:m:ss') : ''
+                } catch (error) {
+                  console.log(error)
+                  return 'error'
+                }
+              },
+              class: 'text-right',
+              variant: 'success'
+            })
+          }
         }
       }
       return f
@@ -317,9 +341,9 @@ export default {
     }
   },
   watch: {
-    editing: function (val) {
+    '$course.view': function (val) {
       // hide details fields when editing is turned off
-      if (val === false) {
+      if (val !== 'edit') {
         this.rows.forEach(r => {
           this.$set(r, '_showDetails', false)
         })
@@ -350,10 +374,10 @@ export default {
 
         const planReady = this.planAssigned && this.plan._user === this.$user._id
 
-        if (show && (this.editing || planReady)) {
+        if (show && (this.$course.view === 'edit' || planReady)) {
           this.$set(item, '_showDetails', true)
           this.currentWaypoint = item
-          if (!this.editing && planReady) {
+          if (this.$course.view !== 'edit' && planReady) {
           // set waypoint delay inputs:
             const wpd = this.plan.waypointDelays.find(wpd => wpd.site === item.site._id && wpd.loop === item.loop)
             this.waypointDelayF = null

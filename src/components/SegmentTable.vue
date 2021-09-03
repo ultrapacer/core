@@ -44,7 +44,7 @@
       {{ segments[segments.length - 1].actualElapsed | formatTime }}
     </template>
     <template #foot(tod)>
-      {{ sec2string(segments[segments.length - 1].tod, 'am/pm') }}
+      {{ sec2string(segments[segments.length - 1].elapsed + event.startTime, 'am/pm') }}
     </template>
     <template #foot(pace)>
       {{ $units.pacef(plan.pacing.pace) | formatTime }}
@@ -176,6 +176,10 @@ export default {
       type: Object,
       required: true
     },
+    event: {
+      type: Object,
+      required: true
+    },
     segments: {
       type: Array,
       required: true
@@ -193,10 +197,6 @@ export default {
       required: true
     },
     printing: {
-      type: Boolean,
-      default: false
-    },
-    showActual: {
       type: Boolean,
       default: false
     },
@@ -361,22 +361,23 @@ export default {
             return timeUtil.sec2string(item.elapsed(), '[h]:m:ss')
           }
         })
-        if (this.showActual) {
+        if (this.$course.view === 'analyze') {
           f.push({
             key: 'actualElapsed',
             label: 'Actual',
             formatter: (value, key, item) => {
-              return timeUtil.sec2string(item.actualElapsed(), '[h]:m:ss')
+              const v = item.actualElapsed()
+              return v !== null ? timeUtil.sec2string(v, '[h]:m:ss') : ''
             },
             variant: 'success'
           })
         }
-        if (this.showClock) {
+        if (this.event.hasTOD()) {
           f.push({
             key: 'tod',
             label: 'Arrival',
             formatter: (value, key, item) => {
-              return timeUtil.sec2string(item.tod(), 'am/pm')
+              return timeUtil.sec2string(item.elapsed() + this.event.startTime, 'am/pm')
             }
           })
         }
@@ -400,17 +401,6 @@ export default {
     time: function () {
       const t = this.segments.reduce((t, x) => { return t + x.time }, 0)
       return timeUtil.sec2string(t, '[h]:m:ss')
-    },
-    actualMovingTime: function () {
-      if (this.showActual) {
-        const t = this.segments.reduce((t, x) => { return t + x.actualElapsed }, 0)
-        return timeUtil.sec2string(t, '[h]:m:ss')
-      } else {
-        return 0
-      }
-    },
-    showClock: function () {
-      return this.segments[0].tod !== undefined
     }
   },
   watch: {

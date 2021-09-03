@@ -5,7 +5,10 @@ Make sure you're viewing the Course for which you intend to make a Plan.\
 Log in first if you want to save this Plan for later viewing/modifying.
 
 ##### Create a Plan
-Click on the green **"New Pacing Plan"** button at the top of the page.
+If not already there, switch to the **Planning** view using the blue selection
+button at the top of the page. If you don't yet have any plans, the **New Plan**
+window will open automatically; otherwise select **New Plan** under the
+**Actions** menu.
 
 #### New/Modify Plan Menu
 

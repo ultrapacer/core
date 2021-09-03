@@ -623,6 +623,7 @@ function iteratePaceCalc (data) {
     tot += f * p[j].dloc
     if (hasPacingData) {
       p[j].dtime = data.pacing.np * f * p[j].dloc
+      p[j].time = p[j - 1].time + p[j].dtime
       delay = getDelay(p[j - 1].loc, p[j].loc)
       elapsed += p[j].dtime + delay
       p[j].elapsed = elapsed

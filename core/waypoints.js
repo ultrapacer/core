@@ -69,6 +69,22 @@ class Waypoint {
     }
   }
 
+  elapsed (segments) {
+    // return elapsed time at waypoint, assume segments array includes waypoint
+    if (this.loc() === 0) return 0
+    const segment = this.matchingSegment(segments)
+    if (segment) return segment.elapsed
+    return undefined
+  }
+
+  actualElapsed (segments) {
+    // return actual elapsed time at waypoint, assume segments array includes waypoint
+    if (this.loc() === 0) return 0
+    const segment = this.matchingSegment(segments)
+    if (segment) return segment.actualElapsed
+    return undefined
+  }
+
   hasTypicalDelay () {
     return Boolean(
       this.type() === 'aid' ||
@@ -90,12 +106,30 @@ class Waypoint {
     }
   }
 
+  actualDelay (points) {
+    if (points[0].actual === undefined) { return undefined }
+    if (!this.loc() || this.type() === 'finish') return 0
+    const threshold = 0.1 // km, distance away for time reference
+    const l = this.loc()
+    const start = Math.max(0, points.findIndex(p => p.loc > l - threshold) - 1)
+    const end = Math.min(points.findIndex((p, i) => i > start && p.loc > l + threshold), points.length - 1)
+    const plannedNoDelay = points[end].time - points[start].time
+    const actualWithDelay = points[end].actual.elapsed - points[start].actual.elapsed
+    return plannedNoDelay && actualWithDelay ? actualWithDelay - plannedNoDelay : undefined
+  }
+
   show () {
     this.visible = true
   }
 
   hide () {
     this.visible = false
+  }
+
+  matchingSegment (segments) {
+    return segments.find(s =>
+      s.waypoint.site._id === this.site._id && s.waypoint.loop === this.loop
+    )
   }
 }
 

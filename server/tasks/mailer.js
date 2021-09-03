@@ -58,22 +58,13 @@ router.route('/good-luck').get(async function (req, res) {
     let users = plans.filter(p => p._user && p._user.email).map(p => { return p._user }).sort((a, b) => a.email < b.email ? -1 : 1)
     users = users.filter((u, i) => i === 0 || u.email !== users[i - 1].email)
 
-    users.forEach(user => {
+    users.forEach(async (user) => {
       let userplans = plans.filter(p => p._user && p._user.email === user.email).sort((a, b) => a._course.name < b._course.name ? -1 : 1)
       userplans = userplans.filter((p, i) => i === 0 || p._course._id !== userplans[i - 1]._course._id)
       userplans.forEach(up => { up.day = moment(up.eventStart ? up.eventStart : up._course.eventStart).tz(up._course.eventTimezone).format('dddd') })
 
-      const context = {
-        title: 'Good luck!'
-      }
-      const app = new Vue({
-        data: {
-          userplans: userplans
-        },
-        template: fs.readFileSync(path.join(__dirname, '../templates/weekend.vue'), 'utf-8')
-      })
-
-      renderer.renderToString(app, context, (err, html) => {
+      const html = await renderEmail('Good luck!', 'weekend.vue', { userplans: userplans })
+      if (html) {
         transporter.sendMail({
           from: '"ultraPacer" <no-reply@ultrapacer.com>',
           to: user.email,
@@ -81,10 +72,7 @@ router.route('/good-luck').get(async function (req, res) {
           text: `Good luck this weekend with ${userplans[0]._course.name}!`,
           html: html
         })
-        if (err) {
-          console.log(err)
-        }
-      })
+      }
     })
 
     res.json('Messages Sent')
@@ -95,26 +83,30 @@ router.route('/good-luck').get(async function (req, res) {
 })
 
 router.route('/test/good-luck').get(async function (req, res) {
-  const html = await renderEmail([
-    { _course: { name: 'hundo' }, day: 'Saturday' },
-    { _course: { name: '5k' }, day: 'Sunday' }
-  ])
+  const html = await renderEmail('testing', 'weekend.vue', {
+    userplans: [
+      { _course: { name: 'hundo' }, day: 'Saturday' },
+      { _course: { name: '5k' }, day: 'Sunday' }
+    ]
+  })
   res.send(html)
 })
 
-async function renderEmail (userplans) {
+async function renderEmail (title, template, data) {
   const context = {
-    title: 'Good luck!'
+    title: title
   }
   const app = new Vue({
-    data: {
-      userplans: userplans
-    },
-    template: fs.readFileSync(path.join(__dirname, '../templates/weekend.vue'), 'utf-8')
+    data: data,
+    template: fs.readFileSync(path.join(__dirname, `../templates/${template}`), 'utf-8')
   })
   let res = ''
   await renderer.renderToString(app, context, (err, html) => {
-    res = html
+    if (err) {
+      console.log(err)
+    } else {
+      res = html
+    }
   })
   return res
 }

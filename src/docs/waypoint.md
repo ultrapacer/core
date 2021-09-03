@@ -4,10 +4,9 @@ This guide will step you through creating and modifying course Waypoints.
 Make sure you're logged in and viewing the Course you intend to edit.
 **You must be the owner/creator of the Course to modify Waypoints.**
 
-#### Enable Editing
-Select the "Waypoints" tab in the main table on the Course page.
-Enable editing of waypoints by clicking the **editing: off** button, which will
-then turn to **editing: on**.
+#### Select Course Editing View
+If not already there, witch to the the **Editing** view using the blue toggle
+at the top of the page.
 
 #### Add New Waypoint(s)
 Click the **+ New Waypoint** button to create a new Waypoint.
@@ -63,3 +62,6 @@ appropriate button in the Waypoints table.
 Start and Finish Waypoints cannot be deleted or moved (they are fixed at the
 beginning and end of the Course) but they can be renamed. The Terrain Factor of
 the Start Waypoint can be modified.
+
+If using a looped course, only the first set of waypoints are shown; these will
+be repeated with subsequent loops.
