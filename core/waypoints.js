@@ -8,35 +8,35 @@ class Waypoint {
     this.visible = site.tier === 1
   }
 
-  name () {
-    if (this.loop >= 2 && this.type() !== 'finish') {
+  get name () {
+    if (this.loop >= 2 && this.type !== 'finish') {
       return `${this.site.name} ${this.loop}`
     } else {
       return this.site.name
     }
   }
 
-  description () { return this.site.description }
+  get description () { return this.site.description }
 
-  loc () {
+  get loc () {
     // return this.site.location + (this.#courseDistance * (this.loop - 1))
     return this.site.location + (this.courseDistance * (this.loop - 1))
   }
 
-  lat () { return this.site.lat }
-  lon () { return this.site.lon }
-  alt () { return this.site.elevation }
-  tier () { return this.site.tier }
-  type () { return this.site.type }
+  get lat () { return this.site.lat }
+  get lon () { return this.site.lon }
+  get alt () { return this.site.elevation }
+  get tier () { return this.site.tier }
+  get type () { return this.site.type }
 
   terrainFactor (waypoints) {
     if ((this.site.terrainFactor !== null && this.site.terrainFactor !== undefined) || !waypoints) {
       return this.site.terrainFactor
     } else {
-      const wps = waypoints.filter(wp => wp.loop === 1).sort((a, b) => a.loc() - b.loc())
+      const wps = waypoints.filter(wp => wp.loop === 1).sort((a, b) => a.loc - b.loc)
       const i = this.site._id
         ? wps.findIndex(wp => wp.site._id === this.site._id)
-        : wps.findIndex(wp => wp.loc() > this.loc())
+        : wps.findIndex(wp => wp.loc > this.loc)
       const wp = wps.filter((wp, j) =>
         (i < 0 || j < i) &&
         wp.terrainFactor() !== null
@@ -53,10 +53,10 @@ class Waypoint {
     if (this.site.terrainType || !waypoints) {
       return this.site.terrainType
     } else {
-      const wps = waypoints.filter(wp => wp.loop === 1).sort((a, b) => a.loc() - b.loc())
+      const wps = waypoints.filter(wp => wp.loop === 1).sort((a, b) => a.loc - b.loc)
       const i = this.site._id
         ? wps.findIndex(wp => wp.site._id === this.site._id)
-        : wps.findIndex(wp => wp.loc() > this.loc())
+        : wps.findIndex(wp => wp.loc > this.loc)
       const wp = wps.filter((wp, j) =>
         (i < 0 || j < i) &&
         wp.terrainType()
@@ -71,7 +71,7 @@ class Waypoint {
 
   elapsed (segments) {
     // return elapsed time at waypoint, assume segments array includes waypoint
-    if (this.loc() === 0) return 0
+    if (this.loc === 0) return 0
     const segment = this.matchingSegment(segments)
     if (segment) return segment.elapsed
     return undefined
@@ -79,17 +79,17 @@ class Waypoint {
 
   actualElapsed (segments) {
     // return actual elapsed time at waypoint, assume segments array includes waypoint
-    if (this.loc() === 0) return 0
+    if (this.loc === 0) return 0
     const segment = this.matchingSegment(segments)
     if (segment) return segment.actualElapsed
     return undefined
   }
 
-  hasTypicalDelay () {
+  get hasTypicalDelay () {
     return Boolean(
-      this.type() === 'aid' ||
-      this.type() === 'water' ||
-      (this.loop >= 2 && this.type() === 'start')
+      this.type === 'aid' ||
+      this.type === 'water' ||
+      (this.loop >= 2 && this.type === 'start')
     )
   }
 
@@ -99,7 +99,7 @@ class Waypoint {
     )
     if (wpd) {
       return wpd.delay
-    } else if (this.hasTypicalDelay()) {
+    } else if (this.hasTypicalDelay) {
       return typicalDelay
     } else {
       return 0
@@ -108,9 +108,9 @@ class Waypoint {
 
   actualDelay (points) {
     if (points[0].actual === undefined) { return undefined }
-    if (!this.loc() || this.type() === 'finish') return 0
+    if (!this.loc || this.type === 'finish') return 0
     const threshold = 0.1 // km, distance away for time reference
-    const l = this.loc()
+    const l = this.loc
     const start = Math.max(0, points.findIndex(p => p.loc > l - threshold) - 1)
     const end = Math.min(points.findIndex((p, i) => i > start && p.loc > l + threshold), points.length - 1)
     const plannedNoDelay = points[end].time - points[start].time
@@ -145,7 +145,7 @@ function loopedWaypoints (waypoints, loops = 1, courseDistance = 0) {
       )
     )
   }
-  return wpls.filter(wpl => wpl.loop === loops || wpl.type() !== 'finish')
+  return wpls.filter(wpl => wpl.loop === loops || wpl.type !== 'finish')
 }
 
 module.exports = {

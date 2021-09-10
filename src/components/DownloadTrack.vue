@@ -309,17 +309,17 @@ export default {
       if (this.hasTime) {
         lap.TotalTimeSeconds = this.$math.round(pnts[pnts.length - 1].elapsed, 3)
       }
-      const coursepoints = this.segments.filter(s => s.waypoint.tier() < 3).map(s => {
+      const coursepoints = this.segments.filter(s => s.waypoint.tier < 3).map(s => {
         const o = {
-          Name: s.waypoint.name(),
+          Name: s.waypoint.name,
           PointType: 'Generic',
           Position: {
-            LatitudeDegrees: this.$math.round(s.waypoint.lat(), 8),
-            LongitudeDegrees: this.$math.round(s.waypoint.lon(), 8)
+            LatitudeDegrees: this.$math.round(s.waypoint.lat, 8),
+            LongitudeDegrees: this.$math.round(s.waypoint.lon, 8)
           }
         }
         if (this.course.source && this.course.source.alt !== 'google') {
-          o.AltitudeMeters = this.$math.round(s.waypoint.alt(), 2)
+          o.AltitudeMeters = this.$math.round(s.waypoint.alt, 2)
         }
         if (this.hasTime) {
           o.Time = moment(this.event.start).add(s.elapsed, 'seconds').utc().format('YYYY-MM-DD[T]HH:mm:ss.SSS[Z]')

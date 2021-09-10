@@ -847,13 +847,13 @@ function processPoints (points, distance, gain, loss) {
 function createTerrainFactors (waypoints) {
   const l = logger()
   if (!waypoints.length) { return [] }
-  const wps = waypoints.sort((a, b) => a.loc() - b.loc())
+  const wps = waypoints.sort((a, b) => a.loc - b.loc)
   let tF = wps[0].terrainFactor()
   const tFs = wps.filter((x, i) => i < wps.length - 1).map((x, i) => {
     if (x.terrainFactor() !== null) { tF = x.terrainFactor() }
     return {
-      start: x.loc(),
-      end: wps[i + 1].loc(),
+      start: x.loc,
+      end: wps[i + 1].loc,
       tF: tF
     }
   })
@@ -864,10 +864,10 @@ function createTerrainFactors (waypoints) {
 function createSegments (points, data = null) {
   const l = logger()
   // break on non-hidden waypoints:
-  const wps = data.waypoints.filter(x => x.tier() < 3).sort((a, b) => a.loc() - b.loc())
+  const wps = data.waypoints.filter(x => x.tier < 3).sort((a, b) => a.loc - b.loc)
 
   // get array of location breaks:
-  const breaks = wps.map(x => { return x.loc() })
+  const breaks = wps.map(x => { return x.loc })
 
   // determine all the stuff
   const segments = calcSegments(points, breaks, data)

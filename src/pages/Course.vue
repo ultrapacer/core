@@ -131,7 +131,6 @@
               :segments="segments"
               :waypoints="waypoints"
               :plan="plan"
-              :busy="$status.processing"
               :mode="'segments'"
               :table-height="printing==='Segments' ? 0 : tableHeight"
               :visible="tableTabIndex===0"
@@ -149,7 +148,6 @@
               :segments="splits"
               :waypoints="waypoints"
               :plan="plan"
-              :busy="$status.processing"
               :mode="'splits'"
               :table-height="printing==='Splits' ? 0 : tableHeight"
               :class="printing==='Splits' ? 'pr-2' : ''"
@@ -204,7 +202,6 @@
               :terrain-factors="terrainFactors"
               :event="event"
               :plan="plan"
-              :busy="$status.loading"
               :visible="tableTabIndex===3"
             />
           </b-tab>
@@ -222,20 +219,22 @@
           ref="profile"
           :printing="printing==='Profile'"
           :course="course"
-          :waypoints="waypoints.filter(wp=>$course.view==='edit'||wp.visible)"
+          :waypoints="visibleWaypoints"
           :points="points"
-          :sun-events="plan.pacing ? plan.pacing.sunEventsByLoc: []"
+          :plan="plan"
           :show-actual="comparing"
           :focus="focus"
           @waypointClick="waypointClick"
+          @setHighlightPoint="(p)=>{highlightPoint = p}"
         />
         <course-map
           v-if="points.length"
           ref="map"
           :course="course"
-          :waypoints="waypoints.filter(wp=>$course.view==='edit'||wp.visible)"
+          :waypoints="visibleWaypoints"
           :points="points.filter(p=>p.loc<=course.distance)"
           :focus="focus"
+          :highlight-point="highlightPoint"
           @waypointClick="waypointClick"
         />
       </b-col>
@@ -363,6 +362,7 @@ export default {
       scales: {},
       waypoint: {},
       focus: [],
+      highlightPoint: null,
       tableTabIndex: 0,
       tableTabNames: ['Segments', 'Splits', 'Waypoints', 'Details'],
       updateFlag: false,
@@ -532,8 +532,13 @@ export default {
       return this.$core.geo.createTerrainFactors(this.waypoints)
     },
     waypoints: function () {
+      this.$logger('Course|waypoints')
       if (!this.course.waypoints || !this.course.waypoints.length) return []
       return this.$core.waypoints.loopedWaypoints(this.course.waypoints, this.course.loops, this.course.distance)
+    },
+    visibleWaypoints: function () {
+      this.$logger('Course|visibleWaypoints')
+      return this.waypoints.filter(wp => this.$course.view === 'edit' || wp.visible)
     },
     delays: function () {
       if (!this.waypoints.length || !this.planAssigned) return []
@@ -541,7 +546,7 @@ export default {
       try {
         return this.waypoints.map(wp => {
           return {
-            loc: wp.loc(),
+            loc: wp.loc,
             delay: wp.delay(this.plan.waypointDelay, this.plan.waypointDelays || [])
           }
         }).filter(d => d.delay > 0)
@@ -573,7 +578,7 @@ export default {
         this.waypoints.filter(wp => !wp.visible).forEach(wp => { wp.show() })
         this.tableTabIndex = 2
       } else {
-        this.waypoints.filter(wp => wp.tier() > 1).forEach(wp => { wp.hide() })
+        this.waypoints.filter(wp => wp.tier > 1).forEach(wp => { wp.hide() })
         this.selectRecentPlan(() => { this.newPlan() })
       }
       if (val === 'analyze') {
@@ -968,7 +973,6 @@ export default {
         if (this.points[0].actual !== undefined) {
           await this.updatePacing()
         }
-        this.$refs.profile.update()
       }
       this.$logger('Course|calcPlan', t)
     },
@@ -979,7 +983,6 @@ export default {
       const q = { ...this.$route.query }
       delete q.plan
       this.$router.push({ query: q })
-      this.$refs.profile.update()
       this.$logger('Course|clearPlan')
     },
     async selectRecentPlan (noPlanFunction) {
@@ -1090,11 +1093,6 @@ export default {
       // update splits and segments
       await this.createPlanSplits()
 
-      // update profile chart
-      if (this.$refs.profile) {
-        this.$refs.profile.update()
-      }
-
       this.$status.processing = false
       this.$logger('Course|updatePacing', t)
     },
@@ -1175,7 +1173,7 @@ export default {
 
       // set printing status
       this.printing = component
-      this.$status.processing = true
+      if (component === 'Profile') this.$status.processing = true
 
       // set filename:
       let filename = `uP-${this.course.name}${(this.plan.name ? ('--' + this.plan.name) : '')}--${component}.pdf`
@@ -1190,7 +1188,7 @@ export default {
         jsPDF: {
           unit: 'in',
           format: 'letter',
-          orientation: this.tableTabIndex === 3 ? 'portrait' : 'landscape'
+          orientation: component === 'Details' ? 'portrait' : 'landscape'
         }
       }
       if (component !== 'Profile') {
@@ -1203,7 +1201,7 @@ export default {
 
       // if profile print, render chart to print size:
       if (component === 'Profile') {
-        await this.$refs.profile.$refs.profile.update()
+        await this.$refs.profile.update()
         await new Promise(resolve => setTimeout(resolve, 500))
       }
       // lazy load the html2pdf module:

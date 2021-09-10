@@ -1,6 +1,7 @@
 <template>
   <b-table
     ref="table"
+    :busy="$status.processing"
     :items="rows"
     :fields="fields"
     primary-key="site._id+'_'loop"
@@ -22,7 +23,7 @@
         <span class="d-none d-xl-inline">Edit</span>
       </b-button>
       <b-button
-        v-if="row.item.type() !== 'start' && row.item.type() !== 'finish'"
+        v-if="row.item.type !== 'start' && row.item.type !== 'finish'"
         class="mr-1"
         @click="delFn(row.item.site)"
       >
@@ -171,9 +172,9 @@ export default {
   computed: {
     rows: function () {
       return this.waypoints.filter(x => (
-        this.$course.view === 'edit' && (x.loop === 1 || x.type() === 'finish')) ||
-        (this.$course.view !== 'edit' && x.tier() < 3)
-      ).sort((a, b) => a.loc() - b.loc())
+        this.$course.view === 'edit' && (x.loop === 1 || x.type === 'finish')) ||
+        (this.$course.view !== 'edit' && x.tier < 3)
+      ).sort((a, b) => a.loc - b.loc)
     },
     showTerrainType: function () {
       return this.waypoints.findIndex(wp => wp.terrainType()) >= 0
@@ -193,13 +194,13 @@ export default {
           key: 'name',
           class: 'text-truncate mw-7rem',
           formatter: (value, key, item) => {
-            return item.name()
+            return item.name
           }
         },
         {
           key: 'type',
           formatter: (value, key, item) => {
-            return this.$waypointTypes[item.type()]
+            return this.$waypointTypes[item.type].text
           },
           class: 'd-none d-md-table-cell'
         },
@@ -207,10 +208,10 @@ export default {
           key: 'location',
           label: `Loc. [${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            if (this.$course.view === 'edit' && item.type() === 'finish') {
+            if (this.$course.view === 'edit' && item.type === 'finish') {
               return this.$units.distf(this.course.distance, 2)
             } else {
-              return this.$units.distf(item.loc(), 2)
+              return this.$units.distf(item.loc, 2)
             }
           },
           class: 'text-right'
@@ -219,7 +220,7 @@ export default {
           key: 'elevation',
           label: `Elev. [${this.$units.alt}]`,
           formatter: (value, key, item) => {
-            return this.$units.altf(item.alt(), 0)
+            return this.$units.altf(item.alt, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'd-none d-sm-table-cell text-right'
@@ -231,7 +232,7 @@ export default {
             key: 'terrainType',
             label: 'Terrain',
             formatter: (value, key, item) => {
-              if (item.type() === 'finish') { return '' }
+              if (item.type === 'finish') { return '' }
               return item.terrainType(this.waypoints) || ''
             },
             class: 'd-none d-lg-table-cell text-right'
@@ -242,7 +243,7 @@ export default {
             key: 'terrainFactor',
             label: 'Factor',
             formatter: (value, key, item) => {
-              if (item.type() === 'finish') { return '' }
+              if (item.type === 'finish') { return '' }
               const v = item.terrainFactor(this.waypoints) || 0
               return `+${v}%`
             },
@@ -370,7 +371,7 @@ export default {
         // curent visible state:
         const show = !item._showDetails
         this.collapseAll()
-        if ((item.type() === 'start' && item.loop === 1) || item.type() === 'finish') return
+        if ((item.type === 'start' && item.loop === 1) || item.type === 'finish') return
         const planReady = this.planAssigned && this.plan._user === this.$user._id
         if (show && (this.$course.view === 'edit' || planReady)) {
           this.$set(item, '_showDetails', true)
@@ -380,10 +381,10 @@ export default {
             const wpd = this.plan.waypointDelays.find(wpd => wpd.site === item.site._id && wpd.loop === item.loop)
             this.waypointDelayF = null
             this.waypointDelayCustom = Boolean(wpd)
-            this.waypointDelayTypical = item.hasTypicalDelay() ? this.plan.waypointDelay : 0
+            this.waypointDelayTypical = item.hasTypicalDelay ? this.plan.waypointDelay : 0
             if (wpd) {
               this.waypointDelayF = timeUtil.sec2string(wpd.delay, 'hh:mm:ss')
-            } else if (this.plan.waypointDelay && item.hasTypicalDelay()) {
+            } else if (this.plan.waypointDelay && item.hasTypicalDelay) {
               this.waypointDelayF = timeUtil.sec2string(this.plan.waypointDelay, 'hh:mm:ss')
             }
           }

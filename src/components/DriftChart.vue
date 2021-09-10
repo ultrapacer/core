@@ -1,20 +1,21 @@
 <template>
-  <plan-chart
+  <Chart
     v-if="chartData.datasets"
     ref="chart"
-    :chart-data="chartData"
+    :data="chartData"
     :options="chartOptions"
-    :width="350"
+    type="line"
+    style="width:350px; height:100px"
     :height="100"
   />
 </template>
 
 <script>
-import PlanChart from './PlanChart.js'
+import Chart from 'vue-chartjs3'
 import { adjust } from '../../core/driftFactor'
 export default {
   components: {
-    PlanChart
+    Chart
   },
   props: {
     drift: {
@@ -35,7 +36,7 @@ export default {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          xAxes: [{
+          x: {
             type: 'linear',
             position: 'bottom',
             ticks: {
@@ -45,32 +46,44 @@ export default {
                   return this.$units.dist
                 } else if (
                   value % this.stepSize === 0 &&
-                  values[values.length - 1] - value > 0.8 * this.stepSize
+                  values[values.length - 1].value - value > 0.8 * this.stepSize
                 ) {
                   return value
                 } else {
                   return ''
                 }
-              },
-              max: Number(this.$units.distf(this.courseDistance))
-            }
-          }],
-          yAxes: [{
+              }
+            },
+            max: Number(this.$units.distf(this.courseDistance))
+          },
+          'y-axis-1': {
             display: true,
             position: 'left',
-            id: 'y-axis-1',
             ticks: {
               callback: function (value, index, values) {
                 return value + '%'
               }
             }
-          }]
+          }
         },
         tooltips: {
           enabled: false
         },
-        legend: {
-          display: false
+        plugins: {
+          legend: {
+            display: false
+          },
+          crosshair: {
+            line: {
+              color: this.$colors.red2.hex,
+              width: 2
+            },
+            sync: {
+              enabled: true,
+              group: 1
+            }
+          },
+          backgroundColorPlugin: false
         }
       }
       return chartOptions
@@ -100,8 +113,9 @@ export default {
           {
             data: d,
             tension: 0,
-            borderColor: this.$colors.brown2,
-            backgroundColor: window.Color(this.$colors.brown2).alpha(0.5).rgbString()
+            borderColor: this.$colors.brown2.rgb,
+            backgroundColor: this.$colors.brown2.transparentize(),
+            fill: 'origin'
           }
         ]
       }

@@ -1,9 +1,11 @@
 <template>
   <div>
-    <line-chart
+    <Chart
+      v-if="chartData.datasets && chartData.datasets.length && chartProfile.length"
       ref="profile"
-      :chart-data="chartData"
+      :data="chartData"
       :options="chartOptions"
+      type="line"
       :style="printing ? 'width: 9.9in; height: 7.25in' : 'height: 300px'"
     />
     <div style=" width: 100%; display: flex; justify-content: flex-end;">
@@ -16,12 +18,16 @@
   </div>
 </template>
 <script>
-import LineChart from './LineChart.js'
 import timeUtil from '../util/time'
+import Chart from 'vue-chartjs3'
+import { Chart as ChartJs, Interaction } from 'chart.js'
+import { CrosshairPlugin, Interpolate } from 'chartjs-plugin-crosshair'
+ChartJs.register(CrosshairPlugin)
+Interaction.modes.interpolate = Interpolate
 
 export default {
   components: {
-    LineChart
+    Chart
   },
   props: {
     course: {
@@ -40,9 +46,9 @@ export default {
       type: Array,
       default () { return [] }
     },
-    sunEvents: {
-      type: Array,
-      default () { return [] }
+    plan: {
+      type: Object,
+      required: true
     },
     showActual: {
       type: Boolean,
@@ -55,41 +61,24 @@ export default {
   },
   data () {
     return {
-      chartColors: {
-        red: 'rgb(255, 0, 0)',
-        darkgreen: 'rgb(0, 140, 140)',
-        darkblue: 'rgb(45, 45, 200)',
-        black: 'rgb(0, 0, 0)',
-        white: 'rgb(255, 255, 255)'
-      },
       chartProfile: [],
       chartGrade: [],
-      markerStyles: {
-        pointRadius: {
-        },
-        pointStyle: {
-          landmark: 'triangle',
-          water: 'rectRot',
-          junction: 'crossRot'
-        },
-        color: {
-          aid: 'red',
-          landmark: 'darkgreen',
-          water: 'darkblue',
-          start: 'black',
-          finish: 'black'
-        }
-      },
-      pmax: 500,
-      chartOptions: {
+      pmax: 500
+    }
+  },
+  computed: {
+    chartOptions: function () {
+      this.$logger('CourseProfile|chartOptions')
+      return {
         animation: {
           duration: 0
         },
+
         responsive: true,
         maintainAspectRatio: false,
         height: '100px',
         scales: {
-          xAxes: [{
+          x: {
             type: 'linear',
             position: 'bottom',
             ticks: {
@@ -100,27 +89,27 @@ export default {
                 } else {
                   return ''
                 }
-              },
-              max: this.$units.distf(this.course.totalDistance()) + 0.01
-            }
-          }],
-          yAxes: [{
+              }
+            },
+            max: this.$units.distf(this.course.totalDistance()) + 0.01
+          },
+
+          'y-axis-1': {
             display: true,
-            position: 'left',
-            id: 'y-axis-1'
-          }, {
+            position: 'left'
+          },
+          'y-axis-2': {
             type: 'linear',
-            display: true,
-            position: 'right',
-            id: 'y-axis-2'
-          }, {
+            display: !this.showActual,
+            position: 'right'
+          },
+          'y-axis-3': {
             type: 'linear',
-            display: false,
+            display: this.showActual,
             position: 'right',
-            id: 'y-axis-3',
-            scaleLabel: {
+            title: {
               display: true,
-              labelString: 'Ahead/Behind',
+              text: '<- Ahead | Behind ->',
               padding: 0
             },
             ticks: {
@@ -131,37 +120,49 @@ export default {
               stepSize: 60,
               maxTicksLimit: 12
             }
-          }]
+          }
+
         },
-        tooltips: {
-          displayColors: false,
-          enabled: true,
-          filter: function (tooltipItem) {
-            return tooltipItem.datasetIndex === 0
+        plugins: {
+          legend: {
+            display: false
           },
-          callbacks: {
-            label: function (tooltipItem, data) {
-              const label = data.datasets[tooltipItem.datasetIndex]
-                .data[tooltipItem.index].label
-              return label
+
+          tooltip: {
+            mode: 'nearest',
+            intersect: true,
+            displayColors: false,
+            filter: function (tooltipItem) {
+              return tooltipItem.datasetIndex === 0
             },
-            title: function (tooltipItem, data) {
-              if (!tooltipItem.length) { return '' }
-              const title = data.datasets[tooltipItem[0].datasetIndex]
-                .data[tooltipItem[0].index].title
-              return title
+
+            callbacks: {
+              label: function (tooltipItem, data) {
+                return tooltipItem.raw.label
+              },
+              title: function (tooltipItem, data) {
+                if (!tooltipItem.length) { return '' }
+                return tooltipItem[0].raw.title
+              }
+            }
+          },
+          crosshair: {
+            line: {
+              color: this.$colors.red2.hex,
+              width: 2
+            },
+            sync: {
+              enabled: true,
+              group: 1
+            },
+            zoom: {
+              enabled: false
             }
           }
         },
-        legend: {
-          display: false
-        },
-        onClick: this.click,
-        backgroundRules: []
+        onClick: this.click
       }
-    }
-  },
-  computed: {
+    },
     chartData: function () {
       this.$logger('CourseProfile|chartData')
       const datasets = [
@@ -170,25 +171,28 @@ export default {
           data: this.chartFocus,
           pointRadius: 0,
           pointHoverRadius: 0,
-          borderColor: this.$colors.red2,
+          borderColor: this.$colors.red2.rgb,
           borderWidth: 2,
-          backgroundColor: this.showActual ? false : this.transparentize(this.$colors.red2, 0.5),
+          backgroundColor: this.$colors.red2.transparentize(),
+          fill: this.showActual ? false : 'origin',
           yAxisID: 'y-axis-1'
         },
         {
           data: this.chartProfile,
           pointRadius: 0,
           pointHoverRadius: 0,
-          borderColor: this.$colors.blue2,
+          borderColor: this.$colors.blue1.rgb,
           borderWidth: 2,
-          backgroundColor: this.showActual ? false : this.transparentize(this.$colors.blue2),
+          backgroundColor: this.$colors.blue1.transparentize(),
+          fill: this.showActual ? false : 'origin',
           yAxisID: 'y-axis-1'
         },
         {
           data: this.chartGrade,
           pointRadius: 0,
           pointHoverRadius: 0,
-          backgroundColor: this.showActual ? false : this.transparentize(this.$colors.red2, 0.75),
+          backgroundColor: this.$colors.red2.transparentize(0.25),
+          fill: this.showActual ? false : 'origin',
           showLine: true,
           yAxisID: 'y-axis-2'
         }
@@ -198,9 +202,10 @@ export default {
           data: this.comparePoints,
           pointRadius: 0,
           pointHoverRadius: 0,
-          borderColor: 'rgb(94, 131, 81)',
+          borderColor: this.$colors.green2.rgb,
           borderWidth: 2,
-          backgroundColor: this.transparentize('rgb(94, 131, 81)', 0.7),
+          backgroundColor: this.$colors.green2.transparentize(),
+          fill: 'origin',
           showLine: true,
           yAxisID: 'y-axis-3'
         })
@@ -252,29 +257,25 @@ export default {
       return {
         data: this.waypoints.map(wp => {
           return {
-            x: this.$units.distf(wp.loc()),
-            y: this.$units.altf(wp.alt()),
+            x: this.$units.distf(wp.loc),
+            y: this.$units.altf(wp.alt),
             label:
-              wp.name() + ' [' +
-              this.$units.distf(wp.loc(), 1) +
+              wp.name + ' [' +
+              this.$units.distf(wp.loc, 1) +
               this.$units.dist + ']',
-            title: this.$waypointTypes[wp.type()],
+            title: this.$waypointTypes[wp.type].text,
             waypoint: wp
           }
         }),
-        backgroundColor: this.waypoints.map(wp => {
-          return this.transparentize(
-            this.chartColors[this.markerStyles.color[wp.type()] || 'white']
-          )
+        pointBackgroundColor: this.waypoints.map(wp => {
+          return this.$waypointTypes[wp.type].backgroundColor.transparentize()
         }),
         borderColor: this.waypoints.map(wp => {
-          return this.chartColors[this.markerStyles.color[wp.type()] || 'black']
+          return this.$waypointTypes[wp.type].color.rgb
         }),
-        borderWidth: Array(this.waypoints.length).fill(2),
+        pointBorderWidth: Array(this.waypoints.length).fill(2),
         fill: false,
-        pointRadius: this.waypoints.map(wp => {
-          return this.markerStyles.pointRadius[wp.type()] || 6
-        }),
+        pointRadius: 6,
         pointStyle: Array(this.waypoints.length).fill('circle'),
         pointHoverRadius: 10,
         showLine: false
@@ -282,26 +283,77 @@ export default {
     }
   },
   watch: {
-    showActual: function (val) {
-      this.chartOptions.scales.yAxes[1].display = !val
-      this.chartOptions.scales.yAxes[2].display = val
+    'plan.pacing.sunEventsByLoc': function (v) {
       this.update()
-    },
-    sunEvents: function (val) {
-      this.updateBackgroundRules()
     }
   },
   async created () {
+    ChartJs.register({
+      id: 'backgroundColorPlugin',
+      beforeDraw: (chart, other) => {
+        if (!this.plan.pacing || !this.plan.pacing.sunEventsByLoc || !this.plan.pacing.sunEventsByLoc.length) return
+        const rules = this.plan.pacing.sunEventsByLoc.map(br => {
+          return {
+            loc: this.$units.distf(br.loc),
+            sunType: br.sunType
+          }
+        })
+        const ctx = chart.ctx
+        const yaxis = chart.scales['y-axis-2']
+        const xaxis = chart.scales.x
+        function distToPixels (d) {
+          return d / (xaxis.max) * xaxis.width + xaxis.left
+        }
+        const colors = {
+          day: this.$colors.white.transparentize(),
+          twilight: this.$colors.black.transparentize(0.15),
+          dark: this.$colors.black.transparentize(0.3)
+        }
+        rules.forEach((r, i) => {
+          const x1 = distToPixels(r.loc)
+          const x2 = distToPixels(i < rules.length - 1 ? rules[i + 1].loc : xaxis.max)
+          if (r.sunType === 'twilight') {
+            const grd = ctx.createLinearGradient(x1, 0, x2, 0)
+            if (
+              (i > 0 && rules[i - 1].sunType === 'day') ||
+                    (i < rules.length - 1 && rules[i + 1].sunType === 'dark')
+            ) {
+              grd.addColorStop(0, colors.day)
+              grd.addColorStop(1, colors.dark)
+            } else {
+              grd.addColorStop(0, colors.dark)
+              grd.addColorStop(1, colors.day)
+            }
+            ctx.fillStyle = grd
+          } else {
+            ctx.fillStyle = colors[r.sunType]
+          }
+          ctx.fillRect(x1, yaxis.top, x2 - x1, yaxis.height)
+        })
+      }
+    })
+    ChartJs.register({
+      id: 'setHighlightPointPlugin',
+      afterEvent: (chart, e) => {
+        const x = chart.scales.x.getValueForPixel(e.event.x)
+        this.setHighlightPoint(x)
+      }
+    })
     this.updateChartProfile()
-    this.updateBackgroundRules()
+  },
+  beforeDestroy () {
+    this.$logger('CourseProfile|beforeDestroy')
+    ChartJs.unregister({ id: 'setHighlightPointPlugin' })
+    ChartJs.unregister({ id: 'backgroundColorPlugin' })
   },
   methods: {
     click: function (point, event) {
       if (!event.length) { return }
       const item = event[0]
-      this.$emit('waypointClick', this.chartWaypoints.data[item._index].waypoint)
+      this.$emit('waypointClick', this.chartWaypoints.data[item.index].waypoint)
     },
     updateChartProfile: function () {
+      if (!this.points.length) return []
       this.$logger('CourseProfile|updateChartProfile')
       const chartProfile = []
       let mbs = this.$math.wlslr(
@@ -331,28 +383,19 @@ export default {
         })
       })
 
-      // this is a hack to make the finish waypoint show up:
-      this.chartOptions.scales.xAxes[0].ticks.max = (
-        this.$units.distf(this.xs[this.xs.length - 1]) + 0.01
-      )
       this.chartProfile = chartProfile
       this.chartGrade = chartGrade
     },
-    transparentize: function (color, opacity) {
-      const alpha = opacity === undefined ? 0.5 : 1 - opacity
-      return window.Color(color).alpha(alpha).rgbString()
-    },
-    updateBackgroundRules: function () {
-      // format distance unit for day/night background:
-      this.chartOptions.backgroundRules = this.sunEvents.map(br => {
-        const br2 = { ...br }
-        br2.loc = this.$units.distf(br2.loc)
-        return br2
-      })
-    },
-    update: function () {
-      this.$refs.profile.update()
+    update: async function () {
+      await this.$refs.profile.update()
       this.$logger('CourseProfile|update')
+    },
+    setHighlightPoint: async function (x) {
+      const loc = x / this.$units.distScale
+      if (loc > 0 && loc < this.course.totalDistance()) {
+        const pnt = this.points.find(p => p.loc >= loc)
+        this.$emit('setHighlightPoint', pnt)
+      }
     }
   }
 }

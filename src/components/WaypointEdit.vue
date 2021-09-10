@@ -236,7 +236,7 @@ export default {
       if (this.model.type === 'start' || this.model.type === 'finish') {
         return [{
           value: this.model.type,
-          text: this.$waypointTypes[this.model.type]
+          text: this.$waypointTypes[this.model.type].text
         }]
       } else {
         const arr = []
@@ -244,7 +244,7 @@ export default {
           if (key !== 'start' && key !== 'finish') {
             arr.push({
               value: key,
-              text: this.$waypointTypes[key]
+              text: this.$waypointTypes[key].text
             })
           }
         })

@@ -22,44 +22,61 @@
       />
       <l-polyline
         :lat-lngs="courseLL"
-        :color="$colors.blue2"
+        :color="$colors.blue1.hex"
       />
       <l-polyline
         :if="focusLL.length"
         :lat-lngs="focusLL"
         :weight="4"
-        :color="$colors.red2"
+        :color="$colors.red2.hex"
       />
       <l-circle-marker
         v-for="wp in waypoints2"
         :key="wp.site._id+'_'+wp.loop"
-        :lat-lng="[wp.lat(), wp.lon()]"
+        :lat-lng="[wp.lat, wp.lon]"
         :radius="6"
         :fill="true"
-        :color="markerColors[wp.type()] || 'black'"
-        :fill-color="markerColors[wp.type()] || 'white'"
+        :color="$waypointTypes[wp.type].color.hex"
+        :fill-color="$waypointTypes[wp.type].backgroundColor.hex"
         :fill-opacity="0.5"
+        :weight="2"
         @click="waypointClick(wp, $event)"
       >
         <l-popup>
-          <b>{{ $waypointTypes[wp.type()] }}</b><br>
-          {{ wp.name() }}
+          <b>{{ $waypointTypes[wp.type].text }}</b><br>
+          {{ wp.name }}
           [{{ waypointLocation(wp.site) }} {{ $units.dist }}]
         </l-popup>
       </l-circle-marker>
+      <l-marker
+        v-if="highlightPoint"
+        :lat-lng="[highlightPoint.lat, highlightPoint.lon]"
+        :z-index-offset="100"
+      />
     </l-map>
   </div>
 </template>
 
 <script>
-import { LMap, LControlLayers, LTileLayer, LPolyline, LCircleMarker, LPopup } from 'vue2-leaflet'
+import { LMap, LControlLayers, LMarker, LTileLayer, LPolyline, LCircleMarker, LPopup } from 'vue2-leaflet'
 import 'leaflet/dist/leaflet.css'
+
+import { Icon } from 'leaflet'
 function uniqueBy (a, cond) {
   return a.filter((e, i) => a.findIndex(e2 => cond(e, e2)) === i)
 }
+
+delete Icon.Default.prototype._getIconUrl
+Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png')
+})
+
 export default {
   components: {
     LMap,
+    LMarker,
     LTileLayer,
     LControlLayers,
     LPolyline,
@@ -82,6 +99,10 @@ export default {
     focus: {
       type: Array,
       default () { return [] }
+    },
+    highlightPoint: {
+      type: Object,
+      default () { return null }
     }
   },
   data () {
@@ -94,13 +115,6 @@ export default {
       focusLL: [],
       initializing: true,
       isMounted: false,
-      markerColors: {
-        start: 'black',
-        finish: 'black',
-        aid: 'red',
-        landmark: 'green',
-        water: 'blue'
-      },
       maxZoom: 18,
       tileProviders: [
         {
@@ -181,9 +195,9 @@ export default {
     waypoints2llls: function () {
       return this.waypoints2.map(wp => {
         return {
-          loc: wp.type() === 'finish' ? this.course.distance : wp.loc() % this.course.distance,
-          lat: wp.lat(),
-          lon: wp.lon()
+          loc: wp.type === 'finish' ? this.course.distance : wp.loc % this.course.distance,
+          lat: wp.lat,
+          lon: wp.lon
         }
       })
     }
@@ -243,9 +257,9 @@ export default {
     waypointLocation (site) {
       const wps = this.waypoints.filter(wp => wp.site._id === site._id)
       if (this.course.loops > 1 && site.type === 'start') {
-        wps.push(this.waypoints.find(wp => wp.type() === 'finish'))
+        wps.push(this.waypoints.find(wp => wp.type === 'finish'))
       }
-      return wps.map(wp => { return this.$units.distf(wp.loc(), 1) }).join(' & ')
+      return wps.map(wp => { return this.$units.distf(wp.loc, 1) }).join(' & ')
     },
     updateMaxZoom (val) {
       this.maxZoom = this.tileProviders.find(x => x.name === val.name)['max-zoom']

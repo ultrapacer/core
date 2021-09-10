@@ -1,19 +1,19 @@
 <template>
-  <plan-chart
+  <Chart
     v-if="sun && chartData.datasets"
     ref="chart"
-    :chart-data="chartData"
+    :data="chartData"
     :options="chartOptions"
-    :width="350"
-    :height="100"
+    type="line"
+    style="width:350px; height:100px"
   />
 </template>
 
 <script>
-import PlanChart from './PlanChart.js'
+import Chart from 'vue-chartjs3'
 export default {
   components: {
-    PlanChart
+    Chart
   },
   props: {
     heatModel: {
@@ -63,7 +63,7 @@ export default {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          xAxes: [{
+          x: {
             type: 'linear',
             position: 'bottom',
             label: 'Distance',
@@ -74,33 +74,45 @@ export default {
                   return this.showDistance ? this.$units.dist : value + ' hrs'
                 } else if (
                   value % this.stepSize === 0 &&
-                    values[values.length - 1] - value > 0.8 * this.stepSize
+                    values[values.length - 1].value - value > 0.8 * this.stepSize
                 ) {
                   return value
                 } else {
                   return ''
                 }
-              },
-              max: this.showDistance ? Number(this.$units.distf(this.ps[this.ps.length - 1].loc)) : 24
-            }
-          }],
-          yAxes: [{
+              }
+            },
+            max: this.showDistance ? Number(this.$units.distf(this.ps[this.ps.length - 1].loc)) : 24
+          },
+          'y-axis-1': {
             display: true,
             position: 'left',
-            id: 'y-axis-1',
             ticks: {
-              min: 0,
+              beginAtZero: true,
               callback: function (value, index, values) {
                 return value + '%'
               }
             }
-          }]
+          }
         },
         tooltips: {
           enabled: false
         },
-        legend: {
-          display: false
+        plugins: {
+          legend: {
+            display: false
+          },
+          crosshair: {
+            line: {
+              color: this.$colors.red2.hex,
+              width: 2
+            },
+            sync: {
+              enabled: this.showDistance,
+              group: 1
+            }
+          },
+          backgroundColorPlugin: false
         }
       }
       return o
@@ -238,8 +250,9 @@ export default {
           {
             data: this.xys,
             tension: 0,
-            borderColor: this.$colors.brown2,
-            backgroundColor: window.Color(this.$colors.brown2).alpha(0.5).rgbString(),
+            borderColor: this.$colors.brown2.rgb,
+            backgroundColor: this.$colors.brown2.transparentize(),
+            fill: 'origin',
             radius: this.radii
           }
         ]

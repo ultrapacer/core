@@ -76,21 +76,62 @@ Vue.prototype.$user = Vue.observable({
     active: false
   }
 })
-Vue.prototype.$colors = {
-  blue1: '#033E75', // dark blue
-  blue2: '#2B6499', // medium blue
-  green2: '#415837', // medium green
-  brown2: '#422a22', // medium brown
-  red2: '#dc3545' // med red
+
+// Color class helps for converting hex to rgb and rgba
+class Color {
+  constructor (hex) {
+    this.hex = hex
+  }
+
+  get rgb () {
+    const a = this.rgbArray
+    return 'rgb(' + a[0] + ',' + a[1] + ',' + a[2] + ')'
+  }
+
+  transparentize (opacity = 0.5) {
+    const a = this.rgbArray
+    return 'rgb(' + a[0] + ',' + a[1] + ',' + a[2] + ',' + opacity + ')'
+  }
+
+  get rgbArray () {
+    let r = 0; let g = 0; let b = 0
+    r = '0x' + this.hex[1] + this.hex[2]
+    g = '0x' + this.hex[3] + this.hex[4]
+    b = '0x' + this.hex[5] + this.hex[6]
+    return [+r, +g, +b]
+  }
 }
+const colors = {
+  blue1: new Color('#033E75'), // dark blue
+  blue2: new Color('#2B6499'), // medium blue
+  green2: new Color('#415837'), // medium green
+  brown2: new Color('#422a22'), // medium brown
+  red2: new Color('#dc3545'), // med red
+  white: new Color('#FFFFFF'),
+  black: new Color('#000000')
+}
+
+// WaypointType class helps with getting colors for profile & map
+class WaypointType {
+  constructor (obj) {
+    Object.keys(obj).forEach(k => {
+      this[k] = obj[k]
+    })
+  }
+
+  get backgroundColor () {
+    return this.bgColor || this.color
+  }
+}
+Vue.prototype.$colors = colors
 Vue.prototype.$waypointTypes = {
-  start: 'Start',
-  finish: 'Finish',
-  aid: 'Aid Station',
-  water: 'Water Source',
-  landmark: 'Landmark',
-  junction: 'Junction',
-  other: 'Other'
+  start: new WaypointType({ text: 'Start', color: colors.black }),
+  finish: new WaypointType({ text: 'Finish', color: colors.black }),
+  aid: new WaypointType({ text: 'Aid Station', color: colors.red2 }),
+  water: new WaypointType({ text: 'Water Source', color: colors.blue1 }),
+  landmark: new WaypointType({ text: 'Landmark', color: colors.green2 }),
+  junction: new WaypointType({ text: 'Junction', color: colors.black, bgColor: colors.white }),
+  other: new WaypointType({ text: 'Other', color: colors.black })
 }
 Vue.prototype.$status = Vue.observable({
   processing: false,

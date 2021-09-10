@@ -105,7 +105,7 @@ export default {
         const rs = []
         this.segments.forEach((s, i) => {
           segs.push(s)
-          if (s.waypoint.tier() === 1) {
+          if (s.waypoint.tier === 1) {
             rs.push(new SuperSegment(segs))
             segs = []
           }
@@ -132,7 +132,7 @@ export default {
           key: 'end',
           label: `${this.mode === 'segments' ? 'Loc' : 'Split'} [${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            return this.$units.distf(item.end(), 2)
+            return this.$units.distf(item.end, 2)
           },
           class: 'text-right'
         },
@@ -140,7 +140,7 @@ export default {
           key: 'alt',
           label: `Elev. [${this.$units.alt}]`,
           formatter: (value, key, item) => {
-            return this.$units.altf(item.last().waypoint.alt(), 0)
+            return this.$units.altf(item.last.waypoint.alt, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'text-right'
@@ -150,7 +150,7 @@ export default {
           label: `Gain [${this.$units.alt}]`,
           formatter: (value, key, item) => {
             const scale = this.course.scales.gain || 1
-            return this.$units.altf(item.gain() * scale, 0)
+            return this.$units.altf(item.gain * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'text-right'
@@ -160,7 +160,7 @@ export default {
           label: 'Loss [' + this.$units.alt + ']',
           formatter: (value, key, item) => {
             const scale = this.course.scales.loss || 1
-            return this.$units.altf(item.loss() * scale, 0)
+            return this.$units.altf(item.loss * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'text-right'
@@ -171,7 +171,7 @@ export default {
           key: 'name',
           label: 'Waypoint',
           formatter: (value, key, item) => {
-            return item.name()
+            return item.name
           },
           class: 'text-truncate mw-7rem'
         }
@@ -179,7 +179,7 @@ export default {
           key: 'len',
           label: `Dist. [${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            return this.$units.distf(item.len(), 2)
+            return this.$units.distf(item.len, 2)
           },
           class: 'text-right'
         }

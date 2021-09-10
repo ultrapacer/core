@@ -1,6 +1,6 @@
 <template>
   <b-list-group
-    v-if="!busy"
+    v-if="!$status.processing"
   >
     <b-list-group-item>
       <h5 class="mb-1">
@@ -601,10 +601,6 @@ export default {
     event: {
       type: Object,
       required: true
-    },
-    busy: {
-      type: Boolean,
-      default: false
     },
     terrainFactors: {
       type: Array,

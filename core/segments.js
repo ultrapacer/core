@@ -7,8 +7,8 @@ class Segment {
     })
   }
 
-  name () {
-    return this.waypoint ? this.waypoint.name() : ''
+  get name () {
+    return this.waypoint ? this.waypoint.name : ''
   }
 }
 const factors = ['gF', 'tF', 'aF', 'hF', 'dF', 'dark']
@@ -19,7 +19,7 @@ class SuperSegment {
     this.segments = segments
   }
 
-  last () {
+  get last () {
     // return last segment object
     return this.segments[this.segments.length - 1]
   }
@@ -29,51 +29,50 @@ class SuperSegment {
     return this.segments.reduce((v, s) => { return v + s[f] }, 0)
   }
 
-  end () {
-    return this.last().end
+  get end () {
+    return this.last.end
   }
 
-  name () {
-    return this.last().waypoint.name()
+  get name () {
+    return this.last.waypoint.name
   }
 
-  len () {
+  get len () {
     return this.sum('len')
   }
 
-  gain () {
+  get gain () {
     return this.sum('gain')
   }
 
-  loss () {
+  get loss () {
     return this.sum('loss')
   }
 
-  time () {
+  get time () {
     return this.sum('time')
   }
 
-  elapsed () {
-    return this.last().elapsed
+  get elapsed () {
+    return this.last.elapsed
   }
 
-  actualElapsed () {
-    const v = this.last().actualElapsed
+  get actualElapsed () {
+    const v = this.last.actualElapsed
     return isNaN(v) ? null : v
   }
 
-  tod () {
-    return this.last().tod
+  get tod () {
+    return this.last.tod
   }
 
-  factors () {
+  get factors () {
     return factors.map(f => {
       const v = this.segments.reduce((v, s) => { return v + s.len * s.factors[f] }, 0)
-      const t = this.len()
 
       return {
         name: f,
-        value: v / t
+        value: v / this.len
       }
     }).filter(f => math.round(f.value, 4) !== 1)
   }

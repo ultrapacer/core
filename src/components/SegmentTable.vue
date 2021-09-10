@@ -1,7 +1,7 @@
 <template>
   <b-table
     ref="table"
-    :busy="busy"
+    :busy="$status.processing"
     :items="rows"
     :fields="fields"
     primary-key="_index"
@@ -104,7 +104,7 @@
           v-for="wp in spannedWaypoints(row.item)"
           :key="wp.site._id"
         >
-          <b>{{ wp.name() }} ({{ $waypointTypes[wp.type()] }}), {{ $units.distf(wp.loc(), 2) }} {{ $units.dist }}</b><br>
+          <b>{{ wp.name }} ({{ $waypointTypes[wp.type].text }}), {{ $units.distf(wp.loc, 2) }} {{ $units.dist }}</b><br>
           <b-row v-if="waypointDelay(wp)">
             <b-col
               cols="4"
@@ -114,7 +114,7 @@
             </b-col>
             <b-col>{{ waypointDelay(wp) / 60 }} minutes</b-col>
           </b-row>
-          <b-row v-if="wp.description()">
+          <b-row v-if="wp.description">
             <b-col
               cols="4"
               class="text-right"
@@ -122,7 +122,7 @@
               <b>Notes:</b>
             </b-col>
             <b-col style="white-space:pre-wrap">
-              {{ wp.description() }}
+              {{ wp.description }}
             </b-col>
           </b-row>
         </b-list-group-item>
@@ -131,7 +131,7 @@
           <b>Pacing Factors</b>
           <div>
             <b-row
-              v-for="factor in row.item.factors()"
+              v-for="factor in row.item.factors"
               :key="factor.name"
               class="mb-1"
             >
@@ -188,10 +188,6 @@ export default {
       type: Object,
       default () { return null }
     },
-    busy: {
-      type: Boolean,
-      default: false
-    },
     mode: {
       type: String,
       required: true
@@ -232,7 +228,7 @@ export default {
         const rs = []
         this.segments.forEach((s, i) => {
           segs.push(s)
-          if (s.waypoint.tier() === 1 || this.visibleSubWaypoints.includes(s._index)) {
+          if (s.waypoint.tier === 1 || this.visibleSubWaypoints.includes(s._index)) {
             rs.push(new SuperSegment(segs))
             segs = []
           }
@@ -284,7 +280,7 @@ export default {
           key: 'end',
           label: 'Dist [' + this.$units.dist + ']',
           formatter: (value, key, item) => {
-            return this.$units.distf(item.end(), 2)
+            return this.$units.distf(item.end, 2)
           }
         },
         {
@@ -292,7 +288,7 @@ export default {
           label: `Gain [${this.$units.alt}]`,
           formatter: (value, key, item) => {
             const scale = this.course.scales ? this.course.scales.gain : 1
-            return this.$units.altf(item.gain() * scale, 0)
+            return this.$units.altf(item.gain * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           }
         },
@@ -301,7 +297,7 @@ export default {
           label: 'Loss [' + this.$units.alt + ']',
           formatter: (value, key, item) => {
             const scale = this.course.scales ? this.course.scales.loss : 1
-            return this.$units.altf(item.loss() * scale, 0)
+            return this.$units.altf(item.loss * scale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           }
         },
@@ -312,9 +308,9 @@ export default {
             const gs = this.course.scales ? this.course.scales.gain : 1
             const ls = this.course.scales ? this.course.scales.loss : 1
             const l = this.mode === 'segments'
-              ? item.len()
+              ? item.len
               : 1 / this.$units.distScale
-            const g = (item.gain() * gs + item.loss() * ls) / l / 10
+            const g = (item.gain * gs + item.loss * ls) / l / 10
             return (g).toFixed(1) + '%'
           }
         }
@@ -324,7 +320,7 @@ export default {
           key: 'len',
           label: 'Len [' + this.$units.dist + ']',
           formatter: (value, key, item) => {
-            return this.$units.distf(item.len(), 2)
+            return this.$units.distf(item.len, 2)
           }
         })
         f.unshift({
@@ -332,7 +328,7 @@ export default {
           label: 'End',
           class: 'text-truncate mw-7rem',
           formatter: (value, key, item) => {
-            return item.name()
+            return item.name
           }
         })
       }
@@ -342,7 +338,7 @@ export default {
             key: 'time',
             label: 'Time',
             formatter: (value, key, item) => {
-              return timeUtil.sec2string(item.time(), '[h]:m:ss')
+              return timeUtil.sec2string(item.time, '[h]:m:ss')
             }
           })
         }
@@ -350,15 +346,15 @@ export default {
           key: 'pace',
           label: `Pace [/${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            const l = this.$units.distf(item.len())
-            return timeUtil.sec2string(item.time() / l, '[h]:m:ss')
+            const l = this.$units.distf(item.len)
+            return timeUtil.sec2string(item.time / l, '[h]:m:ss')
           }
         })
         f.push({
           key: 'elapsed',
           label: 'Elapsed',
           formatter: (value, key, item) => {
-            return timeUtil.sec2string(item.elapsed(), '[h]:m:ss')
+            return timeUtil.sec2string(item.elapsed, '[h]:m:ss')
           }
         })
         if (this.$course.view === 'analyze') {
@@ -366,7 +362,7 @@ export default {
             key: 'actualElapsed',
             label: 'Actual',
             formatter: (value, key, item) => {
-              const v = item.actualElapsed()
+              const v = item.actualElapsed
               return v !== null ? timeUtil.sec2string(v, '[h]:m:ss') : ''
             },
             variant: 'success'
@@ -377,7 +373,7 @@ export default {
             key: 'tod',
             label: 'Arrival',
             formatter: (value, key, item) => {
-              return timeUtil.sec2string(item.elapsed() + this.event.startTime, 'am/pm')
+              return timeUtil.sec2string(item.elapsed + this.event.startTime, 'am/pm')
             }
           })
         }
@@ -389,7 +385,7 @@ export default {
       if (
         !this.printing &&
         this.mode === 'segments' &&
-        this.waypoints.findIndex(x => x.tier() > 1) >= 0) {
+        this.waypoints.findIndex(x => x.tier > 1) >= 0) {
         f.push({
           key: 'collapse',
           label: '',
@@ -428,7 +424,7 @@ export default {
       return item.segments.length > 1
     },
     isCollapseable: function (item) {
-      return item.segments[0].waypoint.tier() === 1 && this.visibleSubWaypoints.includes(item.segments[0]._index - 1)
+      return item.segments[0].waypoint.tier === 1 && this.visibleSubWaypoints.includes(item.segments[0]._index - 1)
     },
     isChild: function (item) {
       return this.visibleSubWaypoints.includes(item.segments[0]._index)
@@ -466,12 +462,12 @@ export default {
       })
       this.$set(row, '_showDetails', !showing)
       const len = this.mode === 'segments'
-        ? row.len()
+        ? row.len
         : 1 / this.$units.distScale
       this.$emit(
         'select',
         this.mode,
-        [row.end() - len, row.end()]
+        [row.end - len, row.end]
       )
       if (!row._showDetails) {
         this.$emit('select', this.mode, [])
@@ -482,16 +478,16 @@ export default {
     },
     spannedWaypoints: function (s) {
       return this.waypoints.filter(wp =>
-        this.$math.round(wp.loc(), 4) > this.$math.round(s.end() - s.len(), 4) &&
-        this.$math.round(wp.loc(), 4) <= this.$math.round(s.end(), 4) && (
-          wp.description() ||
+        this.$math.round(wp.loc, 4) > this.$math.round(s.end - s.len, 4) &&
+        this.$math.round(wp.loc, 4) <= this.$math.round(s.end, 4) && (
+          wp.description ||
         this.waypointDelay(wp))
       )
     },
     waypointDelay: function (wp) {
       if (!this.planAssigned || !this.plan.pacing.delays.length) return 0
       const d = this.plan.pacing.delays.find(d =>
-        this.$math.round(d.loc, 4) === this.$math.round(wp.loc(), 4)
+        this.$math.round(d.loc, 4) === this.$math.round(wp.loc, 4)
       )
       return (d) ? d.delay : 0
     },
@@ -500,8 +496,8 @@ export default {
       const sign = f - 1 > 0 ? '+' : '-'
       let str = `${sign}${(Math.abs(df) * 100).toFixed(1)}%`
       if (this.planAssigned) {
-        const time = item.time()
-        const len = item.len()
+        const time = item.time
+        const len = item.len
         const pace = time / len
         const dTime = Math.abs(time * (1 - 1 / f))
         const dPace = Math.abs(pace * (1 - 1 / f) / this.$units.distScale)
@@ -512,7 +508,7 @@ export default {
     },
     hasFactors (item) {
       let res = false
-      const facts = item.factors()
+      const facts = item.factors
       Object.keys(facts).forEach(k => {
         if (this.$math.round(facts, 4) !== 1) {
           res = true
