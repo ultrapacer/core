@@ -104,10 +104,20 @@
       Pro tip: ultraPacer is better on a desktop. Enjoy :]
     </b-alert>
     <sponsor ref="sponsor" />
-    <patreon-modal
+    <patreon
       v-if="$user.isAuthenticated"
-      ref="patreonModal"
+      ref="patreon"
     />
+    <b-alert
+      :show="$error.timer"
+      class="position-fixed fixed-bottom m-0 rounded-0 pt-1 pb-1"
+      style="z-index: 5000"
+      variant="danger"
+      fade
+      @dismissed="$error.timer=0"
+    >
+      {{ $error.msg }}
+    </b-alert>
   </div>
 </template>
 
@@ -119,7 +129,7 @@ export default {
   components: {
     MenuSocial,
     Sponsor,
-    PatreonModal: () => import(/* webpackPrefetch: true */ './components/PatreonModal.vue')
+    Patreon: () => import(/* webpackPrefetch: true */ './components/Patreon.vue')
   },
   data () {
     return {

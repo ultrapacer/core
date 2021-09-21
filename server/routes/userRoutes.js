@@ -87,7 +87,7 @@ userRoutes.route('/:id').put(async function (req, res) {
         'membership.patreon', 'membership.last_annoyed', 'membership.next_annoy'
       ]
       if (currentUser.admin) {
-        fields.push('membership.active', 'membership.method')
+        fields.push('membership', 'membership.active', 'membership.method')
       }
 
       // loop through available fields and assign applicable ones to update

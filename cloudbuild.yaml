@@ -5,7 +5,7 @@ steps:
 - name: node:10.15.1
   entrypoint: npm
   args: ["run", "build"]
-  secretEnv: ['GOOGLE_ANALYTICS_KEY', 'THUNDERFOREST_API_KEY', 'AUTH0_DOMAIN', 'AUTH0_CLIENT_ID', 'AUTH0_AUDIENCE', 'GOOGLE_API_KEY', 'SMTP_USERNAME', 'SMTP_PASSWORD', 'PATREON_ACCESS_TOKEN', 'PATREON_CAMPAIGN', 'STRAVA_CLIENT_ID', 'STRAVA_CLIENT_SECRET', 'STRAVA_REFRESH_TOKEN']
+  secretEnv: ['GOOGLE_ANALYTICS_KEY', 'THUNDERFOREST_API_KEY', 'AUTH0_DOMAIN', 'AUTH0_CLIENT_ID', 'AUTH0_AUDIENCE', 'GOOGLE_API_KEY', 'SMTP_USERNAME', 'SMTP_PASSWORD', 'PATREON_CLIENT_ID', 'PATREON_CLIENT_SECRET', 'PATREON_CAMPAIGN', 'PATREON_CREATOR_ID', 'STRAVA_CLIENT_ID', 'STRAVA_CLIENT_SECRET', 'STRAVA_REFRESH_TOKEN']
 - name: "gcr.io/cloud-builders/gcloud"
   args: ["app", "deploy"]
 timeout: "1600s"
@@ -27,10 +27,14 @@ availableSecrets:
     env: 'SMTP_USERNAME'
   - versionName: projects/409830855103/secrets/SMTP_PASSWORD/versions/1
     env: 'SMTP_PASSWORD'
-  - versionName: projects/409830855103/secrets/PATREON_ACCESS_TOKEN/versions/1
-    env: 'PATREON_ACCESS_TOKEN'
-  - versionName: projects/409830855103/secrets/PATREON_CAMPAIGN/versions/1
+  - versionName: projects/409830855103/secrets/PATREON_CLIENT_ID/versions/latest
+    env: 'PATREON_CLIENT_ID'
+  - versionName: projects/409830855103/secrets/PATREON_CLIENT_SECRET/versions/latest
+    env: 'PATREON_CLIENT_SECRET'
+  - versionName: projects/409830855103/secrets/PATREON_CAMPAIGN/versions/latest
     env: 'PATREON_CAMPAIGN'
+  - versionName: projects/409830855103/secrets/PATREON_CREATOR_ID/versions/latest
+    env: 'PATREON_CREATOR_ID'
   - versionName: projects/409830855103/secrets/STRAVA_CLIENT_ID/versions/1
     env: 'STRAVA_CLIENT_ID'
   - versionName: projects/409830855103/secrets/STRAVA_CLIENT_SECRET/versions/1

@@ -22,8 +22,10 @@ const keynames = [
   'AUTH0_DOMAIN',
   'AUTH0_AUDIENCE',
   'GOOGLE_API_KEY',
-  'PATREON_ACCESS_TOKEN',
+  'PATREON_CLIENT_ID',
+  'PATREON_CLIENT_SECRET',
   'PATREON_CAMPAIGN',
+  'PATREON_CREATOR_ID',
   'STRAVA_CLIENT_ID',
   'STRAVA_CLIENT_SECRET',
   'STRAVA_REFRESH_TOKEN',
@@ -96,7 +98,8 @@ function startUp () {
   app.use('/api/plan', checkJwt, planRoutes)
   app.use('/api/elevation', elevation)
   app.use('/api/email', checkJwt, email)
-  app.use('/api/patreon', checkJwt, patreon)
+  app.use('/api/patreon', checkJwt, patreon.auth) // authenticated patreon routes
+  app.use('/api/open/patreon', patreon.open) // unauthenticated patreon routes
   app.use('/api/strava', strava)
   app.use('/api/external', external)
 

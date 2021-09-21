@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@google-cloud/secret-manager": "^3.9.1",
+    "@nathanhigh/patreon": "^0.5.2",
     "auth0-js": "^9.16.2",
     "body-parser": "^1.19.0",
     "bootstrap-vue-loader": "^1.0.6",
@@ -30,7 +31,6 @@
     "mongoose": "^5.13.7",
     "node-fetch": "^2.6.1",
     "nodemailer": "^6.6.3",
-    "patreon": "^0.4.1",
     "pretty-data": "^0.40.0",
     "sgeo": "0.0.5",
     "vue": "^2.6.14",

@@ -15,8 +15,16 @@
         <b-form-input
           v-model="membership"
           disabled
-          style="background-color:white"
+          style="background-color:white; min-width: 75px"
         />
+        <b-input-group-append>
+          <b-button
+            variant="primary"
+            @click="$parent.$refs.patreon.patreonOath()"
+          >
+            <v-icon name="brands/patreon" />
+          </b-button>
+        </b-input-group-append>
       </b-input-group>
 
       <b-input-group
@@ -122,8 +130,14 @@ export default {
         }
       ],
       altModel: Object.assign({}, this.$core.normFactor.defaults.alt),
-      membership: 'free',
       model: {}
+    }
+  },
+  computed: {
+    membership: function () {
+      const s = this.$user.membership.method
+      if (this.$user.membership.active && s) return s.charAt(0).toUpperCase() + s.slice(1)
+      return 'Free'
     }
   },
   watch: {
@@ -156,12 +170,6 @@ export default {
       if (user.altModel !== null) {
         this.customAltModel = true
         this.altModel = Object.assign({}, user.altModel)
-      }
-      const s = this.$user.membership.method
-      if (this.$user.membership.active && s) {
-        this.membership = s.charAt(0).toUpperCase() + s.slice(1)
-      } else {
-        this.membership = 'Free'
       }
       this.$status.loading = false
     }

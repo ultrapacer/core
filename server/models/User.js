@@ -42,7 +42,7 @@ const UserSchema = new Schema({
         type: Date
       },
       patreon: {
-        email: {
+        id: {
           type: 'String'
         }
       }

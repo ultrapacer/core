@@ -160,6 +160,20 @@ Vue.prototype.$config = Vue.observable({
   testing: testing
 })
 
+Vue.prototype.$error = Vue.observable({
+  handle: function (gtag, error, options = {}) {
+    gtag.exception({
+      description: error.toString(),
+      fatal: options.fatal || false
+    })
+    this.msg = options.msg || error.toString()
+    this.timer = options.timer || 5
+    console.log(error)
+  },
+  msg: '',
+  timer: 0
+})
+
 //  -----  VUE FILTERS  -----  //
 Vue.filter('commas', function (value) {
   if (!value) {

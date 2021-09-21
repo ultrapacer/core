@@ -139,6 +139,12 @@ export default {
   emailUser (id, data) {
     return this.executeAuth('post', `/api/email/user/${id}`, data)
   },
+  patreonGetLogin () {
+    return this.executeAuth('get', '/api/patreon/url')
+  },
+  patreonUpdateUser (code) {
+    return this.executeAuth('put', `/api/patreon/user/${code}`)
+  },
   patreonPatronsRefresh () {
     return this.executeAuth('get', '/api/patreon/patrons/refresh')
   }
