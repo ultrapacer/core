@@ -46,7 +46,7 @@ try {
   const client = new SecretManagerServiceClient()
   Promise.all(keynames.map(n => {
     return client.accessSecretVersion({
-      name: `projects/409830855103/secrets/${n}/versions/1`
+      name: `projects/409830855103/secrets/${n}/versions/latest`
     })
   })).then(res => {
     keynames.forEach((n, i) => {
