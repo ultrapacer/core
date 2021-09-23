@@ -555,11 +555,13 @@ function calcPacing (data) {
       lastTest = [...newTest]
     }
     logger(`geo.iteratePaceCalc: ${i + 2} iterations`, t)
-    const s = calcSunTime({
-      points: points,
-      event: data.event
-    })
-    pacing = { ...pacing, ...s }
+    if (data.event?.sun) {
+      const s = calcSunTime({
+        points: points,
+        event: data.event
+      })
+      pacing = { ...pacing, ...s }
+    }
   }
 
   logger('geo.calcPacing', t)

@@ -1076,23 +1076,26 @@ export default {
       // update splits, segments, and pacing
       this.updateFlag = false
       this.$status.processing = true
-      const result = this.$core.geo.calcPacing({
-        course: this.course,
-        plan: this.plan,
-        points: this.points,
-        pacing: this.plan.pacing,
-        event: this.event,
-        delays: this.delays,
-        heatModel: this.heatModel,
-        scales: this.scales,
-        terrainFactors: this.terrainFactors
-      })
-      this.points = result.points
-      this.$set(this.plan, 'pacing', result.pacing) // use $set to make reactive
+      try {
+        const result = this.$core.geo.calcPacing({
+          course: this.course,
+          plan: this.plan,
+          points: this.points,
+          pacing: this.plan.pacing,
+          event: this.event,
+          delays: this.delays,
+          heatModel: this.heatModel,
+          scales: this.scales,
+          terrainFactors: this.terrainFactors
+        })
+        this.points = result.points
+        this.$set(this.plan, 'pacing', result.pacing) // use $set to make reactive
 
-      // update splits and segments
-      await this.createPlanSplits()
-
+        // update splits and segments
+        await this.createPlanSplits()
+      } catch (error) {
+        this.$error.handle(this.$gtag, error)
+      }
       this.$status.processing = false
       this.$logger('Course|updatePacing', t)
     },
