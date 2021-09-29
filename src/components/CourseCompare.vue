@@ -127,9 +127,6 @@ export default {
     async load () {
       this.$status.processing = true
       this.$nextTick(async () => {
-        if (this.gpxPoints.length) {
-          this.$core.geo.addLoc(this.gpxPoints)
-        }
         const result = await this.cb(this.gpxPoints, this.startTime)
         if (result.match) {
           this.$refs.modal.hide()
@@ -147,20 +144,22 @@ export default {
         reader.onload = e => {
           this.filename = this.gpxFile.name
           this.$logger(`CourseCompare|loadGPX : loaded ${this.filename} loaded.`)
-          gpxParse.parseGpx(e.target.result, (error, data) => {
+          gpxParse.parseGpx(e.target.result, async (error, data) => {
             if (error) {
               this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
               throw error
             } else {
               this.startTime = moment(data.tracks[0].segments[0][0].time)
-              this.gpxPoints = data.tracks[0].segments[0].map(p => {
-                return {
-                  alt: p.elevation,
-                  lat: p.lat,
-                  lon: p.lon,
-                  elapsed: moment(p.time).diff(this.startTime, 'seconds')
-                }
+              const gpxpoints = data.tracks[0].segments[0].map(p => {
+                return [p.lat, p.lon, p.elevation]
               })
+              this.gpxPoints = await this.$core.tracks.create(gpxpoints, { clean: false })
+
+              // add in elapsed time:
+              this.gpxPoints.forEach((p, i) => {
+                p.elapsed = moment(data.tracks[0].segments[0][i].time).diff(this.startTime, 'seconds')
+              })
+
               this.gpxFileInvalidMsg = ''
             }
           })

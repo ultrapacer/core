@@ -183,7 +183,6 @@
 import api from '@/api'
 import FormTip from '@/forms/FormTip'
 import HelpDoc from '@/docs/waypoint.md'
-import wputil from '../util/waypoints'
 export default {
   components: {
     HelpDoc,
@@ -311,7 +310,12 @@ export default {
     async save () {
       if (this.$status.processing) { return }
       this.$status.processing = true
-      wputil.updateLLA(this.model, this.points)
+
+      // get and add LLA for waypoint:
+      const wp = new this.$core.waypoints.Waypoint(this.model)
+      wp.refreshLLA(this.points)
+      ;({ lat: this.model.lat, lon: this.model.lon, alt: this.model.alt } = wp)
+
       if (this.model._id) {
         this.$gtage(this.$gtag, 'Waypoint', 'edit', this.course.public ? this.course.name : 'private')
         await api.updateWaypoint(this.model._id, this.model)

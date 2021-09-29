@@ -164,15 +164,16 @@ CourseSchema.methods.updateCache = async function () {
   const pnts = course.points
 
   const loops = this.loops || 1
-  core.points.loopPoints(pnts, loops)
-
-  const { points, scales } = core.geo.processPoints(
-    core.geo.arraysToObjects(pnts),
-    this.distance * loops,
-    this.gain * loops,
-    this.loss * loops
+  const points = await core.tracks.create(
+    pnts,
+    {
+      loops: loops,
+      distance: this.distance * loops,
+      gain: this.gain * loops,
+      loss: this.loss * loops
+    }
   )
-  this.scales = scales
+  this.scales = points.scales
 
   const wpls = core.waypoints.loopedWaypoints(waypoints, loops, this.distance)
 

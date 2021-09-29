@@ -69,7 +69,12 @@ export default {
   computed: {
     chartOptions: function () {
       this.$logger('CourseProfile|chartOptions')
-      return {
+
+      // average altitude, for min/max y-axis-1 scale
+      let avgAlt = this.points.map(p => { return p.alt }).reduce((a, b) => a + b) / this.points.length
+      avgAlt = this.$math.round(this.$units.altf(avgAlt) / 20, 0) * 20
+
+      const opts = {
         animation: {
           duration: 0
         },
@@ -91,17 +96,21 @@ export default {
                 }
               }
             },
-            max: this.$units.distf(this.course.totalDistance()) + 0.01
+            max: this.$units.distf(this.course.totalDistance())
           },
 
           'y-axis-1': {
             display: true,
-            position: 'left'
+            position: 'left',
+            suggestedMin: avgAlt - (this.$units.alt === 'ft' ? 100 : 50),
+            suggestedMax: avgAlt + (this.$units.alt === 'ft' ? 100 : 50)
           },
           'y-axis-2': {
             type: 'linear',
             display: !this.showActual,
-            position: 'right'
+            position: 'right',
+            suggestedMin: -2,
+            suggestedMax: 2
           },
           'y-axis-3': {
             type: 'linear',
@@ -162,6 +171,8 @@ export default {
         },
         onClick: this.click
       }
+
+      return opts
     },
     chartData: function () {
       this.$logger('CourseProfile|chartData')

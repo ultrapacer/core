@@ -116,49 +116,13 @@
       >
         <b-tabs
           ref="tables"
-          v-model="tableTabIndex"
+          v-model="tablesTab"
           content-class="mt-1"
         >
-          <b-tab
-            title="Segments"
-            active
-          >
-            <segment-table
-              v-if="segments.length"
-              ref="segmentTable"
-              :event="event"
-              :course="course"
-              :segments="segments"
-              :waypoints="waypoints"
-              :plan="plan"
-              :mode="'segments'"
-              :table-height="printing==='Segments' ? 0 : tableHeight"
-              :visible="tableTabIndex===0"
-              :printing="printing==='Segments'"
-              :class="printing==='Segments' ? 'pr-2' : ''"
-              @select="updateFocus"
-            />
-          </b-tab>
-          <b-tab title="Splits">
-            <segment-table
-              v-if="splits.length"
-              ref="splitTable"
-              :event="event"
-              :course="course"
-              :segments="splits"
-              :waypoints="waypoints"
-              :plan="plan"
-              :mode="'splits'"
-              :table-height="printing==='Splits' ? 0 : tableHeight"
-              :class="printing==='Splits' ? 'pr-2' : ''"
-              :visible="tableTabIndex===1"
-              :printing="printing==='Splits'"
-              @select="updateFocus"
-            />
-          </b-tab>
           <b-tab title="Waypoints">
             <waypoint-table
               ref="waypointTable"
+              active
               :event="event"
               :course="course"
               :waypoints="waypoints"
@@ -168,7 +132,7 @@
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"
               :table-height="tableHeight && printing !== 'Waypoints' ? tableHeight - (owner ? 42 : 0) : 0"
-              :visible="tableTabIndex===2"
+              :visible="tablesTab===0"
               :printing="printing==='Waypoints'"
               :class="printing==='Waypoints' ? 'pr-2' : ''"
               @setUpdateFlag="setUpdateFlag"
@@ -191,6 +155,42 @@
             </b-row>
           </b-tab>
           <b-tab
+            title="Segments"
+          >
+            <segment-table
+              v-if="segments.length"
+              ref="segmentTable"
+              :event="event"
+              :course="course"
+              :segments="segments"
+              :waypoints="waypoints"
+              :plan="plan"
+              :mode="'segments'"
+              :table-height="printing==='Segments' ? 0 : tableHeight"
+              :visible="tablesTab===1"
+              :printing="printing==='Segments'"
+              :class="printing==='Segments' ? 'pr-2' : ''"
+              @select="updateFocus"
+            />
+          </b-tab>
+          <b-tab title="Splits">
+            <segment-table
+              v-if="splits.length"
+              ref="splitTable"
+              :event="event"
+              :course="course"
+              :segments="splits"
+              :waypoints="waypoints"
+              :plan="plan"
+              :mode="'splits'"
+              :table-height="printing==='Splits' ? 0 : tableHeight"
+              :class="printing==='Splits' ? 'pr-2' : ''"
+              :visible="tablesTab===2"
+              :printing="printing==='Splits'"
+              @select="updateFocus"
+            />
+          </b-tab>
+          <b-tab
             v-if="course.splits.kilometers"
             title="Details"
             :style="tableHeight ? {maxHeight: tableHeight + 'px', overflowY: 'auto'} : {}"
@@ -202,7 +202,7 @@
               :terrain-factors="terrainFactors"
               :event="event"
               :plan="plan"
-              :visible="tableTabIndex===3"
+              :visible="tablesTab===3"
             />
           </b-tab>
         </b-tabs>
@@ -317,7 +317,6 @@
 
 <script>
 import api from '@/api'
-import wputil from '../util/waypoints'
 import CourseShare from '../components/CourseShare'
 import DeleteModal from '../components/DeleteModal'
 import SegmentTable from '../components/SegmentTable'
@@ -363,7 +362,7 @@ export default {
       waypoint: {},
       focus: [],
       highlightPoint: null,
-      tableTabIndex: 0,
+      tablesTab: 0,
       tableTabNames: ['Segments', 'Splits', 'Waypoints', 'Details'],
       updateFlag: false,
       showMenu: false,
@@ -419,10 +418,10 @@ export default {
           icon: 'running',
           click: () => { this.loadCompare() }
         }, {
-          text: `Print ${this.tableTabNames[this.tableTabIndex]}${this.tableTabIndex === 3 ? ' Page' : ' Table'}`,
+          text: `Print ${this.tableTabNames[this.tablesTab]}${this.tablesTab === 3 ? ' Page' : ' Table'}`,
           disabled: this.$course.view === 'edit',
           icon: 'print',
-          click: () => { this.print(this.tableTabNames[this.tableTabIndex]) }
+          click: () => { this.print(this.tableTabNames[this.tablesTab]) }
         }, {
           text: 'Print Profile Chart',
           disabled: this.$course.view === 'edit',
@@ -576,7 +575,7 @@ export default {
       if (val === 'edit') {
         this.clearPlan()
         this.waypoints.filter(wp => !wp.visible).forEach(wp => { wp.show() })
-        this.tableTabIndex = 2
+        this.tablesTab = 0
       } else {
         this.waypoints.filter(wp => wp.tier > 1).forEach(wp => { wp.hide() })
         this.selectRecentPlan(() => { this.newPlan() })
@@ -587,10 +586,10 @@ export default {
         this.stopCompare()
       }
     },
-    tableTabIndex: function (val) {
+    tablesTab: function (val) {
       this.focus = []
       // if editing and navigating away from waypoint table, recalc
-      if (this.updateFlag && this.tableTabIndex !== 2) {
+      if (this.updateFlag && this.tablesTab > 0) {
         this.createSplits()
         if (this.planAssigned) {
           this.clearPlanSplits()
@@ -740,17 +739,21 @@ export default {
 
       // if looped course, repeat points array
       if (!this.course.loops) this.course.loops = 1
-      this.$core.points.loopPoints(pnts, this.course.loops)
-
-      this.points = this.$core.geo.arraysToObjects(pnts)
-      const { points, scales } = this.$core.geo.processPoints(
-        this.points,
-        this.course.totalDistance(),
-        this.course.totalGain(),
-        this.course.totalLoss()
+      this.points = await this.$core.tracks.create(
+        pnts,
+        {
+          loops: this.course.loops,
+          distance: this.course.totalDistance(),
+          gain: this.course.totalGain(),
+          loss: this.course.totalLoss()
+        }
       )
-      this.points = points
-      this.scales = scales
+
+      // set waypoint lat/lon/alt from points:
+      this.waypoints.filter(wp => wp.loop === 1 || wp.type === 'finish')
+        .forEach(wp => { wp.refreshLLA(this.points) })
+
+      this.scales = this.points.scales
 
       // set lat/lon in event object:
       this.event.lat = this.points[0].lat
@@ -760,10 +763,6 @@ export default {
         this.event.start = this.course.eventStart
       }
 
-      // refresh LLA's from course points:
-      this.course.waypoints.forEach(wp => {
-        wputil.updateLLA(wp, this.points)
-      })
       if (this.planAssigned) {
         await this.calcPlan()
       }
@@ -775,8 +774,9 @@ export default {
       this.$refs.courseEdit.show(this.course)
     },
     async reloadCourse () {
-      this.focus = []
-      await this.initialize()
+      // reload current page
+      this.$status.loading = true
+      this.$router.go()
     },
     async deleteCourse (course, cb) {
       this.$refs.delModal.show(
@@ -833,17 +833,20 @@ export default {
       )
     },
     updateWaypointLocation (waypoint, loc) {
-      waypoint.location = loc
-      wputil.updateLLA(waypoint, this.points)
-      // wputil.sortWaypointsByDistance(this.course.waypoints)
-      if (String(waypoint._id) === this.updatingWaypointTimeoutID) {
-        clearTimeout(this.updatingWaypointTimeout)
+      try {
+        waypoint.loc = loc
+        waypoint.refreshLLA(this.points)
+        if (String(waypoint.site._id) === this.updatingWaypointTimeoutID) {
+          clearTimeout(this.updatingWaypointTimeout)
+        }
+        this.updatingWaypointTimeoutID = String(waypoint.site._id)
+        this.updatingWaypointTimeout = setTimeout(() => {
+          api.updateWaypoint(waypoint.site._id, waypoint.site)
+        }, 2000)
+        this.setUpdateFlag()
+      } catch (error) {
+        this.$error.handle(this.$gtag, error)
       }
-      this.updatingWaypointTimeoutID = String(waypoint._id)
-      this.updatingWaypointTimeout = setTimeout(() => {
-        api.updateWaypoint(waypoint._id, waypoint)
-      }, 2000)
-      this.setUpdateFlag()
     },
     updateWaypointDelay (waypoint, delay) {
       try {
@@ -1077,7 +1080,7 @@ export default {
       this.updateFlag = false
       this.$status.processing = true
       try {
-        const result = this.$core.geo.calcPacing({
+        const pacing = this.$core.geo.calcPacing({
           course: this.course,
           plan: this.plan,
           points: this.points,
@@ -1088,9 +1091,7 @@ export default {
           scales: this.scales,
           terrainFactors: this.terrainFactors
         })
-        this.points = result.points
-        this.$set(this.plan, 'pacing', result.pacing) // use $set to make reactive
-
+        this.$set(this.plan, 'pacing', pacing) // use $set to make reactive
         // update splits and segments
         await this.createPlanSplits()
       } catch (error) {
@@ -1103,7 +1104,7 @@ export default {
       this.focus = focus
     },
     waypointClick: function (waypoint) {
-      this.tableTabIndex = 2
+      this.tablesTab = 0
       this.$refs.waypointTable.selectWaypoint(waypoint)
     },
     setUpdateFlag: function () {
@@ -1134,7 +1135,7 @@ export default {
           this.event.start = startTime
           await this.updatePacing()
           this.$status.processing = true
-          const res = await this.$core.geo.addActuals(this.points, actual)
+          const res = await this.points.addActuals(actual)
           if (res.match) {
             this.$gtage(this.$gtag, 'Course', 'compare', this.publicName, 1)
             this.comparing = true

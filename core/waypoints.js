@@ -1,3 +1,6 @@
+const { logger } = require('./logger')
+const { isNumeric } = require('./math')
+
 class Waypoint {
   // #courseDistance; need webpack 5
   constructor (site, loop = 1, courseDistance = 0) {
@@ -19,13 +22,21 @@ class Waypoint {
   get description () { return this.site.description }
 
   get loc () {
-    // return this.site.location + (this.#courseDistance * (this.loop - 1))
-    return this.site.location + (this.courseDistance * (this.loop - 1))
+    const v = (this.type === 'finish' && this.courseDistance) ? this.courseDistance : this.site.location
+    return v + (this.courseDistance * (this.loop - 1))
+  }
+
+  set loc (v) {
+    if (!isNumeric(v)) throw new Error('Wrong format for Waypoint.loc')
+    this.site.location = this.courseDistance ? v % this.courseDistance : v
   }
 
   get lat () { return this.site.lat }
   get lon () { return this.site.lon }
   get alt () { return this.site.elevation }
+  set lat (v) { this.site.lat = v }
+  set lon (v) { this.site.lon = v }
+  set alt (v) { this.site.elevation = v }
   get tier () { return this.site.tier }
   get type () { return this.site.type }
 
@@ -106,15 +117,15 @@ class Waypoint {
     }
   }
 
-  actualDelay (points) {
-    if (points[0].actual === undefined) { return undefined }
+  actualDelay (track) {
+    if (track[0].actual === undefined) { return undefined }
     if (!this.loc || this.type === 'finish') return 0
     const threshold = 0.1 // km, distance away for time reference
     const l = this.loc
-    const start = Math.max(0, points.findIndex(p => p.loc > l - threshold) - 1)
-    const end = Math.min(points.findIndex((p, i) => i > start && p.loc > l + threshold), points.length - 1)
-    const plannedNoDelay = points[end].time - points[start].time
-    const actualWithDelay = points[end].actual.elapsed - points[start].actual.elapsed
+    const start = Math.max(0, track.findIndex(p => p.loc > l - threshold) - 1)
+    const end = Math.min(track.findIndex((p, i) => i > start && p.loc > l + threshold), track.length - 1)
+    const plannedNoDelay = track[end].time - track[start].time
+    const actualWithDelay = track[end].actual.elapsed - track[start].actual.elapsed
     return plannedNoDelay && actualWithDelay ? actualWithDelay - plannedNoDelay : undefined
   }
 
@@ -130,6 +141,32 @@ class Waypoint {
     return segments.find(s =>
       s.waypoint.site._id === this.site._id && s.waypoint.loop === this.loop
     )
+  }
+
+  // function updates the lat/lon/alt of a waypoint
+  refreshLLA (track, opts = {}) {
+    logger(`Waypoint|refreshLLA : ${this.name}`)
+
+    let lat, lon, alt, ind
+
+    // if start use start lla
+    if (this.type === 'start') {
+      ;({ lat, lon, alt } = track[0])
+
+    // if finish use finish lla
+    } else if (this.type === 'finish') {
+      ;({ lat, lon, alt } = track.last)
+
+    // otherwise interpolate the lla from track array
+    } else {
+      opts.start = this.site.pointsIndex || 0
+      ;({ lat, lon, alt, ind } = track.getLLA(this.loc, opts))
+    }
+    // update site values
+    this.lat = lat
+    this.lon = lon
+    this.alt = alt
+    if (ind) this.site.pointsIndex = ind
   }
 }
 

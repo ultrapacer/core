@@ -1,59 +1,8 @@
-/* eslint new-cap: 0 */
 const nF = require('./normFactor')
-const { interp, round, wlslr } = require('./math')
-const sgeo = require('sgeo')
-const gpxParse = require('gpx-parse')
+const { round } = require('./math')
 const { logger } = require('./logger')
 const { Segment } = require('./segments')
-
-function calcStats (points, smooth = true) {
-  // return course { gain, loss, dist }
-  const t = logger(`geo|calcStats smooth=${smooth}`)
-  const d = points[points.length - 1].loc
-  let gain = 0
-  let loss = 0
-  let delta = 0
-  if (smooth) {
-    const locs = points.map(x => x.loc)
-    points = pointWLSQ(points, locs, 0.05)
-  }
-  let last = points[0].alt
-  points.forEach(p => {
-    delta = p.alt - last
-    if (delta < 0) {
-      loss += delta
-    } else {
-      gain += delta
-    }
-    last = p.alt
-  })
-  logger(`geo|calcStats smooth=${smooth}`, t)
-  return {
-    gain: gain,
-    loss: loss,
-    dist: d
-  }
-}
-
-function interpp (p1, p2, s) {
-  const p = {
-    loc: s.end,
-    grade: p1.grade
-  }
-  const fs = ['alt']
-  const hasTOD = typeof (p1.tod) !== 'undefined' && typeof (p2.tod) !== 'undefined'
-  if (hasTOD) { fs.push('tod') }
-  fs.forEach(f => {
-    p[f] = interp(
-      p1.loc,
-      p2.loc,
-      p1[f],
-      p2[f],
-      s.end
-    )
-  })
-  return p
-}
+const { interpolatePoint } = require('./points')
 
 function facts (a, b, data) {
   const hasTOD = typeof (a.tod) !== 'undefined' && typeof (b.tod) !== 'undefined'
@@ -75,10 +24,9 @@ function calcSegments (p, breaks, pacing) {
   // p: points array of {loc, lat, lon, alt}
   // breaks: array of [loc,loc,...] to break on
   // pacing: pacing object with np and drift fields
-  p = p.filter((x, i) => i === 0 || x.dloc > 0)
   const cLen = p[p.length - 1].loc
   const s = [] // segments array
-  const alts = getElevation(p, breaks)
+  const alts = p.getLLA(breaks).map(lla => { return lla.alt })
   let len = 0
   let i
   let il
@@ -146,7 +94,7 @@ function calcSegments (p, breaks, pacing) {
 
       // if segment ends between p1 & p2, calc two chunks:
       if (p2.loc > s1.end && k < s.length - 1) {
-        const p3 = interpp(p1, p2, s1)
+        const p3 = interpolatePoint(p1, p2, s1.end)
         arr = [
           { s: s1, p: [p1, p3] },
           { s: s[k + 1], p: [p3, p2] }
@@ -202,319 +150,15 @@ function calcSegments (p, breaks, pacing) {
   return s
 }
 
-function addLoc (p, distance = null) {
-  // add loc & dloc fields
-  // p: points array of {lat, lon, alt}
-  let d = 0
-  let l = 0
-  p[0].loc = 0
-  p[0].dloc = 0
-  for (let i = 1, il = p.length; i < il; i++) {
-    d = gpxParse.utils.calculateDistance(
-      p[i - 1].lat,
-      p[i - 1].lon,
-      p[i].lat,
-      p[i].lon
-    )
-    l += d
-    p[i].dloc = d
-    p[i].loc = l
-  }
-
-  // if specifying other distance, scale distances:
-  if (distance) {
-    if (round(p[p.length - 1].loc, 4) !== round(distance, 4)) {
-      const scale = distance / p[p.length - 1].loc
-      p.forEach((x, i) => {
-        x.dloc = x.dloc * scale
-        x.loc = x.loc * scale
-      })
-    }
-  }
-
-  return p
-}
-
-function addGrades (points) {
-  // add grade field to points array
-  const t = logger('geo|addGrades')
-  const locs = points.map(x => x.loc)
-  const lsq = pointWLSQ(points, locs, 0.05)
-  points.forEach((p, i) => {
-    p.grade = round(lsq[i].grade, 4)
-  })
-  logger('geo|addGrades', t)
-  return points
-}
-
-function cleanUp (points) {
-  // function fixes issues with tracks
-  const t = logger('geo|cleanUp')
-  // REMOVE ANY ZERO DISTANCE POINTS:
-  const prev = points.length
-  points = points.filter((p, i) => i === 0 || p.dloc > 0)
-  if (prev > points.length) {
-    logger(`geo|cleanUp: removed ${prev - points.length} zero-distance points`)
-  }
-
-  // REMOVE ALITITUDE STEPS FROM THE GPX. HAPPENS SOMETIMES WITH STRAVA DEM
-  const at = 20 // meters step size
-  const gt = 200 // % grade
-  let i = 0
-  // create array of step indices
-  const steps = []
-  while (i >= 0) {
-    i = points.findIndex((p, j) =>
-      j > i &&
-      (
-        Math.abs((p.alt - points[j - 1].alt)) > at ||
-        Math.abs((p.alt - points[j - 1].alt) / p.dloc / 10) > gt
-      )
-    )
-    if (i > 0) { steps.push(i) }
-  }
-  // for each step, find extents of adjacent flat sections and interp new alt
-  steps.forEach(s => {
-    let a = s - 1
-    while (a >= 0 && points[s - 1].alt === points[a].alt) { a -= 1 }
-    a += 1
-    let z = s
-    while (z <= points.length - 1 && points[s].alt === points[z].alt) { z += 1 }
-    z -= 1
-    if (z - a > 1) {
-      logger(`geo|cleanUp: fixing altitude step at ${round(points[s].loc, 2)} km from ${round(points[a].alt, 2)} m to ${round(points[z].alt, 2)} m`)
-      for (i = a + 1; i < z; i++) {
-        points[i].alt = interp(
-          points[a].loc,
-          points[z].loc,
-          points[a].alt,
-          points[z].alt,
-          points[i].loc
-        )
-      }
-    }
-  }
-  )
-  logger('geo|cleanUp', t)
-  return points
-}
-
-function pointWLSQ (points, locs, gt) {
-  // p: points array of {loc, lat, lon, alt}
-  // locs: array of locations (km)
-  // gt: grade smoothing threshold
-  const mbs = wlslr(
-    points.map(p => { return p.loc }),
-    points.map(p => { return p.alt }),
-    locs,
-    gt
-  )
-  const ga = []
-  locs.forEach((x, i) => {
-    let grade = mbs[i][0] / 10
-    if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
-    const alt = (x * mbs[i][0]) + mbs[i][1]
-    ga.push({
-      grade: grade,
-      alt: alt
-    })
-  })
-  return ga
-}
-
-function getElevation (points, location) {
-  let locs = []
-  const elevs = []
-  let num = 0
-  if (Array.isArray(location)) {
-    locs = [...location]
-  } else {
-    locs = [location]
-  }
-  location = locs.shift()
-  for (let i = 0, il = points.length; i < il; i++) {
-    if (points[i].loc >= location || i === il - 1) {
-      if (points[i].loc === location || i === il - 1) {
-        elevs.push(points[i].alt)
-      } else {
-        if (points[i + 1].loc === points[i].loc) {
-          elevs.push((points[i + 1].alt + points[i].alt) / 2)
-        } else {
-          num = points[i].alt + (location - points[i].loc) * (points[i + 1].alt - points[i].alt) / (points[i + 1].dloc)
-          elevs.push(num)
-        }
-      }
-      location = locs.shift()
-      if (location == null) {
-        break
-      }
-    }
-  }
-  if (elevs.length > 1) {
-    return elevs
-  } else {
-    return elevs[0]
-  }
-}
-
-function getLatLonAltFromDistance (points, location, start) {
-  // if the start index is passed, make sure you go the right direction:
-  let i0 = Math.min(start, points.length - 1) || 0
-  if (i0 > 0 && (points[i0].loc > location)) {
-    for (let j = i0; j >= 0; j--) {
-      if (points[j].loc <= location) {
-        i0 = j
-        break
-      }
-    }
-  }
-  let locs = []
-  const llas = []
-  if (Array.isArray(location)) {
-    locs = [...location]
-  } else {
-    locs = [location]
-  }
-  location = locs.shift()
-
-  let i = 0
-  while (i < points.length) {
-    if (points[i].loc >= location || i === points.length - 1) {
-      if (points[i].loc === location || i === points.length - 1) {
-        llas.push({
-          lat: points[i].lat,
-          lon: points[i].lon,
-          alt: points[i].alt,
-          grade: points[i].grade,
-          ind: i
-        })
-      } else {
-        if (points[i + 1].loc === points[i].loc) {
-          llas.push({
-            lat: points[i].lat,
-            lon: points[i].lon,
-            alt: (points[i + 1].alt + points[i].alt) / 2,
-            grade: (points[i + 1].grade + points[i].grade) / 2,
-            ind: i
-          })
-        } else {
-          const p1 = new sgeo.latlon(points[i - 1].lat, points[i - 1].lon)
-          const p2 = new sgeo.latlon(points[i].lat, points[i].lon)
-          const dist = location - points[i - 1].loc
-          const brng = p1.bearingTo(p2)
-          const p3 = p1.destinationPoint(brng, dist)
-          llas.push({
-            lat: Number(p3.lat),
-            lon: Number(p3.lng),
-            alt: interp(
-              points[i - 1].loc,
-              points[i].loc,
-              points[i - 1].alt,
-              points[i].alt,
-              location
-            ),
-            grade: interp(
-              points[i - 1].loc,
-              points[i].loc,
-              points[i - 1].grade,
-              points[i].grade,
-              location
-            ),
-            ind: i
-          })
-        }
-      }
-      location = locs.shift()
-      if (location == null) {
-        break
-      }
-    } else {
-      i++
-    }
-  }
-  if (llas.length > 1) {
-    return llas
-  } else {
-    return llas[0]
-  }
-}
-
-function reduce (points, distance = null) {
-  // reduce density of points for processing
-  // correct distance
-
-  const spacing = 0.025 // meters between points
-  if (
-    points[0].loc === undefined ||
-    (distance && (round(points[points.length - 1].loc, 4) !== round(distance, 4)))
-  ) {
-    addLoc(points, distance)
-  }
-
-  // only reformat if it cuts the size down in half
-  if (points[points.length - 1].loc / spacing < points.length / 2) {
-    const len = points[points.length - 1].loc
-    const numpoints = Math.floor(len / spacing) + 1
-    const xs = Array(numpoints).fill(0).map((e, i) => round(i++ * spacing, 3))
-    if (xs[xs.length - 1] < len) {
-      xs.push(len)
-    }
-    const adj = pointWLSQ(
-      points,
-      xs,
-      2 * spacing
-    )
-    const llas = getLatLonAltFromDistance(points, xs, 0)
-
-    // reformat
-    const points2 = xs.map((x, i) => {
-      return {
-        loc: x,
-        dloc: (i > 0) ? x - xs[i - 1] : 0,
-        lat: round(llas[i].lat, 6),
-        lon: round(llas[i].lon, 6),
-        alt: round(adj[i].alt, 2),
-        grade: round(adj[i].grade, 4)
-      }
-    })
-
-    logger(`geo.reduce: Reduced from ${points.length} to ${points2.length} points`)
-    return points2
-  } else {
-    const points2 = points.map((p, i) => {
-      const p2 = { ...p }
-      p2.grade = i > 0 ? (p.alt - points[i - 1].alt) / p.dloc / 10 : 0
-      return p2
-    })
-    logger(`geo.reduce: Maintained ${points.length} points`)
-    return points2
-  }
-}
-
 function calcPacing (data) {
   const t = logger()
   // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel, scales }
-  let hasPlan = false
-  if (data.plan) { hasPlan = true }
-
-  // copy points array & clear out time data if not applicable to this plan
-  const points = data.points.map(p => {
-    const x = { ...p }
-    if (!hasPlan) {
-      delete x.elapsed
-      delete x.time
-      delete x.dtime
-      delete x.tod
-    } else if (data.event.startTime === null) {
-      delete x.tod
-    }
-    return x
-  })
+  const hasPlan = Boolean(data.plan)
 
   let pacing = iteratePaceCalc({
     course: data.course,
     plan: data.plan,
-    points: points,
+    points: data.points,
     pacing: data.pacing || null,
     event: data.event,
     delays: data.delays,
@@ -526,7 +170,7 @@ function calcPacing (data) {
   // locations for sensitivity test:
   const tests = []
   for (let i = 1; i <= 10; i++) {
-    tests.push(Math.floor(i * (points.length - 1) / 10))
+    tests.push(Math.floor(i * (data.points.length - 1) / 10))
   }
 
   // iterate solution:
@@ -537,7 +181,7 @@ function calcPacing (data) {
       pacing = iteratePaceCalc({
         course: data.course,
         plan: data.plan,
-        points: points,
+        points: data.points,
         pacing: pacing,
         event: data.event,
         delays: data.delays,
@@ -545,7 +189,7 @@ function calcPacing (data) {
         scales: data.scales,
         terrainFactors: data.terrainFactors
       })
-      const newTest = tests.map(x => { return points[x].elapsed })
+      const newTest = tests.map(x => { return data.points[x].elapsed })
       if (
         lastTest.length &&
         newTest.findIndex((x, j) => Math.abs(x - lastTest[j]) > 0.5) < 0
@@ -557,7 +201,7 @@ function calcPacing (data) {
     logger(`geo.iteratePaceCalc: ${i + 2} iterations`, t)
     if (data.event?.sun) {
       const s = calcSunTime({
-        points: points,
+        points: data.points,
         event: data.event
       })
       pacing = { ...pacing, ...s }
@@ -566,10 +210,7 @@ function calcPacing (data) {
 
   logger('geo.calcPacing', t)
 
-  return {
-    points: points,
-    pacing: pacing
-  }
+  return pacing
 }
 
 function iteratePaceCalc (data) {
@@ -730,122 +371,6 @@ function calcSunTime (data) {
   return s
 }
 
-async function addActuals (points, actual) {
-  // interpolate actual array to points lat/lon and add actual elapsed & loc
-  const t = logger()
-  actual = actual.map(p => {
-    const x = { ...p }
-    x.ll = new sgeo.latlon(p.lat, p.lon)
-    return x
-  })
-  let MatchFailure = {}
-  try {
-    for (let index = 0; index < points.length; index++) {
-      const p = points[index]
-      // this requires a lot of processing; prevent browser from hanging:
-      if (index % 10 === 0) {
-        await new Promise(resolve => setTimeout(resolve, 5))
-      }
-
-      const ll = new sgeo.latlon(p.lat, p.lon)
-      // pick all points within the next "th"
-      let j = 0
-      let darr = []
-      while (darr.length === 0 || j > darr.length / 3) {
-        if (j !== 0) { actual.shift() }
-        const ths = [0.050, 0.075, 0.100, 0.15, 0.2]
-        for (let ith = 0; ith < ths.length; ith++) {
-          darr = actual.filter(
-            (a, i) => a.loc - actual[0].loc <= ths[ith] || i < 3
-          ).map(a => {
-            return Number(ll.distanceTo(a.ll))
-          })
-          j = darr.findIndex(d => d === Math.min(...darr))
-          if (darr[j] < ths[ith]) { break }
-        }
-      }
-      if (darr[j] === 0) {
-        p.actual = {
-          loc: actual[0].loc,
-          elapsed: actual[0].elapsed
-        }
-      } else {
-        const a1 = actual[j]
-        const a2 = darr[j + 1] >= darr[j - 1] ? actual[j + 1] : actual[j - 1]
-        const d1 = darr[j]
-        const d2 = darr[j + 1] >= darr[j - 1] ? darr[j + 1] : darr[j - 1]
-        if (d1 > 0.25) {
-          MatchFailure = {
-            match: false,
-            point: p
-          }
-          throw MatchFailure
-        }
-        if (a2) {
-          p.actual = {
-            loc: interp(0, 1, a1.loc, a2.loc, d1 / (d1 + d2)),
-            elapsed: interp(0, 1, a1.elapsed, a2.elapsed, d1 / (d1 + d2))
-          }
-        } else {
-          p.actual = {
-            loc: a1.loc,
-            elapsed: a1.elapsed
-          }
-        }
-      }
-    }
-    logger('geo|addActuals MATCH', t)
-    return {
-      match: true
-    }
-  } catch (e) {
-    logger('geo|addActuals FAIL', t)
-    return MatchFailure
-  }
-}
-
-function arraysToObjects (arr) {
-  if (!arr.length) return []
-  if (arr[0].length === 3) {
-    return arr.map(p => {
-      return { lat: p[0], lon: p[1], alt: p[2] }
-    })
-  } else if (arr[0].length === 5) {
-    return arr.map((p, i) => {
-      return {
-        loc: p[0],
-        dloc: (i > 0) ? p[0] - arr[i - 1][0] : 0,
-        lat: p[1],
-        lon: p[2],
-        alt: p[3],
-        grade: p[4]
-      }
-    })
-  } else {
-    return []
-  }
-}
-
-function processPoints (points, distance, gain, loss) {
-  addLoc(points, distance)
-  points = cleanUp(points)
-  addGrades(points)
-  const stats = calcStats(points, false)
-  const scales = {
-    gain: gain / stats.gain,
-    loss: loss / stats.loss,
-    grade: (gain - loss) / (stats.gain - stats.loss)
-  }
-  points.forEach((x) => {
-    x.grade *= (x.grade > 0 ? scales.gain : scales.loss)
-  })
-
-  return {
-    points: points,
-    scales: scales
-  }
-}
-
 function createTerrainFactors (waypoints) {
   const l = logger()
   if (!waypoints.length) { return [] }
@@ -890,7 +415,7 @@ function createSegments (points, data = null) {
 function createSplits (points, units, data = null) {
   const l = logger()
   const distScale = (units === 'kilometers') ? 1 : 0.621371
-  const tot = points[points.length - 1].loc * distScale
+  const tot = points.last.loc * distScale
   const breaks = [0]
   let i = 1
   while (i < tot) {
@@ -927,19 +452,8 @@ function addTOD (segments, points, startTime = null) {
   }
 }
 
-exports.addLoc = addLoc
-exports.addGrades = addGrades
-exports.calcStats = calcStats
 exports.calcSegments = calcSegments
-exports.cleanUp = cleanUp
-exports.getElevation = getElevation
-exports.getLatLonAltFromDistance = getLatLonAltFromDistance
-exports.pointWLSQ = pointWLSQ
-exports.reduce = reduce
 exports.calcPacing = calcPacing
-exports.addActuals = addActuals
-exports.arraysToObjects = arraysToObjects
-exports.processPoints = processPoints
 exports.createSegments = createSegments
 exports.createSplits = createSplits
 exports.createTerrainFactors = createTerrainFactors

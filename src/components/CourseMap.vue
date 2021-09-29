@@ -60,12 +60,7 @@
 <script>
 import { LMap, LControlLayers, LMarker, LTileLayer, LPolyline, LCircleMarker, LPopup } from 'vue2-leaflet'
 import 'leaflet/dist/leaflet.css'
-
 import { Icon } from 'leaflet'
-function uniqueBy (a, cond) {
-  return a.filter((e, i) => a.findIndex(e2 => cond(e, e2)) === i)
-}
-
 delete Icon.Default.prototype._getIconUrl
 Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -190,7 +185,7 @@ export default {
       return arr
     },
     waypoints2: function () {
-      return uniqueBy(this.waypoints, (o1, o2) => o1.site._id === o2.site._id)
+      return this.waypoints.filter(wp => wp.loop === 1 || wp.type === 'finish')
     },
     waypoints2llls: function () {
       return this.waypoints2.map(wp => {
