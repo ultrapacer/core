@@ -1,3 +1,7 @@
+function isNumeric (num) {
+  return (typeof (num) === 'number' || (typeof (num) === 'string' && num.trim() !== '')) && !isNaN(num)
+}
+
 function round (num, digits) {
   return Math.round(num * (10 ** digits)) / 10 ** digits
 }
@@ -105,6 +109,7 @@ function wlslr (x1s, y1s, x2s, th) {
   return mbs
 }
 
+exports.isNumeric = isNumeric
 exports.linearRegression = linearRegression
 exports.round = round
 exports.interp = interp

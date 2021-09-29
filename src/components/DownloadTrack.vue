@@ -164,10 +164,13 @@ export default {
           if (!this.raw.length) { // download raw data:
             this.raw = await api.getCourseField(this.course._id, 'raw')
           }
-          pnts = this.$core.geo.arraysToObjects(this.raw)
-          this.$core.points.loopPoints(pnts, this.course.loops)
-
-          pnts = this.$core.geo.addLoc(pnts, this.course.totalDistance())
+          pnts = await this.$core.tracks.create(
+            this.raw,
+            {
+              loops: this.course.loops,
+              distance: this.course.totalDistance()
+            }
+          )
 
           if (this.hasTime) { // interpolate times from distances in pnts
             const red = this.points.map(p => { return { ...p } })
@@ -195,13 +198,17 @@ export default {
             pnts = pnts.filter((p, i) => i === 0 || p.delapsed > 0)
           }
         } else {
-          pnts = this.points.map(p => { return { ...p } })
-          pnts = this.$core.geo.addLoc(pnts, this.course.totalDistance())
+          pnts = this.points
         }
       } else {
         // LOW RESOLUTION (adjust odd points lat/lon to correct distance)
-        pnts = this.points.map(p => { return { ...p } })
-        pnts = this.$core.geo.addLoc(pnts, this.course.totalDistance()) // update locations
+
+        // create a copy of points with new Point/LLA objects
+        pnts = await this.$core.tracks.create(
+          this.points.map(p => { return [p.lat, p.lon, p.alt] }),
+          { distance: this.course.totalDistance() }
+        )
+
         pnts.forEach((p, i) => {
           if (
             i % 2 === 0 &&
@@ -228,7 +235,7 @@ export default {
             }
           }
         })
-        pnts = this.$core.geo.addLoc(pnts, this.course.totalDistance())
+        pnts.addLocations(this.course.totalDistance())
       }
 
       let name = `uP-${this.course.name}${(this.plan.name ? ('-' + this.plan.name) : '')}${(this.course.reduced ? ('-' + resolution) : '')}`

@@ -99,7 +99,7 @@
     "webpack-dev-server": "^3.11.2"
   },
   "engines": {
-    "nodejs10": ">= 10.0.0",
+    "node": ">= 14.0.0",
     "npm": ">= 3.0.0"
   },
   "browserslist": [

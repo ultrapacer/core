@@ -405,7 +405,7 @@ export default {
       } else if (loc >= this.course.distance) {
         loc = this.course.distance - (0.01 / this.$units.distScale)
       }
-      this.$emit('updateWaypointLocation', item.site, loc)
+      this.$emit('updateWaypointLocation', item, loc)
     },
     selectWaypoint: function (waypoints) {
       this.collapseAll()

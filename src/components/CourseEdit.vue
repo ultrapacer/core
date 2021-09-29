@@ -342,7 +342,6 @@ import HelpDoc from '@/docs/course.md'
 import SelectableLabelInput from '../forms/SelectableLabelInput'
 import StravaRouteInput from '../forms/StravaRouteInput'
 import moment from 'moment-timezone'
-import wputil from '@/util/waypoints'
 const gpxParse = require('gpx-parse')
 export default {
   components: {
@@ -454,127 +453,132 @@ export default {
     },
     async reloadPoints (field) {
       const arr = await api.getCourseField(this.model._id, field)
-      this.gpxPoints = this.$core.geo.arraysToObjects(arr)
-      this.$core.geo.addLoc(this.gpxPoints)
-      this.stats = this.$core.geo.calcStats(this.gpxPoints, true)
+      this.gpxPoints = await this.$core.tracks.create(arr)
+      this.stats = this.gpxPoints.calcStats(true)
       this.courseLoaded = true
       return true
     },
     async save () {
       if (this.$status.processing) { return }
       this.$status.processing = true
+      try {
+        // if we have new points data, format and update:
+        let points = []
+        if (this.newPointsFlag && this.gpxPoints.length) {
+          points = this.gpxPoints
 
-      // if we have new points data, format and update:
-      let points = []
-      if (this.newPointsFlag && this.gpxPoints.length) {
-        points = this.gpxPoints
-        this.points = this.$core.geo.reduce(points, this.model.distance)
+          // get a reduced density set of points:
+          const reduced = points.reduceDensity()
+          this.model.reduced = reduced.length !== points.length
 
-        // reformat points for upload
-        this.model.reduced = this.points.length !== points.length
-        if (this.model.reduced) {
-          this.model.points = this.points.map(x => {
-            return [
-              x.loc,
-              this.$math.round(x.lat, 6),
-              this.$math.round(x.lon, 6),
-              this.$math.round(x.alt, 2),
-              this.$math.round(x.grade, 4)
-            ]
-          })
-          this.model.raw = points.map(x => {
-            return [x.lat, x.lon, x.alt]
-          })
-        } else {
-          this.model.points = points.map(x => {
-            return [x.lat, x.lon, x.alt]
-          })
-          this.model.raw = null
-        }
-      }
-
-      this.model.eventTimezone = this.moment.tz()
-      if (Number(this.moment.format('YYYY') > 1970)) {
-        this.model.eventStart = this.moment.toDate()
-      } else {
-        this.model.eventStart = null
-      }
-
-      if (this.model._id) {
-        const updateModel = {}
-        const fields = [
-          'name',
-          'link',
-          'description',
-          'public',
-          'eventStart',
-          'eventTimezone',
-          'distance',
-          'gain',
-          'loss',
-          'override',
-          'loops'
-        ]
-
-        // only include new points info if we have a new course source:
-        if (this.newPointsFlag) {
-          fields.push('source', 'raw', 'reduced', 'points')
-        }
-        fields.forEach(f => {
-          if (this.model[f] !== undefined) {
-            updateModel[f] = this.model[f]
-          }
-        })
-        await api.updateCourse(this.model._id, updateModel)
-        this.$gtag.event('edit', { event_category: 'Course' })
-
-        // update all waypoints to fit updated course:
-        const diff = this.model.distance - this.prevDist
-        const scaleWaypoints = this.$math.round(diff, 4) !== 0
-        if (scaleWaypoints || this.newPointsFlag) {
-          const waypoints = await api.getWaypoints(this.model._id)
-          // if the distance changed locations by new length
-          if (scaleWaypoints) {
-            this.$logger('CourseEdit|save: scaling waypoints to new distance')
-            waypoints.forEach(wp => {
-              if (wp.type === 'finish') {
-                wp.location = this.model.distance
-              } else if (wp.type !== 'start') {
-                wp.location = wp.location * this.model.distance / this.prevDist
-              }
+          // if the points were reduced, use that
+          if (this.model.reduced) {
+            // reformat reduced to lla array
+            this.model.points = reduced.map(x => {
+              return [
+                this.$math.round(x.lat, 6),
+                this.$math.round(x.lon, 6),
+                this.$math.round(x.alt, 2)
+              ]
             })
+
+            // also store raw (original) set of points:
+            this.model.raw = points.map(x => {
+              return [x.lat, x.lon, x.alt]
+            })
+
+          // if the points were not reduced, use the original LLA's
+          } else {
+            this.model.points = points.map(x => {
+              return [x.lat, x.lon, x.alt]
+            })
+            this.model.raw = null
           }
-          // if the course changed, map them to the new course LLA's
+        }
+
+        this.model.eventTimezone = this.moment.tz()
+        if (Number(this.moment.format('YYYY') > 1970)) {
+          this.model.eventStart = this.moment.toDate()
+        } else {
+          this.model.eventStart = null
+        }
+
+        if (this.model._id) {
+          const updateModel = {}
+          const fields = [
+            'name',
+            'link',
+            'description',
+            'public',
+            'eventStart',
+            'eventTimezone',
+            'distance',
+            'gain',
+            'loss',
+            'override',
+            'loops'
+          ]
+
+          // only include new points info if we have a new course source:
           if (this.newPointsFlag) {
-            this.$logger('CourseEdit|save: mapping waypoints to new course')
-            waypoints.forEach(wp => {
-              if (wp.type !== 'start' && wp.type !== 'finish') {
-                try {
-                  // limit of 0.5 km or 5% of total:
+            fields.push('source', 'raw', 'reduced', 'points')
+          }
+          fields.forEach(f => {
+            if (this.model[f] !== undefined) {
+              updateModel[f] = this.model[f]
+            }
+          })
+          await api.updateCourse(this.model._id, updateModel)
+          this.$gtag.event('edit', { event_category: 'Course' })
+
+          // update all waypoints to fit updated course:
+          const diff = this.model.distance - this.prevDist
+          const scaleWaypoints = this.$math.round(diff, 4) !== 0
+          if (scaleWaypoints || this.newPointsFlag) {
+            let waypoints = await api.getWaypoints(this.model._id)
+            waypoints = waypoints.map(wp => { return new this.$core.waypoints.Waypoint(wp) })
+            // if the distance changed locations by new length
+            if (scaleWaypoints) {
+              this.$logger('CourseEdit|save: scaling waypoints to new distance')
+              waypoints.forEach(wp => {
+                if (wp.type === 'finish') {
+                  wp.loc = this.model.distance
+                } else if (wp.type !== 'start') {
+                  wp.loc = wp.loc * this.model.distance / this.prevDist
+                }
+              })
+            }
+            // if the course changed, map them to the new course LLA's
+            if (this.newPointsFlag) {
+              this.$logger('CourseEdit|save: mapping waypoints to new course')
+              waypoints.forEach(wp => {
+                if (wp.type !== 'start' && wp.type !== 'finish') {
+                // limit of 0.5 km or 5% of total:
                   const limit = Math.max(0.5, 0.05 * this.model.distance)
                   // resolve closest distance along course for waypoint LLA
-                  wp.location = wputil.nearestLoc(wp, this.points, limit)
-                } catch (err) {
-                  console.log(err)
+                  wp.location = points.getNearestLoc([wp.lat, wp.lon], wp.location, limit)
                 }
-              }
-              wputil.updateLLA(wp, this.points)
-            })
+                wp.refreshLLA(points)
+              })
+            }
+            // save them all
+            await Promise.all(waypoints.map(async wp => {
+              await api.updateWaypoint(wp.site._id, wp.site)
+              this.$logger(`CourseEdit|save: updated waypoint ${wp.name}`)
+            }))
           }
-          // save them all
-          await Promise.all(waypoints.map(async wp => {
-            await api.updateWaypoint(wp._id, wp)
-            this.$logger(`CourseEdit|save: updated waypoint ${wp.name}`)
-          }))
+        } else {
+          await api.createCourse(this.model)
+          this.$gtag.event('create', { event_category: 'Course' })
         }
-      } else {
-        await api.createCourse(this.model)
-        this.$gtag.event('create', { event_category: 'Course' })
+        this.$status.processing = false
+        this.clear()
+        this.$refs.modal.hide()
+        this.$nextTick(() => { this.$emit('refresh') })
+      } catch (error) {
+        this.$error.handle(this.$gtag, error)
+        this.$status.processing = false
       }
-      this.$status.processing = false
-      await this.$emit('refresh')
-      this.clear()
-      this.$refs.modal.hide()
     },
     clear () {
       this.gpxPoints = []
@@ -614,61 +618,64 @@ export default {
     },
     async loadGPX (f, source) {
       const t = this.$logger()
-
-      gpxParse.parseGpx(f, async (error, data) => {
-        if (error) {
-          this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
-          this.$status.processing = false
-          throw error
-        } else {
-          this.$logger('CourseEdit|GPX parsed', t)
-          this.model.source = { ...source }
-          this.gpxPoints = data.tracks[0].segments[0].map(p => {
-            return {
-              alt: p.elevation,
-              lat: p.lat,
-              lon: p.lon
-            }
-          })
-          if (this.gpxPoints.length < 100) {
-            this.gpxFileInvalidMsg = 'GPX file has too few points.'
-            this.$status.processing = false
-            return
-          }
-          if (this.gpxPoints.length > 100000) {
-            this.gpxFileInvalidMsg = 'File exceeds size limit of 100,000 points. If this is a valid file, contact me for help.'
-            this.$status.processing = false
-            return
-          }
-          this.$core.geo.addLoc(this.gpxPoints)
-          this.gpxPoints = this.$core.geo.cleanUp(this.gpxPoints)
-          this.stats = this.$core.geo.calcStats(this.gpxPoints, true)
-          if (this.$config.requireGPXElevation && this.stats.gain === 0) {
-            this.gpxFileNoElevFlag = true
-            const t2 = this.$logger('CourseEdit|loadGPX getting elevation data')
-            try {
-              await this.addElevationData(this.gpxPoints)
-              this.$logger(`CourseEdit|loadGPX received elevation data for ${this.gpxPoints.length} points`, t2)
-              this.stats = this.$core.geo.calcStats(this.gpxPoints, true)
-            } catch (err) {
-              this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
-              this.$logger('CourseEdit|loadGPX failed to get elevation data.', t2)
-              this.$gtag.exception({ description: err.message || err, fatal: false })
+      try {
+        gpxParse.parseGpx(f, async (error, data) => {
+          try {
+            if (error) {
+              this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
               this.$status.processing = false
-              return
+              throw error
+            } else {
+              this.$logger('CourseEdit|GPX parsed', t)
+              this.model.source = { ...source }
+              const track = data.tracks[0].segments[0].map(p => {
+                return [p.lat, p.lon, p.elevation]
+              })
+              if (track.length < 100) {
+                this.gpxFileInvalidMsg = 'GPX file has too few points.'
+                this.$status.processing = false
+                return
+              }
+              if (track.length > 100000) {
+                this.gpxFileInvalidMsg = 'File exceeds size limit of 100,000 points. If this is a valid file, contact me for help.'
+                this.$status.processing = false
+                return
+              }
+              this.gpxPoints = await this.$core.tracks.create(track)
+              this.stats = this.gpxPoints.calcStats(true)
+              if (this.$config.requireGPXElevation && this.stats.gain === 0) {
+                this.gpxFileNoElevFlag = true
+                const t2 = this.$logger('CourseEdit|loadGPX getting elevation data')
+                try {
+                  await this.addElevationData(this.gpxPoints)
+                  this.$logger(`CourseEdit|loadGPX received elevation data for ${this.gpxPoints.length} points`, t2)
+                  this.stats = this.gpxPoints.calcStats(true)
+                } catch (err) {
+                  this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
+                  this.$logger('CourseEdit|loadGPX failed to get elevation data.', t2)
+                  this.$gtag.exception({ description: err.message || err, fatal: false })
+                  this.$status.processing = false
+                  return
+                }
+              }
+              this.gpxFileInvalidMsg = ''
+              this.updateModelGainLoss()
+              if (!this.model.name) {
+                this.model.name = this.model.source.name
+              }
+              await this.defaultTimezone(this.gpxPoints[0].lat, this.gpxPoints[0].lon)
+              this.courseLoaded = true
+              this.newPointsFlag = true
             }
+          } catch (error) {
+            this.$error.handle(this.$gtag, error)
           }
-          this.gpxFileInvalidMsg = ''
-          this.updateModelGainLoss()
-          if (!this.model.name) {
-            this.model.name = this.model.source.name
-          }
-          await this.defaultTimezone(this.gpxPoints[0].lat, this.gpxPoints[0].lon)
-          this.courseLoaded = true
-          this.newPointsFlag = true
           this.$status.processing = false
-        }
-      })
+        })
+      } catch (error) {
+        this.$error.handle(this.$gtag, error)
+        this.$status.processing = false
+      }
     },
     changeAltSource: async function (val) {
       if (this.gpxPoints.length) {
@@ -683,7 +690,7 @@ export default {
           try {
             await this.addElevationData(this.gpxPoints, val)
             this.$logger(`CourseEdit|changeAltSource received elevation data for ${this.gpxPoints.length} points`, t2)
-            this.stats = this.$core.geo.calcStats(this.gpxPoints, true)
+            this.stats = this.gpxPoints.calcStats(true)
             this.updateModelGainLoss()
           } catch (err) {
             this.gpxFileInvalidMsg = 'Elevation data and data is not available.'
