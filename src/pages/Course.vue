@@ -430,7 +430,7 @@ export default {
       if (this.course.description) {
         return this.course.description
       } else {
-        return `The ${this.$title} course covers ${this.$units.distf(this.course.dist, 1)} ${this.$units.dist} with ${this.$units.altf(this.course.gain, 0)} ${this.$units.alt} of climbing. Ready?`
+        return `The ${this.$title} course covers ${this.$units.distf(this.course.scaledDist, 1)} ${this.$units.dist} with ${this.$units.altf(this.course.scaledGain, 0)} ${this.$units.alt} of climbing. Ready?`
       }
     },
     views: function () {
@@ -611,24 +611,13 @@ export default {
       } catch (err) {}
       t = this.$logger('Course|initialize - auth initiated', t)
       try {
-        if (this.$route.params.plan) {
-          // this is depreciated; plan id should now in a query item
-          this.course = new this.$core.courses.Course(await api.getCourse(this.$route.params.plan, 'plan'))
-        } else if (this.$route.params.permalink) {
-          this.course = new this.$core.courses.Course(await api.getCourseFields(
-            this.$route.params.permalink,
-            'link',
-            ['name', 'distance', 'gain'],
-            false
-          ))
-          this.$title = this.course.name
-          this.course = new this.$core.courses.Course(await api.getCourse(this.$route.params.permalink, 'link'))
-        } else {
-          this.course = new this.$core.courses.Course(await api.getCourse(this.$route.params.course, 'course'))
-        }
+        // get course db by either link or course id:
+        const coursedb = this.$route.params.permalink
+          ? await api.getCourse(this.$route.params.permalink, 'link')
+          : await api.getCourse(this.$route.params.course, 'course')
 
-        if (!this.course.loops) this.course.loops = 1
-
+        // create a new course object from database:
+        this.course = new this.$core.courses.Course(coursedb)
         t = this.$logger('Course|api.getCourse', t)
 
         // reformat url
@@ -671,13 +660,8 @@ export default {
       this.$logger(`Course|initialize: downloaded (${llas.length} points)`, t1)
 
       // if looped course, repeat points array
-      if (!this.course.loops) this.course.loops = 1
       const track = await this.$core.tracks.create(llas, { loops: this.course.loops })
       this.course.addTrack(track)
-
-      /// temp tmep temp
-      // this.course.waypoints.forEach(wp => { wp.location /= this.course.distScale })
-      /// temp temp temp
 
       // set waypoint lat/lon/alt from points:
       this.waypoints.filter(wp => wp.loop === 1 || wp.type === 'finish')

@@ -158,6 +158,8 @@ CourseSchema.methods.addData = async function (user = null, plan = null) {
     this._plan = null
   }
 
+  if (!this.loops) this.loops = 1
+
   // temporary; for legacy waypoints that don't have percent field
   addPercentage(this.waypoints)
 }
