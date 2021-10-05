@@ -76,14 +76,14 @@ export default {
           key: 'distance',
           sortable: true,
           formatter: (value, key, item) => {
-            return this.$units.distf(item.distance, 2)
+            return this.$units.distf(item.scaledDist, 2)
           }
         },
         {
           key: 'gain',
           sortable: true,
           formatter: (value, key, item) => {
-            return this.$units.altf(item.gain, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(item.scaledGain, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'd-none d-sm-table-cell'
         },
@@ -91,7 +91,7 @@ export default {
           key: 'loss',
           sortable: true,
           formatter: (value, key, item) => {
-            return this.$units.altf(item.loss, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(item.scaledLoss, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'd-none d-sm-table-cell'
         },
