@@ -194,7 +194,7 @@ CourseSchema.methods.updateCache = async function () {
     if (!this.override.loss) this.override.loss = this.loss
     if (!this.override.elevUnit) this.override.elevUnit = 'ft'
     if (!this.override.distUnit) this.override.distUnit = 'mi'
-    // await this.updateOne({ override: this.override })
+    await this.updateOne({ override: this.override })
   }
 
   addPercentage(waypoints)
@@ -204,7 +204,7 @@ CourseSchema.methods.updateCache = async function () {
   const c = new core.courses.Course(this)
   c.addTrack(points)
   ;({ dist: this.distance, gain: this.gain, loss: this.loss } = c.track)
-  // await this.updateOne({ override: this.override })
+  await this.updateOne({ distance: this.distance, gain: this.gain, loss: this.loss })
 
   const wpls = core.waypoints.loopedWaypoints(waypoints, c, loops)
   // get terrrain factors:
