@@ -16,30 +16,30 @@ courseRoutes.route('/').post(async function (req, res) {
     await course.save()
 
     // create start and finish waypoints:
-    const arr = course.reduced ? course.raw : course.points
-    const s = arr[0].length === 3 ? 0 : 1
     const ws = new Waypoint({
       name: 'Start',
       type: 'start',
       location: 0,
+      percent: 0,
       _course: course._id,
-      lat: arr[0][0 + s],
-      lon: arr[0][1 + s],
-      elevation: arr[0][2 + s]
+      lat: course.points[0][0],
+      lon: course.points[0][1],
+      elevation: course.points[0][2]
     })
     await ws.save()
     const wf = new Waypoint({
       name: 'Finish',
       type: 'finish',
       location: course.distance,
+      percent: 1,
       _course: course._id,
-      lat: arr[arr.length - 1][0 + s],
-      lon: arr[arr.length - 1][1 + s],
-      elevation: arr[arr.length - 1][2 + s]
+      lat: course.points[course.points.length - 1][0],
+      lon: course.points[course.points.length - 1][1],
+      elevation: course.points[course.points.length - 1][2]
     })
     await wf.save()
 
-    res.status(200).json({ post: 'Course added successfully' })
+    res.status(200).json({ id: course._id, post: 'Course added successfully' })
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
@@ -69,7 +69,7 @@ courseRoutes.route('/').get(async function (req, res) {
     ]
   }
   const courses = await Course.find(q)
-    .select(['name', 'distance', 'gain', 'loss', 'loops', 'link', '_user'])
+    .select(['name', 'distance', 'gain', 'loss', 'loops', 'override', 'link', '_user'])
     .exec()
   res.json(courses)
 })
@@ -88,7 +88,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
       ]
       const fields2 = [ // these are important fields (requiring clearing cache)
         'eventStart', 'eventTimezone',
-        'override', 'points', 'reduced', 'raw',
+        'override', 'points',
         'distance', 'gain', 'loss', 'loops'
       ]
       if (user.admin) {
@@ -255,7 +255,7 @@ courseRoutes.route('/:course/waypoints').get(async function (req, res) {
     const user = await User.findOne({ auth0ID: req.user.sub }).exec()
     const course = await Course.findById(req.params.course).select(['_user', 'public']).exec()
     if (course._user.equals(user._id) || course.public) {
-      const waypoints = await Waypoint.find({ _course: course }).sort('location').exec()
+      const waypoints = await Waypoint.find({ _course: course }).sort('percent location').exec()
       res.json(waypoints)
     } else {
       res.status(403).send('No permission')
@@ -292,7 +292,7 @@ courseRoutes.route('/:id/copy').put(async function (req, res) {
     const course = await Course.findById(req.params.id).exec()
     if (course._user.equals(user._id) || course.public) {
       console.log('course1 ' + course._id)
-      const wps = await Waypoint.find({ _course: course }).sort('location').exec()
+      const wps = await Waypoint.find({ _course: course }).exec()
       const course2 = new Course(course)
       course2._id = mongoose.Types.ObjectId()
       course2.isNew = true

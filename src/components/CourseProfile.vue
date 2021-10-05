@@ -34,10 +34,6 @@ export default {
       type: Object,
       required: true
     },
-    points: {
-      type: Array,
-      required: true
-    },
     printing: {
       type: Boolean,
       default: false
@@ -71,7 +67,7 @@ export default {
       this.$logger('CourseProfile|chartOptions')
 
       // average altitude, for min/max y-axis-1 scale
-      let avgAlt = this.points.map(p => { return p.alt }).reduce((a, b) => a + b) / this.points.length
+      let avgAlt = this.course.track.map(p => { return p.alt }).reduce((a, b) => a + b) / this.course.track.length
       avgAlt = this.$math.round(this.$units.altf(avgAlt) / 20, 0) * 20
 
       const opts = {
@@ -96,21 +92,23 @@ export default {
                 }
               }
             },
-            max: this.$units.distf(this.course.totalDistance())
+            max: this.$units.distf(this.course.scaledDist)
           },
 
           'y-axis-1': {
             display: true,
             position: 'left',
             suggestedMin: avgAlt - (this.$units.alt === 'ft' ? 100 : 50),
-            suggestedMax: avgAlt + (this.$units.alt === 'ft' ? 100 : 50)
+            suggestedMax: avgAlt + (this.$units.alt === 'ft' ? 100 : 50),
+            grid: { display: !this.showActual }
           },
           'y-axis-2': {
             type: 'linear',
             display: !this.showActual,
             position: 'right',
             suggestedMin: -2,
-            suggestedMax: 2
+            suggestedMax: 2,
+            grid: { display: false }
           },
           'y-axis-3': {
             type: 'linear',
@@ -229,8 +227,8 @@ export default {
       const cF = []
       this.chartProfile.forEach(xy => {
         if (
-          xy.x >= this.$units.distf(this.focus[0]) &&
-          xy.x <= this.$units.distf(this.focus[1])
+          xy.x / this.course.distScale >= this.$units.distf(this.focus[0]) &&
+          xy.x / this.course.distScale <= this.$units.distf(this.focus[1])
         ) {
           cF.push(xy)
         }
@@ -238,20 +236,20 @@ export default {
       return cF
     },
     xs: function () {
-      return Array(this.pmax + 1).fill(0).map((e, i) => i++ * this.course.totalDistance() / this.pmax)
+      return Array(this.pmax + 1).fill(0).map((e, i) => i++ * this.course.dist / this.pmax)
     },
     comparePoints: function () {
       if (this.showActual) {
         const mbs = this.$math.wlslr(
-          this.points.map(p => { return p.loc }),
-          this.points.map(p => { return p.elapsed - p.actual.elapsed }),
+          this.course.points.map(p => { return p.loc }),
+          this.course.points.map(p => { return p.elapsed - p.actual.elapsed }),
           this.xs,
-          2 * this.course.totalDistance() / this.pmax
+          2 * this.course.dist / this.pmax
         )
         const arr = []
         this.xs.forEach((x, i) => {
           arr.push({
-            x: this.$units.distf(x),
+            x: this.$units.distf(x * this.course.distScale),
             y: mbs[i][0] * this.xs[i] + mbs[i][1]
           })
         })
@@ -268,11 +266,11 @@ export default {
       return {
         data: this.waypoints.map(wp => {
           return {
-            x: this.$units.distf(wp.loc),
+            x: this.$units.distf(wp.loc * this.course.distScale),
             y: this.$units.altf(wp.alt),
             label:
               wp.name + ' [' +
-              this.$units.distf(wp.loc, 1) +
+              this.$units.distf(wp.loc * this.course.distScale, 1) +
               this.$units.dist + ']',
             title: this.$waypointTypes[wp.type].text,
             waypoint: wp
@@ -364,32 +362,32 @@ export default {
       this.$emit('waypointClick', this.chartWaypoints.data[item.index].waypoint)
     },
     updateChartProfile: function () {
-      if (!this.points.length) return []
+      if (!this.course.points.length) return []
       this.$logger('CourseProfile|updateChartProfile')
       const chartProfile = []
       let mbs = this.$math.wlslr(
-        this.points.map(p => { return p.loc }),
-        this.points.map(p => { return p.alt }),
+        this.course.points.map(p => { return p.loc }),
+        this.course.points.map(p => { return p.alt }),
         this.xs,
-        this.course.totalDistance() / this.pmax / 5
+        this.course.dist / this.pmax / 5
       )
       this.xs.forEach((x, i) => {
         chartProfile.push({
-          x: this.$units.distf(x),
+          x: this.$units.distf(x * this.course.distScale),
           y: this.$units.altf(mbs[i][0] * this.xs[i] + mbs[i][1])
         })
       })
 
       const chartGrade = []
       mbs = this.$math.wlslr(
-        this.points.map(p => { return p.loc }),
-        this.points.map(p => { return p.alt }),
+        this.course.points.map(p => { return p.loc }),
+        this.course.points.map(p => { return p.alt }),
         this.xs,
-        5 * this.course.totalDistance() / this.pmax
+        5 * this.course.dist / this.pmax
       )
       this.xs.forEach((x, i) => {
         chartGrade.push({
-          x: this.$units.distf(x),
+          x: this.$units.distf(x * this.course.distScale),
           y: mbs[i][0] / 10
         })
       })
@@ -403,8 +401,8 @@ export default {
     },
     setHighlightPoint: async function (x) {
       const loc = x / this.$units.distScale
-      if (loc > 0 && loc < this.course.totalDistance()) {
-        const pnt = this.points.find(p => p.loc >= loc)
+      if (loc > 0 && loc < this.course.dist) {
+        const pnt = this.course.points.find(p => p.loc >= loc)
         this.$emit('setHighlightPoint', pnt)
       }
     }

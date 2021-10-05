@@ -127,18 +127,23 @@ export default {
     async load () {
       this.$status.processing = true
       this.$nextTick(async () => {
-        const result = await this.cb(this.gpxPoints, this.startTime)
-        if (result.match) {
-          this.$refs.modal.hide()
-        } else {
-          this.faildist = result.point.loc
-          this.$refs['toast-match-error'].show()
+        try {
+          const result = await this.cb(this.gpxPoints, this.startTime)
+          if (result.match) {
+            this.$refs.modal.hide()
+          } else {
+            this.faildist = result.point.loc
+            this.$refs['toast-match-error'].show()
+          }
+        } catch (error) {
+          this.$error.handle(this.$gtag, error)
         }
         this.$status.processing = false
       })
     },
     async loadGPX (f) {
       this.$status.processing = true
+      await this.$core.util.sleep(100)
       this.$nextTick(async () => {
         const reader = new FileReader()
         reader.onload = e => {
@@ -147,6 +152,7 @@ export default {
           gpxParse.parseGpx(e.target.result, async (error, data) => {
             if (error) {
               this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
+              this.$status.processing = false
               throw error
             } else {
               this.startTime = moment(data.tracks[0].segments[0][0].time)
@@ -162,10 +168,10 @@ export default {
 
               this.gpxFileInvalidMsg = ''
             }
+            this.$status.processing = false
           })
         }
         reader.readAsText(f.target.files[0])
-        this.$status.processing = false
       })
     },
     async stop () {

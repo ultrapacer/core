@@ -121,7 +121,7 @@ export default {
     return this.execute('get', `/api-public/course/${id}/countusers`)
   },
   getTimeZone (lat, lon) {
-    return this.execute('get', `/api/timezone?lat=${lat}&lon=${lon}`)
+    return this.executeAuth('get', `/api/timezone?lat=${lat}&lon=${lon}`)
   },
   getElevation (coordinates, source) {
     let url = '/api/elevation'

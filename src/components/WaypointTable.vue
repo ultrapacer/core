@@ -128,10 +128,6 @@ export default {
       type: Object,
       default: () => { return {} }
     },
-    points: {
-      type: Array,
-      required: true
-    },
     printing: {
       type: Boolean,
       default: false
@@ -209,9 +205,9 @@ export default {
           label: `Loc. [${this.$units.dist}]`,
           formatter: (value, key, item) => {
             if (this.$course.view === 'edit' && item.type === 'finish') {
-              return this.$units.distf(this.course.distance, 2)
+              return this.$units.distf(this.course.scaledDist, 2)
             } else {
-              return this.$units.distf(item.loc, 2)
+              return this.$units.distf(item.loc * this.course.distScale, 2)
             }
           },
           class: 'text-right'
@@ -305,7 +301,7 @@ export default {
               label: 'Actual',
               formatter: (value, key, item) => {
                 try {
-                  const v = item.actualDelay(this.points)
+                  const v = item.actualDelay(this.course.points)
                   return v >= 10 ? timeUtil.sec2string(v, '[h]:m:ss') : ''
                 } catch (error) {
                   console.log(error)
@@ -399,12 +395,9 @@ export default {
       }
     },
     shiftWaypoint: function (item, delta) {
-      let loc = item.site.location + delta / this.$units.distScale
-      if (loc < 0.01 / this.$units.distScale) {
-        loc = 0.01
-      } else if (loc >= this.course.distance) {
-        loc = this.course.distance - (0.01 / this.$units.distScale)
-      }
+      let loc = item.loc + (delta / this.course.distScale / this.$units.distScale)
+      loc = Math.max(loc, 0.01 / this.course.distScale / this.$units.distScale)
+      loc = Math.min(loc, this.course.track.dist - (0.01 / this.course.distScale / this.$units.distScale))
       this.$emit('updateWaypointLocation', item, loc)
     },
     selectWaypoint: function (waypoints) {

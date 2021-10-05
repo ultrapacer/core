@@ -127,7 +127,7 @@
           v-model="model.drift"
           class="mt-1 pl-3"
           :show-tips="showTips"
-          :course-distance="course.totalDistance()"
+          :course-distance="course.dist"
         />
         <b-form-group
           v-if="Boolean(course.eventStart) || (moment !== null && Number(moment.format('YYYY') > 1970))"
@@ -326,7 +326,7 @@ export default {
     },
     hoursDigits: function () {
       // for courses longer than 250 km, hours field takes up to 3 digits
-      return this.course.totalDistance && this.course.totalDistance() > 250 ? 3 : 2
+      return this.course.dist > 250 ? 3 : 2
     }
   },
   watch: {

@@ -35,7 +35,7 @@
           class="mt-1"
         >
           <b-form-input
-            v-model="model.locUserUnit"
+            v-model="distf"
             type="number"
             step="0.01"
             min="0.01"
@@ -193,10 +193,6 @@ export default {
       type: Object,
       required: true
     },
-    points: {
-      type: Array,
-      required: true
-    },
     waypoints: {
       type: Array,
       required: true
@@ -215,6 +211,7 @@ export default {
         terrainType: null,
         terrainFactor: null
       },
+      distf: null,
       terrainTypes: [
         { name: 'Paved', factor: 0 },
         { name: 'Fireroad', factor: 4 },
@@ -223,12 +220,14 @@ export default {
         { name: 'Technical', factor: 20 },
         { name: 'Other', factor: '' }
       ],
-      showTips: false
+      showTips: false,
+      trigger: 0,
+      waypoint: null
     }
   },
   computed: {
     locationMax: function () {
-      return Number(this.$units.distf(this.course.distance, 2)) -
+      return Number(this.$units.distf(this.course.scaledDist, 2)) -
         0.01
     },
     waypointTypeOptions: function () {
@@ -262,13 +261,17 @@ export default {
       }
     },
     terrainTypePlaceholder: function () {
+      // eslint-disable-next-line no-unused-expressions
+      this.trigger // force recompute
       // 1 - use previous type specified
       // 2 - none (blank)
-      if (!this.model.location) return ''
-      const waypoint = new this.$core.waypoints.Waypoint({ location: this.model.location })
-      return waypoint.terrainType(this.waypoints) || ''
+      if (!this.waypoint?.loc) return ''
+      // const waypoint = new this.$core.waypoints.Waypoint({ location: this.model.location }, this.course)
+      return this.waypoint.terrainType(this.waypoints, false) || ''
     },
     terrainFactorPlaceholder: function () {
+      // eslint-disable-next-line no-unused-expressions
+      this.trigger // force recompute
       // 1 - if a new type is specified, use default for that type
       // 2 - use previous type specified
       // 3 - none (blank)
@@ -280,9 +283,8 @@ export default {
         const tt = this.terrainTypes.find(x => x.name === this.model.terrainType)
         if (tt) return String(tt.factor)
       }
-      if (!this.model.location) return ''
-      const waypoint = new this.$core.waypoints.Waypoint({ location: this.model.location })
-      return String(waypoint.terrainFactor(this.waypoints) || '')
+      if (!this.waypoint?.loc) return ''
+      return String(this.waypoint.terrainFactor(this.waypoints, false) || '')
     }
   },
   methods: {
@@ -298,7 +300,8 @@ export default {
       } else {
         this.model = Object.assign({}, this.defaults)
       }
-      this.model.locUserUnit = this.model.location ? this.$units.distf(this.model.location, 2) : ''
+      this.waypoint = new this.$core.waypoints.Waypoint(this.model, this.course)
+      this.distf = this.waypoint.loc ? this.$units.distf(this.waypoint.loc * this.course.distScale, 2) : ''
       this.$refs.modal.show()
     },
     handleOk (bvModalEvt) {
@@ -312,10 +315,9 @@ export default {
       this.$status.processing = true
 
       // get and add LLA for waypoint:
-      const wp = new this.$core.waypoints.Waypoint(this.model)
-      wp.refreshLLA(this.points)
+      const wp = new this.$core.waypoints.Waypoint(this.model, this.course, 1)
+      wp.refreshLLA(this.course.track)
       ;({ lat: this.model.lat, lon: this.model.lon, alt: this.model.alt } = wp)
-
       if (this.model._id) {
         this.$gtage(this.$gtag, 'Waypoint', 'edit', this.course.public ? this.course.name : 'private')
         await api.updateWaypoint(this.model._id, this.model)
@@ -347,8 +349,9 @@ export default {
     },
     updateLocation: function (val) {
       if (this.model.type !== 'start' && this.model.type !== 'finish') {
-        this.$set(this.model, 'location', val ? val / this.$units.distScale : null)
+        this.waypoint.loc = val ? val / this.course.distScale / this.$units.distScale : null
       }
+      this.trigger++
     }
   }
 }

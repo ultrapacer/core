@@ -3,7 +3,7 @@ const { latlon: LatLon } = require('sgeo')
 const { interp } = require('./math')
 
 // LLA class is for lat/lon/alt pairs (with alt in meters)
-class LLA {
+/* class LLA {
   constructor (arg) {
     // if arg is length 3, it's lat, lon, alt
     if (arg.length === 3) {
@@ -19,10 +19,10 @@ class LLA {
       throw new Error('Point data invalid')
     }
   }
-}
+} */
 
 class Point {
-  constructor (arg) {
+  /* constructor (arg) {
     // if defined by lla array
     if (Array.isArray(arg)) {
       this.lla = new LLA(arg)
@@ -31,14 +31,31 @@ class Point {
     } else {
       throw new Error('Point data invalid')
     }
+  } */
+
+  constructor (arg) {
+    // if arg is length 3, it's lat, lon, alt
+    if (arg.length === 3) {
+      [this.lat, this.lon, this.alt] = arg
+
+    // if arg is length 5, it's loc, lat, lon, at, grade
+    // ** NOTE **, this loc and grade are never used
+    } else if (arg.length === 5) {
+      [this.loc, this.lat, this.lon, this.alt, this.grade] = arg
+
+    // otherwise it's wrong
+    } else {
+      throw new Error('Point data invalid')
+    }
   }
 
-  get lat () { return this.lla.lat }
-  get lon () { return this.lla.lon }
-  get alt () { return this.lla.alt }
-  set lat (v) { this.lla.lat = v }
-  set lon (v) { this.lla.lon = v }
-  set alt (v) { this.lla.alt = v }
+  get latlon () { return new LatLon(this.lat, this.lon) }
+  // get lat () { return this.lla.lat }
+  // get lon () { return this.lla.lon }
+  // get alt () { return this.lla.alt }
+  // set lat (v) { this.lla.lat = v }
+  // set lon (v) { this.lla.lon = v }
+  // set alt (v) { this.lla.alt = v }
 
   has (field) {
     return isNumeric(this[field])
@@ -60,10 +77,14 @@ function interpolatePoint (p1, p2, loc) {
   p3.lat = Number(p3LL.lat)
   p3.lon = Number(p3LL.lng)
 
+  // use first point for these fields:
+  const fields1 = ['grade']
+  fields1.forEach(field => { p3[field] = p1[field] })
+
   // linear interpolation of other fields
-  const fields = ['alt', 'grade']
-  if (p1.has('tod') && p2.has('tod')) { fields.push('tod') }
-  fields.forEach(field => {
+  const fields2 = ['alt']
+  if (p1.has('tod') && p2.has('tod')) { fields2.push('tod') }
+  fields2.forEach(field => {
     p3[field] = interp(
       p1.loc,
       p2.loc,
@@ -75,6 +96,6 @@ function interpolatePoint (p1, p2, loc) {
   return p3
 }
 
-exports.LLA = LLA
+// exports.LLA = LLA
 exports.Point = Point
 exports.interpolatePoint = interpolatePoint

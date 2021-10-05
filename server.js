@@ -12,7 +12,6 @@ const publicRoutes = require('./server/routes/publicRoutes')
 const external = require('./server/routes/external')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
-const geoTz = require('geo-tz')
 const patreon = require('./server/routes/patreon')
 
 // load keys from either ./config/keys.js file or from google cloud secrets:
@@ -30,7 +29,8 @@ const keynames = [
   'STRAVA_CLIENT_SECRET',
   'STRAVA_REFRESH_TOKEN',
   'SMTP_USERNAME',
-  'SMTP_PASSWORD'
+  'SMTP_PASSWORD',
+  'TIMEZONEDB_API_KEY'
 ]
 try {
   keys = require('./config/keys')
@@ -101,6 +101,10 @@ function startUp () {
   app.use('/api/patreon', checkJwt, patreon.auth) // authenticated patreon routes
   app.use('/api/open/patreon', patreon.open) // unauthenticated patreon routes
   app.use('/api/strava', strava)
+
+  // get timezone
+  app.use('/api/timezone', checkJwt, require('./server/routes/timezone'))
+
   app.use('/api/external', external)
 
   app.use('/tasks/mailer', mailer)
@@ -114,12 +118,6 @@ function startUp () {
   })
   app.get('/sitemap.xml', function (req, res) {
     res.sendFile(path.join(DIST_DIR, '/public/sitemap.xml'))
-  })
-
-  // get timezone
-  app.get('/api/timezone', function (req, res) {
-    const tz = geoTz(req.query.lat, req.query.lon)
-    res.send(tz[0])
   })
 
   //  this allows web components to be pathed in development

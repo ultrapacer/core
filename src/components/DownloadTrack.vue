@@ -97,10 +97,6 @@ export default {
       type: Object,
       required: true
     },
-    points: {
-      type: Array,
-      required: true
-    },
     segments: {
       type: Array,
       required: true
@@ -153,7 +149,7 @@ export default {
         this.urls[target] = null
       }
 
-      if (this.hasTime && this.points[0].elapsed === undefined) {
+      if (this.hasTime && this.course.points[0].elapsed === undefined) {
         await this.updateFn()
       }
 
@@ -164,16 +160,10 @@ export default {
           if (!this.raw.length) { // download raw data:
             this.raw = await api.getCourseField(this.course._id, 'raw')
           }
-          pnts = await this.$core.tracks.create(
-            this.raw,
-            {
-              loops: this.course.loops,
-              distance: this.course.totalDistance()
-            }
-          )
+          pnts = await this.$core.tracks.create(this.raw, { loops: this.course.loops })
 
           if (this.hasTime) { // interpolate times from distances in pnts
-            const red = this.points.map(p => { return { ...p } })
+            const red = this.course.points.map(p => { return { ...p } })
             let lastelapsed = 0
             pnts.forEach(p => {
               while (red.length > 1 && red[1].loc <= p.loc) {
@@ -198,22 +188,21 @@ export default {
             pnts = pnts.filter((p, i) => i === 0 || p.delapsed > 0)
           }
         } else {
-          pnts = this.points
+          pnts = this.course.points
         }
       } else {
         // LOW RESOLUTION (adjust odd points lat/lon to correct distance)
 
         // create a copy of points with new Point/LLA objects
         pnts = await this.$core.tracks.create(
-          this.points.map(p => { return [p.lat, p.lon, p.alt] }),
-          { distance: this.course.totalDistance() }
+          this.course.points.map(p => { return [p.lat, p.lon, p.alt] })
         )
 
         pnts.forEach((p, i) => {
           if (
             i % 2 === 0 &&
             i < pnts.length - 2 &&
-            (pnts[i + 1].dloc + pnts[i + 2].dloc < this.points[i + 1].dloc + this.points[i + 2].dloc)
+            (pnts[i + 1].dloc + pnts[i + 2].dloc < this.course.points[i + 1].dloc + this.course.points[i + 2].dloc)
           ) {
             const A = new sgeo.latlon(p.lat, p.lon)
             const B = new sgeo.latlon(pnts[i + 1].lat, pnts[i + 1].lon)
@@ -221,21 +210,20 @@ export default {
             const bAB = A.bearingTo(B)
             const bAC = A.bearingTo(C)
             const dAC = A.distanceTo(C)
-            if (dAC < this.points[i + 1].dloc + this.points[i + 2].dloc) {
-              const alpha = lawOfCosines(dAC, this.points[i + 1].dloc, this.points[i + 2].dloc)
+            if (dAC < this.course.points[i + 1].dloc + this.course.points[i + 2].dloc) {
+              const alpha = lawOfCosines(dAC, this.course.points[i + 1].dloc, this.course.points[i + 2].dloc)
               let bAB2 = 0
               if ((bAB - bAC < 180 && bAC < bAB) || (bAC > 270 && bAB < 90)) {
                 bAB2 = bAC + alpha
               } else {
                 bAB2 = bAC - alpha
               }
-              const B2 = A.destinationPoint(bAB2, this.points[i + 1].dloc)
+              const B2 = A.destinationPoint(bAB2, this.course.points[i + 1].dloc)
               pnts[i + 1].lat = Number(B2.lat)
               pnts[i + 1].lon = Number(B2.lng)
             }
           }
         })
-        pnts.addLocations(this.course.totalDistance())
       }
 
       let name = `uP-${this.course.name}${(this.plan.name ? ('-' + this.plan.name) : '')}${(this.course.reduced ? ('-' + resolution) : '')}`

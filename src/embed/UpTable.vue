@@ -132,7 +132,7 @@ export default {
           key: 'end',
           label: `${this.mode === 'segments' ? 'Loc' : 'Split'} [${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            return this.$units.distf(item.end, 2)
+            return this.$units.distf(item.end * this.course.distScale, 2)
           },
           class: 'text-right'
         },
@@ -149,8 +149,7 @@ export default {
           key: 'gain',
           label: `Gain [${this.$units.alt}]`,
           formatter: (value, key, item) => {
-            const scale = this.course.scales.gain || 1
-            return this.$units.altf(item.gain * scale, 0)
+            return this.$units.altf(item.gain * this.course.gainScale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'text-right'
@@ -159,8 +158,7 @@ export default {
           key: 'loss',
           label: 'Loss [' + this.$units.alt + ']',
           formatter: (value, key, item) => {
-            const scale = this.course.scales.loss || 1
-            return this.$units.altf(item.loss * scale, 0)
+            return this.$units.altf(item.loss * this.course.lossScale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'text-right'
@@ -179,7 +177,7 @@ export default {
           key: 'len',
           label: `Dist. [${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            return this.$units.distf(item.len, 2)
+            return this.$units.distf(item.len * this.course.distScale, 2)
           },
           class: 'text-right'
         }
@@ -213,7 +211,7 @@ export default {
     },
     waypoints: function () {
       if (!this.course.waypoints || !this.course.waypoints.length) return []
-      return loopedWaypoints(this.course.waypoints, this.course.loops, this.course.distance)
+      return loopedWaypoints(this.course.waypoints, this.course)
     }
   },
   async created () {

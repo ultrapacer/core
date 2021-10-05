@@ -93,7 +93,8 @@
     </b-row>
     <course-edit
       ref="courseEdit"
-      @refresh="refreshCourses"
+      @afterEdit="refreshCourses"
+      @afterCreate="goToCourse"
       @delete="deleteCourse"
     />
     <delete-modal
@@ -130,14 +131,14 @@ export default {
           key: 'distance',
           sortable: true,
           formatter: (value, key, item) => {
-            return this.$units.distf(item.totalDistance(), 2)
+            return this.$units.distf(item.scaledDist, 2)
           }
         },
         {
           key: 'gain',
           sortable: true,
           formatter: (value, key, item) => {
-            return this.$units.altf(item.totalGain(), 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(item.scaledGain, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           class: 'd-none d-sm-table-cell'
         },
@@ -145,7 +146,7 @@ export default {
           key: 'loss',
           sortable: true,
           formatter: (value, key, item) => {
-            return this.$units.altf(item.totalLoss(), 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            return this.$units.altf(item.scaledLoss, 0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           },
           thClass: 'd-none d-sm-table-cell',
           tdClass: 'd-none d-sm-table-cell'
@@ -204,12 +205,11 @@ export default {
       }
     },
     async newCourse () {
-      this.$refs.courseEdit.show({})
+      this.$refs.courseEdit.show()
     },
     async editCourse (course) {
       this.$status.processing = true
-      const c = await api.getCourse(course._id)
-      this.$refs.courseEdit.show(c)
+      this.$refs.courseEdit.show(course._id)
     },
     async deleteCourse (course, cb) {
       this.$refs.delModal.show(

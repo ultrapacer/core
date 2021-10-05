@@ -6,11 +6,13 @@ module.exports = {
         useBuiltIns: "usage",
         corejs: 3,
       },],
-      "@babel/preset-react"
+      "@babel/preset-react",
+      '@vue/cli-plugin-babel/preset'
     
   ],
   plugins: [
     "@babel/plugin-transform-modules-commonjs",
     "@babel/plugin-proposal-class-properties",
+    '@babel/plugin-proposal-optional-chaining'
   ],
 };

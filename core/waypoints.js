@@ -2,12 +2,10 @@ const { logger } = require('./logger')
 const { isNumeric } = require('./math')
 
 class Waypoint {
-  // #courseDistance; need webpack 5
-  constructor (site, loop = 1, courseDistance = 0) {
+  constructor (site, course, loop = 1) {
     this.site = site
+    this.course = course
     this.loop = loop
-    // this.#courseDistance = courseDistance
-    this.courseDistance = courseDistance
     this.visible = site.tier === 1
   }
 
@@ -22,13 +20,22 @@ class Waypoint {
   get description () { return this.site.description }
 
   get loc () {
-    const v = (this.type === 'finish' && this.courseDistance) ? this.courseDistance : this.site.location
-    return v + (this.courseDistance * (this.loop - 1))
+    const v = this.site.percent * this.course.trackDist
+    return v + (this.course.trackDist * (this.loop - 1))
   }
 
   set loc (v) {
     if (!isNumeric(v)) throw new Error('Wrong format for Waypoint.loc')
-    this.site.location = this.courseDistance ? v % this.courseDistance : v
+    if (this.type === 'start') {
+      this.site.percent = 0
+      this.site.location = 0 // this is temporary for prior db structure that used location instead of percent
+    } else if (this.type === 'finish') {
+      this.site.percent = 1
+      this.site.location = this.course.trackDist // this is temporary for prior db structure that used location instead of percent
+    } else {
+      this.site.percent = (v / this.course.trackDist) % 1
+      this.site.location = v % this.course.trackDist // this is temporary for prior db structure that used location instead of percent
+    }
   }
 
   get lat () { return this.site.lat }
@@ -40,12 +47,12 @@ class Waypoint {
   get tier () { return this.site.tier }
   get type () { return this.site.type }
 
-  terrainFactor (waypoints) {
+  terrainFactor (waypoints, useId = true) {
     if ((this.site.terrainFactor !== null && this.site.terrainFactor !== undefined) || !waypoints) {
       return this.site.terrainFactor
     } else {
       const wps = waypoints.filter(wp => wp.loop === 1).sort((a, b) => a.loc - b.loc)
-      const i = this.site._id
+      const i = this.site._id && useId
         ? wps.findIndex(wp => wp.site._id === this.site._id)
         : wps.findIndex(wp => wp.loc > this.loc)
       const wp = wps.filter((wp, j) =>
@@ -60,12 +67,12 @@ class Waypoint {
     }
   }
 
-  terrainType (waypoints) {
+  terrainType (waypoints, useId = true) {
     if (this.site.terrainType || !waypoints) {
       return this.site.terrainType
     } else {
       const wps = waypoints.filter(wp => wp.loop === 1).sort((a, b) => a.loc - b.loc)
-      const i = this.site._id
+      const i = this.site._id && useId
         ? wps.findIndex(wp => wp.site._id === this.site._id)
         : wps.findIndex(wp => wp.loc > this.loc)
       const wp = wps.filter((wp, j) =>
@@ -171,18 +178,19 @@ class Waypoint {
 }
 
 // Returns an array of waypoints on the course including loops:
-function loopedWaypoints (waypoints, loops = 1, courseDistance = 0) {
+function loopedWaypoints (waypoints, course) {
+  logger(`waypoints|loopedWaypoints for ${waypoints.length} waypoints over ${course.loops} ${course.trackDist} km loop(s)`)
   const wpls = []
-  for (let il = 1; il <= loops; il++) {
+  for (let il = 1; il <= course.loops; il++) {
     wpls.push(
       ...waypoints.map(
         wp => {
-          return new Waypoint(wp, il, courseDistance)
+          return new Waypoint(wp, course, il)
         }
       )
     )
   }
-  return wpls.filter(wpl => wpl.loop === loops || wpl.type !== 'finish')
+  return wpls.filter(wpl => wpl.loop === course.loops || wpl.type !== 'finish')
 }
 
 module.exports = {

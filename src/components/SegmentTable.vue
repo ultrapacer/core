@@ -20,16 +20,16 @@
       &nbsp;
     </template>
     <template #foot(len)>
-      {{ $units.distf(course.totalDistance(), 2) }}
+      {{ $units.distf(course.scaledDist, 2) }}
     </template>
     <template #foot(end)>
-      {{ $units.distf(course.totalDistance(), 2) }}
+      {{ $units.distf(course.scaledDist, 2) }}
     </template>
     <template #foot(gain)>
-      {{ $units.altf(course.totalGain(), 0) | commas }}
+      {{ $units.altf(course.scaledGain, 0) | commas }}
     </template>
     <template #foot(loss)>
-      {{ $units.altf(course.totalLoss(), 0) | commas }}
+      {{ $units.altf(course.scaledLoss, 0) | commas }}
     </template>
     <template #foot(grade)>
       &nbsp;
@@ -47,7 +47,7 @@
       {{ sec2string(segments[segments.length - 1].elapsed + event.startTime, 'am/pm') }}
     </template>
     <template #foot(pace)>
-      {{ $units.pacef(plan.pacing.pace) | formatTime }}
+      {{ $units.pacef(plan.pacing.pace/ course.distScale) | formatTime }}
     </template>
     <template
       v-if="mode==='segments'"
@@ -104,7 +104,7 @@
           v-for="wp in spannedWaypoints(row.item)"
           :key="wp.site._id"
         >
-          <b>{{ wp.name }} ({{ $waypointTypes[wp.type].text }}), {{ $units.distf(wp.loc, 2) }} {{ $units.dist }}</b><br>
+          <b>{{ wp.name }} ({{ $waypointTypes[wp.type].text }}), {{ $units.distf(wp.loc * course.distScale, 2) }} {{ $units.dist }}</b><br>
           <b-row v-if="waypointDelay(wp)">
             <b-col
               cols="4"
@@ -280,15 +280,14 @@ export default {
           key: 'end',
           label: 'Dist [' + this.$units.dist + ']',
           formatter: (value, key, item) => {
-            return this.$units.distf(item.end, 2)
+            return this.$units.distf(item.end * this.course.distScale, 2)
           }
         },
         {
           key: 'gain',
           label: `Gain [${this.$units.alt}]`,
           formatter: (value, key, item) => {
-            const scale = this.course.scales ? this.course.scales.gain : 1
-            return this.$units.altf(item.gain * scale, 0)
+            return this.$units.altf(item.gain * this.course.gainScale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           }
         },
@@ -296,8 +295,7 @@ export default {
           key: 'loss',
           label: 'Loss [' + this.$units.alt + ']',
           formatter: (value, key, item) => {
-            const scale = this.course.scales ? this.course.scales.loss : 1
-            return this.$units.altf(item.loss * scale, 0)
+            return this.$units.altf(item.loss * this.course.lossScale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
           }
         },
@@ -305,12 +303,10 @@ export default {
           key: 'grade',
           label: 'Grade',
           formatter: (value, key, item) => {
-            const gs = this.course.scales ? this.course.scales.gain : 1
-            const ls = this.course.scales ? this.course.scales.loss : 1
             const l = this.mode === 'segments'
-              ? item.len
+              ? item.len * this.course.distScale
               : 1 / this.$units.distScale
-            const g = (item.gain * gs + item.loss * ls) / l / 10
+            const g = (item.gain * this.course.gainScale + item.loss * this.course.lossScale) / l / 10
             return (g).toFixed(1) + '%'
           }
         }
@@ -320,7 +316,7 @@ export default {
           key: 'len',
           label: 'Len [' + this.$units.dist + ']',
           formatter: (value, key, item) => {
-            return this.$units.distf(item.len, 2)
+            return this.$units.distf(item.len * this.course.distScale, 2)
           }
         })
         f.unshift({
@@ -346,7 +342,7 @@ export default {
           key: 'pace',
           label: `Pace [/${this.$units.dist}]`,
           formatter: (value, key, item) => {
-            const l = this.$units.distf(item.len)
+            const l = this.$units.distf(item.len * this.course.distScale)
             return timeUtil.sec2string(item.time / l, '[h]:m:ss')
           }
         })

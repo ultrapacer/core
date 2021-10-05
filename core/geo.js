@@ -7,7 +7,7 @@ const { interpolatePoint } = require('./points')
 function facts (a, b, data) {
   const hasTOD = typeof (a.tod) !== 'undefined' && typeof (b.tod) !== 'undefined'
   return {
-    gF: nF.gF(a.grade),
+    gF: nF.gF(a.grade * (a.grade >= 0 ? data.course.gainScale : data.course.lossScale)),
     aF: nF.aF([a.alt, b.alt], data.altModel),
     tF: nF.tF([a.loc, b.loc], data.terrainFactors),
     hF: hasTOD && data.heatModel ? nF.hF([a.tod, b.tod], data.heatModel) : 1,
@@ -26,7 +26,7 @@ function calcSegments (p, breaks, pacing) {
   // pacing: pacing object with np and drift fields
   const cLen = p[p.length - 1].loc
   const s = [] // segments array
-  const alts = p.getLLA(breaks).map(lla => { return lla.alt })
+  const alts = pacing.course.track.getLLA(breaks).map(lla => { return lla.alt })
   let len = 0
   let i
   let il
@@ -59,7 +59,8 @@ function calcSegments (p, breaks, pacing) {
     distance: cLen,
     drift: pacing.drift,
     sun: pacing.sun,
-    heatModel: pacing.heatModel
+    heatModel: pacing.heatModel,
+    course: pacing.course
   }
   const delays = (pacing && pacing.delays) ? [...pacing.delays] : []
   function getDelay (a, b) {
@@ -152,7 +153,7 @@ function calcSegments (p, breaks, pacing) {
 
 function calcPacing (data) {
   const t = logger()
-  // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel, scales }
+  // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel }
   const hasPlan = Boolean(data.plan)
 
   let pacing = iteratePaceCalc({
@@ -163,7 +164,6 @@ function calcPacing (data) {
     event: data.event,
     delays: data.delays,
     heatModel: data.heatModel,
-    scales: data.scales,
     terrainFactors: data.terrainFactors
   })
 
@@ -186,7 +186,6 @@ function calcPacing (data) {
         event: data.event,
         delays: data.delays,
         heatModel: data.heatModel,
-        scales: data.scales,
         terrainFactors: data.terrainFactors
       })
       const newTest = tests.map(x => { return data.points[x].elapsed })
@@ -215,7 +214,7 @@ function calcPacing (data) {
 
 function iteratePaceCalc (data) {
   const t = logger()
-  // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel, scales }
+  // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel }
   let plan = false
   if (data.plan) { plan = true }
 
@@ -252,7 +251,15 @@ function iteratePaceCalc (data) {
     }
     return 0
   }
-  const opts = { altModel: data.course.altModel, terrainFactors: data.terrainFactors, distance: data.course.totalDistance(), drift: data.plan.drift, sun: data.event.sun, heatModel: data.heatModel }
+  const opts = {
+    altModel: data.course.altModel,
+    terrainFactors: data.terrainFactors,
+    distance: data.course.dist,
+    drift: data.plan.drift,
+    sun: data.event.sun,
+    heatModel: data.heatModel,
+    course: data.course
+  }
   for (let j = 1, jl = p.length; j < jl; j++) {
     // determine pacing factor for point
     fs = facts(p[j - 1], p[j], opts)
@@ -276,9 +283,9 @@ function iteratePaceCalc (data) {
     }
   }
   Object.keys(factors).forEach(k => {
-    factors[k] = round(factors[k] / data.course.totalDistance(), 4)
+    factors[k] = round(factors[k] / data.course.dist, 4)
   })
-  const normFactor = (tot / data.course.totalDistance())
+  const normFactor = (tot / data.course.dist)
 
   delay = 0
   let time = 0
@@ -294,21 +301,20 @@ function iteratePaceCalc (data) {
     // calculate time, pace, and normalized pace:
     if (data.plan.pacingMethod === 'time') {
       time = data.plan.pacingTarget
-      pace = (time - delay) / data.course.totalDistance()
+      pace = (time - delay) / data.course.dist
       np = pace / normFactor
     } else if (data.plan.pacingMethod === 'pace') {
-      pace = data.plan.pacingTarget
-      time = pace * data.course.totalDistance() + delay
+      pace = data.plan.pacingTarget * data.course.distScale
+      time = pace * data.course.dist + delay
       np = pace / normFactor
     } else if (data.plan.pacingMethod === 'np') {
-      np = data.plan.pacingTarget
+      np = data.plan.pacingTarget * data.course.distScale
       pace = np * normFactor
-      time = pace * data.course.totalDistance() + delay
+      time = pace * data.course.dist + delay
     }
   }
 
   const pacing = {
-    scales: data.scales,
     time: time,
     delay: delay,
     factors: factors,
@@ -413,17 +419,19 @@ function createSegments (points, data = null) {
 }
 
 function createSplits (points, units, data = null) {
-  const l = logger()
+  logger(`segments|createSplits (${units})`)
+
   const distScale = (units === 'kilometers') ? 1 : 0.621371
-  const tot = points.last.loc * distScale
+  const tot = data.course.scaledDist * distScale
+
   const breaks = [0]
   let i = 1
   while (i < tot) {
-    breaks.push(i / distScale)
+    breaks.push(i / data.course.distScale / distScale)
     i++
   }
   if (tot / distScale > breaks[breaks.length - 1]) {
-    breaks.push(tot / distScale)
+    breaks.push(tot / data.course.distScale / distScale)
   }
 
   // remove last break if it's negligible
@@ -440,7 +448,6 @@ function createSplits (points, units, data = null) {
   // map in time:
   addTOD(splits, points, data.startTime)
 
-  logger(`segments|createSplits complete (${splits.length} ${units})`, l)
   return splits
 }
 

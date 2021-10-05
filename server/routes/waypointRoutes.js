@@ -36,7 +36,7 @@ waypointRoutes.route('/:id').put(async function (req, res) {
     if (user.equals(course._user)) {
       const fields = [
         'name', 'location', 'type', 'tier', 'description', 'elevation',
-        'lat', 'lon', 'pointsIndex', 'terrainFactor', 'terrainType'
+        'lat', 'lon', 'pointsIndex', 'terrainFactor', 'terrainType', 'percent'
       ]
       fields.forEach(f => {
         if (req.body[f] !== undefined) {

@@ -21,8 +21,8 @@ babel.config.js
 desktop.ini
 README.md
 
-# Node.js dependencies:
 build/
+config/
 node_modules/
 src/
 static/

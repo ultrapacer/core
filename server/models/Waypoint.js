@@ -14,6 +14,7 @@ const WaypointSchema = new Schema({
     ref: 'Course'
   },
   location: {
+    // location field is becoming obsolete; being replaced w/ percent
     type: Number
   },
   lat: {
@@ -44,6 +45,9 @@ const WaypointSchema = new Schema({
   tier: {
     type: Number,
     default: 1
+  },
+  percent: {
+    type: Number
   }
 }, {
   collection: 'waypoints'

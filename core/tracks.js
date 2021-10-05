@@ -21,7 +21,7 @@ class Track extends Array {
     return this[this.length - 1]
   }
 
-  addLocations (distance = null) {
+  addLocations () {
     logger('Track|addLocations')
     let d = 0
     let l = 0
@@ -37,16 +37,6 @@ class Track extends Array {
       l += d
       this[i].dloc = d
       this[i].loc = l
-    }
-    if (distance) {
-      logger('Track|addLocations : scaling distances')
-      if (round(this.last.loc, 4) !== round(distance, 4)) {
-        this.scales.distance = distance / this.last.loc
-        this.forEach((x, i) => {
-          x.dloc = x.dloc * this.scales.distance
-          x.loc = x.loc * this.scales.distance
-        })
-      }
     }
   }
 
@@ -102,22 +92,15 @@ class Track extends Array {
     })
   }
 
-  calcStats (smooth = true) {
+  calcStats () {
     // return course { gain, loss, dist }
-    logger(`Track|calcStats smooth=${smooth}`)
+    logger('Track|calcStats')
     const d = this.last.loc
     let gain = 0
     let loss = 0
     let delta = 0
-    let points
-    if (smooth) {
-      const locs = this.map(x => x.loc)
-      points = this.getSmoothedProfile(locs, 0.05)
-    } else {
-      points = this
-    }
-    let last = points[0].alt
-    points.forEach(p => {
+    let last = this[0].alt
+    this.forEach(p => {
       delta = p.alt - last
       if (delta < 0) {
         loss += delta
@@ -131,9 +114,8 @@ class Track extends Array {
       loss: loss,
       dist: d
     }
-    if (!smooth) {
-      this.stats = { ...stats }
-    }
+    ;({ dist: this.dist, gain: this.gain, loss: this.loss } = stats)
+    logger(`Track|calcStats ${round(stats.dist, 2)} km ${round(stats.gain, 0)}/${round(stats.loss, 0)} m`)
     return stats
   }
 
@@ -147,6 +129,9 @@ class Track extends Array {
     const locs = Array.isArray(location) ? [...location] : [location]
 
     logger(`Track|getLLA for ${locs.length} location(s).`)
+
+    // if track has loops, just look at location within first loop (eg track)
+    locs.forEach((l, i) => { if (l > this.dist) locs[i] = l % this.dist })
 
     // initialize variables:
     // start at 0 or at input start point (for single location)
@@ -195,7 +180,7 @@ class Track extends Array {
   }
 
   getNearestLoc (ll, start, limit) {
-    logger('Track|getNearestLoc')
+    logger(['Track|getNearestLoc', ll, start, limit])
     // iterate to new location based on waypoint lat/lon
     // ll: [lat, lon] array
     // start: starting location in meters
@@ -248,10 +233,10 @@ class Track extends Array {
     return ga
   }
 
-  reduceDensity () {
+  async reduceDensity () {
   // reduce density of points for processing
   // correct distance
-    logger('Track|reduceDensity')
+    const t = logger('Track|reduceDensity')
     const spacing = 0.025 // meters between points
 
     // only reformat if it cuts the size down in half
@@ -264,110 +249,28 @@ class Track extends Array {
       }
       const adj = this.getSmoothedProfile(xs, 2 * spacing)
       const llas = this.getLLA(xs, 0)
-
-      // reformat
-      const points = new Track(
+      const track = await create(
         llas.map((lla, i) => {
           return [
             round(lla.lat, 6),
             round(lla.lon, 6),
             round(adj[i].alt, 2)
           ]
-        })
+        }),
+        { clean: false }
       )
-      // replace locs and grades
-      points.forEach((p, i) => {
-        p.loc = xs[i]
-        p.dloc = (i > 0) ? xs[0] - xs[i - 1] : 0
-        p.grade = round(adj[i].grade, 4)
-      })
 
-      logger(`Track|reduceDensity: Reduced from ${this.length} to ${points.length} points`)
-      return points
+      logger(`Track|reduceDensity: Reduced from ${this.length} to ${track.length} points`, t)
+      return track
     } else {
       return this
-    }
-  }
-
-  // map array of actual times to this
-  async addActuals (actual) {
-    const t = logger(`Track|addActuals : mapping ${actual.length} points`)
-    actual = actual.map(p => {
-      const x = { ...p }
-      x.ll = new LatLon(p.lat, p.lon)
-      return x
-    })
-    let MatchFailure = {}
-    try {
-      for (let index = 0; index < this.length; index++) {
-        const p = this[index]
-        // this requires a lot of processing; prevent browser from hanging:
-        if (index % 10 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 5))
-        }
-
-        const ll = new LatLon(p.lat, p.lon)
-        // pick all points within the next "th"
-        let j = 0
-        let darr = []
-        while (darr.length === 0 || j > darr.length / 3) {
-          if (j !== 0) { actual.shift() }
-          const ths = [0.050, 0.075, 0.100, 0.15, 0.2]
-          for (let ith = 0; ith < ths.length; ith++) {
-            darr = actual.filter(
-              (a, i) => a.loc - actual[0].loc <= ths[ith] || i < 3
-            ).map(a => {
-              return Number(ll.distanceTo(a.ll))
-            })
-            j = darr.findIndex(d => d === Math.min(...darr))
-            if (darr[j] < ths[ith]) { break }
-          }
-        }
-        if (darr[j] === 0) {
-          p.actual = {
-            loc: actual[0].loc,
-            elapsed: actual[0].elapsed
-          }
-        } else {
-          const a1 = actual[j]
-          const a2 = darr[j + 1] >= darr[j - 1] ? actual[j + 1] : actual[j - 1]
-          const d1 = darr[j]
-          const d2 = darr[j + 1] >= darr[j - 1] ? darr[j + 1] : darr[j - 1]
-          if (d1 > 0.25) {
-            MatchFailure = {
-              match: false,
-              point: p
-            }
-            throw MatchFailure
-          }
-          if (a2) {
-            p.actual = {
-              loc: interp(0, 1, a1.loc, a2.loc, d1 / (d1 + d2)),
-              elapsed: interp(0, 1, a1.elapsed, a2.elapsed, d1 / (d1 + d2))
-            }
-          } else {
-            p.actual = {
-              loc: a1.loc,
-              elapsed: a1.elapsed
-            }
-          }
-        }
-      }
-      logger('Track|addActuals MATCH', t)
-      return {
-        match: true
-      }
-    } catch (e) {
-      logger('Track|addActuals FAIL', t)
-      return MatchFailure
     }
   }
 }
 
 async function create (arr, opts = {}) {
   const clean = opts.clean !== false // default to true
-  const loops = opts.loops || 1
-  logger(`track|create for ${arr.length} points and ${loops} loop(s). clean=${clean}.`)
+  logger(`track|create for ${arr.length} points. clean=${clean}.`)
   let points = arr.map(p => { return new Point(p) })
 
   if (clean) {
@@ -383,30 +286,17 @@ async function create (arr, opts = {}) {
   }
 
   // add all points to this
-  const track = new Track(points.length * loops)
+  const track = new Track(points.length)
 
   // populate track points
-  for (let i = 0; i < points.length * loops; i++) {
-    track[i] = new Point(points[i % points.length])
+  for (let i = 0; i < points.length; i++) {
+    track[i] = points[i]
   }
 
-  track.scales = { distance: 1, gain: 1, loss: 1 }
-
-  track.addLocations(opts.distance)
+  track.addLocations()
   if (clean) track.cleanUp()
   track.addGrades()
   track.calcStats(false)
-
-  // if specifying other distance, scale distances:
-  if (opts?.gain !== undefined && opts?.loss !== undefined) {
-    track.scales.gain = opts.gain / track.stats.gain
-    track.scales.loss = opts.loss / track.stats.loss
-    track.scales.grade = (opts.gain - opts.loss) / (track.stats.gain - track.stats.loss)
-
-    track.forEach((x) => {
-      x.grade *= (x.grade > 0 ? track.scales.gain : track.scales.loss)
-    })
-  }
 
   return track
 }

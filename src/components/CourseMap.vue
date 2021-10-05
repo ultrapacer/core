@@ -83,10 +83,6 @@ export default {
       type: Object,
       required: true
     },
-    points: {
-      type: Array,
-      required: true
-    },
     waypoints: {
       type: Array,
       default () { return [] }
@@ -167,13 +163,14 @@ export default {
       return hm
     },
     pointsllls: function () {
-      return this.points.map(p => {
-        return {
-          loc: p.loc,
-          lat: p.lat,
-          lon: p.lon
-        }
-      })
+      return this.course.track
+        .map(p => {
+          return {
+            loc: p.loc,
+            lat: p.lat,
+            lon: p.lon
+          }
+        })
     },
     points2: function () {
       // this is a combination of the track points and the waypoints (in case
@@ -190,7 +187,7 @@ export default {
     waypoints2llls: function () {
       return this.waypoints2.map(wp => {
         return {
-          loc: wp.type === 'finish' ? this.course.distance : wp.loc % this.course.distance,
+          loc: wp.type === 'finish' ? this.course.track.dist : wp.loc % this.course.track.dist,
           lat: wp.lat,
           lon: wp.lon
         }
@@ -200,8 +197,8 @@ export default {
   watch: {
     focus: function (val) {
       if (val.length) {
-        const lower = val[0] % this.course.distance
-        const upper = val[1] % this.course.distance || this.course.distance
+        const lower = val[0] % this.course.track.dist
+        const upper = val[1] % this.course.track.dist || this.course.track.dist
         const points = this.points2.filter(p =>
           p.loc >= lower && p.loc <= upper
         )

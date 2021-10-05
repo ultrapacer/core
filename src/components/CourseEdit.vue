@@ -44,11 +44,11 @@
             :show-tips="showTips"
             class="mb-0"
             @loadGPX="loadGPX"
-            @change="courseLoaded=false"
+            @change="trackLoaded=false"
           />
 
           <b-input-group
-            v-if="courseLoaded === true || model._id"
+            v-if="trackLoaded === true || model._id"
             prepend="Elevation Data"
             class="mt-1"
           >
@@ -64,7 +64,7 @@
             Required: data source for elevation.
           </form-tip>
           <b-input-group
-            v-if="courseLoaded === true && stats"
+            v-if="trackLoaded === true"
             prepend="Stats"
             class="mt-1"
           >
@@ -81,7 +81,7 @@
                 >
                   Dist:
                 </b-col>
-                <b-col>{{ $units.distf(stats.dist, 2) | commas }}  {{ $units.dist }}</b-col>
+                <b-col>{{ $units.distf(track.dist, 2) | commas }}  {{ $units.dist }}</b-col>
               </b-row>
               <b-row>
                 <b-col
@@ -92,7 +92,7 @@
                 >
                   Gain:
                 </b-col>
-                <b-col>{{ $units.altf(stats.gain, 0) | commas }}  {{ $units.alt }}</b-col>
+                <b-col>{{ $units.altf(track.gain, 0) | commas }}  {{ $units.alt }}</b-col>
               </b-row>
               <b-row>
                 <b-col
@@ -103,12 +103,12 @@
                 >
                   Loss:
                 </b-col>
-                <b-col>{{ -$units.altf(stats.loss, 0) | commas }}  {{ $units.alt }}</b-col>
+                <b-col>{{ -$units.altf(track.loss, 0) | commas }}  {{ $units.alt }}</b-col>
               </b-row>
             </div>
           </b-input-group>
         </selectable-label-input>
-        <div v-if="courseLoaded === true || model._id">
+        <div v-if="trackLoaded === true || model._id">
           <b-input-group
             prepend="Name"
             class="mt-1"
@@ -162,12 +162,12 @@
               class="mt-1"
             >
               <b-form-input
-                v-model="distancef"
+                v-model="distf"
                 type="number"
                 required
                 step="0.01"
-                :min="$math.round((stats ? stats.dist : model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 0.9, 2)"
-                :max="$math.round((stats ? stats.dist : model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 1.1, 2)"
+                :min="$math.round((track.dist || model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 0.9, 2)"
+                :max="$math.round((track.dist || model.distance) * ((model.override.distUnit === 'mi') ? 0.621371 : 1) * 1.1, 2)"
                 @input="updateDistance"
               />
               <b-form-select
@@ -189,8 +189,8 @@
                 type="number"
                 required
                 step="0"
-                :min="$math.round((stats ? stats.gain : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
-                :max="$math.round((stats ? stats.gain : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
+                :min="$math.round((track.gain || model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
+                :max="$math.round((track.gain || model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
                 @input="updateGain"
               />
               <b-form-select
@@ -212,8 +212,8 @@
                 type="number"
                 required
                 step="0"
-                :min="$math.round(-(stats ? stats.loss : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
-                :max="$math.round(-(stats ? stats.loss : model.gain) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
+                :min="$math.round(-(track.loss || model.loss) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 0.8, 0)"
+                :max="$math.round(-(track.loss || model.loss) * ((model.override.elevUnit === 'ft') ? 3.28084 : 1) * 1.2, 0)"
                 @input="updateLoss"
               />
               <b-form-select
@@ -315,7 +315,7 @@
         </b-button>
         <b-button
           variant="primary"
-          :disabled="courseLoaded !== true"
+          :disabled="Boolean(!model._id && !trackLoaded)"
           @click="ok()"
         >
           Save
@@ -353,7 +353,8 @@ export default {
   },
   data () {
     return {
-      courseLoaded: false,
+      trackLoaded: false,
+      newTrack: false,
       defaults: {
         override: {
           enabled: false,
@@ -374,23 +375,18 @@ export default {
       gpxFile: null,
       gpxFileInvalidMsg: '',
       gpxFileNoElevFlag: false,
-      gpxPoints: [],
       loopEnabled: false,
       model: { source: {} },
       moment: null,
-      points: [],
-      prevDist: 0,
-      rawLoaded: false,
+      track: [],
       showTips: false,
-      stats: null,
-      distancef: null,
+      distf: null,
       gainf: null,
       lossf: null,
       sourceOptions: [
         { value: 'gpx', text: 'GPX File' },
         { value: 'strava-route', text: 'Strava Route' }
-      ],
-      newPointsFlag: false // to track whether we need to upload new points
+      ]
     }
   },
   computed: {
@@ -416,26 +412,24 @@ export default {
     }
   },
   methods: {
-    async show (course, raw = null) {
-      this.courseLoaded = false
-      this.newPointsFlag = false
+    async show (id = null) {
+      this.$status.processing = true
+      this.trackLoaded = false
+      this.newTrack = false
       this.showTips = false
       this.moment = null
       this.gpxFileInvalidMsg = ''
-      if (course._id) {
-        this.model = JSON.parse(JSON.stringify(course)) // deep clone course
+      if (id) {
+        this.model = await api.getCourse(id, 'course')
         if (!this.model.source.alt) this.$set(this.model.source, 'alt', this.model.source.type)
-        this.prevDist = course.distance
         const tz = this.model.eventTimezone || moment.tz.guess()
         if (this.model.eventStart) {
           this.moment = moment(this.model.eventStart).tz(tz)
         } else {
           this.moment = moment(0).tz(tz)
         }
-        this.model.override = { ...course.override }
         this.updateDistanceUnit(this.model.override.distUnit)
         this.updateElevUnit(this.model.override.elevUnit)
-        this.courseLoaded = this.reloadPoints(course.reduced ? 'raw' : 'points')
         this.loopEnabled = this.model.loops > 1
       } else {
         this.moment = moment(0).tz(moment.tz.guess())
@@ -451,49 +445,28 @@ export default {
         this.save()
       }
     },
-    async reloadPoints (field) {
-      const arr = await api.getCourseField(this.model._id, field)
-      this.gpxPoints = await this.$core.tracks.create(arr)
-      this.stats = this.gpxPoints.calcStats(true)
-      this.courseLoaded = true
+    async reloadTrack () {
+      const arr = await api.getCourseField(this.model._id, 'points')
+      this.track = await this.$core.tracks.create(arr)
+      this.trackLoaded = true
       return true
     },
     async save () {
       if (this.$status.processing) { return }
       this.$status.processing = true
       try {
-        // if we have new points data, format and update:
-        let points = []
-        if (this.newPointsFlag && this.gpxPoints.length) {
-          points = this.gpxPoints
-
-          // get a reduced density set of points:
-          const reduced = points.reduceDensity()
-          this.model.reduced = reduced.length !== points.length
-
-          // if the points were reduced, use that
-          if (this.model.reduced) {
-            // reformat reduced to lla array
-            this.model.points = reduced.map(x => {
-              return [
-                this.$math.round(x.lat, 6),
-                this.$math.round(x.lon, 6),
-                this.$math.round(x.alt, 2)
-              ]
-            })
-
-            // also store raw (original) set of points:
-            this.model.raw = points.map(x => {
-              return [x.lat, x.lon, x.alt]
-            })
-
-          // if the points were not reduced, use the original LLA's
-          } else {
-            this.model.points = points.map(x => {
-              return [x.lat, x.lon, x.alt]
-            })
-            this.model.raw = null
-          }
+        // if we have new track data, format and update:
+        if (this.trackLoaded && this.track.length) {
+          this.model.points = this.track.map(x => {
+            return [
+              this.$math.round(x.lat, 6),
+              this.$math.round(x.lon, 6),
+              this.$math.round(x.alt, 2)
+            ]
+          })
+          this.model.distance = this.track.dist
+          this.model.gain = this.track.gain
+          this.model.loss = this.track.loss
         }
 
         this.model.eventTimezone = this.moment.tz()
@@ -519,9 +492,9 @@ export default {
             'loops'
           ]
 
-          // only include new points info if we have a new course source:
-          if (this.newPointsFlag) {
-            fields.push('source', 'raw', 'reduced', 'points')
+          // only include new track info if we have a new course source:
+          if (this.trackLoaded) {
+            fields.push('source', 'points')
           }
           fields.forEach(f => {
             if (this.model[f] !== undefined) {
@@ -532,59 +505,51 @@ export default {
           this.$gtag.event('edit', { event_category: 'Course' })
 
           // update all waypoints to fit updated course:
-          const diff = this.model.distance - this.prevDist
-          const scaleWaypoints = this.$math.round(diff, 4) !== 0
-          if (scaleWaypoints || this.newPointsFlag) {
+          if (this.trackLoaded) {
+            const course = new this.$core.courses.Course(this.model)
+            course.addTrack(this.track)
             let waypoints = await api.getWaypoints(this.model._id)
-            waypoints = waypoints.map(wp => { return new this.$core.waypoints.Waypoint(wp) })
-            // if the distance changed locations by new length
-            if (scaleWaypoints) {
-              this.$logger('CourseEdit|save: scaling waypoints to new distance')
-              waypoints.forEach(wp => {
-                if (wp.type === 'finish') {
-                  wp.loc = this.model.distance
-                } else if (wp.type !== 'start') {
-                  wp.loc = wp.loc * this.model.distance / this.prevDist
-                }
-              })
-            }
+            waypoints = waypoints.map(wp => { return new this.$core.waypoints.Waypoint(wp, course) })
             // if the course changed, map them to the new course LLA's
-            if (this.newPointsFlag) {
-              this.$logger('CourseEdit|save: mapping waypoints to new course')
-              waypoints.forEach(wp => {
+            this.$logger('CourseEdit|save: mapping waypoints to new course')
+            waypoints.forEach(wp => {
+              if (this.newTrack) {
                 if (wp.type !== 'start' && wp.type !== 'finish') {
                 // limit of 0.5 km or 5% of total:
-                  const limit = Math.max(0.5, 0.05 * this.model.distance)
+                  const limit = Math.max(0.5, 0.05 * this.track.dist)
                   // resolve closest distance along course for waypoint LLA
-                  wp.location = points.getNearestLoc([wp.lat, wp.lon], wp.location, limit)
+                  wp.loc = this.track.getNearestLoc([wp.lat, wp.lon], wp.loc, limit)
                 }
-                wp.refreshLLA(points)
-              })
-            }
+              }
+              wp.refreshLLA(this.track)
+            })
+
             // save them all
             await Promise.all(waypoints.map(async wp => {
               await api.updateWaypoint(wp.site._id, wp.site)
               this.$logger(`CourseEdit|save: updated waypoint ${wp.name}`)
             }))
           }
+          this.$nextTick(async () => { await this.$core.util.sleep(100); this.$emit('afterEdit') })
         } else {
-          await api.createCourse(this.model)
+          const { id } = await api.createCourse(this.model)
           this.$gtag.event('create', { event_category: 'Course' })
+          this.$nextTick(() => { this.$emit('afterCreate', { _id: id }) })
         }
         this.$status.processing = false
         this.clear()
         this.$refs.modal.hide()
-        this.$nextTick(() => { this.$emit('refresh') })
       } catch (error) {
         this.$error.handle(this.$gtag, error)
         this.$status.processing = false
       }
     },
     clear () {
-      this.gpxPoints = []
+      this.track = []
       this.model = JSON.parse(JSON.stringify(this.defaults))
       this.file = null
-      this.newPointsFlag = false
+      this.trackLoaded = false
+      this.newTrack = false
       this.gpxFileNoElevFlag = false
     },
     async remove () {
@@ -628,28 +593,29 @@ export default {
             } else {
               this.$logger('CourseEdit|GPX parsed', t)
               this.model.source = { ...source }
-              const track = data.tracks[0].segments[0].map(p => {
+              const llas = data.tracks[0].segments[0].map(p => {
                 return [p.lat, p.lon, p.elevation]
               })
-              if (track.length < 100) {
+              if (llas.length < 100) {
                 this.gpxFileInvalidMsg = 'GPX file has too few points.'
                 this.$status.processing = false
                 return
               }
-              if (track.length > 100000) {
+              if (llas.length > 100000) {
                 this.gpxFileInvalidMsg = 'File exceeds size limit of 100,000 points. If this is a valid file, contact me for help.'
                 this.$status.processing = false
                 return
               }
-              this.gpxPoints = await this.$core.tracks.create(track)
-              this.stats = this.gpxPoints.calcStats(true)
-              if (this.$config.requireGPXElevation && this.stats.gain === 0) {
+              const track = await this.$core.tracks.create(llas)
+              const reduced = await track.reduceDensity()
+              this.track = (reduced.length < track.length) ? reduced : track
+
+              if (this.$config.requireGPXElevation && this.track.gain === 0) {
                 this.gpxFileNoElevFlag = true
                 const t2 = this.$logger('CourseEdit|loadGPX getting elevation data')
                 try {
-                  await this.addElevationData(this.gpxPoints)
-                  this.$logger(`CourseEdit|loadGPX received elevation data for ${this.gpxPoints.length} points`, t2)
-                  this.stats = this.gpxPoints.calcStats(true)
+                  await this.addElevationData(this.track)
+                  this.$logger(`CourseEdit|loadGPX received elevation data for ${this.track.length} points`, t2)
                 } catch (err) {
                   this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
                   this.$logger('CourseEdit|loadGPX failed to get elevation data.', t2)
@@ -663,9 +629,9 @@ export default {
               if (!this.model.name) {
                 this.model.name = this.model.source.name
               }
-              await this.defaultTimezone(this.gpxPoints[0].lat, this.gpxPoints[0].lon)
-              this.courseLoaded = true
-              this.newPointsFlag = true
+              await this.defaultTimezone(this.track[0].lat, this.track[0].lon)
+              this.trackLoaded = true
+              this.newTrack = true
             }
           } catch (error) {
             this.$error.handle(this.$gtag, error)
@@ -678,7 +644,9 @@ export default {
       }
     },
     changeAltSource: async function (val) {
-      if (this.gpxPoints.length) {
+      this.$logger(`CourseEdit|changeAltSource to ${val}`)
+      if (!this.track.length) await this.reloadTrack()
+      if (this.track.length) {
         this.$set(this.model.source, 'alt', val)
         if (val === 'strava-route') {
           this.$refs.stravaRouteInput.getStravaRoute()
@@ -688,9 +656,9 @@ export default {
           this.$status.processing = true
           const t2 = this.$logger('CourseEdit|changeAltSource getting elevation data')
           try {
-            await this.addElevationData(this.gpxPoints, val)
-            this.$logger(`CourseEdit|changeAltSource received elevation data for ${this.gpxPoints.length} points`, t2)
-            this.stats = this.gpxPoints.calcStats(true)
+            await this.addElevationData(this.track, val)
+            this.$logger(`CourseEdit|changeAltSource received elevation data for ${this.track.length} points`, t2)
+            this.track.calcStats()
             this.updateModelGainLoss()
           } catch (err) {
             this.gpxFileInvalidMsg = 'Elevation data and data is not available.'
@@ -701,14 +669,11 @@ export default {
           }
           this.$status.processing = false
         }
-        this.newPointsFlag = true
+        this.trackLoaded = true
       }
     },
     updateModelGainLoss: function () {
-      if (!this.model.override || !this.model.override.enabled) {
-        this.model.gain = this.stats.gain
-        this.model.loss = this.stats.loss
-        this.model.distance = this.stats.dist
+      if (!this.model.override?.enabled) {
         this.setDistGainLoss()
       }
     },
@@ -716,44 +681,48 @@ export default {
       this.model.override.distUnit = this.$units.dist
       this.model.override.elevUnit = this.$units.alt
       if (!val) {
-        if (this.courseLoaded !== true) {
-          this.$status.processing = true
-          await this.courseLoaded
-          this.$status.processing = false
-        }
-        this.model.gain = this.stats.gain
-        this.model.loss = this.stats.loss
-        this.model.distance = this.stats.dist
-        this.updateDistanceUnit(this.model.override.distUnit)
-        this.updateElevUnit(this.model.override.elevUnit)
+        delete this.model.override.dist
+        delete this.model.override.gain
+        delete this.model.override.loss
       } else {
+        // if enabling override, initialize these values to match model
+        this.model.override.dist = this.track?.dist || this.model.distance
+        this.model.override.gain = this.track?.gain || this.model.gain
+        this.model.override.loss = this.track?.loss || this.model.loss
         this.updateDistanceUnit(this.$units.dist)
         this.updateElevUnit(this.$units.alt)
       }
       this.$set(this.model.override, 'enabled', val)
     },
     updateDistance: function (val) {
-      this.model.distance = val / ((this.model.override.distUnit === 'mi') ? 0.621371 : 1)
+      this.model.override.dist = val / ((this.model.override.distUnit === 'mi') ? 0.621371 : 1)
     },
     async updateDistanceUnit (val) {
-      this.distancef = this.$math.round(this.model.distance * ((val === 'mi') ? 0.621371 : 1), 2)
+      this.distf = this.$math.round(this.model.override.dist * ((val === 'mi') ? 0.621371 : 1), 2)
     },
     updateGain: function (val) {
-      this.model.gain = val / ((this.model.override.elevUnit === 'ft') ? 3.28084 : 1)
+      this.model.override.gain = val / ((this.model.override.elevUnit === 'ft') ? 3.28084 : 1)
     },
     updateLoss: function (val) {
-      this.model.loss = -val / ((this.model.override.elevUnit === 'ft') ? 3.28084 : 1)
+      this.model.override.loss = -val / ((this.model.override.elevUnit === 'ft') ? 3.28084 : 1)
     },
     async updateElevUnit (val) {
-      this.gainf = this.$math.round(this.model.gain * ((val === 'ft') ? 3.28084 : 1), 0)
-      this.lossf = -this.$math.round(this.model.loss * ((val === 'ft') ? 3.28084 : 1), 0)
+      this.gainf = this.$math.round(this.model.override.gain * ((val === 'ft') ? 3.28084 : 1), 0)
+      this.lossf = -this.$math.round(this.model.override.loss * ((val === 'ft') ? 3.28084 : 1), 0)
     },
     async defaultTimezone (lat, lon) {
-      const tz = await api.getTimeZone(lat, lon)
-      if (Number(this.moment.format('YYYY') > 1970)) {
-        this.moment = moment(this.moment.utc().tz(tz))
-      } else {
-        this.moment = moment(0).tz(tz)
+      try {
+        const tz = await this.$utils.timeout(
+          api.getTimeZone(lat, lon),
+          5000
+        )
+        if (Number(this.moment.format('YYYY') > 1970)) {
+          this.moment = moment(this.moment.utc().tz(tz))
+        } else {
+          this.moment = moment(0).tz(tz)
+        }
+      } catch (error) {
+        this.$error.handle(this.$gtag, error)
       }
     },
     showHelp () {
@@ -764,13 +733,13 @@ export default {
     },
     sourceChange (val) {
       this.gpxFile = null
-      this.gpxPoints = []
-      this.courseLoaded = false
+      this.track = []
+      this.trackLoaded = false
       delete this.model.source.name
       this.model.source.alt = val
     },
-    async addElevationData (points, source) {
-      const lls = points.map(p => {
+    async addElevationData (track, source) {
+      const lls = track.map(p => {
         return [
           this.$math.round(p.lat, 6),
           this.$math.round(p.lon, 6)
@@ -781,9 +750,10 @@ export default {
         15000 + lls.length
       )
       if (lls.length === data.alts.length) {
-        points.forEach((p, i) => {
+        track.forEach((p, i) => {
           p.alt = data.alts[i]
         })
+        track.calcStats()
         this.$set(this.model.source, 'alt', data.source)
         this.$gtag.event('addElevationData', { event_category: 'Course', event_label: data.source })
       } else {

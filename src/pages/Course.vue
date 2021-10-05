@@ -102,7 +102,7 @@
         {{ course.description }}
       </span>
       <span v-else-if="course.name">
-        The {{ course.name }} course covers <b>{{ $units.distf(course.totalDistance(), 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.totalGain(), 0) | commas }} {{ $units.alt }}</b> of climbing.
+        The {{ course.name }} course covers <b>{{ $units.distf(course.scaledDist, 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.scaledGain, 0) | commas }} {{ $units.alt }}</b> of climbing.
       </span>
     </div>
     <b-row
@@ -127,7 +127,6 @@
               :course="course"
               :waypoints="waypoints"
               :plan="plan"
-              :points="points"
               :segments="planAssigned && pacingSplitsReady ? plan.splits.segments : course.splits.segments"
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"
@@ -198,7 +197,6 @@
             <plan-details
               ref="planDetails"
               :course="course"
-              :points="points"
               :terrain-factors="terrainFactors"
               :event="event"
               :plan="plan"
@@ -208,19 +206,18 @@
         </b-tabs>
       </b-col>
       <b-col
-        v-if="points.length"
+        v-if="pointsReady"
         :lg="comparing ? 5 : 6"
         xl="5"
         order="1"
         class="chart-map-container"
       >
         <course-profile
-          v-if="points.length"
+          v-if="pointsReady"
           ref="profile"
           :printing="printing==='Profile'"
           :course="course"
           :waypoints="visibleWaypoints"
-          :points="points"
           :plan="plan"
           :show-actual="comparing"
           :focus="focus"
@@ -228,11 +225,10 @@
           @setHighlightPoint="(p)=>{highlightPoint = p}"
         />
         <course-map
-          v-if="points.length"
+          v-if="pointsReady"
           ref="map"
           :course="course"
           :waypoints="visibleWaypoints"
-          :points="points.filter(p=>p.loc<=course.distance)"
           :focus="focus"
           :highlight-point="highlightPoint"
           @waypointClick="waypointClick"
@@ -242,7 +238,7 @@
     <course-edit
       v-if="owner"
       ref="courseEdit"
-      @refresh="reloadCourse"
+      @afterEdit="reloadCourse"
       @delete="deleteCourse"
     />
     <plan-edit
@@ -254,10 +250,9 @@
     />
     <waypoint-edit
       v-if="owner && $course.view==='edit'"
-      ref="wpEdit"
+      ref="waypointEdit"
       :course="course"
       :waypoints="waypoints"
-      :points="points"
       :terrain-factors="terrainFactors"
       @refresh="refreshWaypoints"
       @delete="deleteWaypoint"
@@ -267,12 +262,11 @@
       ref="delModal"
     />
     <download-track
-      v-if="points.length && course.splits"
+      v-if="pointsReady && course.splits"
       ref="download"
       :course="course"
       :plan="plan"
       :event="event"
-      :points="points"
       :segments="course.splits.segments"
       :update-fn="updatePacing"
     />
@@ -290,7 +284,7 @@
       @setPublic="course.public=true"
     />
     <email-user
-      v-if="$user.isAuthenticated && course._user && points.length"
+      v-if="$user.isAuthenticated && course._user && pointsReady"
       ref="emailOwner"
       :user-id="course._user"
       type="course"
@@ -356,9 +350,7 @@ export default {
       plan: {},
       plans: [],
       plansByOthers: [],
-      points: [],
       printing: false,
-      scales: {},
       waypoint: {},
       focus: [],
       highlightPoint: null,
@@ -438,7 +430,7 @@ export default {
       if (this.course.description) {
         return this.course.description
       } else {
-        return `The ${this.$title} course covers ${this.$units.distf(this.course.distance, 1)} ${this.$units.dist} with ${this.$units.altf(this.course.gain, 0)} ${this.$units.alt} of climbing. Ready?`
+        return `The ${this.$title} course covers ${this.$units.distf(this.course.dist, 1)} ${this.$units.dist} with ${this.$units.altf(this.course.gain, 0)} ${this.$units.alt} of climbing. Ready?`
       }
     },
     views: function () {
@@ -533,7 +525,10 @@ export default {
     waypoints: function () {
       this.$logger('Course|waypoints')
       if (!this.course.waypoints || !this.course.waypoints.length) return []
-      return this.$core.waypoints.loopedWaypoints(this.course.waypoints, this.course.loops, this.course.distance)
+      return this.$core.waypoints.loopedWaypoints(
+        this.course.waypoints,
+        this.course
+      )
     },
     visibleWaypoints: function () {
       this.$logger('Course|visibleWaypoints')
@@ -557,6 +552,9 @@ export default {
     },
     publicName: function () {
       return this.course.public ? this.course.name : 'private'
+    },
+    pointsReady: function () {
+      return Boolean(!this.$status.loading && this.course.points?.length)
     }
   },
   watch: {
@@ -646,14 +644,6 @@ export default {
 
         this.$gtage(this.$gtag, 'Course', 'view', this.publicName)
         this.plans = this.course.plans || []
-
-        // match waypoints in cached segments w/ actual objects
-        this.course.splits.segments.forEach(s => {
-          const wp = this.waypoints.find(
-            wp => wp.site._id === s.waypoint.site && wp.loop === s.waypoint.loop
-          )
-          if (wp) s.waypoint = wp
-        })
       } catch (error) {
         console.log(error)
         this.$gtag.exception({
@@ -666,8 +656,44 @@ export default {
         return
       }
       this.$title = this.course.name
+
+      // if bot, stop here:
+      if (isbot(navigator.userAgent)) {
+        this.syncSegmentWaypoints()
+        this.$status.processing = false
+        this.$status.loading = false
+        return
+      }
+
+      // download course track:
+      const t1 = this.$logger()
+      const llas = await api.getCourseField(this.course._id, 'points')
+      this.$logger(`Course|initialize: downloaded (${llas.length} points)`, t1)
+
+      // if looped course, repeat points array
+      if (!this.course.loops) this.course.loops = 1
+      const track = await this.$core.tracks.create(llas, { loops: this.course.loops })
+      this.course.addTrack(track)
+
+      /// temp tmep temp
+      // this.course.waypoints.forEach(wp => { wp.location /= this.course.distScale })
+      /// temp temp temp
+
+      // set waypoint lat/lon/alt from points:
+      this.waypoints.filter(wp => wp.loop === 1 || wp.type === 'finish')
+        .forEach(wp => { wp.refreshLLA(this.course.track) })
+
+      this.syncSegmentWaypoints()
+
+      // set lat/lon in event object:
+      this.event.lat = this.course.track[0].lat
+      this.event.lon = this.course.track[0].lon
+      if (this.course.eventStart) {
+        this.event.timezone = this.course.eventTimezone
+        this.event.start = this.course.eventStart
+      }
+
       this.$status.loading = false
-      await this.getPoints()
 
       if (this.$route.query.plan) {
         if (this.$route.query.plan.length <= 24) {
@@ -696,7 +722,7 @@ export default {
             this.$refs.planEdit.show(p)
           }
         }
-      } else if (!isbot(navigator.userAgent)) {
+      } else {
         this.selectRecentPlan(() => {
           if (this.owner) {
             this.$course.view = 'edit'
@@ -710,6 +736,7 @@ export default {
         })
       }
       this.$status.processing = false
+      this.$status.loading = false
       setTimeout(() => {
         if (!this.$user.isAuthenticated) {
           this.$refs['toast-welcome'].show()
@@ -729,49 +756,9 @@ export default {
 
       this.$logger('Course|initialize', t)
     },
-    async getPoints () {
-      let t = this.$logger()
-      const pnts = await api.getCourseField(
-        this.course._id,
-        'points'
-      )
-      t = this.$logger(`Course|getPoints: downloaded (${pnts.length} points)`, t)
-
-      // if looped course, repeat points array
-      if (!this.course.loops) this.course.loops = 1
-      this.points = await this.$core.tracks.create(
-        pnts,
-        {
-          loops: this.course.loops,
-          distance: this.course.totalDistance(),
-          gain: this.course.totalGain(),
-          loss: this.course.totalLoss()
-        }
-      )
-
-      // set waypoint lat/lon/alt from points:
-      this.waypoints.filter(wp => wp.loop === 1 || wp.type === 'finish')
-        .forEach(wp => { wp.refreshLLA(this.points) })
-
-      this.scales = this.points.scales
-
-      // set lat/lon in event object:
-      this.event.lat = this.points[0].lat
-      this.event.lon = this.points[0].lon
-      if (this.course.eventStart) {
-        this.event.timezone = this.course.eventTimezone
-        this.event.start = this.course.eventStart
-      }
-
-      if (this.planAssigned) {
-        await this.calcPlan()
-      }
-      this.$logger('Course|getPoints: complete', t)
-      this.$status.loading = false
-    },
     async editCourse () {
       if (this.$course.view !== 'edit') { this.$course.view = 'edit' }
-      this.$refs.courseEdit.show(this.course)
+      this.$refs.courseEdit.show(this.course._id)
     },
     async reloadCourse () {
       // reload current page
@@ -798,10 +785,10 @@ export default {
       )
     },
     async newWaypoint () {
-      this.$refs.wpEdit.show({})
+      this.$refs.waypointEdit.show({})
     },
     async editWaypoint (waypoint) {
-      this.$refs.wpEdit.show(waypoint)
+      this.$refs.waypointEdit.show(waypoint)
     },
     async deleteWaypoint (waypoint, cb) {
       this.$refs.delModal.show(
@@ -835,7 +822,7 @@ export default {
     updateWaypointLocation (waypoint, loc) {
       try {
         waypoint.loc = loc
-        waypoint.refreshLLA(this.points)
+        waypoint.refreshLLA(this.course.track)
         if (String(waypoint.site._id) === this.updatingWaypointTimeoutID) {
           clearTimeout(this.updatingWaypointTimeout)
         }
@@ -879,6 +866,15 @@ export default {
       this.course.waypoints = await api.getWaypoints(this.course._id)
       this.setUpdateFlag()
       if (typeof callback === 'function') callback()
+    },
+    syncSegmentWaypoints () {
+      // match waypoints in cached segments w/ actual objects
+      this.course.splits.segments.forEach(s => {
+        const wp = this.waypoints.find(
+          wp => wp.site._id === s.waypoint.site && wp.loop === s.waypoint.loop
+        )
+        if (wp) s.waypoint = wp
+      })
     },
     async newPlan () {
       this.$gtage(this.$gtag, 'Plan', 'add', this.publicName)
@@ -973,7 +969,7 @@ export default {
         this.$status.processing = true
         setTimeout(() => { this.updatePacing() }, 10)
       } else {
-        if (this.points[0].actual !== undefined) {
+        if (this.course.points[0].actual !== undefined) {
           await this.updatePacing()
         }
       }
@@ -1025,19 +1021,21 @@ export default {
     createSplits: async function () {
       const t = this.$logger()
       this.course.splits.segments = await this.$core.geo.createSegments(
-        this.points,
+        this.course.points,
         {
           waypoints: this.waypoints,
-          tFs: this.terrainFactors
+          tFs: this.terrainFactors,
+          course: this.course
         }
       )
       const units = ['kilometers', 'miles']
       units.forEach(async (unit) => {
         this.course.splits[unit] = await this.$core.geo.createSplits(
-          this.points,
+          this.course.points,
           unit,
           {
-            tFs: this.terrainFactors
+            tFs: this.terrainFactors,
+            course: this.course
           }
         )
       })
@@ -1047,22 +1045,24 @@ export default {
       const t = this.$logger()
       if (!this.plan.splits) { this.$set(this.plan, 'splits', {}) }
       const segments = await this.$core.geo.createSegments(
-        this.points,
+        this.course.points,
         {
           waypoints: this.waypoints,
           ...this.plan.pacing,
-          startTime: this.event.startTime
+          startTime: this.event.startTime,
+          course: this.course
         }
       )
       this.$set(this.plan.splits, 'segments', segments)
       const units = ['kilometers', 'miles']
       units.forEach(async (unit) => {
         const s = await this.$core.geo.createSplits(
-          this.points,
+          this.course.points,
           unit,
           {
             ...this.plan.pacing,
-            startTime: this.event.startTime
+            startTime: this.event.startTime,
+            course: this.course
           }
         )
         this.$set(this.plan.splits, unit, s)
@@ -1083,12 +1083,11 @@ export default {
         const pacing = this.$core.geo.calcPacing({
           course: this.course,
           plan: this.plan,
-          points: this.points,
+          points: this.course.points,
           pacing: this.plan.pacing,
           event: this.event,
           delays: this.delays,
           heatModel: this.heatModel,
-          scales: this.scales,
           terrainFactors: this.terrainFactors
         })
         this.$set(this.plan, 'pacing', pacing) // use $set to make reactive
@@ -1131,11 +1130,10 @@ export default {
       this.$course.view = 'analyze'
       this.$refs.courseCompare.show(
         async (actual, startTime) => {
-          await new Promise(resolve => setTimeout(resolve, 100)) // sleep a bit
+          await this.$core.util.sleep(100)
           this.event.start = startTime
-          await this.updatePacing()
           this.$status.processing = true
-          const res = await this.points.addActuals(actual)
+          const res = await this.course.addActuals(actual)
           if (res.match) {
             this.$gtage(this.$gtag, 'Course', 'compare', this.publicName, 1)
             this.comparing = true
