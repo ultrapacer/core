@@ -18,7 +18,8 @@ try {
   keys = require('../config/keys')
 } catch (err) {
   // set keys from environment variables
-  ['THUNDERFOREST_API_KEY',
+  [
+    'THUNDERFOREST_API_KEY',
     'GOOGLE_ANALYTICS_KEY',
     'AUTH0_DOMAIN',
     'AUTH0_CLIENT_ID',

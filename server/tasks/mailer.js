@@ -10,15 +10,7 @@ const path = require('path')
 const renderer = require('vue-server-renderer').createRenderer({
   template: fs.readFileSync(path.join(__dirname, '../templates/email.html'), 'utf-8')
 })
-
-// create reusable transporter object using the default SMTP transport
-const transporter = nodemailer.createTransport({
-  service: 'SendinBlue',
-  auth: {
-    user: process.env.SMTP_USERNAME,
-    pass: process.env.SMTP_PASSWORD
-  }
-})
+const { getSecret } = require('../secrets')
 
 // emailing all users weekend email
 router.route('/good-luck').get(async function (req, res) {
@@ -65,6 +57,19 @@ router.route('/good-luck').get(async function (req, res) {
 
       const html = await renderEmail('Good luck!', 'weekend.vue', { userplans: userplans })
       if (html) {
+        // get keys:
+        const keys = await getSecret(['SMTP_USERNAME', 'SMTP_PASSWORD'])
+
+        // create reusable transporter object using the default SMTP transport
+        const transporter = nodemailer.createTransport({
+          service: 'SendinBlue',
+          auth: {
+            user: keys.SMTP_USERNAME,
+            pass: keys.SMTP_PASSWORD
+          }
+        })
+
+        // send mail
         transporter.sendMail({
           from: '"ultraPacer" <no-reply@ultrapacer.com>',
           to: user.email,

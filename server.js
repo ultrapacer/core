@@ -13,52 +13,9 @@ const external = require('./server/routes/external')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
 const patreon = require('./server/routes/patreon')
+const { getSecret } = require('./server/secrets')
 
-// load keys from either ./config/keys.js file or from google cloud secrets:
-let keys = {}
-const keynames = [
-  'MONGODB',
-  'AUTH0_DOMAIN',
-  'AUTH0_AUDIENCE',
-  'GOOGLE_API_KEY',
-  'PATREON_CLIENT_ID',
-  'PATREON_CLIENT_SECRET',
-  'PATREON_CAMPAIGN',
-  'PATREON_CREATOR_ID',
-  'STRAVA_CLIENT_ID',
-  'STRAVA_CLIENT_SECRET',
-  'STRAVA_REFRESH_TOKEN',
-  'SMTP_USERNAME',
-  'SMTP_PASSWORD',
-  'TIMEZONEDB_API_KEY'
-]
-try {
-  keys = require('./config/keys')
-  // hack to get rid of double+single quote format in keys.js file
-  Object.keys(keys).forEach(k => {
-    keys[k] = keys[k].replace(/'/g, '')
-  })
-  // store keys in env:
-  keynames.forEach(k => { process.env[k] = keys[k] })
-  startUp()
-} catch (err) {
-  const { SecretManagerServiceClient } = require('@google-cloud/secret-manager')
-  const client = new SecretManagerServiceClient()
-  Promise.all(keynames.map(n => {
-    return client.accessSecretVersion({
-      name: `projects/409830855103/secrets/${n}/versions/latest`
-    })
-  })).then(res => {
-    keynames.forEach((n, i) => {
-      keys[n] = res[i][0].payload.data.toString()
-    })
-    // store keys in env:
-    keynames.forEach(k => { process.env[k] = keys[k] })
-    startUp()
-  })
-}
-
-function startUp () {
+async function startUp () {
   const elevation = require('./server/routes/elevation')
   const email = require('./server/routes/email')
   const strava = require('./server/routes/strava')
@@ -66,6 +23,9 @@ function startUp () {
   // connect to the database:
   mongoose.Promise = global.Promise
   mongoose.set('useFindAndModify', false)
+
+  const keys = await getSecret(['MONGODB', 'AUTH0_DOMAIN', 'AUTH0_AUDIENCE'])
+
   mongoose.connect(keys.MONGODB).then(
     () => { console.log('Database is connected') },
     err => { console.log('Can not connect to the database' + err) }
@@ -155,3 +115,5 @@ function startUp () {
     console.log('Press Ctrl+C to quit.')
   })
 }
+
+startUp()

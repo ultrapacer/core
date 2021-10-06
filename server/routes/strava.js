@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const fetch = require('node-fetch')
+const { getSecret } = require('../secrets')
 
 // GET STRAVA ROUTE DETAILS
 router.route('/route/:id').get(async function (req, res) {
@@ -39,6 +40,9 @@ router.route('/route/:id/gpx').get(async function (req, res) {
 
 // GET ACCESS TOKEN FOR STRAVA API V3
 async function getAccessToken () {
+  // get keys
+  const keys = await getSecret(['STRAVA_CLIENT_ID', 'STRAVA_CLIENT_SECRET', 'STRAVA_REFRESH_TOKEN'])
+
   const res = await fetch('https://www.strava.com/oauth/token', {
     method: 'post',
     headers: {
@@ -46,9 +50,9 @@ async function getAccessToken () {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      client_id: process.env.STRAVA_CLIENT_ID,
-      client_secret: process.env.STRAVA_CLIENT_SECRET,
-      refresh_token: process.env.STRAVA_REFRESH_TOKEN,
+      client_id: keys.STRAVA_CLIENT_ID,
+      client_secret: keys.STRAVA_CLIENT_SECRET,
+      refresh_token: keys.STRAVA_REFRESH_TOKEN,
       grant_type: 'refresh_token'
     })
   })

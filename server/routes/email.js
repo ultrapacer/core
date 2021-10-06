@@ -2,19 +2,24 @@ const express = require('express')
 const router = express.Router()
 const nodemailer = require('nodemailer')
 const User = require('../models/User')
-
-// create reusable transporter object using the default SMTP transport
-const transporter = nodemailer.createTransport({
-  service: 'SendinBlue',
-  auth: {
-    user: process.env.SMTP_USERNAME,
-    pass: process.env.SMTP_PASSWORD
-  }
-})
+const { getSecret } = require('../secrets')
 
 router.route('/user/:id').post(async function (req, res) {
   try {
     const user = await User.findById(req.params.id).exec()
+
+    // get keys:
+    const keys = await getSecret(['SMTP_USERNAME', 'SMTP_PASSWORD'])
+
+    // create reusable transporter object using the default SMTP transport
+    const transporter = nodemailer.createTransport({
+      service: 'SendinBlue',
+      auth: {
+        user: keys.SMTP_USERNAME,
+        pass: keys.SMTP_PASSWORD
+      }
+    })
+
     await transporter.sendMail({
       from: '"ultraPacer" <no-reply@ultrapacer.com>',
       to: user.email,

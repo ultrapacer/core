@@ -6,6 +6,7 @@ const router = {
 const patreon = require('@nathanhigh/patreon')
 const User = require('../models/User')
 const url = require('url')
+const { getSecret } = require('../secrets')
 
 // REFRESH LIST OF PATRONAGE STATUS
 router.auth.route('/patrons/refresh').get(async function (req, res) {
@@ -14,8 +15,10 @@ router.auth.route('/patrons/refresh').get(async function (req, res) {
 
     const patreonAPIClient = patreon.patreon(user.membership.patreon.token)
 
+    const campaign = await getSecret('PATREON_CAMPAIGN')
+
     const apiurl = url.format({
-      pathname: `/campaigns/${process.env.PATREON_CAMPAIGN}/members`,
+      pathname: `/campaigns/${campaign}/members`,
       query: {
         include: 'user',
         'fields[member]': 'full_name,email'
@@ -108,13 +111,16 @@ router.auth.route('/url').get(async function (req, res) {
   const user = await User.findOne({ auth0ID: req.user.sub }).select('admin').exec()
   const scopes = ['identity', 'identity[email]']
   if (user.admin) scopes.push('campaigns', 'campaigns.members', 'campaigns.members[email]')
+
+  const clientId = await getSecret('PATREON_CLIENT_ID')
+
   const loginUrl = url.format({
     protocol: 'https',
     host: 'patreon.com',
     pathname: '/oauth2/authorize',
     query: {
       response_type: 'code',
-      client_id: process.env.PATREON_CLIENT_ID,
+      client_id: clientId,
       redirect_uri: getRedirect(req.headers.host),
       scope: scopes.join(' '),
       state: 'chill'
@@ -125,7 +131,10 @@ router.auth.route('/url').get(async function (req, res) {
 
 router.auth.route('/user/:code').put(async function (req, res) {
   try {
-    const oauthClient = patreon.oauth(process.env.PATREON_CLIENT_ID, process.env.PATREON_CLIENT_SECRET)
+    // get keys
+    const keys = await getSecret(['PATREON_CLIENT_ID', 'PATREON_CLIENT_SECRET'])
+
+    const oauthClient = patreon.oauth(keys.PATREON_CLIENT_ID, keys.PATREON_CLIENT_SECRET)
     const { access_token: accessToken } = await oauthClient.getTokens(req.params.code, getRedirect(req.headers.host))
     const apiClient = patreon.patreon(accessToken)
     const apiurl = url.format({
