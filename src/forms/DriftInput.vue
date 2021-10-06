@@ -26,6 +26,9 @@
           fixed
           small
         >
+          <template #head(value)>
+            <span class="d-none d-md-inline">Change </span>[%]
+          </template>
           <template #cell(onset)="row">
             <b-form-input
               v-model="row.item.onset"
@@ -88,6 +91,7 @@
             :drift="value"
             :course-distance="courseDistance"
             class="mt-1"
+            style="width:100%"
           />
         </div>
       </div>
