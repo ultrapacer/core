@@ -2,20 +2,39 @@
   <div>
     <b-modal
       ref="modal"
-      title="Support ultraPacer?"
+      :title="title"
       scrollable
       centered
       hide-header-close
       no-close-on-esc
       no-close-on-backdrop
     >
-      <p v-if="message">
-        Looks like you're enjoying ultraPacer (well at least you've racked up
-        {{ message }} to your name).
+      <!-- Timed Reminder Limit Message -->
+      <div v-if="mode==='reminder'">
+        <p v-if="message">
+          Looks like you're enjoying ultraPacer (well at least you've racked up
+          {{ message }} to your name).
+        </p>
+      </div>
+
+      <!-- Course Limit Message -->
+      <div v-else-if="mode==='courselimit'">
+        <p>
+          Glad you have been utilizing ultraPacer. In order to provide ultraPacer at no cost to
+          you, free user accounts are limited to <b>{{ $config.freeCoursesLimit }} courses</b>
+          created by them.
+        </p>
+        <p>
+          Please consider joining the Patreon club to support the project. There is
+          <b>no course limit</b> to users with Patreon membership at any donation level.
+        </p>
+      </div>
+
+      <p>
+        I do this on my own time and with my own resources. Donations help to cover some of my
+        operating and coffee expenses.
       </p>
       <p>
-        I do this on my own time and with my own resources. Donations help to cover some of my operating and coffee expenses.
-        <br>
         Would you sponsor ultraPacer on Patreon for as little as $1/month?
       </p>
       <p>
@@ -27,7 +46,8 @@
         v-if="noPledgesFound"
         class="text-danger"
       >
-        Patreon connected successfully, however no pledges for ultraPacer were found. Please contact me if you see this message in error. Thanks for your support!
+        Patreon connected successfully, however no pledges for ultraPacer were found.
+        Please contact me if you see this message in error. Thanks for your support!
       </p>
       <template #modal-footer>
         <b-button
@@ -78,18 +98,17 @@ import moment from 'moment'
 export default {
   data () {
     return {
-      delay: 2000,
+      delay: 10000,
       timeout: null,
       message: '',
       oathwindow: null,
       thankYouTimer: 0,
       loginURL: '',
       noPledgesFound: false,
-      noPledgesTimer: 0
+      noPledgesTimer: 0,
+      title: '',
+      mode: 'reminder'
     }
-  },
-  created () {
-    this.getLoginURL()
   },
   mounted () {
     this.timeout = setTimeout(() => {
@@ -102,6 +121,7 @@ export default {
   methods: {
     async initiate () {
       try {
+        // this component should only be loaded if authenticated, but double check:
         if (!this.$user.isAuthenticated) return
 
         if (this.$user.membership.active) {
@@ -124,24 +144,31 @@ export default {
           } else {
             this.$logger('Patreon|initiate: not enough plans or courses')
           }
-          if (showModal) {
-            this.show()
+          if (showModal && !this.$refs.modal.isShow) {
+            this.reminder()
           }
         } else {
           this.$logger(`Patreon|initiate: remind again in ${-d} days`)
         }
       } catch (error) {
-        console.log(error)
-        this.$gtag.exception({
-          description: `Patreon|initiate: ${error.toString()}`,
-          fatal: false
-        })
+        this.$error.handle(this.$gtag, error, 'Patreon|initiate')
       }
     },
-    async show () {
+    async show (arg = null) {
       this.noPledgesFound = false
-      this.$gtage(this.$gtag, 'Patreon', 'show')
+      if (!this.loginURL) await this.getLoginURL()
+      this.$gtag.event(this.mode, { event_category: 'Patreon' })
       this.$refs.modal.show()
+    },
+    async reminder () {
+      this.title = 'Support ultraPacer?'
+      this.mode = 'reminder'
+      this.show()
+    },
+    async courseLimit () {
+      this.title = 'Free course limit reached...'
+      this.mode = 'courselimit'
+      this.show()
     },
     casualNumber (num) {
       switch (num) {
@@ -157,17 +184,20 @@ export default {
       }
     },
     async goToPatreon () {
+      this.$logger('Patreon|goToPatreon')
       window.open('https://www.patreon.com/ultrapacer', '_blank')
-      this.setLastAnnoyed(3)
-      this.$gtage(this.$gtag, 'Patreon', 'visit')
+      this.snoozeReminder(3)
+      this.$gtag.event('visit', { event_category: 'Patreon' })
       this.$refs.modal.hide()
     },
     async maybeLater () {
-      this.setLastAnnoyed(14)
-      this.$gtage(this.$gtag, 'Patreon', 'later')
+      this.$logger('Patreon|maybeLater')
+      this.snoozeReminder(14)
+      this.$gtag.event('later', { event_category: 'Patreon' })
       this.$refs.modal.hide()
     },
-    async setLastAnnoyed (delay) {
+    async snoozeReminder (delay) {
+      this.$logger('Patreon|snoozeReminder')
       try {
         await this.$api.updateUser(
           this.$user._id,
@@ -177,25 +207,22 @@ export default {
           }
         )
       } catch (error) {
-        console.log(error)
-        this.$gtag.exception({
-          description: `Patreon|setLastAnnoyed: ${error.toString()}`,
-          fatal: false
-        })
+        this.$error.handle(this.$gtag, error, 'Patreon|snoozeReminder')
       }
-      this.$logger('Patreon| Updated last_annoyed')
     },
     async getLoginURL () {
       this.$logger('Patreon|getLoginURL : Getting Patreon login URL')
       try {
-        const url = await this.$api.patreonGetLogin()
+        const url = await this.$utils.timeout(this.$api.patreonGetLogin(), 5000)
         this.loginURL = url
       } catch (error) {
-        this.$error.handle(this.$gtag, error)
+        // handle error:
+        this.$error.handle(this.$gtag, error, 'Patreon|getLoginURL')
       }
     },
-    patreonOath () {
+    async patreonOath () {
       try {
+        if (!this.loginURL) await this.getLoginURL()
         if (!this.loginURL) throw new Error('No Patreon login URL')
 
         // open new window:
@@ -210,7 +237,7 @@ export default {
         window.addEventListener('message', this.receiveMessage, false)
       } catch (error) {
         // handle error:
-        this.$error.handle(this.$gtag, error)
+        this.$error.handle(this.$gtag, error, 'Patreon|patreonOath')
       }
     },
     async receiveMessage (event) {

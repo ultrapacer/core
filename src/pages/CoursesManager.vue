@@ -205,7 +205,12 @@ export default {
       }
     },
     async newCourse () {
-      this.$refs.courseEdit.show()
+      const ownedCourseTotal = this.courses.filter(c => c._user === this.$user._id).length
+      if (this.$user.membership.active || ownedCourseTotal < this.$config.freeCoursesLimit) {
+        this.$refs.courseEdit.show()
+      } else {
+        this.$parent.$refs.patreon.courseLimit()
+      }
     },
     async editCourse (course) {
       this.$status.processing = true

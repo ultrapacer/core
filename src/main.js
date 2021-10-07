@@ -146,7 +146,13 @@ Vue.prototype.$course = Vue.observable({
 })
 
 Vue.prototype.$utils = {
-  timeout: (prom, time) => Promise.race([prom, new Promise((resolve, reject) => setTimeout(reject, time))])
+  timeout: async function (prom, time) {
+    try {
+      return await Promise.race([prom, new Promise((resolve, reject) => setTimeout(reject, time))])
+    } catch (error) {
+      throw new Error(`Timeout in ${time} ms`)
+    }
+  }
 }
 // this is a temp fix to reformat the old vue-analytics format to vue-gtag:
 Vue.prototype.$gtage = (gtag, category, action, label, value) => {
@@ -157,16 +163,18 @@ Vue.prototype.$gtage = (gtag, category, action, label, value) => {
 }
 Vue.prototype.$config = Vue.observable({
   requireGPXElevation: true,
-  testing: testing
+  testing: testing,
+  freeCoursesLimit: 5
 })
 
 Vue.prototype.$error = Vue.observable({
-  handle: function (gtag, error, options = {}) {
+  handle: function (gtag, error, location = '', options = {}) {
+    const description = (location ? `${location} => ` : '') + error.toString()
     gtag.exception({
-      description: error.toString(),
+      description: description,
       fatal: options.fatal || false
     })
-    this.msg = options.msg || error.toString()
+    this.msg = options.msg || description
     this.timer = options.timer || 5
     console.log(error)
   },
