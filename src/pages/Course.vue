@@ -905,7 +905,7 @@ export default {
         this.plans = await api.getPlans(this.course._id, this.$user._id)
         this.selectPlan(this.plans.find(p => p._id === plan._id))
       } else {
-        this.plans = [this.plan]
+        this.plans = [plan]
         this.selectPlan({ ...plan })
       }
       await this.calcPlan()
@@ -946,7 +946,13 @@ export default {
           )
         }
       } else {
-        this.$router.push({ query: { plan: JSURL.stringify(this.plan) } })
+        const temp = {}
+        const fields = [
+          '_id', 'name', 'description', 'pacingMethod', 'pacingTarget',
+          'drift', 'heatModel', 'waypointDelay', 'eventStart', 'eventTimezone'
+        ]
+        fields.forEach(f => { if (this.plan[f]) temp[f] = this.plan[f] })
+        this.$router.push({ query: { plan: JSURL.stringify(temp) } })
       }
       this.$gtage(this.$gtag, 'Plan', 'view', this.publicName)
       if (!this.pacingSplitsReady) {

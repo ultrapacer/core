@@ -345,11 +345,19 @@ export default {
     async show (plan) {
       this.showTips = false
       this.moment = null
+
+      // create new model instance
+      this.model = { _course: this.course._id, ...this.defaults }
+
+      // if plan is passed, copy over desired fields:
       if (typeof (plan) !== 'undefined') {
-        this.model = Object.assign({}, plan)
-      } else {
-        this.model = Object.assign({}, this.defaults)
+        const fields = [
+          '_id', 'name', 'description', 'pacingMethod', 'pacingTarget',
+          'drift', 'heatModel', 'waypointDelay', 'eventStart', 'eventTimezone'
+        ]
+        fields.forEach(f => { if (plan[f]) this.model[f] = plan[f] })
       }
+
       if (this.model.pacingTarget) {
         let s = this.model.pacingTarget
         if (
@@ -389,57 +397,62 @@ export default {
     async save () {
       if (this.$status.processing) { return }
       this.$status.processing = true
-      this.model.pacingTarget = string2sec(this.model.pacingTargetF)
-      if (
-        this.model.pacingMethod === 'pace' ||
+      try {
+        this.model.pacingTarget = string2sec(this.model.pacingTargetF)
+        if (
+          this.model.pacingMethod === 'pace' ||
         this.model.pacingMethod === 'np'
-      ) {
-        this.model.pacingTarget = this.$units.distf(this.model.pacingTarget)
-      }
-      if (this.customStart || !this.course.eventStart) {
-        this.model.eventTimezone = this.moment.tz()
-        if (Number(this.moment.format('YYYY') > 1970)) {
-          this.model.eventStart = this.moment.toDate()
+        ) {
+          this.model.pacingTarget = this.$units.distf(this.model.pacingTarget)
+        }
+        if (this.customStart || !this.course.eventStart) {
+          this.model.eventTimezone = this.moment.tz()
+          if (Number(this.moment.format('YYYY') > 1970)) {
+            this.model.eventStart = this.moment.toDate()
+          } else {
+            this.model.eventStart = null
+          }
         } else {
           this.model.eventStart = null
+          this.model.eventTimezone = null
         }
-      } else {
-        this.model.eventStart = null
-        this.model.eventTimezone = null
-      }
-      this.model.waypointDelay = string2sec(this.model.waypointDelayF)
-      let p = {}
-      if (this.$auth.isAuthenticated()) {
-        if (this.model._id) {
-          await api.updatePlan(this.model._id, this.model)
-          p._id = this.model._id
-          this.$gtage(this.$gtag, 'Plan', 'edit',
-            this.course.public ? this.course.name : 'private'
-          )
-        } else {
-          this.model._course = this.course._id
-          p = await api.createPlan(this.model)
-          this.$gtage(this.$gtag, 'Plan', 'create',
-            this.course.public ? this.course.name : 'private'
-          )
-          if (String(p._user._id) !== String(this.course._user)) {
-            this.newPlanToastMsg = `View, edit, and add plans for "${this.course.name}" next time you log in by selecting "My Courses" in the top menu.`
-            this.$refs['toast-new-plan'].show()
+        this.model.waypointDelay = string2sec(this.model.waypointDelayF)
+
+        let p = {}
+        if (this.$auth.isAuthenticated()) {
+          if (this.model._id) {
+            await api.updatePlan(this.model._id, this.model)
+            p._id = this.model._id
+            this.$gtage(this.$gtag, 'Plan', 'edit',
+              this.course.public ? this.course.name : 'private'
+            )
+          } else {
+            p = await api.createPlan(this.model)
+            this.$gtage(this.$gtag, 'Plan', 'create',
+              this.course.public ? this.course.name : 'private'
+            )
+            if (String(p._user._id) !== String(this.course._user)) {
+              this.newPlanToastMsg = `View, edit, and add plans for "${this.course.name}" next time you log in by selecting "My Courses" in the top menu.`
+              this.$refs['toast-new-plan'].show()
+            }
           }
+        } else {
+          p = JSON.parse(JSON.stringify(this.model))
+          this.newPlanToastMsg = `Login or Signup to ultraPacer to save or share your new plan for "${this.course.name}".`
+          this.$refs['toast-new-plan'].show()
+          this.$gtage(this.$gtag, 'Plan', 'temporary',
+            this.course.public ? this.course.name : 'private'
+          )
         }
-      } else {
-        p = { ...this.model }
-        this.newPlanToastMsg = `Login or Signup to ultraPacer to save or share your new plan for "${this.course.name}".`
-        this.$refs['toast-new-plan'].show()
-        this.$gtage(this.$gtag, 'Plan', 'temporary',
-          this.course.public ? this.course.name : 'private'
-        )
-      }
-      await this.$emit('refresh', p, () => {
+        await this.$emit('refresh', p, () => {
+          this.$status.processing = false
+          this.clear()
+          this.$refs.modal.hide()
+        })
+      } catch (error) {
         this.$status.processing = false
-        this.clear()
-        this.$refs.modal.hide()
-      })
+        this.$error.handle(this.$gtag, error, 'PlanEdit|save')
+      }
     },
     clear () {
       this.enableDrift = false
