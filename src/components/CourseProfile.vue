@@ -344,6 +344,7 @@ export default {
     ChartJs.register({
       id: 'setHighlightPointPlugin',
       afterEvent: (chart, e) => {
+        if (chart.config.options.plugins.setHighlightPointPlugin?.enabled === false) return
         const x = chart.scales.x.getValueForPixel(e.event.x)
         this.setHighlightPoint(x)
       }

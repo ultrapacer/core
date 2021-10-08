@@ -112,6 +112,9 @@ export default {
               group: 1
             }
           },
+          setHighlightPointPlugin: {
+            enabled: this.showDistance
+          },
           backgroundColorPlugin: false
         }
       }
