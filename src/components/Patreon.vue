@@ -22,7 +22,7 @@
         <p>
           Glad you have been utilizing ultraPacer. In order to provide ultraPacer at no cost to
           you, free user accounts are limited to <b>{{ $config.freeCoursesLimit }} courses</b>
-          created by them.
+          created by them. Courses shared to the Races page do not count against your limit :]
         </p>
         <p>
           Please consider joining the Patreon club to support the project. There is
