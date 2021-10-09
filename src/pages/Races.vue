@@ -6,7 +6,11 @@
     <h1 class="h1 d-none d-md-block">
       Race Database
     </h1>
-    <p>Click on your race below to make a game plan.<br>Not seeing your race? Contact me and let me know!</p>
+    <p>
+      Click on your race below to make a game plan.<br>
+      Not seeing your race? Contact me and let me know!<br>
+      If you notice anything wrong or out of date, please contact the course owner through the actions menu to keep everything current.
+    </p>
     <b-row v-if="!$status.loading">
       <b-col>
         <race-table
