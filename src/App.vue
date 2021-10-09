@@ -109,6 +109,16 @@
       ref="patreon"
     />
     <b-alert
+      :show="$alert.timer"
+      class="position-fixed fixed-bottom m-0 rounded-0 pt-1 pb-1 center"
+      style="z-index: 5000; text-align: center"
+      :variant="$alert.variant"
+      fade
+      @dismissed="$alert.timer=0"
+    >
+      <b>{{ $alert.message }}</b>
+    </b-alert>
+    <b-alert
       :show="$error.timer"
       class="position-fixed fixed-bottom m-0 rounded-0 pt-1 pb-1"
       style="z-index: 5000"

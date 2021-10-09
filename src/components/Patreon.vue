@@ -70,26 +70,6 @@
         </b-button>
       </template>
     </b-modal>
-    <b-alert
-      :show="thankYouTimer"
-      class="position-fixed fixed-bottom m-0 rounded-0 pt-1 pb-1"
-      style="z-index: 5000"
-      variant="success"
-      fade
-      @dismissed="thankYouTimer=0"
-    >
-      Thank you for your support! Happy trails!
-    </b-alert>
-    <b-alert
-      :show="noPledgesTimer"
-      class="position-fixed fixed-bottom m-0 rounded-0 pt-1 pb-1"
-      style="z-index: 5000"
-      variant="warning"
-      fade
-      @dismissed="noPledgesTimer=0"
-    >
-      Patreon connected successfully, however no pledges for ultraPacer were found. Please contact me if you see this message in error. Thanks for your support!
-    </b-alert>
   </div>
 </template>
 
@@ -102,10 +82,8 @@ export default {
       timeout: null,
       message: '',
       oathwindow: null,
-      thankYouTimer: 0,
       loginURL: '',
       noPledgesFound: false,
-      noPledgesTimer: 0,
       title: '',
       mode: 'reminder'
     }
@@ -255,13 +233,20 @@ export default {
           await this.$parent.getUser()
 
           // notify user of success
-          this.thankYouTimer = 4
+          this.$alert.show('Thank you for your support! Happy trails!')
 
           // hide modal
           this.$refs.modal.hide()
         } else {
           // alert user that no membership was found:
-          if (this.$refs.modal.isShow) { this.noPledgesFound = true } else { this.noPledgesTimer = 6 }
+          if (this.$refs.modal.isShow) {
+            this.noPledgesFound = true
+          } else {
+            this.$alert.show(
+              'Patreon connected successfully, however no pledges for ultraPacer were found. Please contact me if you see this message in error.',
+              { variant: 'warning', timer: 6 }
+            )
+          }
         }
 
         // remove listener:

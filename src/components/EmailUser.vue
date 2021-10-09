@@ -64,22 +64,6 @@
         </b-button>
       </template>
     </b-modal>
-    <div
-      ref="message"
-      hidden
-    >
-      <p>
-        Hello. You received the following message from <b>{{ name }}</b> regarding your {{ type }} <b>"{{ subject }}"</b>.
-        <br>
-        Reply to this email (at {{ replyTo }}) to respond.
-      </p>
-      <p><pre><b>{{ message }}</b></pre></p>
-      <p v-if="url">
-        <b-link :href="url">
-          {{ url }}
-        </b-link>
-      </p>
-    </div>
   </div>
 </template>
 
@@ -133,15 +117,17 @@ export default {
         await api.emailUser(
           this.userId,
           {
-            subject: `ultraPacer | ${this.subject}`,
-            text: this.$refs.message.textContent,
-            html: this.$refs.message.getInnerHTML(),
-            replyTo: this.replyTo
+            name: this.name,
+            type: this.type,
+            course: this.subject,
+            message: this.message,
+            replyTo: this.replyTo,
+            url: this.url
           })
         this.$gtag.event('email', { event_category: capitalize(this.type), event_label: this.subject })
+        this.$alert.show('Message sent!')
       } catch (error) {
-        this.$gtag.exception({ description: error.message || error, fatal: false })
-        console.log(error)
+        this.$error.handle(this.$gtag, error, 'EmailUser|send')
       }
       this.$status.processing = false
       this.$refs.modal.hide()
