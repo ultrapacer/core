@@ -88,10 +88,9 @@ const CourseSchema = new Schema({
     ref: 'Plan'
   }],
   points: [],
-  raw: [],
   reduced: {
     type: Boolean,
-    default: true
+    default: false
   },
   source: {},
   altModel: {},

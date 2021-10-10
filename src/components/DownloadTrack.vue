@@ -6,7 +6,7 @@
       title="Download GPS/TCX Files"
       hide-footer
     >
-      <p>Select your download type below. Use the "Low Resolution" files if loading onto your watch{{ hasTime ? 'for real-time pacing' : '' }}.</p>
+      <p>Select your download type below.</p>
       <p v-show="!hasTime">
         Create/select a plan for this course to download with time & pacing data.
       </p>
@@ -14,45 +14,21 @@
         <b-button-group vertical>
           <download-track-button
             type="GPX"
-            :resolution="course.reduced ? 'Original' : ''"
             :ready="ready.gpx"
             :spinner="working.gpx"
             :url="urls.gpx"
             :filename="filenames.gpx"
             :disabled="disableButtons"
-            @generate="generate('gpx','orig','gpx')"
+            @generate="generate('gpx','gpx')"
           />
           <download-track-button
             type="TCX"
-            :resolution="course.reduced ? 'Original' : ''"
             :ready="ready.tcx"
             :spinner="working.tcx"
             :url="urls.tcx"
             :filename="filenames.tcx"
             :disabled="disableButtons"
-            @generate="generate('tcx','orig','tcx')"
-          />
-          <download-track-button
-            v-if="course.reduced"
-            type="GPX"
-            resolution="Low"
-            :ready="ready.gpx2"
-            :spinner="working.gpx2"
-            :url="urls.gpx2"
-            :filename="filenames.gpx2"
-            :disabled="disableButtons"
-            @generate="generate('gpx','low','gpx2')"
-          />
-          <download-track-button
-            v-if="course.reduced"
-            type="TCX"
-            resolution="Low"
-            :ready="ready.tcx2"
-            :spinner="working.tcx2"
-            :url="urls.tcx2"
-            :filename="filenames.tcx2"
-            :disabled="disableButtons"
-            @generate="generate('tcx','low','tcx2')"
+            @generate="generate('tcx','tcx')"
           />
         </b-button-group>
       </div>
@@ -61,24 +37,9 @@
 </template>
 
 <script>
-/* eslint new-cap: 0 */
 import moment from 'moment-timezone'
-import api from '@/api'
 import DownloadTrackButton from './DownloadTrackButton'
-const sgeo = require('sgeo')
 const xml2js = require('xml2js')
-
-function lawOfCosines (a, b, c) {
-  const val = Math.acos((a ** 2 + b ** 2 - c ** 2) / (2 * a * b)) * 180 / Math.PI
-  if (!val) {
-    console.log({
-      a: a,
-      b: b,
-      c: c
-    })
-  }
-  return val
-}
 
 export default {
   components: {
@@ -110,19 +71,8 @@ export default {
     return {
       urls: {},
       filenames: [],
-      raw: [],
-      working: {
-        gpx: false,
-        tcx: false,
-        gpx2: false,
-        tcx2: false
-      },
-      ready: {
-        gpx: false,
-        tcx: false,
-        gpx2: false,
-        tcx2: false
-      },
+      working: { gpx: false, tcx: false },
+      ready: { gpx: false, tcx: false },
       disableButtons: false
     }
   },
@@ -136,8 +86,8 @@ export default {
       this.ready = {}
       this.$refs.modal.show()
     },
-    async generate (type, resolution, target) {
-      const t = this.$logger(`DownloadGPX|generate ${type} ${resolution}`)
+    async generate (type, target) {
+      const t = this.$logger(`DownloadGPX|generate ${type}`)
 
       this.working[target] = true
       this.ready[target] = false
@@ -153,46 +103,10 @@ export default {
         await this.updateFn()
       }
 
-      let pnts = []
-      if (resolution === 'orig') {
-        // ORIGINAL RESOLUTION
-        if (this.course.reduced) {
-          if (!this.raw.length) { // download raw data:
-            this.raw = await api.getCourseField(this.course._id, 'raw')
-          }
-          pnts = await this.$core.tracks.create(this.raw, { loops: this.course.loops })
+      const pnts = this.course.points
 
-          if (this.hasTime) { // interpolate times from distances in pnts
-            const red = this.course.points.map(p => { return { ...p } })
-            let lastelapsed = 0
-            pnts.forEach(p => {
-              while (red.length > 1 && red[1].loc <= p.loc) {
-                red.shift()
-              }
-              if (p.loc === red[0].loc || red.length === 1) {
-                p.elapsed = red[0].elapsed
-              } else if (p.loc > red[0].loc && p.loc < red[1].loc) {
-                p.elapsed = this.$math.interp(
-                  red[0].loc,
-                  red[1].loc,
-                  red[0].elapsed,
-                  red[1].elapsed,
-                  p.loc
-                )
-              }
-              p.elapsed = this.$math.round(p.elapsed, 3)
-              p.delapsed = p.elapsed - lastelapsed
-              lastelapsed = p.elapsed
-            })
-            // remove any points with zero change in time:
-            pnts = pnts.filter((p, i) => i === 0 || p.delapsed > 0)
-          }
-        } else {
-          pnts = this.course.points
-        }
-      } else {
-        // LOW RESOLUTION (adjust odd points lat/lon to correct distance)
-
+      /* this code  will adjust odd points to make length work; may want to reuse someday
+        // (adjust odd points lat/lon to correct distance)
         // create a copy of points with new Point/LLA objects
         pnts = await this.$core.tracks.create(
           this.course.points.map(p => { return [p.lat, p.lon, p.alt] })
@@ -224,9 +138,9 @@ export default {
             }
           }
         })
-      }
+      */
 
-      let name = `uP-${this.course.name}${(this.plan.name ? ('-' + this.plan.name) : '')}${(this.course.reduced ? ('-' + resolution) : '')}`
+      let name = `uP-${this.course.name}${(this.plan.name && this.hasTime ? ('-' + this.plan.name) : '')}`
 
       name = name.replace(/ /g, '_')
       this.filenames[target] = `${name}.${type}`

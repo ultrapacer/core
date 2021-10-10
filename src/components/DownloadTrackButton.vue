@@ -14,7 +14,7 @@
       v-show="spinner"
       small
     />
-    {{ ready ? 'Download' : 'Generate' }} {{ type }} {{ resolution ? `(${resolution} Resolution)` : '' }}
+    {{ ready ? 'Download' : 'Generate' }} {{ type }}
   </b-button>
 </template>
 
@@ -40,10 +40,6 @@ export default {
     type: {
       type: String,
       required: true
-    },
-    resolution: {
-      type: String,
-      default: ''
     },
     disabled: {
       type: Boolean,
