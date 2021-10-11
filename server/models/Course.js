@@ -195,7 +195,7 @@ CourseSchema.methods.updateCache = async function () {
     if (!this.override.loss) this.override.loss = this.loss
     if (!this.override.elevUnit) this.override.elevUnit = 'ft'
     if (!this.override.distUnit) this.override.distUnit = 'mi'
-    await this.updateOne({ override: this.override })
+    await this.updateOne({ override: this.override, reduced: false })
   }
 
   addPercentage(waypoints)
