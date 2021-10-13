@@ -290,7 +290,7 @@ courseRoutes.route('/:id/copy').put(async function (req, res) {
   try {
     const user = await User.findOne({ auth0ID: req.user.sub }).exec()
     const course = await Course.findById(req.params.id).exec()
-    if (course._user.equals(user._id) || course.public) {
+    if (course._user.equals(user._id) || user.admin || course.public) {
       console.log('course1 ' + course._id)
       const wps = await Waypoint.find({ _course: course }).exec()
       const course2 = new Course(course)
