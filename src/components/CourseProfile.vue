@@ -401,7 +401,7 @@ export default {
       this.$logger('CourseProfile|update')
     },
     setHighlightPoint: async function (x) {
-      const loc = x / this.$units.distScale
+      const loc = x / this.course.distScale / this.$units.distScale
       if (loc > 0 && loc < this.course.dist) {
         const pnt = this.course.points.find(p => p.loc >= loc)
         this.$emit('setHighlightPoint', pnt)
