@@ -355,7 +355,7 @@ export default {
       focus: [],
       highlightPoint: null,
       tablesTab: 0,
-      tableTabNames: ['Segments', 'Splits', 'Waypoints', 'Details'],
+      tableTabNames: ['Waypoints', 'Segments', 'Splits', 'Details'],
       updateFlag: false,
       showMenu: false,
       updatingWaypointTimeout: null,
