@@ -252,19 +252,21 @@ export default {
           tdClass: 'actionButtonColumn'
         })
       } else {
-        f.push({
-          key: this.event.hasTOD() ? 'tod' : 'elapsed',
-          label: 'Time',
-          formatter: (value, key, item) => {
-            const v = item.elapsed(this.segments)
-            return v !== undefined
-              ? this.event.hasTOD()
-                ? timeUtil.sec2string(v + this.event.startTime, 'am/pm')
-                : timeUtil.sec2string(v, '[h]:m:ss')
-              : ''
-          },
-          class: 'text-right'
-        })
+        if (this.planAssigned) {
+          f.push({
+            key: this.event.hasTOD() ? 'tod' : 'elapsed',
+            label: 'Time',
+            formatter: (value, key, item) => {
+              const v = item.elapsed(this.segments)
+              return v !== undefined
+                ? this.event.hasTOD()
+                  ? timeUtil.sec2string(v + this.event.startTime, 'am/pm')
+                  : timeUtil.sec2string(v, '[h]:m:ss')
+                : ''
+            },
+            class: 'text-right'
+          })
+        }
         if (this.$course.view === 'analyze') {
           f.push({
             key: this.event.hasTOD() ? 'actualTOD' : 'actualElapsed',
