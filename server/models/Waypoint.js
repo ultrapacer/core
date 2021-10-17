@@ -48,6 +48,22 @@ const WaypointSchema = new Schema({
   },
   percent: {
     type: Number
+  },
+
+  // array of cutoff times and loops
+  cutoffs: {
+    type: [
+      {
+        time: {
+          type: Number,
+          set: v => Math.round(v >= 1 ? v : 1) // ensure integer >= 1
+        },
+        loop: {
+          type: Number,
+          set: v => Math.round(v >= 1 ? v : 1) // ensure integer >= 1
+        }
+      }
+    ]
   }
 }, {
   collection: 'waypoints'

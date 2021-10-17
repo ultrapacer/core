@@ -37,10 +37,10 @@ import 'vue-awesome/icons/share-alt'
 import 'vue-awesome/icons/trash'
 import VIcon from 'vue-awesome/components/Icon'
 import './custom.scss'
-import { sec2string } from './util/time'
-import Core from '../core'
+import time from './util/time'
+import core from '../core'
 import math from '../core/math'
-Vue.prototype.$core = Core
+Vue.prototype.$core = core
 Vue.prototype.$math = math
 
 Vue.component('VIcon', VIcon)
@@ -152,7 +152,8 @@ Vue.prototype.$utils = {
     } catch (error) {
       throw new Error(`Timeout in ${time} ms`)
     }
-  }
+  },
+  time: time
 }
 // this is a temp fix to reformat the old vue-analytics format to vue-gtag:
 Vue.prototype.$gtage = (gtag, category, action, label, value) => {
@@ -204,7 +205,7 @@ Vue.filter('timef', function (value, format) {
   if (isNaN(value)) {
     return ''
   }
-  return sec2string(value, format)
+  return time.sec2string(value, format)
 })
 
 Vue.prototype.$api = api

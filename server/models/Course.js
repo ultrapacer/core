@@ -132,6 +132,18 @@ const CourseSchema = new Schema({
     type: Number,
     default: 1,
     set: v => Math.round(v >= 1 ? v : 1) // ensure integer >= 1
+  },
+
+  // flag for whether course is for an organized race
+  race: {
+    type: Boolean,
+    default: true
+  },
+
+  // race cutoff, in seconds from start
+  cutoff: {
+    type: Number,
+    set: v => Math.round(v >= 1 ? v : 1) // ensure integer >= 1
   }
 }, {
   collection: 'courses'

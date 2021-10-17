@@ -676,6 +676,7 @@ export default {
         this.event.timezone = this.course.eventTimezone
         this.event.start = this.course.eventStart
       }
+      this.course.event = this.event
 
       this.$status.loading = false
 
@@ -769,10 +770,10 @@ export default {
       )
     },
     async newWaypoint () {
-      this.$refs.waypointEdit.show({})
+      this.$refs.waypointEdit.show()
     },
-    async editWaypoint (waypoint) {
-      this.$refs.waypointEdit.show(waypoint)
+    async editWaypoint (waypoint, loop = 1) {
+      this.$refs.waypointEdit.show(waypoint, loop)
     },
     async deleteWaypoint (waypoint, cb) {
       this.$refs.delModal.show(
@@ -913,6 +914,7 @@ export default {
     },
     async selectPlan (plan) {
       this.$logger(`Course|selectPlan: ${plan.name} selected.`)
+      this.$refs.waypointTable?.collapseAll()
       this.plan = plan
       if (!this.comparing) {
         if (this.plan.eventStart) {
@@ -1083,6 +1085,16 @@ export default {
         this.$set(this.plan, 'pacing', pacing) // use $set to make reactive
         // update splits and segments
         await this.createPlanSplits()
+
+        // check if any cutoffs were missed for races:
+        if (this.course.race) {
+          const cutoffwps = this.waypoints.filter(wp => wp.cutoff && wp.elapsed(this.segments) > wp.cutoff + 29)
+          this.$logger(`Course|updatePacing missed ${cutoffwps.lengths} cutoffs.`)
+          if (cutoffwps.length) {
+            const msg = `Plan misses cutoff(s) at the following locations: ${cutoffwps.map(wp => { return wp.name }).join(', ')}`
+            this.$alert.show(msg, { variant: 'danger', timer: 6 })
+          }
+        }
       } catch (error) {
         this.$error.handle(this.$gtag, error)
       }

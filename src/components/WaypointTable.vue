@@ -17,10 +17,9 @@
     <template #cell(actions)="row">
       <b-button
         class="mr-1"
-        @click="editFn(row.item.site)"
+        @click="editFn(row.item.site, row.item.loop)"
       >
         <v-icon name="edit" />
-        <span class="d-none d-xl-inline">Edit</span>
       </b-button>
       <b-button
         v-if="row.item.type !== 'start' && row.item.type !== 'finish'"
@@ -28,7 +27,6 @@
         @click="delFn(row.item.site)"
       >
         <v-icon name="trash" />
-        <span class="d-none d-xl-inline">Delete</span>
       </b-button>
     </template>
     <template #row-details="row">
@@ -44,7 +42,7 @@
               size="sm"
               class="mr-1"
               variant="outline-primary"
-              @click="shiftWaypoint(row.item, sb.value)"
+              @click="shiftWaypoint(rows.find(r=>r.site._id===row.item.site._id), sb.value)"
             >
               {{ sb.display }}
             </b-button>
@@ -58,7 +56,6 @@
             @submit.prevent=""
           >
             <b-form-group
-              v-if="Boolean(course.eventStart)"
               class="mt-1 mb-0 pl-2"
             >
               <b-form-radio
@@ -80,12 +77,9 @@
               prepend="Delay"
               class="pl-4"
             >
-              <b-form-input
-                v-model="waypointDelayF"
-                v-mask="'##:##:##'"
-                type="text"
-                min="0"
-                placeholder="hh:mm:ss"
+              <time-input
+                v-model="waypointDelay"
+                format="hh:mm:ss"
                 required
               />
               <b-input-group-append v-if="waypointDelayValid">
@@ -106,7 +100,11 @@
 
 <script>
 import timeUtil from '../util/time'
+import TimeInput from '../forms/TimeInput'
 export default {
+  components: {
+    TimeInput
+  },
   props: {
     course: {
       type: Object,
@@ -162,15 +160,26 @@ export default {
       ],
       waypointDelayCustom: false, // whether current waypoint has custom delay set
       waypointDelayTypical: '', // what the typical delay should be for current waypoint
-      waypointDelayF: '' // formatted string delay for current waypoint
+      waypointDelay: null // delay (seconds) for current waypoint
     }
   },
   computed: {
     rows: function () {
-      return this.waypoints.filter(x => (
-        this.$course.view === 'edit' && (x.loop === 1 || x.type === 'finish')) ||
-        (this.$course.view !== 'edit' && x.tier < 3)
+      const arr = this.waypoints.filter(x => (
+        this.$course.view === 'edit' || x.tier < 3)
       ).sort((a, b) => a.loc - b.loc)
+
+      // clear variants from any cells that have them:
+      arr.filter(wp => wp._cellVariants).forEach(wp => { delete wp._cellVariants })
+
+      // highlight any missed cutoffs:
+      if (this.$course.view === 'plan' && this.showTime) {
+        arr.filter(wp => wp.cutoff && wp.elapsed(this.segments) > wp.cutoff + 29) // w/in the minute
+          .forEach(wp => {
+            wp._cellVariants = { elapsed: 'danger', tod: 'danger', cutoff: 'danger' }
+          })
+      }
+      return arr
     },
     showTerrainType: function () {
       return this.waypoints.findIndex(wp => wp.terrainType()) >= 0
@@ -180,6 +189,9 @@ export default {
     },
     planAssigned: function () {
       return Boolean(Object.entries(this.plan).length) && Boolean(this.plan._id)
+    },
+    showTime: function () {
+      return this.$course.view !== 'edit' && this.segments[this.segments.length - 1].elapsed
     },
     showDelay: function () {
       return Boolean(this.planAssigned && (this.plan.waypointDelay || (this.plan.waypointDelays && this.plan.waypointDelays.length > 0)))
@@ -222,6 +234,20 @@ export default {
           class: 'd-none d-sm-table-cell text-right'
         }
       ]
+
+      if (this.showCutoffs && this.$course.view !== 'analyze') {
+        f.push({
+          key: 'cutoff',
+          label: 'Cutoff',
+          formatter: (value, key, item) => {
+            const v = item.cutoff
+            return v === null
+              ? ''
+              : timeUtil.sec2string(v + this.event.startTime, 'am/pm')
+          },
+          class: 'd-none d-md-table-cell d-lg-none d-xl-table-cell text-right'
+        })
+      }
       if (this.$course.view === 'edit') {
         if (this.showTerrainType) {
           f.push({
@@ -252,7 +278,7 @@ export default {
           tdClass: 'actionButtonColumn'
         })
       } else {
-        if (this.planAssigned) {
+        if (this.showTime) {
           f.push({
             key: this.event.hasTOD() ? 'tod' : 'elapsed',
             label: 'Time',
@@ -318,13 +344,6 @@ export default {
       }
       return f
     },
-    waypointDelay: function () {
-      if (!this.waypointDelayF || this.waypointDelayF.length !== 8) {
-        return null
-      } else {
-        return timeUtil.string2sec(this.waypointDelayF)
-      }
-    },
     waypointDelayValid: function () {
       // whether the input for a custom delay value is valid and unique
       if (this.waypointDelay === null || isNaN(this.waypointDelay)) {
@@ -336,6 +355,9 @@ export default {
       } else {
         return this.waypointDelayTypical !== this.waypointDelay
       }
+    },
+    showCutoffs: function () {
+      return this.waypoints.filter(wp => wp.cutoff).length
     }
   },
   watch: {
@@ -377,13 +399,13 @@ export default {
           if (this.$course.view !== 'edit' && planReady) {
           // set waypoint delay inputs:
             const wpd = this.plan.waypointDelays.find(wpd => wpd.site === item.site._id && wpd.loop === item.loop)
-            this.waypointDelayF = null
+            this.waypointDelay = null
             this.waypointDelayCustom = Boolean(wpd)
             this.waypointDelayTypical = item.hasTypicalDelay ? this.plan.waypointDelay : 0
             if (wpd) {
-              this.waypointDelayF = timeUtil.sec2string(wpd.delay, 'hh:mm:ss')
+              this.waypointDelay = wpd.delay
             } else if (this.plan.waypointDelay && item.hasTypicalDelay) {
-              this.waypointDelayF = timeUtil.sec2string(this.plan.waypointDelay, 'hh:mm:ss')
+              this.waypointDelay = this.plan.waypointDelay
             }
           }
           this.$nextTick(() => { this.$refs.table.selectRow(this.rows.findIndex(row => row === item)) })
@@ -414,7 +436,7 @@ export default {
     },
     waypointDelayClear: function (item) {
       this.$emit('updateWaypointDelay', item, null)
-      this.waypointDelayF = timeUtil.sec2string(this.plan.waypointDelay, 'hh:mm:ss')
+      this.waypointDelay = null
     },
     waypointDelayChange: function (item) {
       this.$emit('updateWaypointDelay', item, this.waypointDelay)

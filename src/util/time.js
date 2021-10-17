@@ -1,4 +1,5 @@
 function sec2string (val, format) {
+  if (val === null) return ''
   val = Math.round(val)
   let h = Math.floor(val / 3600)
   const m = Math.floor((val % 3600) / 60)
@@ -31,7 +32,16 @@ function sec2string (val, format) {
   }
 }
 
-function string2sec (val) {
+function string2sec (val, format) {
+  // function converts string (eg hh:mm:ss) to seconds
+  //
+  // format is optional, valid arguments are:
+  //   mm, hh:mm
+  //
+
+  // if seconds aren't specified, add them
+  if (format && format.slice(-1) === 'm') val = val + ':0'
+
   const arr = val.split(':')
   let s = 0
   for (let i = 0, il = arr.length; i < il; i++) {

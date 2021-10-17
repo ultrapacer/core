@@ -84,7 +84,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
     if (user.admin || user.equals(course._user)) {
       // define available fields
       const fields1 = [ // these are benign fields
-        'name', 'description', 'public', 'source'
+        'name', 'description', 'public', 'source', 'cutoff'
       ]
       const fields2 = [ // these are important fields (requiring clearing cache)
         'eventStart', 'eventTimezone',

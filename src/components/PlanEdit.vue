@@ -34,43 +34,37 @@
           <b-form-select
             v-model="model.pacingMethod"
             type="number"
-            :options="pacingMethods"
+            :options="Object.keys(pacingMethods).map(k=>{return {value:k, text:pacingMethods[k].text}})"
             required
+            @change="pacingMethodChange"
           />
         </b-input-group>
         <form-tip v-if="showTips">
           Required: pacing method for this plan; see Docs.
         </form-tip>
         <b-input-group
-          :prepend="targetLabel"
+          :prepend="pacingMethods[model.pacingMethod].text"
+          :append="pacingMethods[model.pacingMethod].type==='pace'?`[/${$units.dist}]`:''"
           class="mt-1"
         >
-          <b-form-input
-            ref="planformtimeinput"
-            v-model="model.pacingTargetF"
-            v-mask="targetMask"
-            type="text"
-            min="0"
-            :placeholder="targetPlaceholder"
+          <time-input
+            v-model="model.pacingTarget"
+            :format="pacingMethods[model.pacingMethod].format"
+            :scale="pacingMethods[model.pacingMethod].type==='pace' ? 1/ $units.distScale : 1"
             required
-            @change="checkTargetFormat"
           />
         </b-input-group>
         <form-tip v-if="showTips">
-          Required: {{ targetPopover }}
+          Required: enter {{ pacingMethods[model.pacingMethod].text }} as
+          {{ pacingMethods[model.pacingMethod].format }}
         </form-tip>
         <b-input-group
           prepend="Aid Station Delay"
           class="mt-1"
         >
-          <b-form-input
-            v-model="model.waypointDelayF"
-            v-mask="'##:##'"
-            type="text"
-            min="0"
-            placeholder="mm:ss"
-            :formatter="format_hhmm"
-            lazy-formatter
+          <time-input
+            v-model="model.waypointDelay"
+            format="mm:ss"
             required
           />
         </b-input-group>
@@ -231,11 +225,11 @@
 <script>
 import api from '@/api'
 import moment from 'moment-timezone'
-import { sec2string, string2sec } from '../util/time'
 import DateTimeInput from '../forms/DateTimeInput'
 import DriftInput from '../forms/DriftInput'
 import FormTip from '../forms/FormTip'
 import HeatInput from '../forms/HeatInput'
+import TimeInput from '../forms/TimeInput'
 import HelpDoc from '@/docs/plan.md'
 export default {
   components: {
@@ -243,7 +237,8 @@ export default {
     DriftInput,
     FormTip,
     HeatInput,
-    HelpDoc
+    HelpDoc,
+    TimeInput
   },
   filters: {
     datetime: function (val, tz) {
@@ -267,66 +262,29 @@ export default {
         pacingMethod: 'time',
         waypointDelay: 120,
         drift: null,
-        heatModel: null
+        heatModel: null,
+        pacingTarget: null
       },
-      model: {},
+      model: {
+        pacingMethod: 'time',
+        pacingTarget: null
+      },
       moment: null,
-      pacingMethods: [
-        { value: 'time', text: 'Elapsed Time' },
-        { value: 'pace', text: 'Average Pace' },
-        { value: 'np', text: 'Normalized Pace' }
-      ],
+      pacingMethods: {
+        time: {
+          text: 'Elapsed Time',
+          type: 'time',
+          format: `${'h'.repeat(this.course.dist > 250 ? 3 : 2)}:mm:ss`
+        },
+        pace: { text: 'Average Pace', type: 'pace', format: 'mm:ss' },
+        np: { text: 'Normalized Pace', type: 'pace', format: 'mm:ss' }
+      },
       customStart: false,
       enableDrift: false,
       enableHeat: true,
       showTips: false,
       timezones: moment.tz.names(),
       newPlanToastMsg: ''
-    }
-  },
-  computed: {
-    targetLabel: function () {
-      let str = ''
-      const pacingMethod = this.pacingMethods.find(
-        pm => pm.value === this.model.pacingMethod
-      )
-      if (pacingMethod) {
-        str = pacingMethod.text
-        if (
-          this.model.pacingMethod === 'pace' ||
-          this.model.pacingMethod === 'np'
-        ) {
-          str = `${str} [/${this.$units.dist}]`
-        }
-      }
-      return str
-    },
-    targetPlaceholder: function () {
-      if (
-        this.model.pacingMethod === 'pace' ||
-        this.model.pacingMethod === 'np'
-      ) {
-        return 'mm:ss'
-      } else {
-        return `${'h'.repeat(this.hoursDigits)}:mm:ss`
-      }
-    },
-    targetMask: function () {
-      if (
-        this.model.pacingMethod === 'pace' ||
-        this.model.pacingMethod === 'np'
-      ) {
-        return '##:##'
-      } else {
-        return `${'#'.repeat(this.hoursDigits)}:##:##`
-      }
-    },
-    targetPopover: function () {
-      return `${this.targetLabel}: enter target as ${this.targetPlaceholder}`
-    },
-    hoursDigits: function () {
-      // for courses longer than 250 km, hours field takes up to 3 digits
-      return this.course.dist > 250 ? 3 : 2
     }
   },
   watch: {
@@ -357,25 +315,6 @@ export default {
         ]
         fields.forEach(f => { if (plan[f]) this.model[f] = plan[f] })
       }
-
-      if (this.model.pacingTarget) {
-        let s = this.model.pacingTarget
-        if (
-          this.model.pacingMethod === 'pace' ||
-          this.model.pacingMethod === 'np'
-        ) {
-          s = s / this.$units.distScale
-          this.model.pacingTargetF = sec2string(s, 'mm:ss')
-        } else {
-          this.model.pacingTargetF = sec2string(s, `${'h'.repeat(this.hoursDigits)}:mm:ss`)
-        }
-      } else {
-        this.model.pacingTargetF = ''
-      }
-      this.model.waypointDelayF = sec2string(
-        this.model.waypointDelay,
-        'mm:ss'
-      )
       const tz = this.model.eventTimezone || this.course.eventTimezone || moment.tz.guess()
       if (this.model.eventStart) {
         this.moment = moment(this.model.eventStart).tz(tz)
@@ -398,13 +337,6 @@ export default {
       if (this.$status.processing) { return }
       this.$status.processing = true
       try {
-        this.model.pacingTarget = string2sec(this.model.pacingTargetF)
-        if (
-          this.model.pacingMethod === 'pace' ||
-        this.model.pacingMethod === 'np'
-        ) {
-          this.model.pacingTarget = this.$units.distf(this.model.pacingTarget)
-        }
         if (this.customStart || !this.course.eventStart) {
           this.model.eventTimezone = this.moment.tz()
           if (Number(this.moment.format('YYYY') > 1970)) {
@@ -416,7 +348,6 @@ export default {
           this.model.eventStart = null
           this.model.eventTimezone = null
         }
-        this.model.waypointDelay = string2sec(this.model.waypointDelayF)
 
         let p = {}
         if (this.$auth.isAuthenticated()) {
@@ -458,9 +389,6 @@ export default {
       this.enableDrift = false
       this.model = Object.assign({}, this.defaults)
     },
-    checkTargetFormat (val) {
-      this.validateTime(this.$refs.planformtimeinput, val)
-    },
     async remove () {
       this.$emit('delete', this.model, async (err) => {
         if (!err) {
@@ -469,52 +397,6 @@ export default {
         }
       })
     },
-    validateTime (el, val, max1 = null) {
-      let pass = true
-      let ph = ''
-      if (el.required || val.length) {
-        if (el.hasOwnProperty._props !== undefined) {
-          ph = el._props.placeholder
-        } else {
-          ph = el.placeholder
-        }
-        if (val.length === ph.length) {
-          const arr = val.split(':')
-          for (let i = arr.length - 1; i > 0; i--) {
-            if (Number(arr[i]) >= 60) {
-              pass = false
-            }
-          }
-          if (max1 && Number(arr[0]) > max1) {
-            pass = false
-          }
-        } else {
-          pass = false
-        }
-      }
-      if (pass) {
-        el.setCustomValidity('')
-      } else {
-        el.setCustomValidity(`Enter time as "${ph}"`)
-      }
-    },
-    format_hhmm (value, event) {
-      let v = value
-      if (value.length && value.indexOf(':') === -1) {
-        if (value.length === 1) {
-          v = `0${value}:00`
-        } else if (value.length === 2) {
-          v = `${value}:00`
-        } else if (value.length === 3) {
-          const s = `0${value}`
-          v = s.slice(0, 2) + ':' + s.slice(2)
-        } else if (value.length === 4) {
-          v = value.slice(0, 2) + ':' + value.slice(2)
-        }
-      }
-      this.validateTime(event.target, v, 24)
-      return v
-    },
     customStartDefaults: function (val) {
       const dt = this.course.eventStart || 0
       const tz = this.course.eventTimezone || moment.tz.guess()
@@ -522,6 +404,10 @@ export default {
     },
     toggleTips () {
       this.showTips = !this.showTips
+    },
+    pacingMethodChange () {
+      // clear out target when method changes:
+      this.$nextTick(() => { this.$set(this.model, 'pacingTarget', null) })
     }
   }
 }

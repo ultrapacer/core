@@ -136,6 +136,37 @@ class Waypoint {
     return plannedNoDelay && actualWithDelay ? actualWithDelay - plannedNoDelay : undefined
   }
 
+  get cutoff () {
+    // getting cutoff retrieves from array of {time, loop} items
+    if (this.type === 'finish') return this.course.cutoff || null
+    if (this.tier === 1) {
+      const v = this.site.cutoffs?.find(c => c.loop === this.loop)
+      if (v) { return v.time }
+    }
+    return null
+  }
+
+  set cutoff (v) {
+    // setting a cutoff updates or removes that item from array on db item
+
+    // find index of cutoff if it already exists
+    const i = this.site.cutoffs?.findIndex(c => c.loop === this.loop)
+
+    // if it already exists, update or remove it
+    if (i >= 0) {
+      if (v) {
+        this.site.cutoffs[i].time = v
+      } else {
+        this.site.cutoffs.splice(i, 1)
+      }
+
+    // otherwise add a new one
+    } else if (v) {
+      if (!this.site.cutoffs) { this.site.cutoffs = [] }
+      this.site.cutoffs.push({ time: v, loop: this.loop })
+    }
+  }
+
   show () {
     this.visible = true
   }

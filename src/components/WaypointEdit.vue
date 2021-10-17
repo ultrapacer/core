@@ -18,6 +18,7 @@
       >
         <b-input-group
           prepend="Name"
+          :append="course.loops>1?'Loop ' + waypoint.loop:''"
         >
           <b-form-input
             v-model="model.name"
@@ -30,7 +31,7 @@
         </form-tip>
         <b-input-group
           v-if="model.type != 'start' && model.type != 'finish'"
-          prepend="Location"
+          :prepend="course.loops>1?`Loop ${waypoint.loop} loc.`:'Location'"
           :append="$units.dist"
           class="mt-1"
         >
@@ -38,7 +39,7 @@
             v-model="distf"
             type="number"
             step="0.01"
-            min="0.01"
+            :min="locationMin"
             :max="locationMax"
             required
             @change="updateLocation"
@@ -114,6 +115,24 @@
         <form-tip v-if="showTips">
           Required: terrain-based pace adjustment, basically anything that is too small to appear in elevation data (see Docs).
         </form-tip>
+
+        <!-- AID STATION CUTOFF --->
+        <div v-if="course.race && model.tier===1 && (model.type!=='start' || course.loops > 1)">
+          <b-input-group
+            :prepend="`${course.loops>1 ? 'Loop ' + waypoint.loop : 'Station'} Cutoff`"
+            class="mt-1"
+            :append="cutoffTOD"
+          >
+            <time-input
+              v-model="waypoint.cutoff"
+              format="hh:mm"
+            />
+          </b-input-group>
+          <form-tip v-if="showTips">
+            Optional: time limit{{ course.loops > 1 ? 's' : '' }} for station, from start (hh:mm).
+          </form-tip>
+        </div>
+
         <b-input-group
           prepend="Notes"
           class="mt-1"
@@ -182,11 +201,13 @@
 <script>
 import api from '@/api'
 import FormTip from '@/forms/FormTip'
+import TimeInput from '@/forms/TimeInput'
 import HelpDoc from '@/docs/waypoint.md'
 export default {
   components: {
     HelpDoc,
-    FormTip
+    FormTip,
+    TimeInput
   },
   props: {
     course: {
@@ -209,7 +230,8 @@ export default {
         type: 'aid',
         tier: 1,
         terrainType: null,
-        terrainFactor: null
+        terrainFactor: null,
+        cutoffs: []
       },
       distf: null,
       terrainTypes: [
@@ -222,13 +244,23 @@ export default {
       ],
       showTips: false,
       trigger: 0,
-      waypoint: null
+      waypoint: {}
     }
   },
   computed: {
+    locationMin: function () {
+      // location max is 0.01 more than current loop distance
+      return Number(
+        this.$units.distf(
+          this.course.trackDist * (this.waypoint.loop - 1) * this.course.distScale, 2)
+      ) + 0.01
+    },
     locationMax: function () {
-      return Number(this.$units.distf(this.course.scaledDist, 2)) -
-        0.01
+      // location max is 0.01 less than current loop distance
+      return Number(
+        this.$units.distf(
+          this.course.trackDist * this.waypoint.loop * this.course.distScale, 2)
+      ) - 0.01
     },
     waypointTypeOptions: function () {
       if (this.model.type === 'start' || this.model.type === 'finish') {
@@ -285,6 +317,10 @@ export default {
       }
       if (!this.waypoint?.loc) return ''
       return String(this.waypoint.terrainFactor(this.waypoints, false) || '')
+    },
+    cutoffTOD: function () {
+      if (!this.course.event.startTime || !this.waypoint.cutoff) return ''
+      return this.$utils.time.sec2string(this.course.event.startTime + this.waypoint.cutoff, 'am/pm')
     }
   },
   methods: {
@@ -293,14 +329,15 @@ export default {
         this.model.terrainFactor = this.terrainTypes.find(x => x.name === v).factor
       }
     },
-    async show (waypoint) {
+    async show (db = {}, loop = 1) {
       this.showTips = false
-      if (waypoint._id) {
-        this.model = Object.assign({}, waypoint)
+      if (db._id) {
+        this.model = JSON.parse(JSON.stringify(db))
       } else {
-        this.model = Object.assign({}, this.defaults)
+        this.model = JSON.parse(JSON.stringify(this.defaults))
       }
-      this.waypoint = new this.$core.waypoints.Waypoint(this.model, this.course)
+
+      this.waypoint = new this.$core.waypoints.Waypoint(this.model, this.course, loop)
       this.distf = this.waypoint.loc ? this.$units.distf(this.waypoint.loc * this.course.distScale, 2) : ''
       this.$refs.modal.show()
     },
@@ -335,6 +372,7 @@ export default {
     },
     clear () {
       this.model = Object.assign({}, this.defaults)
+      this.waypoint = {}
     },
     async remove () {
       this.$emit('delete', this.model, async (err) => {

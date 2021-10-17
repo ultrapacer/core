@@ -134,14 +134,50 @@
           <form-tip v-if="showTips">
             Optional: description for your course or race.
           </form-tip>
-          <date-time-input
-            v-model="moment"
-            :show-tips="showTips"
+
+          <!--- Organized Event Specific Inputs --->
+          <b-form-checkbox
+            v-model="model.race"
+            :value="true"
+            :unchecked-value="false"
+            class="mt-1"
+            @change="toggleRace"
           >
-            <template #date-tip>
-              Optional: use for organized races. Plans made for this course can set thier own times.
-            </template>
-          </date-time-input>
+            Organized event
+          </b-form-checkbox>
+          <form-tip v-if="showTips">
+            Optional: course is for organized race (enables times, cut-offs and such things).
+          </form-tip>
+          <b-form-group
+            v-if="model.race"
+            class="mb-0 pl-3"
+          >
+            <date-time-input
+              v-model="moment"
+              :show-tips="showTips"
+            >
+              <template #date-tip>
+                Optional: use for organized races. Plans made for this course can set thier own times.
+              </template>
+            </date-time-input>
+            <div v-if="moment.unix()">
+              <b-input-group
+                prepend="Race Cutoff"
+                :append="cutoffTOD"
+                class="mt-1"
+              >
+                <time-input
+                  v-model="model.cutoff"
+                  format="hh:mm"
+                />
+              </b-input-group>
+              <form-tip v-if="showTips">
+                Optional: time limit for course from start (hh:mm)
+              </form-tip>
+            </div>
+          </b-form-group>
+
+          <!--- Override Inputs --->
           <b-form-checkbox
             v-model="model.override.enabled"
             class="mt-1"
@@ -227,11 +263,13 @@
               Required (if Override is enabled): specify descent/loss and units.
             </form-tip>
           </b-form-group>
+
+          <!-- Loop Inputs --->
           <b-form-checkbox
             v-model="loopEnabled"
             class="mt-1"
             :unchecked-value="false"
-            @change="enableLoop"
+            @change="toggleLoop"
           >
             Loop course
           </b-form-checkbox>
@@ -255,6 +293,8 @@
               />
             </b-input-group>
           </b-form-group>
+
+          <!-- Public/Sharing Inputs --->
           <b-form-checkbox
             v-model="model.public"
             :value="true"
@@ -338,6 +378,7 @@
 import api from '@/api'
 import DateTimeInput from '../forms/DateTimeInput'
 import FormTip from '../forms/FormTip'
+import TimeInput from '../forms/TimeInput'
 import HelpDoc from '@/docs/course.md'
 import SelectableLabelInput from '../forms/SelectableLabelInput'
 import StravaRouteInput from '../forms/StravaRouteInput'
@@ -349,7 +390,8 @@ export default {
     FormTip,
     HelpDoc,
     StravaRouteInput,
-    SelectableLabelInput
+    SelectableLabelInput,
+    TimeInput
   },
   data () {
     return {
@@ -404,6 +446,13 @@ export default {
         )
       }
       return arr
+    },
+    cutoffTOD: function () {
+      // string showing time of day for cutoff value entered
+      if (!this.model) return ''
+      if (!(this.moment.unix() && this.model?.cutoff)) return ''
+      const startSeconds = this.$utils.time.string2sec(this.moment.format('kk:mm:ss'))
+      return this.$utils.time.sec2string(startSeconds + this.model.cutoff, 'am/pm')
     }
   },
   watch: {
@@ -473,6 +522,7 @@ export default {
         if (Number(this.moment.format('YYYY') > 1970)) {
           this.model.eventStart = this.moment.toDate()
         } else {
+          this.model.race = false
           this.model.eventStart = null
         }
 
@@ -489,7 +539,9 @@ export default {
             'gain',
             'loss',
             'override',
-            'loops'
+            'loops',
+            'race',
+            'cutoff'
           ]
 
           // only include new track info if we have a new course source:
@@ -760,8 +812,14 @@ export default {
         throw new Error('Elevation data returned does not match.')
       }
     },
-    enableLoop (val) {
+    toggleLoop (val) {
       this.model.loops = val ? 2 : 1
+    },
+    toggleRace (val) {
+      if (!val) {
+        this.model.cutoff = null
+        this.moment = moment(0).tz(this.moment.tz())
+      }
     }
   }
 }
