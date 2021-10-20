@@ -1,17 +1,23 @@
-/* eslint-disable */
-import auth0 from "auth0-js";
-import { EventEmitter } from "events";
-const webAuth = new auth0.WebAuth({
-  domain: process.env.AUTH0_DOMAIN,
-  redirectUri: `${window.location.origin}/callback`,
-  clientID: process.env.AUTH0_CLIENT_ID,
-  responseType: "token id_token",
-  scope: "openid profile email",
-  audience: process.env.AUTH0_AUDIENCE
-});
+import auth0 from 'auth0-js'
+import { EventEmitter } from 'events'
 
-const localStorageKey = "loggedIn";
-const loginEvent = "loginEvent";
+// if environment parameters undefined, no auth
+const enableAuth = Boolean(process.env.AUTH0_DOMAIN)
+
+let webAuth
+if (enableAuth) {
+  webAuth = new auth0.WebAuth({
+    domain: process.env.AUTH0_DOMAIN,
+    redirectUri: `${window.location.origin}/callback`,
+    clientID: process.env.AUTH0_CLIENT_ID,
+    responseType: 'token id_token',
+    scope: 'openid profile email',
+    audience: process.env.AUTH0_AUDIENCE
+  })
+}
+
+const localStorageKey = 'loggedIn'
+const loginEvent = 'loginEvent'
 
 class AuthService extends EventEmitter {
   idToken = null;
@@ -20,132 +26,139 @@ class AuthService extends EventEmitter {
   tokenExpiry = null;
   accessTokenExpiry = null;
 
-  login(customState) {
+  login (customState) {
     webAuth.authorize({
       appState: customState
-    });
+    })
   }
 
-  logOut() {
-    localStorage.removeItem(localStorageKey);
+  logOut () {
+    localStorage.removeItem(localStorageKey)
 
-    this.idToken = null;
-    this.accessToken = null;
-    this.tokenExpiry = null;
-    this.profile = null;
-    this.accessTokenExpiry = null;
+    this.idToken = null
+    this.accessToken = null
+    this.tokenExpiry = null
+    this.profile = null
+    this.accessTokenExpiry = null
 
     webAuth.logout({
       returnTo: `${window.location.origin}`
-    });
+    })
 
-    this.emit(loginEvent, { loggedIn: false });
+    this.emit(loginEvent, { loggedIn: false })
   }
 
-  handleAuthentication() {
+  handleAuthentication () {
     return new Promise((resolve, reject) => {
       webAuth.parseHash((err, authResult) => {
         if (err) {
-          reject(err);
+          reject(err)
         } else {
-          this.localLogin(authResult);
-          resolve(authResult.idToken);
+          this.localLogin(authResult)
+          resolve(authResult.idToken)
         }
-      });
-    });
+      })
+    })
   }
 
-  isAuthenticated() {
+  isAuthenticated () {
     return (
       Date.now() < this.tokenExpiry &&
-      localStorage.getItem(localStorageKey) === "true"
-    );
+      localStorage.getItem(localStorageKey) === 'true'
+    )
   }
 
-  isIdTokenValid() {
+  isIdTokenValid () {
     return (
       this.idToken &&
       this.tokenExpiry &&
       Date.now() < this.tokenExpiry
-    );
+    )
   }
 
-  isAccessTokenValid() {
+  isAccessTokenValid () {
     return (
       this.accessToken &&
       this.accessTokenExpiry &&
       Date.now() < this.accessTokenExpiry
-    );
+    )
   }
 
-  getIdToken() {
+  getIdToken () {
     return new Promise((resolve, reject) => {
       if (this.isIdTokenValid()) {
-        resolve(this.idToken);
+        resolve(this.idToken)
       } else if (this.isAuthenticated()) {
         this.renewTokens().then(authResult => {
-          resolve(authResult.idToken);
-        }, reject("Unable to renew authentication"));
+          resolve(authResult.idToken)
+        // eslint-disable-next-line prefer-promise-reject-errors
+        }, reject('Unable to renew authentication'))
       } else {
-        resolve();
+        resolve()
       }
-    });
+    })
   }
 
-  getAccessToken() {
+  getAccessToken () {
     return new Promise((resolve, reject) => {
       if (this.isAccessTokenValid()) {
-        resolve(this.accessToken);
+        resolve(this.accessToken)
       } else {
         this.renewTokens().then(authResult => {
-          resolve(authResult.accessToken);
-        }, reject);
+          resolve(authResult.accessToken)
+        }, reject)
       }
-    });
+    })
   }
 
-  localLogin(authResult) {
-    this.idToken = authResult.idToken;
-    this.profile = authResult.idTokenPayload;
+  localLogin (authResult) {
+    this.idToken = authResult.idToken
+    this.profile = authResult.idTokenPayload
 
-    this.accessToken = authResult.accessToken;
+    this.accessToken = authResult.accessToken
 
     // Convert the expiry time from seconds to milliseconds,
     // required by the Date constructor
-    this.tokenExpiry = new Date(this.profile.exp * 1000);
+    this.tokenExpiry = new Date(this.profile.exp * 1000)
 
     // Convert expiresIn to milliseconds and add the current time
     // (expiresIn is a relative timestamp, we want an absolute time)
-    this.accessTokenExpiry = new Date(Date.now() + authResult.expiresIn * 1000);
+    this.accessTokenExpiry = new Date(Date.now() + authResult.expiresIn * 1000)
 
-    localStorage.setItem(localStorageKey, "true");
+    localStorage.setItem(localStorageKey, 'true')
 
     this.emit(loginEvent, {
       loggedIn: true,
       profile: authResult.idTokenPayload,
       state: authResult.appState || {}
-    });
+    })
   }
 
-  renewTokens() {
+  renewTokens () {
     return new Promise((resolve, reject) => {
-      if (localStorage.getItem(localStorageKey) !== "true") {
-        return reject("Not logged in");
+      if (localStorage.getItem(localStorageKey) !== 'true') {
+        // eslint-disable-next-line prefer-promise-reject-errors
+        return reject('Not logged in')
       }
 
       webAuth.checkSession({}, (err, authResult) => {
         if (err) {
-          reject(err);
+          reject(err)
         } else {
-          this.localLogin(authResult);
-          resolve(authResult);
+          this.localLogin(authResult)
+          resolve(authResult)
         }
-      });
-    });
+      })
+    })
   }
 }
 
-const service = new AuthService();
-service.setMaxListeners(5);
+// create a dummy auth service proxy that just returns false to everything
+const DummyAuthService = new Proxy({}, {
+  get: function () { return () => { return false } }
+})
 
-export default service;
+const service = enableAuth ? new AuthService() : DummyAuthService
+service.setMaxListeners(5)
+
+export default service

@@ -5,7 +5,10 @@ Go to [https://ultrapacer.com](https://ultrapacer.com)
 
 # development
 
-## Config Files
+## A. Config Files
+The following is required to start a dev instance of the server. If
+you just want just the front end (and do not need user
+authentication), skip this.
 ``` bash
 # add a file /config/keys.js with:
 module.exports = {
@@ -15,19 +18,33 @@ module.exports = {
   MONGODB: "'mongodb+srv://XXXXXXXXXX'" // credentials and path to database
 }
 ```
-  
-## Build Setup
 
+## B. Build Setup
+Install dependencies:
 ``` bash
-# install dependencies
 npm install
-
-# serve with hot reload at localhost:3000
-start nodemon server
-start npm run dev
 ```
 
-  
+## C. Starting up
+### To serve both front-end and back-end
+Start server in one console:
+``` bash
+nodemon server
+```
+
+Start front end in another console:
+``` bash
+npm run dev
+```
+
+### To serve just the front-end
+``` bash
+npm run dev -- --serverless
+```
+
+## D. Accessing local site
+Navigate to **localhost:3000** in your browser
+
 ## No License / Copyright
 The source code herin is copyright to Danny Murphy.
 This code may be forked, downloaded, and/or modified for the purposes of

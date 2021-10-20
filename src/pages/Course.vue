@@ -605,7 +605,7 @@ export default {
     async initialize () {
       this.$status.processing = true
       this.$status.loading = true
-      let t = this.$logger()
+      let t = this.$logger('Course|initialize')
       try {
         await this.$auth.getAccessToken()
       } catch (err) {}

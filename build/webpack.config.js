@@ -25,7 +25,7 @@ try {
     'AUTH0_CLIENT_ID',
     'AUTH0_AUDIENCE'
   ].forEach(n => {
-    keys[n] = `'${process.env[n]}'`
+    if (process.env[n] !== undefined) keys[n] = `'${process.env[n]}'`
   })
 }
 
@@ -156,6 +156,17 @@ const config = {
 module.exports = (env, argv) => {
   if (argv.mode === 'development') {
     config.devtool = 'eval-cheap-module-source-map'
+
+    // if running in development with front end only, proxy the api to actual server
+    if (argv.serverless) {
+      Object.assign(
+        config.devServer.proxy['/api'],
+        {
+          target: 'https://ultrapacer.com',
+          changeOrigin: true
+        }
+      )
+    }
   }
   if (argv.mode === 'production') {
     config.output.filename = 'public/js/[name].[contenthash:8].js'
