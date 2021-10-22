@@ -212,7 +212,7 @@
         :sizes="{cols:5, sm:4, lg:5, xl:4}"
       >
         <template #value>
-          <b>{{ percentWithPace(aF(maxAltitude)) }}</b>
+          <b>{{ percentWithPace(aF(maxAltitude) - 1) }}</b>
           at
           <b>{{ $units.altf(maxAltitude, 0) | commas }} {{ $units.alt }}</b>
         </template>
