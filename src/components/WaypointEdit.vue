@@ -117,7 +117,7 @@
         </form-tip>
 
         <!-- AID STATION CUTOFF --->
-        <div v-if="course.race && model.tier===1 && (model.type!=='start' || course.loops > 1)">
+        <div v-if="course.race && model.tier===1 && (model.type!=='start' || course.loops > 1) && model.type !== 'finish'">
           <b-input-group
             :prepend="`${course.loops>1 ? 'Loop ' + waypoint.loop : 'Station'} Cutoff`"
             class="mt-1"
