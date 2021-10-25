@@ -532,7 +532,11 @@ export default {
     },
     visibleWaypoints: function () {
       this.$logger('Course|visibleWaypoints')
-      return this.waypoints.filter(wp => this.$course.view === 'edit' || wp.visible)
+      return this.waypoints.filter(wp =>
+        this.$course.view === 'edit' ||
+        (this.tablesTab === 0 && wp.tier <= 2) ||
+        wp.visible
+      )
     },
     delays: function () {
       if (!this.waypoints.length || !this.planAssigned) return []
