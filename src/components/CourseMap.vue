@@ -251,7 +251,7 @@ export default {
       if (this.course.loops > 1 && site.type === 'start') {
         wps.push(this.waypoints.find(wp => wp.type === 'finish'))
       }
-      return wps.map(wp => { return this.$units.distf(wp.loc, 1) }).join(' & ')
+      return wps.map(wp => { return this.$units.distf(wp.loc * this.course.distScale, 1) }).join(' & ')
     },
     updateMaxZoom (val) {
       this.maxZoom = this.tileProviders.find(x => x.name === val.name)['max-zoom']
