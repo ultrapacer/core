@@ -362,7 +362,7 @@ export default {
             this.$gtage(this.$gtag, 'Plan', 'create',
               this.course.public ? this.course.name : 'private'
             )
-            if (String(p._user._id) !== String(this.course._user)) {
+            if (!this.$course.owner) {
               this.newPlanToastMsg = `View, edit, and add plans for "${this.course.name}" next time you log in by selecting "My Courses" in the top menu.`
               this.$refs['toast-new-plan'].show()
             }

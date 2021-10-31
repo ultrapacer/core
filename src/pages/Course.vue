@@ -130,7 +130,7 @@
               :segments="planAssigned && pacingSplitsReady ? plan.splits.segments : course.splits.segments"
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"
-              :table-height="tableHeight && printing !== 'Waypoints' ? tableHeight - (owner ? 42 : 0) : 0"
+              :table-height="tableHeight && printing !== 'Waypoints' ? tableHeight - ($course.owner ? 42 : 0) : 0"
               :visible="tablesTab===0"
               :printing="printing==='Waypoints'"
               :class="printing==='Waypoints' ? 'pr-2' : ''"
@@ -139,7 +139,7 @@
               @updateWaypointDelay="updateWaypointDelay"
             />
             <b-row
-              v-if="owner"
+              v-if="$course.owner"
               class="m-1"
             >
               <div style="flex: 1 1 auto">
@@ -236,7 +236,7 @@
       </b-col>
     </b-row>
     <course-edit
-      v-if="owner"
+      v-if="$course.owner"
       ref="courseEdit"
       @afterEdit="reloadCourse"
       @delete="deleteCourse"
@@ -249,7 +249,7 @@
       @delete="deletePlan"
     />
     <waypoint-edit
-      v-if="owner && $course.view==='edit'"
+      v-if="$course.owner && $course.view==='edit'"
       ref="waypointEdit"
       :course="course"
       :waypoints="waypoints"
@@ -284,9 +284,9 @@
       @setPublic="course.public=true"
     />
     <email-user
-      v-if="$user.isAuthenticated && course._user && pointsReady"
+      v-if="$user.isAuthenticated && pointsReady"
       ref="emailOwner"
-      :user-id="course._user"
+      :to-user-ids="course._users"
       type="course"
       :subject="course.name"
       :url="url"
@@ -347,6 +347,7 @@ export default {
       comparing: false,
       course: {},
       event: new this.$core.events.Event({}),
+      logger: this.$log.child({ file: 'Course.vue' }),
       plan: {},
       plans: [],
       plansByOthers: [],
@@ -383,7 +384,7 @@ export default {
           click: () => { this.newPlan() }
         }, {
           text: 'Modify Course',
-          disabled: !this.owner,
+          disabled: !this.$course.owner,
           icon: 'edit',
           click: () => { this.editCourse() }
         }, {
@@ -397,7 +398,7 @@ export default {
           click: () => { this.$refs.courseShare.init('plan') }
         }, {
           text: `Email ${this.course.link ? 'Race' : 'Course'} Owner`,
-          disabled: this.owner,
+          disabled: this.$course.owner,
           icon: 'envelope',
           click: () => { this.emailOwner() }
         }, {
@@ -439,7 +440,7 @@ export default {
           view: 'edit',
           text: 'Course Editing',
           button: 'Editing',
-          disabled: !this.owner,
+          disabled: !this.$course.owner,
           icon: 'edit'
         }, {
           view: 'plan',
@@ -477,12 +478,6 @@ export default {
       hM.start = this.event.sun.rise + 1800
       hM.stop = this.event.sun.set + 3600
       return hM
-    },
-    owner: function () {
-      return (
-        this.$user.isAuthenticated &&
-        String(this.$user._id) === String(this.course._user)
-      )
     },
     planAssigned: function () {
       return Boolean(Object.entries(this.plan).length)
@@ -523,7 +518,7 @@ export default {
       return this.$core.geo.createTerrainFactors(this.waypoints)
     },
     waypoints: function () {
-      this.$logger('Course|waypoints')
+      this.logger.child({ method: 'waypoints' }).info('run')
       if (!this.course.waypoints || !this.course.waypoints.length) return []
       return this.$core.waypoints.loopedWaypoints(
         this.course.waypoints,
@@ -531,7 +526,7 @@ export default {
       )
     },
     visibleWaypoints: function () {
-      this.$logger('Course|visibleWaypoints')
+      this.logger.child({ method: 'visibleWaypoints' }).info('run')
       return this.waypoints.filter(wp =>
         this.$course.view === 'edit' ||
         (this.tablesTab === 0 && wp.tier <= 2) ||
@@ -540,7 +535,7 @@ export default {
     },
     delays: function () {
       if (!this.waypoints.length || !this.planAssigned) return []
-      this.$logger('Course|delays')
+      this.logger.child({ method: 'delays' }).info('run')
       try {
         return this.waypoints.map(wp => {
           return {
@@ -564,7 +559,7 @@ export default {
   watch: {
     '$course.view': function (val) {
       if (this.$status.loading) return
-      this.$logger(`Course|$course.view watcher : view changed to ${val}`)
+      this.logger.child({ method: '$course.view watcher' }).info(`view changed to ${val}`)
       // update after disabling editing
       if (val !== 'edit' && this.updateFlag) {
         this.createSplits()
@@ -607,13 +602,13 @@ export default {
   },
   methods: {
     async initialize () {
+      const log = this.logger.child({ method: 'initialize' })
+      log.info('run')
       this.$status.processing = true
       this.$status.loading = true
-      let t = this.$logger('Course|initialize')
       try {
         await this.$auth.getAccessToken()
       } catch (err) {}
-      t = this.$logger('Course|initialize - auth initiated', t)
       try {
         // get course db by either link or course id:
         const coursedb = this.$route.params.permalink
@@ -622,7 +617,12 @@ export default {
 
         // create a new course object from database:
         this.course = new this.$core.courses.Course(coursedb)
-        t = this.$logger('Course|api.getCourse', t)
+
+        // set ownership
+        this.$course.owner = Boolean(
+          this.$user.isAuthenticated &&
+          this.course._users.includes(this.$user._id)
+        )
 
         // reformat url
         const route = this.course.link
@@ -659,9 +659,8 @@ export default {
       }
 
       // download course track:
-      const t1 = this.$logger()
       const llas = await api.getCourseField(this.course._id, 'points')
-      this.$logger(`Course|initialize: downloaded (${llas.length} points)`, t1)
+      log.info(`downloaded (${llas.length} points)`)
 
       // if looped course, repeat points array
       const track = await this.$core.tracks.create(llas, { loops: this.course.loops })
@@ -701,19 +700,19 @@ export default {
               }
               this.selectPlan(plan)
             } catch (error) {
-              console.log(error)
+              this.error(error)
             }
           }
         } else {
           const p = JSURL.tryParse(this.$route.query.plan, null)
           if (p) {
-            this.$logger('Course|created: showing plan from URL')
+            log.info('showing plan from URL')
             this.$refs.planEdit.show(p)
           }
         }
       } else {
         this.selectRecentPlan(() => {
-          if (this.owner) {
+          if (this.$course.owner) {
             this.$course.view = 'edit'
           } else {
             setTimeout(() => {
@@ -743,7 +742,7 @@ export default {
         }, 1000)
       }
 
-      this.$logger('Course|initialize', t)
+      log.info('comlete')
     },
     async editCourse () {
       if (this.$course.view !== 'edit') { this.$course.view = 'edit' }
@@ -825,8 +824,8 @@ export default {
       }
     },
     updateWaypointDelay (waypoint, delay) {
+      this.logger.child({ method: 'updateWaypointDelay' }).info('run')
       try {
-        this.$logger('Course|updateWaypointDelay')
         if (!this.plan || !this.plan.waypointDelays) return
 
         // remove old record if it exists:
@@ -853,6 +852,8 @@ export default {
     },
     async refreshWaypoints (callback) {
       this.course.waypoints = await api.getWaypoints(this.course._id)
+      this.waypoints.filter(wp => wp.loop === 1 || wp.type === 'finish')
+        .forEach(wp => { wp.refreshLLA(this.course.track) })
       this.setUpdateFlag()
       if (typeof callback === 'function') callback()
     },
@@ -894,7 +895,7 @@ export default {
           await api.deletePlan(plan._id)
           this.$gtage(this.$gtag, 'Plan', 'delete', this.publicName)
           await this.clearPlan()
-          this.plans = await api.getPlans(this.course._id, this.$user._id)
+          this.plans = await api.getPlans(this.course._id)
           this.selectRecentPlan(() => { setTimeout(() => { this.newPlan() }, 1000) })
         },
         (err) => {
@@ -907,7 +908,7 @@ export default {
     },
     async refreshPlans (plan, callback) {
       if (this.$auth.isAuthenticated()) {
-        this.plans = await api.getPlans(this.course._id, this.$user._id)
+        this.plans = await api.getPlans(this.course._id)
         this.selectPlan(this.plans.find(p => p._id === plan._id))
       } else {
         this.plans = [plan]
@@ -917,7 +918,7 @@ export default {
       if (typeof callback === 'function') callback()
     },
     async selectPlan (plan) {
-      this.$logger(`Course|selectPlan: ${plan.name} selected.`)
+      this.logger.child({ method: 'selectPlan' }).info(`${plan.name} selected.`)
       this.$refs.waypointTable?.collapseAll()
       this.plan = plan
       if (!this.comparing) {
@@ -936,7 +937,7 @@ export default {
       this.calcPlan()
     },
     async calcPlan () {
-      const t = this.$logger()
+      this.logger.child({ method: 'calcPlan' }).info('run')
       if (!this.planAssigned) { return }
       if (this.plan._id) {
         if (this.$route.query.plan !== this.plan._id) {
@@ -969,20 +970,19 @@ export default {
           await this.updatePacing()
         }
       }
-      this.$logger('Course|calcPlan', t)
     },
     async clearPlan () {
+      this.logger.child({ method: 'clearPlan' }).info('run')
       // deselect the current plan
       if (!this.planAssigned) { return }
       this.plan = {}
       const q = { ...this.$route.query }
       delete q.plan
       this.$router.push({ query: q })
-      this.$logger('Course|clearPlan')
     },
     async selectRecentPlan (noPlanFunction) {
       if (this.planAssigned) return
-      this.$logger('Course|selectRecentPlan')
+      this.logger.child({ method: 'selectRecentPlan' }).info('run')
       if (this.plans.length) {
         const lastViewed = Math.max.apply(
           Math,
@@ -1015,7 +1015,7 @@ export default {
       }
     },
     createSplits: async function () {
-      const t = this.$logger()
+      this.logger.child({ method: 'createSplits' }).info('run')
       this.course.splits.segments = await this.$core.geo.createSegments(
         this.course.points,
         {
@@ -1035,10 +1035,9 @@ export default {
           }
         )
       })
-      this.$logger('Course|createSplits', t)
     },
     createPlanSplits: async function () {
-      const t = this.$logger()
+      this.logger.child({ method: 'createPlanSplits' }).info('run')
       if (!this.plan.splits) { this.$set(this.plan, 'splits', {}) }
       const segments = await this.$core.geo.createSegments(
         this.course.points,
@@ -1063,7 +1062,6 @@ export default {
         )
         this.$set(this.plan.splits, unit, s)
       })
-      this.$logger('Course|createPlanSplits', t)
     },
     clearPlanSplits: function () {
       this.plans.forEach(p => {
@@ -1071,7 +1069,8 @@ export default {
       })
     },
     async updatePacing () {
-      const t = this.$logger()
+      const log = this.logger.child({ method: 'updatePacing' })
+      log.info('run')
       // update splits, segments, and pacing
       this.updateFlag = false
       this.$status.processing = true
@@ -1093,7 +1092,7 @@ export default {
         // check if any cutoffs were missed for races:
         if (this.course.race) {
           const cutoffwps = this.waypoints.filter(wp => wp.cutoff && wp.elapsed(this.segments) > wp.cutoff + 29)
-          this.$logger(`Course|updatePacing missed ${cutoffwps.lengths} cutoffs.`)
+          log.log(cutoffwps.length ? 'warn' : 'info', `missed ${cutoffwps.length} cutoffs.`)
           if (cutoffwps.length) {
             const msg = `Plan misses cutoff(s) at the following locations: ${cutoffwps.map(wp => { return wp.name }).join(', ')}`
             this.$alert.show(msg, { variant: 'danger', timer: 6 })
@@ -1103,7 +1102,6 @@ export default {
         this.$error.handle(this.$gtag, error)
       }
       this.$status.processing = false
-      this.$logger('Course|updatePacing', t)
     },
     updateFocus: function (type, focus) {
       this.focus = focus
@@ -1117,6 +1115,16 @@ export default {
     },
     async download () {
       await this.$refs.download.show()
+    },
+    async addOwner (user) {
+      if (!this.$course.owner) { return }
+      this.logger.child({ method: 'addOwner' }).info('run')
+      await api.modifyCourseUsers(this.course._id, 'add', user)
+    },
+    async removeOwner (user) {
+      if (!this.$course.owner) { return }
+      this.logger.child({ method: 'removeOwner' }).info('run')
+      await api.modifyCourseUsers(this.course._id, 'remove', user)
     },
     async changeOwner (_user) {
       if (!this.$user.admin) { return }
@@ -1155,7 +1163,8 @@ export default {
       )
     },
     async print (component) {
-      const t = this.$logger()
+      const log = this.logger.child({ method: 'print' })
+      log.info(component)
 
       // define $refs for each print component:
       const refs = {
@@ -1214,7 +1223,7 @@ export default {
       }
       // lazy load the html2pdf module:
       if (!html2pdf) {
-        this.$logger('Course|print importing html2pdf')
+        log.info('importing html2pdf')
         await import(/* webpackPrefetch: true */ 'html2pdf.js')
           .then(mod => { html2pdf = mod.default })
       }
@@ -1276,7 +1285,6 @@ export default {
             if (component === 'Profile') {
               this.$nextTick(() => { this.$refs.profile.update() })
             }
-            this.$logger(`Course|print ${component}`, t)
           })
       })
     },

@@ -7,7 +7,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import AuthPlugin from './plugins/auth'
 import api from './api'
-import { logger } from '../core/logger'
+import logger from './log'
 import UnitsPlugin from './plugins/units'
 import VueGtag from 'vue-gtag'
 import VuePageTitle from 'vue-page-title'
@@ -30,6 +30,7 @@ import 'vue-awesome/icons/download'
 import 'vue-awesome/icons/edit'
 import 'vue-awesome/icons/envelope'
 import 'vue-awesome/icons/lock'
+import 'vue-awesome/icons/minus-circle'
 import 'vue-awesome/icons/plus'
 import 'vue-awesome/icons/print'
 import 'vue-awesome/icons/running'
@@ -142,7 +143,8 @@ Vue.prototype.$window = Vue.observable({
   width: window.innerWidth
 })
 Vue.prototype.$course = Vue.observable({
-  view: 'plan'
+  view: 'plan',
+  owner: false
 })
 
 Vue.prototype.$utils = {
@@ -177,7 +179,7 @@ Vue.prototype.$error = Vue.observable({
     })
     this.msg = options.msg || description
     this.timer = options.timer || 5
-    console.log(error)
+    logger.error(error)
   },
   msg: '',
   timer: 0
@@ -209,7 +211,8 @@ Vue.filter('timef', function (value, format) {
 })
 
 Vue.prototype.$api = api
-Vue.prototype.$logger = logger
+Vue.prototype.$logger = logger.info // depreciated 10.29.2021
+Vue.prototype.$log = logger
 Vue.use(UnitsPlugin)
 
 Vue.config.productionTip = false

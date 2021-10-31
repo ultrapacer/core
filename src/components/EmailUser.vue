@@ -74,8 +74,8 @@ function capitalize (s) {
 }
 export default {
   props: {
-    userId: {
-      type: String,
+    toUserIds: {
+      type: Array,
       required: true
     },
     subject: {
@@ -114,16 +114,15 @@ export default {
       if (this.$status.processing) { return }
       this.$status.processing = true
       try {
-        await api.emailUser(
-          this.userId,
-          {
-            name: this.name,
-            type: this.type,
-            course: this.subject,
-            message: this.message,
-            replyTo: this.replyTo,
-            url: this.url
-          })
+        await api.emailUsers({
+          toUserIds: this.toUserIds,
+          name: this.name,
+          type: this.type,
+          course: this.subject,
+          message: this.message,
+          replyTo: this.replyTo,
+          url: this.url
+        })
         this.$gtag.event('email', { event_category: capitalize(this.type), event_label: this.subject })
         this.$alert.show('Message sent!')
       } catch (error) {

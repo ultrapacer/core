@@ -49,21 +49,28 @@
           <template #cell(actions)="row">
             <div>
               <b-button
-                v-if="$user._id==row.item._user"
+                v-if="row.item._users.includes($user._id)"
                 class="mr-1"
                 @click="editCourse(row.item)"
               >
                 <v-icon name="edit" />
-                <span class="d-none d-md-inline">Edit</span>
+                <span class="d-none d-lg-inline">Edit</span>
               </b-button>
               <b-button
+                v-if="!row.item.meta.deletable"
+                class="mr-1"
+                @click="removeCourse(row.item)"
+              >
+                <v-icon name="minus-circle" />
+                <span class="d-none d-lg-inline">Remove</span>
+              </b-button>
+              <b-button
+                v-if="row.item.meta.deletable"
                 class="mr-1"
                 @click="deleteCourse(row.item)"
               >
                 <v-icon name="trash" />
-                <span class="d-none d-md-inline">
-                  {{ $user._id==row.item._user ? 'Del' : 'Remove' }}
-                </span>
+                <span class="d-none d-lg-inline">Delete</span>
               </b-button>
               <router-link
                 :to="row.item.link ? {
@@ -156,7 +163,8 @@ export default {
           label: 'Actions',
           tdClass: 'actionButtonColumn'
         }
-      ]
+      ],
+      logger: this.$log.child({ file: 'CoursesManager.vue' })
     }
   },
   watch: {
@@ -205,7 +213,7 @@ export default {
       }
     },
     async newCourse () {
-      const ownedCourseTotal = this.courses.filter(c => c._user === this.$user._id).length
+      const ownedCourseTotal = this.courses.filter(c => c._users.includes(this.$user._id)).length
       if (this.$user.membership.active || ownedCourseTotal < this.$config.freeCoursesLimit) {
         this.$refs.courseEdit.show()
       } else {
@@ -216,12 +224,49 @@ export default {
       this.$status.processing = true
       this.$refs.courseEdit.show(course._id)
     },
+    async removeCourse (course, cb) {
+      this.$refs.delModal.show(
+        {
+          type: 'course',
+          object: course,
+          verb: 'remove'
+        },
+        async () => {
+          const log = this.logger.child({ method: 'removeCourse' })
+          try {
+            log.info(`course: ${course._id}`)
+            // if user is also an owner, remove from course users list
+            if (course._users.includes(this.$user._id)) {
+              await api.modifyCourseUsers(course._id, 'remove', this.$user._id)
+            }
+
+            // remove course from users list and delete users plans:
+            await api.modifyUserCourses(this.$user._id, 'remove', course._id)
+
+            // remove course from page:
+            const index = this.courses.findIndex(x => x._id === course._id)
+            if (index > -1) {
+              this.courses.splice(index, 1)
+            }
+          } catch (error) {
+            log.error(error)
+            this.$error.handle(this.$gtag, error, 'CoursesManager|removeCourse')
+          }
+        },
+        (err) => {
+          if (typeof (cb) === 'function') {
+            if (err) cb(err)
+            else cb()
+          }
+        }
+      )
+    },
     async deleteCourse (course, cb) {
       this.$refs.delModal.show(
         {
           type: 'course',
           object: course,
-          verb: this.$user._id === course._user ? 'delete' : 'remove'
+          verb: 'delete'
         },
         async () => {
           await api.deleteCourse(course._id)

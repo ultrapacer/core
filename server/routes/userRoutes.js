@@ -1,21 +1,15 @@
-// userRoutes.js
 const express = require('express')
 const userRoutes = express.Router()
 const User = require('../models/User')
 const Course = require('../models/Course')
 const Plan = require('../models/Plan')
-const ObjectId = require('mongoose').Types.ObjectId
-
-function isValidObjectId (id) {
-  if (ObjectId.isValid(id)) {
-    if ((String)(new ObjectId(id)) === id) { return true }
-    return false
-  }
-  return false
-}
+const { isValidObjectId, getCurrentUser, getUser, routeName } = require('../util')
+const logger = require('winston').child({ file: 'userRoutes.js' })
 
 // GET
 userRoutes.route('/').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  log.verbose('run')
   try {
     let user = await User.findOneAndUpdate(
       { auth0ID: req.user.sub },
@@ -25,34 +19,30 @@ userRoutes.route('/').get(async function (req, res) {
       user = new User({
         auth0ID: req.user.sub
       })
+      log.info('creating new user')
       await user.save()
     }
     res.json(user)
   } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+    log.error(err)
+    res.status(400).send('Error getting user')
   }
 })
 
 // GET STATS
 userRoutes.route('/stats').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  log.verbose('run')
   try {
-    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const user = await getCurrentUser(req)
     const q = {
       $or: [
-        {
-          _user: user
-        },
+        { _user: user }, // depreciated 2021.10.22
+        { _users: user },
         {
           $and: [
-            {
-              _id: {
-                $in: user._courses
-              }
-            },
-            {
-              public: true
-            }
+            { _id: { $in: user._courses } },
+            { public: true }
           ]
         }
       ]
@@ -64,13 +54,15 @@ userRoutes.route('/stats').get(async function (req, res) {
       plans: planCount
     })
   } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+    log.error(err)
+    res.status(400).send('Error getting user stats')
   }
 })
 
 // UPDATE
 userRoutes.route('/:id').put(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  log.verbose('run')
   try {
     // search by id or email:
     const q = isValidObjectId(req.params.id) ? { _id: req.params.id } : { email: req.params.id }
@@ -99,13 +91,47 @@ userRoutes.route('/:id').put(async function (req, res) {
       })
 
       await user.updateOne(update)
+
+      log.info('User updated')
       res.json('Update complete')
     } else {
+      log.warn('No permission')
       res.status(403).send('No permission')
     }
   } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+    log.error(err)
+    res.status(400).send('Error updating user')
+  }
+})
+
+// UPDATE USER COURSES LIST:
+userRoutes.route('/:id/course/:action/:courseId').put(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  log.info('run')
+  const { id, action, courseId } = req.params
+  try {
+    // get user to update and currentUser (logged in)
+    const [user, currentUser] = await Promise.all([
+      getUser(id, '_courses'),
+      getCurrentUser(req, ['admin', '_courses'])
+    ])
+    if (user.equals(currentUser) || currentUser.admin) {
+      if (action === 'add') {
+        user._courses.push(courseId)
+        await user.save()
+      } else if (action === 'remove') {
+        await user.removeCourse(courseId)
+      } else {
+        return res.status(400).send('Incorrect action specified')
+      }
+      res.status(200).send(`User course ${action} complete`)
+    } else {
+      log.warn('No permission')
+      res.status(403).send('No permission')
+    }
+  } catch (error) {
+    log.error(error)
+    res.status(400).send('Error modifying user courses')
   }
 })
 

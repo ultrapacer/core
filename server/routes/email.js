@@ -10,9 +10,9 @@ const renderer = require('vue-server-renderer').createRenderer({
   template: fs.readFileSync(path.join(__dirname, '../templates/email.html'), 'utf-8')
 })
 
-router.route('/user/:id').post(async function (req, res) {
+router.route('/').post(async function (req, res) {
   try {
-    const user = await User.findById(req.params.id).exec()
+    const users = await User.find({ _id: { $in: req.body.toUserIds } }).select('email').exec()
 
     // get keys:
     const keys = await getSecret(['SMTP_USERNAME', 'SMTP_PASSWORD'])
@@ -40,19 +40,19 @@ router.route('/user/:id').post(async function (req, res) {
     if (html) {
       await transporter.sendMail({
         from: '"ultraPacer" <no-reply@ultrapacer.com>',
-        to: user.email,
+        to: users.map(u => { return u.email }),
         subject: 'ultraPacer | ' + req.body.course,
         text: req.body.message,
         html: html,
         replyTo: req.body.replyTo
       })
-      res.json('Message Sent')
+      res.status(200).json('Message Sent')
     } else {
       res.status(400).send('Not sent')
     }
   } catch (err) {
     console.log(err)
-    res.status(400).send(err)
+    res.status(400).send('Error sending email')
   }
 })
 

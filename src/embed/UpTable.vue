@@ -47,14 +47,12 @@ import Vue from 'vue'
 import Loading from 'vue-loading-overlay'
 
 import UnitsPlugin from '@/plugins/units'
-import { logger } from '../../core/logger'
 import api from '@/api-external'
 import { BLink, BTable } from 'bootstrap-vue'
 import { Course } from '../../core/courses'
 import { loopedWaypoints } from '../../core/waypoints'
 import { Segment, SuperSegment } from '../../core/segments'
 
-Vue.prototype.$logger = logger
 Vue.use(UnitsPlugin)
 export default {
   components: {
@@ -218,7 +216,6 @@ export default {
     if (!this.courseId) {
       throw new Error('Course not specified.')
     }
-    const t = this.$logger()
     if (this.units === 'metric') {
       this.$units.setDist('km')
       this.$units.setAlt('m')
@@ -259,7 +256,6 @@ export default {
         }
     }
     this.isLoading = false
-    this.$logger('UpTable|created: complete', t)
   }
 }
 </script>

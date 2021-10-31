@@ -51,13 +51,11 @@ publicRoutes.route('/course/:course/field/:field').get(async function (req, res)
       _id: req.params.course,
       public: true
     }
-    const course = await Course.findOne(q)
-      .select(['_user', req.params.field])
-      .exec()
-    res.json(course[req.params.field])
+    const course = await Course.findOne(q).select(req.params.field).exec()
+    res.status(200).json(course[req.params.field])
   } catch (err) {
     console.log(err)
-    res.status(400).send(err)
+    res.status(400).send(`Error retrieving ${req.params.field}`)
   }
 })
 

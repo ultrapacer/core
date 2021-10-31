@@ -143,6 +143,7 @@ export default {
   },
   data () {
     return {
+      logger: this.$log.child({ file: 'App.vue' }),
       user: {},
       authInterval: null,
       spinner: {},
@@ -230,9 +231,12 @@ export default {
       }
     },
     async refreshAuth () {
+      const log = this.logger.child({ method: 'refreshAuth' })
       this.$user.isAuthenticated = await this.$auth.isAuthenticated()
-      this.$logger(`Authenticated: ${this.$user.isAuthenticated}`)
-      if (!this.$user.isAuthenticated) {
+      if (this.$user.isAuthenticated) {
+        log.verbose('Authenticated')
+      } else {
+        log.warn('Not authenticated')
         window.clearInterval(this.refreshAuth)
       }
     }

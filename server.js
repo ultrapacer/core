@@ -14,6 +14,7 @@ const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
 const patreon = require('./server/routes/patreon')
 const { getSecret } = require('./server/secrets')
+const logger = require('./server/log').child({ file: 'server.js' })
 
 async function startUp () {
   const elevation = require('./server/routes/elevation')
@@ -27,8 +28,8 @@ async function startUp () {
   const keys = await getSecret(['MONGODB', 'AUTH0_DOMAIN', 'AUTH0_AUDIENCE'])
 
   mongoose.connect(keys.MONGODB).then(
-    () => { console.log('Database is connected') },
-    err => { console.log('Can not connect to the database' + err) }
+    () => { logger.info('Database is connected') },
+    err => { logger.error('Can not connect to the database' + err) }
   )
 
   const app = express()
@@ -108,11 +109,11 @@ async function startUp () {
 
   const PORT = process.env.PORT || 8080
   app.listen(PORT, () => {
-    console.log(`DIST_DIR: ${DIST_DIR}`)
-    console.log(`HTML_FILE: ${HTML_FILE}`)
-    console.log(`STATIC_FOLDER: ${STATIC_FOLDER}`)
-    console.log(`App listening on port ${PORT}`)
-    console.log('Press Ctrl+C to quit.')
+    logger.info(`DIST_DIR: ${DIST_DIR}`)
+    logger.info(`HTML_FILE: ${HTML_FILE}`)
+    logger.info(`STATIC_FOLDER: ${STATIC_FOLDER}`)
+    logger.info(`App listening on port ${PORT}`)
+    logger.info('Press Ctrl+C to quit.')
   })
 }
 

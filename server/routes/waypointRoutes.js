@@ -1,76 +1,92 @@
-// waypointRoutes.js
 const express = require('express')
 const waypointRoutes = express.Router()
+const shallowEqual = require('../../core/util/shallow-equal')
 const Course = require('../models/Course')
 const Waypoint = require('../models/Waypoint')
-const User = require('../models/User')
+const { getCurrentUser, routeName } = require('../util')
+const logger = require('winston').child({ file: 'waypointRoutes.js' })
 
 // SAVE NEW
 waypointRoutes.route('/').post(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  log.info('run')
   try {
     const waypoint = new Waypoint(req.body)
     if (isNaN(waypoint.terrainFactor)) {
       waypoint.terrainFactor = null
     }
-    waypoint._user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    const course = await Course.findById(waypoint._course).select('_user').exec()
-    if (waypoint._user.equals(course._user)) {
+    waypoint._user = await getCurrentUser(req, 'admin')
+    waypoint._course = await Course.findById(waypoint._course).select(['_user', '_users']).exec()
+    if (waypoint._course.isPermitted('modify', waypoint._user)) {
       await waypoint.save()
-      await course.clearCache()
-      res.json('Update complete')
+      res.status(200).json('Update complete')
     } else {
+      log.warn('No permission')
       res.status(403).send('No permission')
     }
   } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+    log.error(err)
+    res.status(400).send('Error saving new waypoint')
   }
 })
 
 //  UPDATE
 waypointRoutes.route('/:id').put(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  log.info('run')
   try {
-    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    const waypoint = await Waypoint.findById(req.params.id).exec()
-    const course = await Course.findById(waypoint._course).select('_user').exec()
-    if (user.equals(course._user)) {
-      const fields = [
-        'name', 'location', 'type', 'tier', 'description', 'elevation',
-        'lat', 'lon', 'pointsIndex', 'terrainFactor', 'terrainType', 'percent',
-        'cutoffs'
-      ]
+    const [user, waypoint] = await Promise.all([
+      getCurrentUser(req, 'admin'),
+      Waypoint
+        .findById(req.params.id)
+        .populate([{ path: '_course', select: ['_user', '_users'] }])
+        .exec()
+    ])
+    if (waypoint._course.isPermitted('modify', user)) {
+      // add values from req to waypoint model
+      const fields = Object.keys(Waypoint.schema.obj).filter(k => k.charAt(0) !== '_')
       fields.forEach(f => {
         if (req.body[f] !== undefined) {
-          waypoint[f] = req.body[f]
+          if (!shallowEqual(req.body[f], waypoint[f])) waypoint[f] = req.body[f]
         }
       })
-      if (isNaN(waypoint.terrainFactor)) { waypoint.terrainFactor = null }
+
+      // update database
       await waypoint.save()
-      await course.clearCache()
-      res.json('Update complete')
+
+      res.status(200).send('Update complete')
     } else {
+      log.warn('No permission')
       res.status(403).send('No permission')
     }
   } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+    log.error(err)
+    res.status(400).send('Error updating waypoint')
   }
 })
 
 // DELETE
 waypointRoutes.route('/:id').delete(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  log.info('run')
   try {
-    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
-    const waypoint = await Waypoint.findById(req.params.id).populate('_course', '_user').exec()
-    if (waypoint._course._user.equals(user._id)) {
-      await waypoint._course.clearCache()
+    const [user, waypoint] = await Promise.all([
+      getCurrentUser(req, 'admin'),
+      Waypoint
+        .findById(req.params.id)
+        .populate([{ path: '_course', select: ['_user', '_users'] }])
+        .exec()
+    ])
+    if (waypoint._course.isPermitted('modify', user)) {
       await waypoint.remove()
-      res.json('Successfully removed')
+      res.status(200).send('Successfully removed')
     } else {
+      log.warn('No permission')
       res.status(403).send('No permission')
     }
   } catch (err) {
-    res.status(400).send(err)
+    log.error(err)
+    res.status(400).send('Error deleting waypoint')
   }
 })
 

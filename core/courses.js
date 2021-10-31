@@ -1,6 +1,6 @@
 const { isNumeric, interp } = require('./math')
 const { sleep } = require('./util')
-const { logger } = require('./logger')
+const logger = require('winston').child({ component: 'courses.js' })
 
 class CoursePoint {
   constructor (course, point, loop) {
@@ -69,7 +69,8 @@ class Course {
   // map array of actual times to this
   async addActuals (actual) {
     // where actual is an array of Points or CoursePoints
-    const t = logger(`Course|addActuals : mapping ${actual.length} points`)
+    const log = logger.child({ method: 'Course.addActuals' })
+    log.info(`mapping ${actual.length} points`)
     if (!this.points?.length) { throw new Error('Course has no points array') }
 
     // shallow copy actual array
@@ -130,13 +131,13 @@ class Course {
           }
         }
       }
-      logger('Track|addActuals MATCH', t)
+      log.info('MATCH')
       return {
         match: true
       }
     } catch (e) {
       if (MatchFailure.point) {
-        logger('Track|addActuals FAIL', t)
+        log.warn('FAIL')
         return MatchFailure
       } else {
         throw e

@@ -1,6 +1,6 @@
 const { round, interp, wlslr } = require('./math')
 const gpxParse = require('gpx-parse')
-const { logger } = require('./logger')
+const logger = require('winston').child({ component: 'tracks.js' })
 const { latlon: LatLon } = require('sgeo')
 const { makeReactive } = require('./util')
 const { Point, interpolatePoint } = require('./points')
@@ -22,7 +22,7 @@ class Track extends Array {
   }
 
   addLocations () {
-    logger('Track|addLocations')
+    logger.child({ method: 'Track.addLocations' }).info('started')
     let d = 0
     let l = 0
     this[0].loc = 0
@@ -41,7 +41,8 @@ class Track extends Array {
   }
 
   cleanUp () {
-    logger('Track|cleanup')
+    const log = logger.child({ method: 'Track.cleanup' })
+    log.info('started')
     // function fixes issues with tracks
 
     // REMOVE ALITITUDE STEPS FROM THE GPX. HAPPENS SOMETIMES WITH STRAVA DEM
@@ -67,7 +68,7 @@ class Track extends Array {
       while (z <= this.length - 1 && this[s].alt === this[z].alt) { z += 1 }
       z -= 1
       if (z - a > 1) {
-        logger(`Track|cleanUp: fixing altitude step at ${round(this[s].loc, 2)} km from ${round(this[a].alt, 2)} m to ${round(this[z].alt, 2)} m`)
+        log.info(`fixing altitude step at ${round(this[s].loc, 2)} km from ${round(this[a].alt, 2)} m to ${round(this[z].alt, 2)} m`)
         for (i = a + 1; i < z; i++) {
           this[i].alt = interp(
             this[a].loc,
@@ -84,7 +85,7 @@ class Track extends Array {
 
   addGrades () {
   // add grade field to points array
-    logger('Track|addGrades')
+    logger.info('Track|addGrades')
     const locs = Array(...this).map(x => x.loc)
     const lsq = this.getSmoothedProfile(locs, 0.05)
     this.forEach((p, i) => {
@@ -94,7 +95,7 @@ class Track extends Array {
 
   calcStats () {
     // return course { gain, loss, dist }
-    logger('Track|calcStats')
+    logger.info('Track|calcStats')
     const d = this.last.loc
     let gain = 0
     let loss = 0
@@ -115,7 +116,7 @@ class Track extends Array {
       dist: d
     }
     ;({ dist: this.dist, gain: this.gain, loss: this.loss } = stats)
-    logger(`Track|calcStats ${round(stats.dist, 2)} km ${round(stats.gain, 0)}/${round(stats.loss, 0)} m`)
+    logger.info(`Track|calcStats ${round(stats.dist, 2)} km ${round(stats.gain, 0)}/${round(stats.loss, 0)} m`)
     return stats
   }
 
@@ -128,7 +129,7 @@ class Track extends Array {
     // if location is already array, copy, otherwise make it one:
     const locs = Array.isArray(location) ? [...location] : [location]
 
-    logger(`Track|getLLA for ${locs.length} location(s).`)
+    logger.info(`Track|getLLA for ${locs.length} location(s).`)
 
     // if track has loops, just look at location within first loop (eg track)
     locs.forEach((l, i) => { if (l > this.dist) locs[i] = l % this.dist })
@@ -180,7 +181,7 @@ class Track extends Array {
   }
 
   getNearestLoc (ll, start, limit) {
-    logger(['Track|getNearestLoc', ll, start, limit])
+    logger.info(['Track|getNearestLoc', ll, start, limit])
     // iterate to new location based on waypoint lat/lon
     // ll: [lat, lon] array
     // start: starting location in meters
@@ -213,7 +214,7 @@ class Track extends Array {
   getSmoothedProfile (locs, gt) {
     // locs: array of locations (km)
     // gt: grade smoothing threshold
-    logger('Track|getSmoothedProfile')
+    logger.info('Track|getSmoothedProfile')
     const mbs = wlslr(
       this.map(p => { return p.loc }),
       this.map(p => { return p.alt }),
@@ -236,7 +237,7 @@ class Track extends Array {
   async reduceDensity () {
   // reduce density of points for processing
   // correct distance
-    const t = logger('Track|reduceDensity')
+    logger.info('Track|reduceDensity')
     const spacing = 0.025 // meters between points
 
     // only reformat if it cuts the size down in half
@@ -260,7 +261,7 @@ class Track extends Array {
         { clean: false }
       )
 
-      logger(`Track|reduceDensity: Reduced from ${this.length} to ${track.length} points`, t)
+      logger.info(`Track|reduceDensity: Reduced from ${this.length} to ${track.length} points`)
       return track
     } else {
       return this
@@ -270,7 +271,7 @@ class Track extends Array {
 
 async function create (arr, opts = {}) {
   const clean = opts.clean !== false // default to true
-  logger(`track|create for ${arr.length} points. clean=${clean}.`)
+  logger.info(`track|create for ${arr.length} points. clean=${clean}.`)
   let points = arr.map(p => { return new Point(p) })
 
   if (clean) {
@@ -281,7 +282,7 @@ async function create (arr, opts = {}) {
       round(p.lon - points[i - 1].lon, 8) !== 0
     )
     if (prev > points.length) {
-      logger(`tracks|create: removed ${prev - points.length} zero-distance points`)
+      logger.info(`tracks|create: removed ${prev - points.length} zero-distance points`)
     }
   }
 

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema
+const logger = require('winston').child({ file: 'Waypoint.js' })
 
 // Define collection and schema for Posts
 const WaypointSchema = new Schema({
@@ -67,6 +68,30 @@ const WaypointSchema = new Schema({
   }
 }, {
   collection: 'waypoints'
+})
+
+WaypointSchema.pre('save', async function (next) {
+  // if important fields are changed, clear course cache
+
+  // get list of changed fields
+  let changes = this.modifiedPaths()
+
+  // these are the important fields
+  const fields = ['percent', 'terrainFactor', 'tier']
+
+  // if any of the changed fields are important, clear the cache
+  changes = changes.filter(c => fields.includes(c))
+  if (changes.length) {
+    logger.child({ method: 'pre-save' }).info(`${changes.join(', ')} changed; clearing cache.`)
+    await this._course?.clearCache?.()
+  }
+
+  next()
+})
+
+WaypointSchema.post('remove', function () {
+  logger.child({ method: 'post-remove' }).info('run')
+  this._course?.clearCache?.()
 })
 
 module.exports = mongoose.model('Waypoint', WaypointSchema)

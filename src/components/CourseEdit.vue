@@ -341,7 +341,7 @@
           </b-button>
         </div>
         <b-button
-          v-if="model._id"
+          v-if="model._id && model.meta.deletable"
           variant="danger"
           @click="remove"
         >

@@ -33,6 +33,7 @@
     "vue": "^2.6.14",
     "vue-router": "^3.5.2",
     "vue-server-renderer": "^2.6.14",
+    "winston": "^3.3.3",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {

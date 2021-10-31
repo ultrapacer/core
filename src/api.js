@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import axios from 'axios'
-import { logger } from '../core/logger'
+const logger = require('winston').child({ file: 'api.js' })
 
 const client = axios.create({
   json: true
@@ -8,7 +8,8 @@ const client = axios.create({
 
 export default {
   async executeAuth (method, resource, data) {
-    const t = logger(`api|executeAuth|${method}|${resource} initiated`)
+    const log = logger.child({ method: 'executeAuth' })
+    log.info(`${resource} initiated`)
     const accessToken = await Vue.prototype.$auth.getAccessToken()
     return client({
       method,
@@ -18,18 +19,19 @@ export default {
         Authorization: `Bearer ${accessToken}`
       }
     }).then(req => {
-      logger(`api|executeAuth|${method}|${resource}`, t)
+      log.info(`${resource} completed`)
       return req.data
     })
   },
   async execute (method, resource, data) {
-    const t = logger(`api|execute|${method}|${resource} initiated`)
+    const log = logger.child({ method: 'execute' })
+    log.info(`${resource} initiated`)
     return client({
       method,
       url: resource,
       data
     }).then(req => {
-      logger(`api|execute|${method}|${resource}`, t)
+      log.info(`${resource} completed`)
       return req.data
     })
   },
@@ -41,6 +43,9 @@ export default {
   },
   updateUser (id, data) {
     return this.executeAuth('put', `/api/user/${id}`, data)
+  },
+  modifyUserCourses (id, action, course) {
+    return this.executeAuth('put', `/api/user/${id}/course/${action}/${course}`)
   },
   getCourses () {
     return this.executeAuth('get', '/api/courses')
@@ -63,14 +68,6 @@ export default {
       return this.execute('get', `/api-public/course/${id}/field/${field}`)
     }
   },
-  async getCourseFields (id, key = 'course', fields, tryAuth = true) {
-    const sub = (key === 'course') ? '' : key + '/'
-    if (tryAuth && Vue.prototype.$auth.isAuthenticated()) {
-      return this.executeAuth('put', `/api/course/${sub}${id}/fields`, fields)
-    } else {
-      return this.execute('put', `/api-public/course/${sub}${id}/fields`, fields)
-    }
-  },
   createCourse (data) {
     return this.executeAuth('post', '/api/courses', data)
   },
@@ -82,6 +79,9 @@ export default {
   },
   copyCourse (id) {
     return this.executeAuth('put', `/api/course/${id}/copy`)
+  },
+  modifyCourseUsers (id, action, user) {
+    return this.executeAuth('put', `/api/course/${id}/user/${action}/${user}`)
   },
   getWaypoints (courseID) {
     return this.executeAuth('get', `/api/course/${courseID}/waypoints`)
@@ -102,8 +102,8 @@ export default {
       return this.execute('get', `/api-public/plan/${id}`)
     }
   },
-  getPlans (courseID, userID) {
-    return this.executeAuth('get', `/api/course/${courseID}/plans/${userID}`)
+  getPlans (courseID) {
+    return this.executeAuth('get', `/api/course/${courseID}/plans`)
   },
   createPlan (data) {
     return this.executeAuth('post', '/api/plan', data)
@@ -136,8 +136,8 @@ export default {
     // return gpx file for Strava route ID
     return this.execute('get', `/api/strava/route/${id}/gpx`)
   },
-  emailUser (id, data) {
-    return this.executeAuth('post', `/api/email/user/${id}`, data)
+  emailUsers (data) {
+    return this.executeAuth('post', '/api/email', data)
   },
   patreonGetLogin () {
     return this.executeAuth('get', '/api/patreon/url')
