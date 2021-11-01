@@ -118,16 +118,6 @@
     >
       <b>{{ $alert.message }}</b>
     </b-alert>
-    <b-alert
-      :show="$error.timer"
-      class="position-fixed fixed-bottom m-0 rounded-0 pt-1 pb-1"
-      style="z-index: 5000"
-      variant="danger"
-      fade
-      @dismissed="$error.timer=0"
-    >
-      {{ $error.msg }}
-    </b-alert>
   </div>
 </template>
 

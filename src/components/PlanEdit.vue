@@ -382,7 +382,7 @@ export default {
         })
       } catch (error) {
         this.$status.processing = false
-        this.$error.handle(this.$gtag, error, 'PlanEdit|save')
+        this.$error.handle(error, 'PlanEdit|save')
       }
     },
     clear () {

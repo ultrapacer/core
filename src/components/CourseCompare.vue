@@ -136,7 +136,7 @@ export default {
             this.$refs['toast-match-error'].show()
           }
         } catch (error) {
-          this.$error.handle(this.$gtag, error)
+          this.$error.handle(error)
         }
         this.$status.processing = false
       })

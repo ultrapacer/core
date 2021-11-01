@@ -592,7 +592,7 @@ export default {
         this.clear()
         this.$refs.modal.hide()
       } catch (error) {
-        this.$error.handle(this.$gtag, error)
+        this.$error.handle(error)
         this.$status.processing = false
       }
     },
@@ -686,12 +686,12 @@ export default {
               this.newTrack = true
             }
           } catch (error) {
-            this.$error.handle(this.$gtag, error)
+            this.$error.handle(error)
           }
           this.$status.processing = false
         })
       } catch (error) {
-        this.$error.handle(this.$gtag, error)
+        this.$error.handle(error)
         this.$status.processing = false
       }
     },
@@ -774,7 +774,7 @@ export default {
           this.moment = moment(0).tz(tz)
         }
       } catch (error) {
-        this.$error.handle(this.$gtag, error)
+        this.$error.handle(error)
       }
     },
     showHelp () {

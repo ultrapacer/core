@@ -147,5 +147,8 @@ export default {
   },
   patreonPatronsRefresh () {
     return this.executeAuth('get', '/api/patreon/patrons/refresh')
+  },
+  reportError (data) {
+    return this.execute('post', '/api/error', data)
   }
 }

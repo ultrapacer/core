@@ -126,7 +126,7 @@ export default {
         this.$gtag.event('email', { event_category: capitalize(this.type), event_label: this.subject })
         this.$alert.show('Message sent!')
       } catch (error) {
-        this.$error.handle(this.$gtag, error, 'EmailUser|send')
+        this.$error.handle(error, 'EmailUser|send')
       }
       this.$status.processing = false
       this.$refs.modal.hide()

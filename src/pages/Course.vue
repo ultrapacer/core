@@ -820,7 +820,7 @@ export default {
         }, 2000)
         this.setUpdateFlag()
       } catch (error) {
-        this.$error.handle(this.$gtag, error)
+        this.$error.handle(error)
       }
     },
     updateWaypointDelay (waypoint, delay) {
@@ -1099,7 +1099,7 @@ export default {
           }
         }
       } catch (error) {
-        this.$error.handle(this.$gtag, error)
+        this.$error.handle(error)
       }
       this.$status.processing = false
     },

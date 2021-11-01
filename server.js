@@ -62,6 +62,7 @@ async function startUp () {
   app.use('/api/patreon', checkJwt, patreon.auth) // authenticated patreon routes
   app.use('/api/open/patreon', patreon.open) // unauthenticated patreon routes
   app.use('/api/strava', strava)
+  app.use('/api/error', require('./server/routes/error'))
 
   // get timezone
   app.use('/api/timezone', checkJwt, require('./server/routes/timezone'))

@@ -169,17 +169,25 @@ export default {
   },
   watch: {
     '$user._id': async function (v) {
-      if (v) {
-        await this.refreshCourses()
-        this.$status.loading = false
+      try {
+        if (v) {
+          await this.refreshCourses()
+        }
+      } catch (error) {
+        this.$error.handle(error)
       }
+      this.$status.loading = false
     }
   },
   async created () {
-    this.$status.loading = true
-    if (this.$user._id) {
-      await this.refreshCourses()
-      this.$status.loading = false
+    try {
+      this.$status.loading = true
+      if (this.$user._id) {
+        await this.refreshCourses()
+        this.$status.loading = false
+      }
+    } catch (error) {
+      this.$error.handle(error, 'CoursesManager|created')
     }
   },
   methods: {
@@ -250,7 +258,7 @@ export default {
             }
           } catch (error) {
             log.error(error)
-            this.$error.handle(this.$gtag, error, 'CoursesManager|removeCourse')
+            this.$error.handle(error, 'CoursesManager|removeCourse')
           }
         },
         (err) => {

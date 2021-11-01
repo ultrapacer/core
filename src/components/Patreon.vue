@@ -129,7 +129,7 @@ export default {
           this.$logger(`Patreon|initiate: remind again in ${-d} days`)
         }
       } catch (error) {
-        this.$error.handle(this.$gtag, error, 'Patreon|initiate')
+        this.$error.handle(error, 'Patreon|initiate')
       }
     },
     async show (arg = null) {
@@ -185,7 +185,7 @@ export default {
           }
         )
       } catch (error) {
-        this.$error.handle(this.$gtag, error, 'Patreon|snoozeReminder')
+        this.$error.handle(error, 'Patreon|snoozeReminder')
       }
     },
     async getLoginURL () {
@@ -195,7 +195,7 @@ export default {
         this.loginURL = url
       } catch (error) {
         // handle error:
-        this.$error.handle(this.$gtag, error, 'Patreon|getLoginURL')
+        this.$error.handle(error, 'Patreon|getLoginURL')
       }
     },
     async patreonOath () {
@@ -215,7 +215,7 @@ export default {
         window.addEventListener('message', this.receiveMessage, false)
       } catch (error) {
         // handle error:
-        this.$error.handle(this.$gtag, error, 'Patreon|patreonOath')
+        this.$error.handle(error, 'Patreon|patreonOath')
       }
     },
     async receiveMessage (event) {

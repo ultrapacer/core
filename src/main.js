@@ -171,18 +171,31 @@ Vue.prototype.$config = Vue.observable({
 })
 
 Vue.prototype.$error = Vue.observable({
-  handle: function (gtag, error, location = '', options = {}) {
-    const description = (location ? `${location} => ` : '') + error.toString()
-    gtag.exception({
-      description: description,
-      fatal: options.fatal || false
-    })
-    this.msg = options.msg || description
-    this.timer = options.timer || 5
-    logger.error(error)
-  },
-  msg: '',
-  timer: 0
+  handle: function (error, location, fatal = false) {
+    try {
+      logger.error(error.stack || error)
+
+      // show alert:
+      const description = (location ? `${location} => ` : '') + error.toString()
+      const msg = `Error performing action${location ? ' [' + location + ']' : ''}. Please report errors to help development.`
+      Vue.prototype.$alert.show(
+        msg,
+        { variant: 'danger' }
+      )
+
+      // report in analytics:
+      Vue.prototype.$gtag.exception({
+        description: description,
+        fatal: fatal
+      })
+
+      // report to server
+      const stack = (location ? `${location} => ` : '') + error.stack
+      Vue.prototype.$api.reportError({ error: stack })
+    } catch (err) {
+      logger.error(err)
+    }
+  }
 })
 
 Vue.prototype.$alert = Vue.observable({
