@@ -1,3 +1,13 @@
 const winston = require('../core/log')
-// todo: add server logging stuff here
+
+const dev = process.argv.includes('development')
+if (dev) {
+  winston.child({ file: 'log.js' }).info('logging in development mode')
+} else {
+  const { LoggingWinston } = require('@google-cloud/logging-winston')
+  const loggingWinston = new LoggingWinston()
+  winston.add(loggingWinston)
+  winston.child({ file: 'log.js' }).info('logging in production mode')
+}
+
 module.exports = winston

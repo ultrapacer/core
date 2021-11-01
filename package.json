@@ -14,6 +14,7 @@
     "analyzer": "webpack --mode production --analyzer on --config build/webpack.config.js"
   },
   "dependencies": {
+    "@google-cloud/logging-winston": "^4.1.1",
     "@google-cloud/secret-manager": "^3.9.1",
     "@nathanhigh/patreon": "^0.5.2",
     "auth0-js": "^9.16.2",
