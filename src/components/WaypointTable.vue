@@ -293,7 +293,7 @@ export default {
             class: 'text-right'
           })
         }
-        if (this.$course.view === 'analyze') {
+        if (this.$course.comparing) {
           f.push({
             key: this.event.hasTOD() ? 'actualTOD' : 'actualElapsed',
             label: 'Actual',
@@ -323,7 +323,7 @@ export default {
             },
             class: 'd-none d-lg-table-cell text-right'
           })
-          if (this.$course.view === 'analyze') {
+          if (this.$course.comparing) {
             f.push({
               key: 'actualDelay',
               label: 'Actual',

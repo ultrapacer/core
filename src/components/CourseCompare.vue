@@ -22,7 +22,7 @@
         >
           <b-form-file
             v-model="gpxFile"
-            :placeholder="filename && comparing ? filename : 'Choose a GPX file...'"
+            :placeholder="filename && $course.comparing ? filename : 'Choose a GPX file...'"
             accept=".gpx"
             no-drop
             required
@@ -42,7 +42,7 @@
           style="text-align: left; flex: auto"
         >
           <b-button
-            v-if="comparing"
+            v-if="$course.comparing"
             variant="warning"
             @click="stop()"
           >
@@ -91,12 +91,6 @@ export default {
   components: {
     FormTip
   },
-  props: {
-    comparing: {
-      type: Boolean,
-      default: false
-    }
-  },
   data () {
     return {
       filename: '',
@@ -132,7 +126,7 @@ export default {
           if (result.match) {
             this.$refs.modal.hide()
           } else {
-            this.faildist = result.point.loc
+            this.faildist = result.point?.loc || 0
             this.$refs['toast-match-error'].show()
           }
         } catch (error) {

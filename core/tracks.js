@@ -127,7 +127,8 @@ class Track extends Array {
     //   start : optional start index to speed up search; only for single location
 
     // if location is already array, copy, otherwise make it one:
-    const locs = Array.isArray(location) ? [...location] : [location]
+    const isArray = Array.isArray(location)
+    const locs = isArray ? [...location] : [location]
 
     logger.info(`Track|getLLA for ${locs.length} location(s).`)
 
@@ -177,7 +178,54 @@ class Track extends Array {
         back ? i-- : i++
       }
     }
-    return (llas.length > 1) ? llas : llas[0]
+    return isArray ? llas : llas[0]
+  }
+
+  getNearestPoint (latlon, start, limit) {
+    logger.child({ method: 'Track|getNearestPoint' }).verbose([start._index, limit])
+    // iterate to new location based on waypoint lat/lon
+    // latlon: sgeo LatLon object
+    // start: starting point in current track
+    // limit: max distance it can move
+    const steps = 5
+    let p = this[start._index]
+    let jj = start._index
+    let min = 0
+
+    while (limit > 0.025) {
+      const size = limit / steps
+      const ps = [p]
+
+      // loop thru incremental steps:
+      for (let i = 1; i <= steps; i++) {
+        const l = p.loc + (size * i)
+        if (l <= this.last.loc) {
+          while (this[jj + 1].loc < l && jj < this.length - 1) {
+            jj++
+          }
+          if (jj > ps[ps.length - 1]._index) ps.push(this[jj])
+        }
+      }
+
+      // get an array of distances from reference latlon:
+      const dists = ps.map(x => {
+        return Number(latlon.distanceTo(x.latlon))
+      })
+
+      // find the minimum distance:
+      min = Math.min(...dists)
+      const imin = dists.findIndex(d => d === min)
+
+      // set the new point to the one w/ min distance:
+      p = ps[imin]
+
+      // downsize iteration
+      limit = limit / steps
+    }
+    return {
+      point: p,
+      delta: min
+    }
   }
 
   getNearestLoc (ll, start, limit) {
@@ -292,6 +340,7 @@ async function create (arr, opts = {}) {
   // populate track points
   for (let i = 0; i < points.length; i++) {
     track[i] = points[i]
+    track[i]._index = i
   }
 
   track.addLocations()

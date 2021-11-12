@@ -144,7 +144,8 @@ Vue.prototype.$window = Vue.observable({
 })
 Vue.prototype.$course = Vue.observable({
   view: 'plan',
-  owner: false
+  owner: false,
+  comparing: false
 })
 
 Vue.prototype.$utils = {

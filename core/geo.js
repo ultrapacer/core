@@ -30,7 +30,7 @@ function calcSegments (p, breaks, pacing) {
   let len = 0
   let i
   let il
-  const hasActuals = (p[0].actual !== undefined)
+  const hasActuals = (p[0].actual !== undefined && p[p.length - 1].actual !== undefined)
   for (i = 1, il = breaks.length; i < il; i++) {
     len = breaks[i] - breaks[i - 1]
     s.push(new Segment({

@@ -111,7 +111,7 @@
     >
       <b-col
         order="2"
-        :lg="comparing ? 7 : 6"
+        :lg="$course.comparing ? 7 : 6"
         :xl="7"
       >
         <b-tabs
@@ -207,7 +207,7 @@
       </b-col>
       <b-col
         v-if="pointsReady"
-        :lg="comparing ? 5 : 6"
+        :lg="$course.comparing ? 5 : 6"
         xl="5"
         order="1"
         class="chart-map-container"
@@ -219,7 +219,6 @@
           :course="course"
           :waypoints="visibleWaypoints"
           :plan="plan"
-          :show-actual="comparing"
           :focus="focus"
           @waypointClick="waypointClick"
           @setHighlightPoint="(p)=>{highlightPoint = p}"
@@ -273,9 +272,8 @@
     <course-compare
       v-if="planAssigned"
       ref="courseCompare"
-      :comparing="comparing"
       @stop="stopCompare"
-      @cancel="()=>{ if (!comparing) { $course.view = 'plan'}}"
+      @cancel="()=>{ if (!$course.comparing) { $course.view = 'plan'}}"
     />
     <course-share
       ref="courseShare"
@@ -344,7 +342,6 @@ export default {
   data () {
     return {
       saving: false,
-      comparing: false,
       course: {},
       event: new this.$core.events.Event({}),
       logger: this.$log.child({ file: 'Course.vue' }),
@@ -560,6 +557,9 @@ export default {
     '$course.view': function (val) {
       if (this.$status.loading) return
       this.logger.child({ method: '$course.view watcher' }).info(`view changed to ${val}`)
+
+      this.$course.comparing = false
+
       // update after disabling editing
       if (val !== 'edit' && this.updateFlag) {
         this.createSplits()
@@ -579,7 +579,7 @@ export default {
       }
       if (val === 'analyze') {
         this.$nextTick(() => { this.loadCompare() })
-      } else if (this.comparing) {
+      } else if (this.$course.comparing) {
         this.stopCompare()
       }
     },
@@ -597,8 +597,13 @@ export default {
     }
   },
   async created () {
+    this.logger.child({ method: 'created' }).verbose('run')
     this.$course.view = 'plan'
     this.initialize()
+  },
+  beforeDestroy () {
+    this.logger.child({ method: 'beforeDestroy' }).verbose('run')
+    this.$course.comparing = false
   },
   methods: {
     async initialize () {
@@ -921,7 +926,7 @@ export default {
       this.logger.child({ method: 'selectPlan' }).info(`${plan.name} selected.`)
       this.$refs.waypointTable?.collapseAll()
       this.plan = plan
-      if (!this.comparing) {
+      if (!this.$course.comparing) {
         if (this.plan.eventStart) {
           this.event.timezone = this.plan.eventTimezone
           this.event.start = this.plan.eventStart
@@ -1135,7 +1140,7 @@ export default {
       await api.updateCourse(this.course._id, { public: true, link: link })
     },
     async stopCompare (cb) {
-      this.comparing = false
+      this.$course.comparing = false
       if (typeof cb === 'function') await cb()
       this.resetEventTime()
       this.$course.view = 'plan'
@@ -1150,12 +1155,12 @@ export default {
           const res = await this.course.addActuals(actual)
           if (res.match) {
             this.$gtage(this.$gtag, 'Course', 'compare', this.publicName, 1)
-            this.comparing = true
+            this.$course.comparing = true
             this.createPlanSplits()
           } else {
             this.$gtage(this.$gtag, 'Course', 'compare', this.publicName, 0)
             this.resetEventTime()
-            this.comparing = false
+            this.$course.comparing = false
           }
           this.$status.processing = false
           return res

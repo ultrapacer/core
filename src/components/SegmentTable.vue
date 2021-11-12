@@ -353,7 +353,7 @@ export default {
             return timeUtil.sec2string(item.elapsed, '[h]:m:ss')
           }
         })
-        if (this.$course.view === 'analyze') {
+        if (this.$course.comparing) {
           f.push({
             key: 'actualElapsed',
             label: 'Actual',

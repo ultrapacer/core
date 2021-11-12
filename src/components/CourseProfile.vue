@@ -46,10 +46,6 @@ export default {
       type: Object,
       required: true
     },
-    showActual: {
-      type: Boolean,
-      default: false
-    },
     focus: {
       type: Array,
       default () { return [] }
@@ -100,11 +96,11 @@ export default {
             position: 'left',
             suggestedMin: avgAlt - (this.$units.alt === 'ft' ? 100 : 50),
             suggestedMax: avgAlt + (this.$units.alt === 'ft' ? 100 : 50),
-            grid: { display: !this.showActual }
+            grid: { display: !this.$course.comparing }
           },
           'y-axis-2': {
             type: 'linear',
-            display: !this.showActual,
+            display: !this.$course.comparing,
             position: 'right',
             suggestedMin: -2,
             suggestedMax: 2,
@@ -112,7 +108,7 @@ export default {
           },
           'y-axis-3': {
             type: 'linear',
-            display: this.showActual,
+            display: this.$course.comparing,
             position: 'right',
             title: {
               display: true,
@@ -183,7 +179,7 @@ export default {
           borderColor: this.$colors.red2.rgb,
           borderWidth: 2,
           backgroundColor: this.$colors.red2.transparentize(),
-          fill: this.showActual ? false : 'origin',
+          fill: this.$course.comparing ? false : 'origin',
           yAxisID: 'y-axis-1'
         },
         {
@@ -193,7 +189,7 @@ export default {
           borderColor: this.$colors.blue1.rgb,
           borderWidth: 2,
           backgroundColor: this.$colors.blue1.transparentize(),
-          fill: this.showActual ? false : 'origin',
+          fill: this.$course.comparing ? false : 'origin',
           yAxisID: 'y-axis-1'
         },
         {
@@ -201,12 +197,12 @@ export default {
           pointRadius: 0,
           pointHoverRadius: 0,
           backgroundColor: this.$colors.red2.transparentize(0.25),
-          fill: this.showActual ? false : 'origin',
+          fill: this.$course.comparing ? false : 'origin',
           showLine: true,
           yAxisID: 'y-axis-2'
         }
       ]
-      if (this.showActual) {
+      if (this.$course.comparing) {
         datasets.push({
           data: this.comparePoints,
           pointRadius: 0,
@@ -239,7 +235,7 @@ export default {
       return Array(this.pmax + 1).fill(0).map((e, i) => i++ * this.course.dist / this.pmax)
     },
     comparePoints: function () {
-      if (this.showActual) {
+      if (this.$course.comparing) {
         const mbs = this.$math.wlslr(
           this.course.points.map(p => { return p.loc }),
           this.course.points.map(p => { return p.elapsed - p.actual.elapsed }),

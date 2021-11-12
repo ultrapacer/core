@@ -1,4 +1,4 @@
-const { isNumeric, interp } = require('./math')
+const { isNumeric } = require('./math')
 const { sleep } = require('./util')
 const logger = require('winston').child({ component: 'courses.js' })
 
@@ -73,75 +73,42 @@ class Course {
     log.info(`mapping ${actual.length} points`)
     if (!this.points?.length) { throw new Error('Course has no points array') }
 
-    // shallow copy actual array
-    actual = [...actual]
+    // init variables
+    let delta = 0
+    let lastGoodPoint = {}
+    let a = actual[0]
 
-    let MatchFailure = {}
-    try {
-      for (let index = 0; index < this.points.length; index++) {
-        const p = this.points[index]
+    for (let index = 0; index < this.points.length; index++) {
+      // breakup processing to not hang browser
+      if (index % 20 === 0) await sleep(10)
 
-        // this requires a lot of processing; prevent browser from hanging:
-        if (index % 10 === 0) {
-          await sleep(5)
-        }
-        // pick all points within the next "th"
-        let j = 0
-        let darr = []
-        while (darr.length === 0 || j > darr.length / 3) {
-          if (j !== 0) { actual.shift() }
-          const ths = [0.050, 0.075, 0.100, 0.15, 0.2]
-          for (let ith = 0; ith < ths.length; ith++) {
-            darr = actual.filter(
-              (a, i) => a.loc - actual[0].loc <= ths[ith] || i < 3
-            ).map(a => {
-              return Number(p.latlon.distanceTo(a.latlon))
-            })
-            j = darr.findIndex(d => d === Math.min(...darr))
-            if (darr[j] < ths[ith]) { break }
-          }
-        }
-        if (darr[j] === 0) {
-          p.actual = {
-            loc: actual[0].loc,
-            elapsed: actual[0].elapsed
-          }
-        } else {
-          const a1 = actual[j]
-          const a2 = darr[j + 1] >= darr[j - 1] ? actual[j + 1] : actual[j - 1]
-          const d1 = darr[j]
-          const d2 = darr[j + 1] >= darr[j - 1] ? darr[j + 1] : darr[j - 1]
-          if (d1 > 0.25) {
-            MatchFailure = {
-              match: false,
-              point: p
-            }
-            throw MatchFailure
-          }
-          if (a2) {
-            p.actual = {
-              loc: interp(0, 1, a1.loc, a2.loc, d1 / (d1 + d2)),
-              elapsed: interp(0, 1, a1.elapsed, a2.elapsed, d1 / (d1 + d2))
-            }
-          } else {
-            p.actual = {
-              loc: a1.loc,
-              elapsed: a1.elapsed
-            }
-          }
+      // set current point
+      const p = this.points[index]
+
+      // limit for search gets bigger as error grows
+      const limit = Math.max(0.1, Number(p.latlon.distanceTo(a.latlon)) * 1.1)
+
+      // resolve closest point on actual track to current course point
+      ;({ point: a, delta } = actual.getNearestPoint(p.latlon, a, limit))
+
+      // keep track of last good match
+      if (delta < 0.1) lastGoodPoint = p
+
+      // if you ever get more than 2km offtrack, return match fail:
+      if (delta > 2) {
+        log.warn(`diverged at ${lastGoodPoint.loc} km`)
+        return {
+          match: false,
+          point: lastGoodPoint
         }
       }
-      log.info('MATCH')
-      return {
-        match: true
-      }
-    } catch (e) {
-      if (MatchFailure.point) {
-        log.warn('FAIL')
-        return MatchFailure
-      } else {
-        throw e
-      }
+
+      // set the actual for point
+      p.actual = a
+    }
+    log.info('success')
+    return {
+      match: true
     }
   }
 }
