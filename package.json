@@ -27,7 +27,7 @@
     "jwks-rsa": "^1.12.3",
     "moment-timezone": "^0.5.33",
     "mongoose": "^5.13.7",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.1.1",
     "nodemailer": "^6.6.3",
     "pretty-data": "^0.40.0",
     "sgeo": "0.0.5",
