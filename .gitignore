@@ -20,3 +20,5 @@ desktop.ini
 *.ntvs*
 *.njsproj
 *.sln
+
+app.yaml
