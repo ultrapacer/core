@@ -1,6 +1,6 @@
 const nF = require('./normFactor')
 const { round } = require('./math')
-const { logger } = require('./logger')
+const logger = require('winston').child({ file: 'geo.js' })
 const { Segment } = require('./segments')
 const { interpolatePoint } = require('./points')
 
@@ -152,7 +152,13 @@ function calcSegments (p, breaks, pacing) {
 }
 
 function calcPacing (data) {
-  const t = logger()
+  const log = logger.child({ method: 'calcPacing' })
+  log.info('run')
+
+  const iterationThreshold = 2 // seconds
+  const testLocations = 10
+  const maxIterations = 20 // iterations
+
   // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel }
   const hasPlan = Boolean(data.plan)
 
@@ -169,15 +175,15 @@ function calcPacing (data) {
 
   // locations for sensitivity test:
   const tests = []
-  for (let i = 1; i <= 10; i++) {
-    tests.push(Math.floor(i * (data.points.length - 1) / 10))
+  for (let i = 1; i <= testLocations; i++) {
+    tests.push(Math.floor(i * (data.points.length - 1) / testLocations))
   }
 
   // iterate solution:
   if (hasPlan && data.event.startTime !== null) {
     let lastTest = []
     let i
-    for (i = 0; i < 20; i++) {
+    for (i = 0; i < maxIterations; i++) {
       pacing = iteratePaceCalc({
         course: data.course,
         plan: data.plan,
@@ -191,13 +197,13 @@ function calcPacing (data) {
       const newTest = tests.map(x => { return data.points[x].elapsed })
       if (
         lastTest.length &&
-        newTest.findIndex((x, j) => Math.abs(x - lastTest[j]) > 0.5) < 0
+        newTest.findIndex((x, j) => Math.abs(x - lastTest[j]) > iterationThreshold) < 0
       ) {
         break
       }
       lastTest = [...newTest]
     }
-    logger(`geo.iteratePaceCalc: ${i + 2} iterations`, t)
+    log.info(`${i + 2} iterations`)
     if (data.event?.sun) {
       const s = calcSunTime({
         points: data.points,
@@ -206,14 +212,13 @@ function calcPacing (data) {
       pacing = { ...pacing, ...s }
     }
   }
-
-  logger('geo.calcPacing', t)
-
+  log.info('complete')
   return pacing
 }
 
 function iteratePaceCalc (data) {
-  const t = logger()
+  const log = logger.child({ method: 'iteratePaceCalc' })
+  log.debug('run')
   // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel }
   let plan = false
   if (data.plan) { plan = true }
@@ -331,7 +336,7 @@ function iteratePaceCalc (data) {
     sun: data.event.sun || null
   }
 
-  logger('geo.iteratePaceCalc', t)
+  log.verbose('complete')
   return pacing
 }
 
@@ -378,7 +383,8 @@ function calcSunTime (data) {
 }
 
 function createTerrainFactors (waypoints) {
-  const l = logger()
+  const log = logger.child({ method: 'createTerrainFactors' })
+
   if (!waypoints.length) { return [] }
   const wps = waypoints.sort((a, b) => a.loc - b.loc)
   let tF = wps[0].terrainFactor()
@@ -390,12 +396,13 @@ function createTerrainFactors (waypoints) {
       tF: tF
     }
   })
-  logger('segments|createTerrainFactors complete', l)
+  log.info('complete')
   return tFs
 }
 
 function createSegments (points, data = null) {
-  const l = logger()
+  const log = logger.child({ method: 'createSegments' })
+
   // break on non-hidden waypoints:
   const wps = data.waypoints.filter(x => x.tier < 3).sort((a, b) => a.loc - b.loc)
 
@@ -414,12 +421,12 @@ function createSegments (points, data = null) {
   // map in time:
   addTOD(segments, points, data.startTime)
 
-  logger(`segments|createSegments complete (${segments.length} segments)`, l)
+  log.info(`complete (${segments.length} segments)`)
   return segments
 }
 
 function createSplits (points, units, data = null) {
-  logger(`segments|createSplits (${units})`)
+  logger.child({ method: 'createSplits' }).info(units)
 
   const distScale = (units === 'kilometers') ? 1 : 0.621371
   const tot = data.course.scaledDist * distScale

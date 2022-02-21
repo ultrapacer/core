@@ -5,11 +5,11 @@
     v-model="formatted"
     v-mask="mask"
     type="text"
-    :placeholder="format"
+    :placeholder="placeholder"
     :required="required"
     :state="changed ? valid : null"
     @input="update"
-    @change="changed=true"
+    @change="change"
   />
 </template>
 
@@ -33,11 +33,17 @@ export default {
       default: false
     },
 
+    default: {
+      type: Number,
+      default: null
+    },
+
     // used to scale input/output (for paces)
     scale: {
       type: Number,
       default: 1
     }
+
   },
   data () {
     return {
@@ -49,6 +55,10 @@ export default {
     mask: function () {
       // mask replaces letters (eg hh) with ##
       return this.format.replaceAll(/[A-Z]/ig, '#')
+    },
+    placeholder: function () {
+      if (this.default) return this.$utils.time.sec2string(this.default, this.format)
+      return this.format
     },
     val: function () {
       if (!this.formatted || this.formatted.length !== this.format.length) {
@@ -75,17 +85,27 @@ export default {
   },
   methods: {
     setFormatted () {
-      this.formatted = this.value === null
+      this.formatted = this.value === this.default
         ? ''
         : this.$utils.time.sec2string(this.value * this.scale, this.format)
     },
     update () {
       if (this.valid !== false) {
         this.$refs.timeinput.setCustomValidity('')
-        this.$emit('input', this.val / this.scale)
+        this.$emit('input', this.valueOrDefault())
       } else {
         this.$refs.timeinput.setCustomValidity(`Enter value as ${this.format}.`)
       }
+    },
+    change () {
+      this.changed = true
+      if (this.valid !== false) {
+        this.$emit('change', this.valueOrDefault())
+      }
+    },
+    valueOrDefault () {
+      if (!this.formatted.length && this.default !== '') return this.default
+      return this.val === null ? null : this.val / this.scale
     }
   }
 }

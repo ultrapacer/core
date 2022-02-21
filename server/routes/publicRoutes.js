@@ -2,9 +2,11 @@
 const express = require('express')
 const publicRoutes = express.Router()
 const Course = require('../models/Course')
-const Sponsor = require('../models/Sponsor')
 const Plan = require('../models/Plan')
+const Sponsor = require('../models/Sponsor')
 const xml2js = require('xml2js')
+const logger = require('winston').child({ file: 'publicRoutes.js' })
+const { routeName } = require('../util')
 
 // GET COURSE
 publicRoutes.route(['/course/:_id', '/course/link/:link']).get(async function (req, res) {
@@ -19,25 +21,6 @@ publicRoutes.route(['/course/:_id', '/course/link/:link']).get(async function (r
     await course.addData()
     if (!course.hasCache()) { await course.updateCache() }
     res.json(course)
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
-  }
-})
-
-// GET COURSE BY PLAN
-publicRoutes.route('/course/plan/:_id').get(async function (req, res) {
-  try {
-    const plan = await Plan.findById(req.params._id)
-      .populate(['_user', { path: '_course', select: '-points -raw' }])
-      .exec()
-    if (plan._course.public) {
-      await plan._course.addData(plan._user, req.params._id)
-      if (!plan._course.hasCache()) { await plan._course.updateCache() }
-      res.json(plan._course)
-    } else {
-      res.status(403).send('No permission')
-    }
   } catch (err) {
     console.log(err)
     res.status(400).send(err)
@@ -113,17 +96,20 @@ publicRoutes.route('/ispublic/:type/:id').get(async function (req, res) {
 
 // GET PLAN
 publicRoutes.route('/plan/:id').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
   try {
+    log.info('run')
     const plan = await Plan.findById(req.params.id)
       .populate([{ path: '_course', select: 'public' }])
       .exec()
     if (plan._course.public) {
-      res.json(plan)
+      res.status(200).json(plan)
     } else {
+      log.warn('No permission')
       res.status(403).send('No permission')
     }
   } catch (err) {
-    console.log(err)
+    log.error(err)
     res.status(400).send(err)
   }
 })

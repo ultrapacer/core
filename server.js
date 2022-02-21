@@ -63,6 +63,7 @@ async function startUp () {
   app.use('/api/open/patreon', patreon.open) // unauthenticated patreon routes
   app.use('/api/strava', strava)
   app.use('/api/error', require('./server/routes/error'))
+  app.use('/api/batch', checkJwt, require('./server/routes/batch'))
 
   // get timezone
   app.use('/api/timezone', checkJwt, require('./server/routes/timezone'))
@@ -99,7 +100,6 @@ async function startUp () {
       res.sendFile(path.join(DIST_DIR, `../static/components/${a}`))
     })
   }
-  // end temporary
 
   app.get('/*', (req, res) => {
     res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')

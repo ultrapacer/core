@@ -1,163 +1,172 @@
 <template>
-  <b-table
-    ref="table"
-    :busy="$status.processing"
-    :items="rows"
-    :fields="fields"
-    primary-key="_index"
-    selectable
-    select-mode="single"
-    hover
-    foot-clone
-    small
-    head-variant="light"
-    no-border-collapse
-    :class="`mb-0 table-xs${printing ? ' show-all-cells' : ''}`"
-    :sticky-header="tableHeight ? tableHeight + 'px' : false"
-    @row-clicked="selectRow"
-  >
-    <template #foot(name)>
-      &nbsp;
-    </template>
-    <template #foot(len)>
-      {{ $units.distf(course.scaledDist, 2) }}
-    </template>
-    <template #foot(end)>
-      {{ $units.distf(course.scaledDist, 2) }}
-    </template>
-    <template #foot(gain)>
-      {{ $units.altf(course.scaledGain, 0) | commas }}
-    </template>
-    <template #foot(loss)>
-      {{ $units.altf(course.scaledLoss, 0) | commas }}
-    </template>
-    <template #foot(grade)>
-      &nbsp;
-    </template>
-    <template #foot(time)>
-      {{ time }}
-    </template>
-    <template #foot(elapsed)>
-      {{ segments[segments.length - 1].elapsed | formatTime }}
-    </template>
-    <template #foot(actualElapsed)>
-      {{ segments[segments.length - 1].actualElapsed | formatTime }}
-    </template>
-    <template #foot(tod)>
-      {{ sec2string(segments[segments.length - 1].elapsed + event.startTime, 'am/pm') }}
-    </template>
-    <template #foot(pace)>
-      {{ $units.pacef(plan.pacing.pace/ course.distScale) | formatTime }}
-    </template>
-    <template
-      v-if="mode==='segments'"
-      #cell(collapse)="row"
+  <div>
+    <b-table
+      ref="table"
+      :busy="$status.processing"
+      :items="rows"
+      :fields="fields"
+      primary-key="_index"
+      selectable
+      select-mode="single"
+      hover
+      foot-clone
+      small
+      head-variant="light"
+      no-border-collapse
+      :class="`mb-0 table-xs${printing ? ' show-all-cells' : ''}`"
+      :sticky-header="tableHeight ? tableHeight - 24 + 'px' : false"
+      @row-clicked="selectRow"
     >
-      <b-button
-        v-if="isCollapsed(row.item)"
-        class="collapse-button mr-1"
-        @click="expandRow(row.item)"
+      <template #foot(name)>
+      &nbsp;
+      </template>
+      <template #foot(len)>
+        {{ $units.distf(course.scaledDist, 2) }}
+      </template>
+      <template #foot(end)>
+        {{ $units.distf(course.scaledDist, 2) }}
+      </template>
+      <template #foot(gain)>
+        {{ $units.altf(course.scaledGain, 0) | commas }}
+      </template>
+      <template #foot(loss)>
+        {{ $units.altf(course.scaledLoss, 0) | commas }}
+      </template>
+      <template #foot(grade)>
+      &nbsp;
+      </template>
+      <template #foot(time)>
+        {{ time }}
+      </template>
+      <template #foot(elapsed)>
+        {{ segments[segments.length - 1].elapsed | formatTime }}
+      </template>
+      <template #foot(actualElapsed)>
+        {{ segments[segments.length - 1].actualElapsed | formatTime }}
+      </template>
+      <template #foot(tod)>
+        {{ sec2string(segments[segments.length - 1].elapsed + event.startTime, 'am/pm') }}
+      </template>
+      <template #foot(pace)>
+        {{ $units.pacef(plan.pacing.pace/ course.distScale) | formatTime }}
+      </template>
+      <template
+        v-if="mode==='segments'"
+        #cell(collapse)="row"
       >
-        &#9660;
-      </b-button>
-      <b-button
-        v-else-if="isCollapseable(row.item)"
-        class="collapse-button mr-1"
-        @click="collapseRow(row.item)"
-      >
-        &#9650;
-      </b-button>
-      <div
-        v-else-if="isChild(row.item)"
-        style="text-align:center"
-      >
-        &#8944;
-      </div>
-    </template>
-    <template #row-details="row">
-      <b-list-group>
-        <!--
+        <b-button
+          v-if="isCollapsed(row.item)"
+          class="collapse-button mr-1"
+          @click="expandRow(row.item)"
+        >
+          &#9660;
+        </b-button>
+        <b-button
+          v-else-if="isCollapseable(row.item)"
+          class="collapse-button mr-1"
+          @click="collapseRow(row.item)"
+        >
+          &#9650;
+        </b-button>
+        <div
+          v-else-if="isChild(row.item)"
+          style="text-align:center"
+        >
+          &#8944;
+        </div>
+      </template>
+      <template #row-details="row">
+        <b-list-group>
+          <!--
         :class="(spannedWaypoints(getSegment(row.item)).length || hasFactors(row.item)) ? 'pt-1' : 'd-md-none pt-1'"
         -->
-        <b-list-group-item
-          :class="`d-${minFieldsSize}-none`"
-        >
-          <b-row
-            v-for="f in fields.filter(f=>Boolean(fieldsInTable[f.key]))"
-            :key="f.key"
-            :class="`mb-1 d-${fieldsInTable[f.key]}-none`"
+          <b-list-group-item
+            :class="`d-${minFieldsSize}-none`"
           >
-            <b-col
-              cols="4"
-              class="text-right"
-            >
-              <b>{{ f.label }}:</b>
-            </b-col>
-            <b-col>
-              {{ f.formatter(null,null,row.item) }}
-            </b-col>
-          </b-row>
-        </b-list-group-item>
-        <b-list-group-item :class="`d-none d-${minFieldsSize}-block p-0`" />
-
-        <b-list-group-item
-          v-for="wp in spannedWaypoints(row.item)"
-          :key="wp.site._id"
-        >
-          <b>{{ wp.name }} ({{ $waypointTypes[wp.type].text }}), {{ $units.distf(wp.loc * course.distScale, 2) }} {{ $units.dist }}</b><br>
-          <b-row v-if="waypointDelay(wp)">
-            <b-col
-              cols="4"
-              class="text-sm-right"
-            >
-              <b>Delay:</b>
-            </b-col>
-            <b-col>{{ waypointDelay(wp) / 60 }} minutes</b-col>
-          </b-row>
-          <b-row v-if="wp.description">
-            <b-col
-              cols="4"
-              class="text-right"
-            >
-              <b>Notes:</b>
-            </b-col>
-            <b-col style="white-space:pre-wrap">
-              {{ wp.description }}
-            </b-col>
-          </b-row>
-        </b-list-group-item>
-
-        <b-list-group-item>
-          <b>Pacing Factors</b>
-          <div>
             <b-row
-              v-for="factor in row.item.factors"
-              :key="factor.name"
-              class="mb-1"
+              v-for="f in fields.filter(f=>Boolean(fieldsInTable[f.key]))"
+              :key="f.key"
+              :class="`mb-1 d-${fieldsInTable[f.key]}-none`"
             >
               <b-col
                 cols="4"
                 class="text-right"
               >
-                <b>{{ factorLables[factor.name] }}:</b>
+                <b>{{ f.label }}:</b>
               </b-col>
-              <b-col>{{ formatPaceTimePercent(factor.value, row.item) }}</b-col>
+              <b-col>
+                {{ f.formatter(null,null,row.item) }}
+              </b-col>
             </b-row>
-            <b-row
-              class="mb-1 show-if-solo"
-            >
+          </b-list-group-item>
+          <b-list-group-item :class="`d-none d-${minFieldsSize}-block p-0`" />
+
+          <b-list-group-item
+            v-for="wp in spannedWaypoints(row.item)"
+            :key="wp.site._id"
+          >
+            <b>{{ wp.name }} ({{ $waypointTypes[wp.type].text }}), {{ $units.distf(wp.loc * course.distScale, 2) }} {{ $units.dist }}</b><br>
+            <b-row v-if="waypointDelay(wp)">
+              <b-col
+                cols="4"
+                class="text-sm-right"
+              >
+                <b>Delay:</b>
+              </b-col>
+              <b-col>{{ waypointDelay(wp) / 60 }} minutes</b-col>
+            </b-row>
+            <b-row v-if="wp.description">
               <b-col
                 cols="4"
                 class="text-right"
               >
-                None
+                <b>Notes:</b>
+              </b-col>
+              <b-col style="white-space:pre-wrap">
+                {{ wp.description }}
               </b-col>
             </b-row>
-          </div>
-        </b-list-group-item>
-      </b-list-group>
-    </template>
-  </b-table>
+          </b-list-group-item>
+
+          <b-list-group-item>
+            <b>Pacing Factors</b>
+            <div>
+              <b-row
+                v-for="factor in row.item.factors"
+                :key="factor.name"
+                class="mb-1"
+              >
+                <b-col
+                  cols="4"
+                  class="text-right"
+                >
+                  <b>{{ factorLables[factor.name] }}:</b>
+                </b-col>
+                <b-col>{{ formatPaceTimePercent(factor.value, row.item) }}</b-col>
+              </b-row>
+              <b-row
+                class="mb-1 show-if-solo"
+              >
+                <b-col
+                  cols="4"
+                  class="text-right"
+                >
+                  None
+                </b-col>
+              </b-row>
+            </div>
+          </b-list-group-item>
+        </b-list-group>
+      </template>
+    </b-table>
+
+    <b-row
+      class="mr-1 ml-1"
+      style="display: flex; border-top: inset"
+    >
+      <div>Distance in <b>{{ $units.distance }}</b>; altitude in <b>{{ $units.altitude }}</b></div>
+    </b-row>
+  </div>
 </template>
 
 <script>
@@ -250,8 +259,6 @@ export default {
         fieldsInTable.loss = 'xl'
         if (this.planAssigned) {
           fieldsInTable.gain = 'sm'
-          fieldsInTable.time = 'md'
-          fieldsInTable.pace = 'sm'
         }
       } else {
         fieldsInTable.grade = 'md'
@@ -278,14 +285,14 @@ export default {
       const f = [
         {
           key: 'end',
-          label: 'Dist [' + this.$units.dist + ']',
+          label: 'Dist.',
           formatter: (value, key, item) => {
             return this.$units.distf(item.end * this.course.distScale, 2)
           }
         },
         {
           key: 'gain',
-          label: `Gain [${this.$units.alt}]`,
+          label: 'Gain',
           formatter: (value, key, item) => {
             return this.$units.altf(item.gain * this.course.gainScale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -293,7 +300,7 @@ export default {
         },
         {
           key: 'loss',
-          label: 'Loss [' + this.$units.alt + ']',
+          label: 'Loss',
           formatter: (value, key, item) => {
             return this.$units.altf(item.loss * this.course.lossScale, 0)
               .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -314,7 +321,7 @@ export default {
       if (this.mode === 'segments') {
         f.splice(1, 0, {
           key: 'len',
-          label: 'Len [' + this.$units.dist + ']',
+          label: 'Len',
           formatter: (value, key, item) => {
             return this.$units.distf(item.len * this.course.distScale, 2)
           }
@@ -340,10 +347,10 @@ export default {
         }
         f.push({
           key: 'pace',
-          label: `Pace [/${this.$units.dist}]`,
+          label: 'Pace',
           formatter: (value, key, item) => {
-            const l = this.$units.distf(item.len * this.course.distScale)
-            return timeUtil.sec2string(item.time / l, '[h]:m:ss')
+            const v = item.pace / this.course.distScale / this.$units.distScale
+            return timeUtil.sec2string(v, '[h]:m:ss')
           }
         })
         f.push({

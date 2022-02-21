@@ -10,6 +10,10 @@ class Segment {
   get name () {
     return this.waypoint ? this.waypoint.name : ''
   }
+
+  get pace () {
+    return this.time / this.len
+  }
 }
 const factors = ['gF', 'tF', 'aF', 'hF', 'dF', 'dark']
 
@@ -53,6 +57,10 @@ class SuperSegment {
     return this.sum('time')
   }
 
+  get pace () {
+    return this.time / this.len
+  }
+
   get elapsed () {
     return this.last.elapsed
   }
@@ -64,6 +72,10 @@ class SuperSegment {
 
   get tod () {
     return this.last.tod
+  }
+
+  get waypoint () {
+    return this.last.waypoint
   }
 
   get factors () {

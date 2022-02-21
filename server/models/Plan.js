@@ -1,5 +1,7 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema
+const PlanNote = require('./PlanNote')
+const PlanDelay = require('./PlanDelay')
 
 const PlanSchema = new Schema({
   _user: {
@@ -67,7 +69,9 @@ const PlanSchema = new Schema({
   last_viewed: {
     type: Date,
     default: null
-  }
+  },
+  delays: [PlanDelay.schema],
+  notes: [PlanNote.schema]
 }, {
   collection: 'plans'
 })

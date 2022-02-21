@@ -34,7 +34,9 @@ import 'vue-awesome/icons/minus-circle'
 import 'vue-awesome/icons/plus'
 import 'vue-awesome/icons/print'
 import 'vue-awesome/icons/running'
+import 'vue-awesome/icons/save'
 import 'vue-awesome/icons/share-alt'
+import 'vue-awesome/icons/times-circle'
 import 'vue-awesome/icons/trash'
 import VIcon from 'vue-awesome/components/Icon'
 import './custom.scss'
@@ -126,13 +128,13 @@ class WaypointType {
 }
 Vue.prototype.$colors = colors
 Vue.prototype.$waypointTypes = {
-  start: new WaypointType({ text: 'Start', color: colors.black }),
-  finish: new WaypointType({ text: 'Finish', color: colors.black }),
-  aid: new WaypointType({ text: 'Aid Station', color: colors.red2 }),
-  water: new WaypointType({ text: 'Water Source', color: colors.blue1 }),
-  landmark: new WaypointType({ text: 'Landmark', color: colors.green2 }),
-  junction: new WaypointType({ text: 'Junction', color: colors.black, bgColor: colors.white }),
-  other: new WaypointType({ text: 'Other', color: colors.black })
+  start: new WaypointType({ text: 'Start', color: colors.black, short: 'S' }),
+  finish: new WaypointType({ text: 'Finish', color: colors.black, short: 'F' }),
+  aid: new WaypointType({ text: 'Aid Station', color: colors.red2, short: 'AS' }),
+  water: new WaypointType({ text: 'Water Source', color: colors.blue1, short: 'W' }),
+  landmark: new WaypointType({ text: 'Landmark', color: colors.green2, short: 'L' }),
+  junction: new WaypointType({ text: 'Junction', color: colors.black, bgColor: colors.white, short: 'J' }),
+  other: new WaypointType({ text: 'Other', color: colors.black, short: 'O' })
 }
 Vue.prototype.$status = Vue.observable({
   processing: false,
@@ -144,6 +146,7 @@ Vue.prototype.$window = Vue.observable({
 })
 Vue.prototype.$course = Vue.observable({
   view: 'plan',
+  mode: 'view',
   owner: false,
   comparing: false
 })

@@ -114,6 +114,9 @@ export default {
   deletePlan (id) {
     return this.executeAuth('delete', `/api/plan/${id}`)
   },
+  batch (data) {
+    return this.executeAuth('post', '/api/batch/', data)
+  },
   isPublic (type, id) {
     return this.execute('get', `/api-public/ispublic/${type}/${id}`)
   },

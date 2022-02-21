@@ -1,0 +1,3 @@
+dispatch:
+  - url: "beta.ultrapacer.com/*"
+    service: beta

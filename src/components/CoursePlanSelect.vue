@@ -7,7 +7,7 @@
     <template #button-content>
       <div class="plan-select-dropdown-button-div">
         <div style="text-overflow: ellipsis; overflow: hidden; width:100%; text-align: left">
-          Plan: {{ plan.name }}
+          <span class="d-none d-sm-inline">Plan: </span>{{ plan.name }}
         </div>
       </div>
     </template>

@@ -162,15 +162,8 @@ export default {
         this.spinner.hide()
       }
     },
-    '$status.processing': function (val) {
-      if (val) {
-        window.onbeforeunload = function () {
-          return true
-        }
-      } else {
-        window.onbeforeunload = null
-      }
-    }
+    '$course.mode': function () { this.refreshNavGuard() },
+    '$status.processing': function () { this.refreshNavGuard() }
   },
   async created () {
     try {
@@ -228,6 +221,16 @@ export default {
       } else {
         log.warn('Not authenticated')
         window.clearInterval(this.refreshAuth)
+      }
+    },
+    refreshNavGuard () {
+      const guard = this.$course.mode === 'edit' || this.$status.processing
+      if (guard) {
+        window.onbeforeunload = function () {
+          return true
+        }
+      } else {
+        window.onbeforeunload = null
       }
     }
   }
@@ -322,6 +325,9 @@ export default {
 .table-xs td, .table-xs th {
   font-size: 90%;
   line-height: 1.25;
+}
+.table-xs .form-control, .table-xs .input-group-text {
+  font-size: inherit;
 }
 .collapse-button {
   font-size: 80% !important;

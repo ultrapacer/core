@@ -1,4 +1,4 @@
-const { logger } = require('./logger')
+const logger = require('winston').child({ file: 'waypoints.js' })
 const { isNumeric } = require('./math')
 
 class Waypoint {
@@ -85,6 +85,41 @@ class Waypoint {
         return null
       }
     }
+  }
+
+  len (segments) {
+    if (this.loc === 0) return 0
+    const segment = this.matchingSegment(segments)
+    if (segment) return segment.len
+    return undefined
+  }
+
+  gain (segments) {
+    if (this.loc === 0) return 0
+    const segment = this.matchingSegment(segments)
+    if (segment) return segment.gain
+    return undefined
+  }
+
+  loss (segments) {
+    if (this.loc === 0) return 0
+    const segment = this.matchingSegment(segments)
+    if (segment) return segment.loss
+    return undefined
+  }
+
+  time (segments) {
+    if (this.loc === 0) return 0
+    const segment = this.matchingSegment(segments)
+    if (segment) return segment.time
+    return undefined
+  }
+
+  pace (segments) {
+    if (this.loc === 0) return 0
+    const segment = this.matchingSegment(segments)
+    if (segment) return segment.pace
+    return undefined
   }
 
   elapsed (segments) {
@@ -183,7 +218,7 @@ class Waypoint {
 
   // function updates the lat/lon/alt of a waypoint
   refreshLLA (track, opts = {}) {
-    logger(`Waypoint|refreshLLA : ${this.name}`)
+    logger.child({ method: 'refreshLLA' }).info(this.name)
 
     let lat, lon, alt, ind
 
@@ -210,7 +245,7 @@ class Waypoint {
 
 // Returns an array of waypoints on the course including loops:
 function loopedWaypoints (waypoints, course) {
-  logger(`waypoints|loopedWaypoints for ${waypoints.length} waypoints over ${course.loops} ${course.trackDist} km loop(s)`)
+  logger.child({ method: 'loopedWaypoints' }).info(`${waypoints.length} waypoints over ${course.loops} ${course.trackDist} km loop(s)`)
   const wpls = []
   for (let il = 1; il <= course.loops; il++) {
     wpls.push(

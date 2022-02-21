@@ -3,6 +3,8 @@ export default {
     Vue.prototype.$units = {
       dist: 'mi',
       alt: 'ft',
+      get distance () { return this.dist === 'mi' ? 'miles' : 'kilometers' },
+      get altitude () { return this.alt === 'ft' ? 'feet' : 'meters' },
       distScale: 0.621371,
       altScale: 3.28084,
       set (dist, alt) {

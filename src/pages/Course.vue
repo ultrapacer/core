@@ -28,13 +28,14 @@
           >
             <!-- MODE SELECT --->
             <b-dropdown
-              v-if="views.filter(v=>!Boolean(v.disabled)).length>1"
+              v-if="$course.mode !== 'edit' && views.filter(v=>!Boolean(v.disabled)).length>1"
               right
               variant="primary"
               class="mr-1"
             >
               <template #button-content>
-                <v-icon :name="views.find(v=>v.view===$course.view).icon" />  {{ views.find(v=>v.view===$course.view).button }}
+                <v-icon :name="views.find(v=>v.view===$course.view).icon" />
+                <span class="d-none d-sm-inline">{{ views.find(v=>v.view===$course.view).button }}</span>
               </template>
               <b-dropdown-item
                 v-for="v in views.filter(v=>!Boolean(v.disabled))"
@@ -51,44 +52,75 @@
             <div
               style="flex-grow:1; display: flex; min-width: 0"
             >
-              <!-- NEW PLAN BUTTON --->
-              <b-button
-                v-if="$course.view==='plan' && !plans.length && !plansByOthers.length"
-                variant="primary"
-                class="mr-1"
-                style="max-width: 100%; margin-left:auto"
-                @click.prevent="newPlan()"
-              >
-                <v-icon name="plus" />  New Plan
-              </b-button>
+              <div style="max-width: 100%; margin-left:auto">
+                <!-- NEW PLAN BUTTON --->
+                <b-button
+                  v-if="$course.view==='plan' && $course.mode !=='edit' && !plans.length && !plansByOthers.length"
+                  variant="primary"
+                  class="mr-1"
+                  @click.prevent="newPlan()"
+                >
+                  <v-icon name="plus" />  New Plan
+                </b-button>
 
-              <!-- PLAN SELECT --->
-              <course-plan-select
-                v-if="$course.view!=='edit' && (plans.length || plansByOthers.length)"
-                :plan="plan"
-                :plans="plans"
-                :plans-by-others="plansByOthers"
-                class="mr-1"
-                style="max-width: 100%; margin-left:auto"
-                @select="selectPlan"
-                @new="newPlan"
-              />
+                <div
+                  v-if="$course.view=='plan' && plan._id && planOwner"
+                  class="btn-group"
+                >
+                  <b-button
+                    v-if="$course.mode==='edit'"
+                    class="mr-1"
+                    variant="danger"
+                    @click="updateCancel"
+                  >
+                    <v-icon name="times-circle" /> Cancel
+                  </b-button>
+                  <b-button
+                    v-if="$course.mode==='edit' && (updates.count || saveButtonVisible)"
+                    class="mr-1"
+                    variant="success"
+                    @click="updateBatch"
+                  >
+                    <v-icon name="save" /> Save
+                  </b-button>
+                  <b-button
+                    v-else-if="$course.mode!=='edit' && tablesTab===0"
+                    class="mr-1"
+                    variant="warning"
+                    @click="$course.mode='edit'"
+                  >
+                    <v-icon name="edit" /><span class="d-none d-sm-inline">Edit</span>
+                  </b-button>
+                </div>
+
+                <!-- PLAN SELECT --->
+                <course-plan-select
+                  v-if="$course.view!=='edit'&& $course.mode !=='edit' && (plans.length || plansByOthers.length)"
+                  :plan="plan"
+                  :plans="plans"
+                  :plans-by-others="plansByOthers"
+                  class="mr-1"
+                  @select="selectPlan"
+                  @new="newPlan"
+                />
+
+                <!-- ACTIONS SELECT --->
+                <b-dropdown
+                  v-if="$course.mode !=='edit' "
+                  right
+                  variant="primary"
+                  text="Actions"
+                >
+                  <b-dropdown-item
+                    v-for="(action, i) in actions.filter(a=>!Boolean(a.disabled))"
+                    :key="'action_'+i"
+                    @click="action.click()"
+                  >
+                    <v-icon :name="action.icon" />  {{ action.text }}
+                  </b-dropdown-item>
+                </b-dropdown>
+              </div>
             </div>
-
-            <!-- ACTIONS SELECT --->
-            <b-dropdown
-              right
-              variant="primary"
-              text="Actions"
-            >
-              <b-dropdown-item
-                v-for="(action, i) in actions.filter(a=>!Boolean(a.disabled))"
-                :key="'action_'+i"
-                @click="action.click()"
-              >
-                <v-icon :name="action.icon" />  {{ action.text }}
-              </b-dropdown-item>
-            </b-dropdown>
           </b-col>
         </b-row>
       </b-col>
@@ -119,42 +151,49 @@
           v-model="tablesTab"
           content-class="mt-1"
         >
-          <b-tab title="Waypoints">
+          <b-tab
+            v-if="$course.view==='edit'"
+            title="Waypoints"
+          >
             <waypoint-table
               ref="waypointTable"
               active
               :event="event"
               :course="course"
               :waypoints="waypoints"
-              :plan="plan"
-              :segments="planAssigned && pacingSplitsReady ? plan.splits.segments : course.splits.segments"
               :edit-fn="editWaypoint"
               :del-fn="deleteWaypoint"
-              :table-height="tableHeight && printing !== 'Waypoints' ? tableHeight - ($course.owner ? 42 : 0) : 0"
+              :table-height="printing==='Waypoints' ? 0 : tableHeight"
               :visible="tablesTab===0"
               :printing="printing==='Waypoints'"
               :class="printing==='Waypoints' ? 'pr-2' : ''"
-              @setUpdateFlag="setUpdateFlag"
+              @newWaypoint="newWaypoint"
               @updateWaypointLocation="updateWaypointLocation"
-              @updateWaypointDelay="updateWaypointDelay"
+              @addChange="update"
             />
-            <b-row
-              v-if="$course.owner"
-              class="m-1"
-            >
-              <div style="flex: 1 1 auto">
-                <b-button
-                  v-if="$course.view==='edit'"
-                  variant="success"
-                  @click.prevent="newWaypoint()"
-                >
-                  <v-icon name="plus" /><span>New Waypoint</span>
-                </b-button>
-              </div>
-            </b-row>
+          </b-tab>
+          <b-tab
+            v-else
+            title="Plan"
+          >
+            <plan-table
+              ref="planTable"
+              active
+              :event="event"
+              :course="course"
+              :waypoints="waypoints"
+              :plan="plan"
+              :segments="planAssigned && pacingSplitsReady ? plan.splits.segments : course.splits.segments"
+              :table-height="printing==='Plan' ? 0 : tableHeight"
+              :printing="printing==='Plan'"
+              :class="printing==='Plan' ? 'pr-2' : ''"
+              @change="update"
+              @input="showSaveButton"
+            />
           </b-tab>
           <b-tab
             title="Segments"
+            :disabled="$course.mode === 'edit'"
           >
             <segment-table
               v-if="segments.length"
@@ -172,7 +211,10 @@
               @select="updateFocus"
             />
           </b-tab>
-          <b-tab title="Splits">
+          <b-tab
+            title="Splits"
+            :disabled="$course.mode === 'edit'"
+          >
             <segment-table
               v-if="splits.length"
               ref="splitTable"
@@ -193,6 +235,7 @@
             v-if="course.splits.kilometers"
             title="Details"
             :style="tableHeight ? {maxHeight: tableHeight + 'px', overflowY: 'auto'} : {}"
+            :disabled="$course.mode === 'edit'"
           >
             <plan-details
               ref="planDetails"
@@ -312,6 +355,7 @@ import api from '@/api'
 import CourseShare from '../components/CourseShare'
 import DeleteModal from '../components/DeleteModal'
 import SegmentTable from '../components/SegmentTable'
+import PlanTable from '../components/PlanTable'
 import WaypointTable from '../components/WaypointTable'
 import PlanDetails from '../components/PlanDetails'
 import PlanEdit from '../components/PlanEdit'
@@ -335,9 +379,18 @@ export default {
     EmailUser: () => import(/* webpackPrefetch: true */ '../components/EmailUser.vue'),
     SegmentTable,
     WaypointTable,
+    PlanTable,
     PlanDetails,
     PlanEdit,
     WaypointEdit: () => import(/* webpackPrefetch: true */ '../components/WaypointEdit.vue')
+  },
+  beforeRouteLeave (to, from, next) {
+    this.logger.child({ method: 'beforeRouteLeave' }).verbose('run')
+    const c = this.updates.count
+    if (c) {
+      return next(window.confirm(`${c} unsaved change${c > 1 ? 's' : ''}. Discard?`))
+    }
+    return next()
   },
   data () {
     return {
@@ -353,15 +406,19 @@ export default {
       focus: [],
       highlightPoint: null,
       tablesTab: 0,
-      tableTabNames: ['Waypoints', 'Segments', 'Splits', 'Details'],
       updateFlag: false,
       showMenu: false,
+      saveButtonVisible: false,
+      updates: { count: 0 },
       updatingWaypointTimeout: null,
       updatingWaypointTimeoutID: null,
       url: ''
     }
   },
   computed: {
+    tableTabNames: function () {
+      return [this.$course.view === 'edit' ? 'Waypoints' : 'Plan', 'Segments', 'Splits', 'Details']
+    },
     actions: function () {
       return [
         {
@@ -422,7 +479,7 @@ export default {
     },
     tableHeight: function () {
       if (this.$window.width < 992) return 0
-      return (this.$window.height - 173)
+      return (this.$window.height - 162)
     },
     description: function () {
       if (this.course.description) {
@@ -530,22 +587,6 @@ export default {
         wp.visible
       )
     },
-    delays: function () {
-      if (!this.waypoints.length || !this.planAssigned) return []
-      this.logger.child({ method: 'delays' }).info('run')
-      try {
-        return this.waypoints.map(wp => {
-          return {
-            loc: wp.loc,
-            delay: wp.delay(this.plan.waypointDelay, this.plan.waypointDelays || [])
-          }
-        }).filter(d => d.delay > 0)
-      } catch (error) {
-        console.log(error)
-        this.$gtag.exception({ description: `Course|delays: ${error.toString()}`, fatal: false })
-        return []
-      }
-    },
     publicName: function () {
       return this.course.public ? this.course.name : 'private'
     },
@@ -604,6 +645,7 @@ export default {
   beforeDestroy () {
     this.logger.child({ method: 'beforeDestroy' }).verbose('run')
     this.$course.comparing = false
+    this.$course.mode = 'view'
   },
   methods: {
     async initialize () {
@@ -642,61 +684,50 @@ export default {
 
         this.$gtage(this.$gtag, 'Course', 'view', this.publicName)
         this.plans = this.course.plans || []
-      } catch (error) {
-        console.log(error)
-        this.$gtag.exception({
-          description: `Course|initialize: ${error.toString()}`,
-          fatal: true
-        })
-        this.$status.processing = false
-        this.$status.loading = false
-        this.$router.push({ path: '/' })
-        return
-      }
-      this.$title = this.course.name
 
-      // if bot, stop here:
-      if (isbot(navigator.userAgent)) {
+        this.$title = this.course.name
+
+        // if bot, stop here:
+        if (isbot(navigator.userAgent)) {
+          this.syncSegmentWaypoints()
+          this.$status.processing = false
+          this.$status.loading = false
+          return
+        }
+
+        // download course track:
+        const llas = await api.getCourseField(this.course._id, 'points')
+        log.info(`downloaded (${llas.length} points)`)
+
+        // if looped course, repeat points array
+        const track = await this.$core.tracks.create(llas, { loops: this.course.loops })
+        this.course.addTrack(track)
+
+        // set waypoint lat/lon/alt from points:
+        this.waypoints.filter(wp => wp.loop === 1 || wp.type === 'finish')
+          .forEach(wp => { wp.refreshLLA(this.course.track) })
+
         this.syncSegmentWaypoints()
-        this.$status.processing = false
+
+        // set lat/lon in event object:
+        this.event.lat = this.course.track[0].lat
+        this.event.lon = this.course.track[0].lon
+        if (this.course.eventStart) {
+          this.event.timezone = this.course.eventTimezone
+          this.event.start = this.course.eventStart
+        }
+        this.course.event = this.event
+
         this.$status.loading = false
-        return
-      }
 
-      // download course track:
-      const llas = await api.getCourseField(this.course._id, 'points')
-      log.info(`downloaded (${llas.length} points)`)
-
-      // if looped course, repeat points array
-      const track = await this.$core.tracks.create(llas, { loops: this.course.loops })
-      this.course.addTrack(track)
-
-      // set waypoint lat/lon/alt from points:
-      this.waypoints.filter(wp => wp.loop === 1 || wp.type === 'finish')
-        .forEach(wp => { wp.refreshLLA(this.course.track) })
-
-      this.syncSegmentWaypoints()
-
-      // set lat/lon in event object:
-      this.event.lat = this.course.track[0].lat
-      this.event.lon = this.course.track[0].lon
-      if (this.course.eventStart) {
-        this.event.timezone = this.course.eventTimezone
-        this.event.start = this.course.eventStart
-      }
-      this.course.event = this.event
-
-      this.$status.loading = false
-
-      if (this.$route.query.plan) {
-        if (this.$route.query.plan.length <= 24) {
-          let plan = this.plans.find(
-            x => x._id === this.$route.query.plan
-          )
-          if (plan) {
-            this.selectPlan(plan)
-          } else {
-            try {
+        if (this.$route.query.plan) {
+          if (this.$route.query.plan.length <= 24) {
+            let plan = this.plans.find(
+              x => x._id === this.$route.query.plan
+            )
+            if (plan) {
+              this.selectPlan(plan)
+            } else {
               plan = await this.$api.getPlan(this.$route.query.plan)
               if (this.plan._user === this.$user._id) {
                 this.plans.push(plan)
@@ -704,50 +735,53 @@ export default {
                 this.plansByOthers.push(plan)
               }
               this.selectPlan(plan)
-            } catch (error) {
-              this.error(error)
+            }
+          } else {
+            const p = JSURL.tryParse(this.$route.query.plan, null)
+            if (p) {
+              log.info('showing plan from URL')
+              this.$refs.planEdit.show(p)
             }
           }
         } else {
-          const p = JSURL.tryParse(this.$route.query.plan, null)
-          if (p) {
-            log.info('showing plan from URL')
-            this.$refs.planEdit.show(p)
-          }
+          this.selectRecentPlan(() => {
+            if (this.$course.owner) {
+              this.$course.view = 'edit'
+            } else {
+              setTimeout(() => {
+                if (this.$course.view !== 'edit' && !this.$refs.planEdit.$refs.modal.isShow) {
+                  this.newPlan()
+                }
+              }, 2000)
+            }
+          })
         }
-      } else {
-        this.selectRecentPlan(() => {
-          if (this.$course.owner) {
-            this.$course.view = 'edit'
-          } else {
-            setTimeout(() => {
-              if (this.$course.view !== 'edit' && !this.$refs.planEdit.$refs.modal.isShow) {
-                this.newPlan()
-              }
-            }, 2000)
-          }
-        })
-      }
-      this.$status.processing = false
-      this.$status.loading = false
-      setTimeout(() => {
-        if (!this.$user.isAuthenticated) {
-          this.$refs['toast-welcome'].show()
-        }
-      }, 1000)
-
-      // if the url has an "after" action, strip it off and execute it
-      if (this.$route.query.after) {
-        const q = { ...this.$route.query }
-        const after = this.$route.query.after
-        delete q.after
-        this.$router.replace({ query: q })
+        this.$status.processing = false
+        this.$status.loading = false
         setTimeout(() => {
-          this[after]()
+          if (!this.$user.isAuthenticated) {
+            this.$refs['toast-welcome'].show()
+          }
         }, 1000)
-      }
 
-      log.info('comlete')
+        // if the url has an "after" action, strip it off and execute it
+        if (this.$route.query.after) {
+          const q = { ...this.$route.query }
+          const after = this.$route.query.after
+          delete q.after
+          this.$router.replace({ query: q })
+          setTimeout(() => {
+            this[after]()
+          }, 1000)
+        }
+
+        log.info('comlete')
+      } catch (error) {
+        this.$error.handle(error, 'Course|initialize', true)
+        this.$status.processing = false
+        this.$status.loading = false
+        this.$router.push({ path: '/' })
+      }
     },
     async editCourse () {
       if (this.$course.view !== 'edit') { this.$course.view = 'edit' }
@@ -756,6 +790,7 @@ export default {
     async reloadCourse () {
       // reload current page
       this.$status.loading = true
+      window.onbeforeunload = null
       this.$router.go()
     },
     async deleteCourse (course, cb) {
@@ -925,7 +960,7 @@ export default {
     async selectPlan (plan) {
       this.logger.child({ method: 'selectPlan' }).info(`${plan.name} selected.`)
       this.$refs.waypointTable?.collapseAll()
-      this.plan = plan
+      this.plan = new this.$core.plans.Plan(plan)
       if (!this.$course.comparing) {
         if (this.plan.eventStart) {
           this.event.timezone = this.plan.eventTimezone
@@ -1080,13 +1115,23 @@ export default {
       this.updateFlag = false
       this.$status.processing = true
       try {
+        // create delays array of loc/time objects
+        const delays = this.waypoints.map(wp => {
+          return {
+            loc: wp.loc,
+            delay: this.plan.getDelayAtWaypoint(wp).delay
+          }
+        })
+          .filter(d => d.delay > 0)
+          .sort((a, b) => a.loc - b.loc)
+
         const pacing = this.$core.geo.calcPacing({
           course: this.course,
           plan: this.plan,
           points: this.course.points,
           pacing: this.plan.pacing,
           event: this.event,
-          delays: this.delays,
+          delays: delays,
           heatModel: this.heatModel,
           terrainFactors: this.terrainFactors
         })
@@ -1113,10 +1158,109 @@ export default {
     },
     waypointClick: function (waypoint) {
       this.tablesTab = 0
-      this.$refs.waypointTable.selectWaypoint(waypoint)
+      this.$refs.waypointTable?.selectWaypoint(waypoint)
+      this.$refs.planTable?.selectWaypoint(waypoint)
     },
     setUpdateFlag: function () {
       this.updateFlag = true
+    },
+    showSaveButton: function () {
+      this.saveButtonVisible = true
+    },
+    // add function adds obj to updates list
+    update: function (type, obj, valid) {
+      const log = this.logger.child({ method: 'update' })
+      try {
+        log.info(`type: ${type}`)
+        const u = this.updates
+        if (obj._id) {
+          if (valid) {
+          // create update array if it doesn't exist
+            if (!u.update) u.update = {}
+            if (!u.update?.[type]) u.update[type] = []
+
+            const x = u.update[type].find(o => o === obj)
+            if (!x) u.update[type].push(obj)
+
+            // if there is an remove array, remove this from it
+            if (u.remove?.[type]) {
+              const y = u.remove[type].findIndex(o => o === obj)
+              if (y >= 0) u.remove[type].splice(y, 1)
+            }
+          } else {
+          // create removal array if it doesn't exist
+            if (!u.remove) u.remove = {}
+            if (!u.remove?.[type]) u.remove[type] = []
+
+            const x = u.remove[type].find(o => o === obj)
+            if (!x) u.remove[type].push(obj)
+
+            // if there is an update array, remove this from it
+            if (u.update?.[type]) {
+              const y = u.update[type].findIndex(o => o === obj)
+              if (y >= 0) u.update[type].splice(y, 1)
+            }
+          }
+        } else if (valid) {
+        // create add array if it doesn't exist
+          if (!u.add) u.add = {}
+          if (!u.add?.[type]) u.add[type] = []
+
+          const x = u.add[type].find(o => o === obj)
+          if (!x) u.add[type].push(obj)
+        } else if (u.add?.[type]) {
+          const x = u.add[type].findIndex(o => o === obj)
+          if (x >= 0) u.add[type].splice(x, 1)
+        }
+        u.count = 0
+        const actions = ['add', 'update', 'remove']
+        actions.forEach(a => {
+          if (u[a]) {
+            const models = Object.keys(u[a])
+            models.forEach(t => {
+              u.count += u[a][t]?.length || 0
+            })
+          }
+        })
+        log.info(`${u.count} updates pending`)
+
+        if (type === 'Plan.delays') {
+          this.$status.processing = true
+          setTimeout(() => { this.updatePacing() }, 10)
+        }
+        this.$nextTick(() => { this.saveButtonVisible = u.count > 0 })
+      } catch (error) {
+        this.$error.handle(error)
+      }
+    },
+    updateBatch: async function () {
+      this.logger.child({ method: 'updateBatch' }).info('run')
+      try {
+        this.$status.processing = true
+        await this.$api.batch(this.updates)
+        this.$status.processing = false
+        this.$nextTick(() => {
+          this.reloadCourse()
+        })
+      } catch (error) {
+        this.$error.handle(error)
+        this.$status.processing = false
+      }
+    },
+    updateCancel: async function () {
+      this.logger.child({ method: 'updateCancel' }).info('run')
+      try {
+        if (this.updates.count) {
+          this.$status.processing = true
+          await this.refreshPlans({ _id: this.plan._id })
+          this.updates = {}
+        }
+        this.$course.mode = 'view'
+        this.saveButtonVisible = false
+      } catch (error) {
+        this.$error.handle(error)
+      }
+      this.$status.processing = false
     },
     async download () {
       await this.$refs.download.show()
@@ -1177,7 +1321,8 @@ export default {
         Splits: 'splitTable',
         Waypoints: 'waypointTable',
         Details: 'planDetails',
-        Profile: 'profile'
+        Profile: 'profile',
+        Plan: 'planTable'
       }
 
       // clear focus, if any:
@@ -1214,7 +1359,7 @@ export default {
         }
       }
       if (component !== 'Profile') {
-        opt.pagebreak = { mode: 'avoid-all' }
+        opt.pagebreak = { mode: 'css', avoid: 'tr' }
       }
 
       // define logo image for header:
