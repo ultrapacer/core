@@ -7,7 +7,7 @@ steps:
   args: ["run", "build"]
   secretEnv: ['GOOGLE_ANALYTICS_KEY', 'THUNDERFOREST_API_KEY', 'AUTH0_DOMAIN', 'AUTH0_CLIENT_ID', 'AUTH0_AUDIENCE']
 - name: "gcr.io/cloud-builders/gcloud"
-  args: ["app", "deploy"]
+  args: ["app", "deploy", "$_DEPLOY_CONFIG"]
 timeout: "1600s"
 availableSecrets:
   secretManager:
