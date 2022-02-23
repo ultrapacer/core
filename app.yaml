@@ -1,6 +1,6 @@
 runtime: nodejs14
 env: standard
-service: beta
+service: default
 handlers:
   - url: /public
     static_dir: dist/public
