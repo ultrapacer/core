@@ -1,0 +1,11 @@
+runtime: nodejs14
+env: standard
+service: beta
+handlers:
+  - url: /public
+    static_dir: dist/public
+
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto
