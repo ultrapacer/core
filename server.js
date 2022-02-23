@@ -12,7 +12,7 @@ const publicRoutes = require('./server/routes/publicRoutes')
 const external = require('./server/routes/external')
 const jwt = require('express-jwt')
 const jwksRsa = require('jwks-rsa')
-const patreon = require('./server/routes/patreon')
+const membership = require('./server/routes/membership')
 const { getSecret } = require('./server/secrets')
 const logger = require('./server/log').child({ file: 'server.js' })
 
@@ -59,8 +59,8 @@ async function startUp () {
   app.use('/api/plan', checkJwt, planRoutes)
   app.use('/api/elevation', elevation)
   app.use('/api/email', checkJwt, email)
-  app.use('/api/patreon', checkJwt, patreon.auth) // authenticated patreon routes
-  app.use('/api/open/patreon', patreon.open) // unauthenticated patreon routes
+  app.use('/api/membership', checkJwt, membership.auth) // authenticated membership routes
+  app.use('/api/open/membership', membership.open) // unauthenticated membership routes
   app.use('/api/strava', strava)
   app.use('/api/error', require('./server/routes/error'))
   app.use('/api/batch', checkJwt, require('./server/routes/batch'))

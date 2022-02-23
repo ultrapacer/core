@@ -31,6 +31,7 @@ import 'vue-awesome/icons/edit'
 import 'vue-awesome/icons/envelope'
 import 'vue-awesome/icons/lock'
 import 'vue-awesome/icons/minus-circle'
+import 'vue-awesome/icons/mug-hot'
 import 'vue-awesome/icons/plus'
 import 'vue-awesome/icons/print'
 import 'vue-awesome/icons/running'
@@ -174,28 +175,42 @@ Vue.prototype.$config = Vue.observable({
   freeCoursesLimit: 5
 })
 
+// add custom logger transport for analytics erros
+const Transport = require('winston-transport')
+class FrontendErrorTransport extends Transport {
+  log (info, callback) {
+    setImmediate(() => {
+      this.emit('logged', info)
+    })
+
+    // format log string:
+    const logStr = `${info.file ? ' [' + info.file + ']' : ''}${info.method ? '[' + info.method + ']' : ''} ${info.level.toUpperCase()}: ${info.message}`
+
+    // report error to backend via api:
+    Vue.prototype.$api.reportError({ error: logStr })
+
+    // report to analytics:
+    Vue.prototype.$gtag.exception({
+      description: logStr.split(/\r?\n/)[0]
+    })
+
+    // alert user:
+    Vue.prototype.$alert.show(
+      'Error performing action. Please report errors to help development.',
+      { variant: 'danger' }
+    )
+
+    callback()
+  }
+}
+logger.add(new FrontendErrorTransport({ level: 'error' }))
+
 Vue.prototype.$error = Vue.observable({
-  handle: function (error, location, fatal = false) {
+  // this is depreciated as of 2/23/2022
+  // instead just use logger.error(error.stack)
+  handle: function (error, location) {
     try {
       logger.error(error.stack || error)
-
-      // show alert:
-      const description = (location ? `${location} => ` : '') + error.toString()
-      const msg = `Error performing action${location ? ' [' + location + ']' : ''}. Please report errors to help development.`
-      Vue.prototype.$alert.show(
-        msg,
-        { variant: 'danger' }
-      )
-
-      // report in analytics:
-      Vue.prototype.$gtag.exception({
-        description: description,
-        fatal: fatal
-      })
-
-      // report to server
-      const stack = (location ? `${location} => ` : '') + error.stack
-      Vue.prototype.$api.reportError({ error: stack })
     } catch (err) {
       logger.error(err)
     }

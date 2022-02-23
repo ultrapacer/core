@@ -19,10 +19,25 @@
         />
         <b-input-group-append>
           <b-button
+            v-if="$user.membership.method==='patreon'"
             variant="primary"
-            @click="$parent.$refs.patreon.patreonOath()"
+            @click="$parent.$refs.support.goToPatreon()"
           >
             <v-icon name="brands/patreon" />
+          </b-button>
+          <b-button
+            v-else-if="$user.membership.method==='buymeacoffee'"
+            variant="primary"
+            @click="$parent.$refs.support.goToBuyMeACoffee()"
+          >
+            <v-icon name="mug-hot" />
+          </b-button>
+          <b-button
+            v-else
+            variant="primary"
+            @click="$parent.$refs.support.show"
+          >
+            Support
           </b-button>
         </b-input-group-append>
       </b-input-group>
@@ -172,6 +187,10 @@ export default {
         this.altModel = Object.assign({}, user.altModel)
       }
       this.$status.loading = false
+    },
+    async goToBuyMeACoffee () {
+      this.$gtage(this.$gtag, 'BuyMeACoffee', 'visit')
+      window.open('https://buymeacoffee.com/ultrapacer', '_blank')
     }
   }
 }

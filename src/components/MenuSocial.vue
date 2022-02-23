@@ -45,57 +45,28 @@
       v-b-popover.hover.blur.bottomright.d250.v-info="'Donate to uP with Paypal!'"
       target="_blank"
       class="nav-link socialbutton"
-      @click="goToPaypal()"
+      @click="()=>{$parent.$parent.$refs.support.goToPaypal()}"
     >
-      <form
-        ref="paypalForm"
-        action="https://www.paypal.com/cgi-bin/webscr"
-        method="post"
-        target="_blank"
-      >
-        <input
-          type="hidden"
-          name="cmd"
-          value="_donations"
-        >
-        <input
-          type="hidden"
-          name="business"
-          value="danny@ultrapacer.com"
-        >
-        <input
-          type="hidden"
-          name="currency_code"
-          value="USD"
-        >
-        <v-icon name="brands/paypal" />
-      </form>
+      <v-icon name="brands/paypal" />
     </b-link>
     <b-link
       v-b-popover.hover.blur.bottomright.d250.v-info="'Donate to uP with Patreon!'"
       target="_blank"
       class="nav-link socialbutton"
-      @click="goToPatreon"
+      @click="()=>{$parent.$parent.$refs.support.goToPatreon()}"
     >
       <v-icon name="brands/patreon" />
     </b-link>
+    <b-link
+      v-b-popover.hover.blur.bottomright.d250.v-info="'Buy Me a Coffee!'"
+      target="_blank"
+      class="nav-link socialbutton"
+      @click="()=>{$parent.$parent.$refs.support.goToBuyMeACoffee()}"
+    >
+      <v-icon name="mug-hot" />
+    </b-link>
   </div>
 </template>
-
-<script>
-export default {
-  methods: {
-    async goToPaypal () {
-      this.$gtage(this.$gtag, 'Paypal', 'visit')
-      this.$refs.paypalForm.submit()
-    },
-    async goToPatreon () {
-      this.$gtage(this.$gtag, 'Patreon', 'visit')
-      window.open('https://www.patreon.com/ultrapacer', '_blank')
-    }
-  }
-}
-</script>
 
 <style>
 .socialbutton {

@@ -22,8 +22,8 @@ Want to contribute to the ultraPacer project? Yes, please!
   [Github](https://github.com/amokrunner/ultrapacer).
 
 #### Contribute Financially
-1. You can donate to the project by becomming a
-  [Patreon Member](https://www.patreon.com/ultrapacer).
+1. You can donate to the project via
+  <a href="https://buymeacoffee.com/ultrapacer" target="_blank">Buy Me a Coffee</a>.
 2. If you represent a brand, consider becoming a sponsor of the project.
   Your brand will be presented as a sponsor throughout the ultraPacer
   platform. Reach out to me for more info.

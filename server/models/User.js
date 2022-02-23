@@ -43,6 +43,11 @@ const UserSchema = new Schema({
       next_annoy: {
         type: Date
       },
+      buymeacoffee: {
+        id: {
+          type: 'String'
+        }
+      },
       patreon: {
         id: {
           type: 'String'

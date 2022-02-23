@@ -143,13 +143,13 @@ export default {
     return this.executeAuth('post', '/api/email', data)
   },
   patreonGetLogin () {
-    return this.executeAuth('get', '/api/patreon/url')
+    return this.executeAuth('get', '/api/membership/patreon/url')
   },
   patreonUpdateUser (code) {
-    return this.executeAuth('put', `/api/patreon/user/${code}`)
+    return this.executeAuth('put', `/api/membership/patreon/user/${code}`)
   },
-  patreonPatronsRefresh () {
-    return this.executeAuth('get', '/api/patreon/patrons/refresh')
+  membershipsRefresh () {
+    return this.executeAuth('get', '/api/membership/members/refresh')
   },
   reportError (data) {
     return this.execute('post', '/api/error', data)

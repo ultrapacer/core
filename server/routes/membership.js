@@ -7,89 +7,149 @@ const patreon = require('@nathanhigh/patreon')
 const User = require('../models/User')
 const url = require('url')
 const { getSecret } = require('../secrets')
+const logger = require('winston').child({ file: 'membership.js' })
+const { routeName } = require('../util')
+
+const BMC = require('buymeacoffee.js') // add BMC package
 
 // REFRESH LIST OF PATRONAGE STATUS
-router.auth.route('/patrons/refresh').get(async function (req, res) {
+router.auth.route('/members/refresh').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
   try {
     const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    if (!user.admin) {
+      log.warn('No permission')
+      res.status(403).send('No permission')
+      return
+    }
 
-    const patreonAPIClient = patreon.patreon(user.membership.patreon.token)
+    // get array of buymeacoffee suppporters
+    let bmcSubscribors = []
+    try {
+      const bmcKey = await getSecret('BUYMEACOFFEE_API_KEY')
+      const coffee = new BMC(bmcKey) // add your token here
+      const bmcSubscriptionData = await coffee.Subscriptions()
+      bmcSubscribors = bmcSubscriptionData.data.map(s => {
+        return {
+          type: 'buymeacoffee',
+          name: s.payer_name,
+          email: s.payer_email,
+          id: s.subscription_id.toString()
+        }
+      })
+    } catch (error) {
+      log.error(error)
+    }
 
-    const campaign = await getSecret('PATREON_CAMPAIGN')
+    // get array of patreon supporters
+    let patrons = []
+    try {
+      const patreonAPIClient = patreon.patreon(user.membership.patreon.token)
+      const campaign = await getSecret('PATREON_CAMPAIGN')
+      const apiurl = url.format({
+        pathname: `/campaigns/${campaign}/members`,
+        query: {
+          include: 'user',
+          'fields[member]': 'full_name,email'
+        }
+      })
+      const { rawJson } = await patreonAPIClient(apiurl)
+      patrons = rawJson.data.map(p => {
+        return {
+          type: 'patreon',
+          name: p.attributes.full_name,
+          email: p.attributes.email,
+          id: p.relationships.user.data.id
+        }
+      })
+    } catch (error) {
+      log.error(error)
+    }
 
-    const apiurl = url.format({
-      pathname: `/campaigns/${campaign}/members`,
-      query: {
-        include: 'user',
-        'fields[member]': 'full_name,email'
-      }
-    })
+    const members = [...bmcSubscribors, ...patrons]
+    log.info(`${members.length} members: ${bmcSubscribors.length} BuyMeACoffee & ${patrons.length} Patreon`)
 
-    const { rawJson } = await patreonAPIClient(apiurl)
-    const patrons = rawJson.data.map(p => {
-      return {
-        name: p.attributes.full_name,
-        email: p.attributes.email,
-        id: p.relationships.user.data.id
-      }
-    })
-
-    if (!patrons.length) {
-      throw (new Error('No patrons'))
+    if (!members.length) {
+      throw (new Error('No members'))
     }
 
     // TEMPORARY fix membership to object in any records first:
     await User.updateMany({ membership: { $not: { $type: 'object' } } }, { membership: { active: false } }).exec()
 
-    // find users with emails in the patreon list, set status and id in user database:
-    const users = await User.find({ email: { $in: patrons.map(p => { return p.email }) } })
+    // find users with emails in the member list
+    const users = await User.find({ email: { $in: members.map(p => { return p.email }) } })
       .select(['email', 'membership']).exec()
 
-    const newPatrons = []
+    // set status and id in user database:
+    const newMembers = []
     await Promise.all(
       users.map(u => {
-        const patron = patrons.find(p => p.email === u.email)
+        const member = members.find(m => m.email === u.email)
         if (!u.membership.active) u.set('membership.active', true)
-        if (!u.membership.patreon) u.set('membership.patreon', {})
-        if (!u.membership.method || u.membership.method !== 'lifetime') u.set('membership.method', 'patreon')
-        if (!u.membership.patreon.id) u.set('membership.patreon.id', patron.id)
-        if (u.isModified('membership.active')) newPatrons.push({ _id: u._id, email: u.email })
+        if (!u.membership[member.type]) u.set(`membership.${member.type}`, {})
+        if (!u.membership.method || u.membership.method !== 'lifetime') u.set('membership.method', member.type)
+        if (!u.membership[member.type].id) u.set(`membership.${member.type}.id`, member.id)
+        if (u.isModified('membership.active')) newMembers.push({ _id: u._id, email: u.email })
         return u.isModified() ? u.save() : false
       })
     )
-    console.log(`patreon/patrons/refresh : ${newPatrons.length} new patrons.`)
-    console.log(newPatrons)
+    log.info(`${newMembers.length} new members.`)
+    newMembers.forEach(m => { log.info(`New: ${m.email}`) })
 
     // find users with patreon memberships not in the patron list:
-    const oldUsers = await User.find(
+    const expiredUsers = await User.find(
       {
-        $and: [
+        $or: [
           {
-            'membership.method': 'patreon'
+            $and: [
+              {
+                'membership.method': 'patreon'
+              },
+              {
+                'membership.patreon.id': {
+                  $not: {
+                    $in: patrons.map(p => { return p.id })
+                  }
+                }
+              }
+            ]
           },
           {
-            'membership.patreon.id': {
-              $not: {
-                $in: patrons.map(p => { return p.id })
+            $and: [
+              {
+                'membership.method': 'buymeacoffee'
+              },
+              {
+                'membership.buymeacoffee.id': {
+                  $not: {
+                    $in: bmcSubscribors.map(p => { return p.id })
+                  }
+                }
               }
-            }
+            ]
           }
         ]
       }
     ).select(['email', 'membership']).exec()
-    const oldPatrons = oldUsers.map(u => { return { _id: u._id, email: u.email } })
-    console.log(`patreon/patrons/refresh : ${oldPatrons.length} old patrons no longer on list.`)
-    console.log(oldPatrons)
+    const expiredMembers = expiredUsers.map(u => { return { _id: u._id, email: u.email } })
+    log.info(`${expiredMembers.length} members no longer on lists.`)
+    expiredMembers.forEach(m => { log.warn(`Expired: ${m.email}`) })
+
+    // find users that have membership not associated in ultraPacer database:
+    const unassociatedMembers = members.filter(m => users.findIndex(u => m.email === u.email) < 0)
+    log.info(`${unassociatedMembers.length} unassociated members.`)
+    unassociatedMembers.forEach(m => { log.warn(`Unassociated: ${m.email}`) })
 
     // return lists:
     res.json({
       active: users.map(u => { return { _id: u._id, email: u.email } }),
-      added: newPatrons,
-      old: oldPatrons
+      added: newMembers,
+      expired: expiredMembers,
+      unassociated: unassociatedMembers
     })
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+  } catch (error) {
+    log.error(error)
+    res.status(400).send(error)
   }
 })
 
@@ -107,7 +167,7 @@ function getRedirect (host) {
   return ''
 }
 
-router.auth.route('/url').get(async function (req, res) {
+router.auth.route('/patreon/url').get(async function (req, res) {
   const user = await User.findOne({ auth0ID: req.user.sub }).select('admin').exec()
   const scopes = ['identity', 'identity[email]']
   if (user.admin) scopes.push('campaigns', 'campaigns.members', 'campaigns.members[email]')
@@ -129,7 +189,7 @@ router.auth.route('/url').get(async function (req, res) {
   res.send(loginUrl)
 })
 
-router.auth.route('/user/:code').put(async function (req, res) {
+router.auth.route('/patreon/user/:code').put(async function (req, res) {
   try {
     // get keys
     const keys = await getSecret(['PATREON_CLIENT_ID', 'PATREON_CLIENT_SECRET'])

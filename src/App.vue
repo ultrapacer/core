@@ -27,7 +27,10 @@
               class="navbar-logo-img"
             >
           </div>
-          <div class="d-none d-md-block navbar-ultrapacer">
+          <div class="d-none d-md-block d-lg-none navbar-ultrapacer">
+            uP
+          </div>
+          <div class="d-none d-lg-block navbar-ultrapacer">
             ultraPacer
           </div>
         </div>
@@ -69,6 +72,12 @@
             About
           </b-nav-item>
           <b-nav-item
+            href="#"
+            @click.prevent="$refs.support.show"
+          >
+            Support
+          </b-nav-item>
+          <b-nav-item
             v-if="!$user.isAuthenticated"
             href="#"
             @click.prevent="login()"
@@ -104,9 +113,8 @@
       Pro tip: ultraPacer is better on a desktop. Enjoy :]
     </b-alert>
     <sponsor ref="sponsor" />
-    <patreon
-      v-if="$user.isAuthenticated"
-      ref="patreon"
+    <support
+      ref="support"
     />
     <b-alert
       :show="$alert.timer"
@@ -129,7 +137,7 @@ export default {
   components: {
     MenuSocial,
     Sponsor,
-    Patreon: () => import(/* webpackPrefetch: true */ './components/Patreon.vue')
+    Support: () => import(/* webpackPrefetch: true */ './components/Support.vue')
   },
   data () {
     return {

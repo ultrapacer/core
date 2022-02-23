@@ -225,7 +225,7 @@ export default {
       if (this.$user.membership.active || ownedCourseTotal < this.$config.freeCoursesLimit) {
         this.$refs.courseEdit.show()
       } else {
-        this.$parent.$refs.patreon.courseLimit()
+        this.$parent.$refs.support.courseLimit()
       }
     },
     async editCourse (course) {
