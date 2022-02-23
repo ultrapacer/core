@@ -38,7 +38,7 @@ router.auth.route('/members/refresh').get(async function (req, res) {
         }
       })
     } catch (error) {
-      log.error(error)
+      log.error('Error retrieving Buy Me a Coffee list.')
     }
 
     // get array of patreon supporters
@@ -63,7 +63,7 @@ router.auth.route('/members/refresh').get(async function (req, res) {
         }
       })
     } catch (error) {
-      log.error(error)
+      log.error('Error retrieving Patreon list.')
     }
 
     const members = [...bmcSubscribors, ...patrons]
@@ -97,40 +97,41 @@ router.auth.route('/members/refresh').get(async function (req, res) {
     newMembers.forEach(m => { log.info(`New: ${m.email}`) })
 
     // find users with patreon memberships not in the patron list:
-    const expiredUsers = await User.find(
-      {
-        $or: [
+    const orQuery = []
+    if (patrons.length) {
+      orQuery.push({
+        $and: [
           {
-            $and: [
-              {
-                'membership.method': 'patreon'
-              },
-              {
-                'membership.patreon.id': {
-                  $not: {
-                    $in: patrons.map(p => { return p.id })
-                  }
-                }
-              }
-            ]
+            'membership.method': 'patreon'
           },
           {
-            $and: [
-              {
-                'membership.method': 'buymeacoffee'
-              },
-              {
-                'membership.buymeacoffee.id': {
-                  $not: {
-                    $in: bmcSubscribors.map(p => { return p.id })
-                  }
-                }
+            'membership.patreon.id': {
+              $not: {
+                $in: patrons.map(p => { return p.id })
               }
-            ]
+            }
           }
         ]
-      }
-    ).select(['email', 'membership']).exec()
+      })
+    }
+    if (bmcSubscribors.length) {
+      orQuery.push({
+        $and: [
+          {
+            'membership.method': 'buymeacoffee'
+          },
+          {
+            'membership.buymeacoffee.id': {
+              $not: {
+                $in: bmcSubscribors.map(p => { return p.id })
+              }
+            }
+          }
+        ]
+      })
+    }
+    const expiredUsers = await User.find({ $or: orQuery })
+      .select(['email', 'membership']).exec()
     const expiredMembers = expiredUsers.map(u => { return { _id: u._id, email: u.email } })
     log.info(`${expiredMembers.length} members no longer on lists.`)
     expiredMembers.forEach(m => { log.warn(`Expired: ${m.email}`) })
@@ -142,6 +143,8 @@ router.auth.route('/members/refresh').get(async function (req, res) {
 
     // return lists:
     res.json({
+      buymeacoffee: bmcSubscribors.length,
+      patreon: patrons.length,
       active: users.map(u => { return { _id: u._id, email: u.email } }),
       added: newMembers,
       expired: expiredMembers,
@@ -149,7 +152,7 @@ router.auth.route('/members/refresh').get(async function (req, res) {
     })
   } catch (error) {
     log.error(error)
-    res.status(400).send(error)
+    res.status(400).send('error')
   }
 })
 
