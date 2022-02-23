@@ -417,6 +417,7 @@ export default {
       gpxFile: null,
       gpxFileInvalidMsg: '',
       gpxFileNoElevFlag: false,
+      logger: this.$log.child({ file: 'CourseEdit.vue' }),
       loopEnabled: false,
       model: { source: {} },
       moment: null,
@@ -634,7 +635,7 @@ export default {
       })
     },
     async loadGPX (f, source) {
-      const t = this.$logger()
+      const logger = this.logger.child({ method: 'loadGPX' })
       try {
         gpxParse.parseGpx(f, async (error, data) => {
           try {
@@ -643,11 +644,26 @@ export default {
               this.$status.processing = false
               throw error
             } else {
-              this.$logger('CourseEdit|GPX parsed', t)
+              logger.info('GPX parsed')
               this.model.source = { ...source }
-              const llas = data.tracks[0].segments[0].map(p => {
+
+              // choose source from GPX:
+              let arr = []
+              if (data.tracks.length) {
+                logger.info('Using GPX track')
+                arr = data.tracks[0].segments[0]
+              } else if (data.routes.length) {
+                logger.info('Using GPX route')
+                arr = data.routes[0].points
+              } else {
+                throw new Error('GPX file contains no tracks or routes')
+              }
+
+              // map to LLA array
+              const llas = arr.map(p => {
                 return [p.lat, p.lon, p.elevation]
               })
+
               if (llas.length < 100) {
                 this.gpxFileInvalidMsg = 'GPX file has too few points.'
                 this.$status.processing = false
@@ -664,14 +680,13 @@ export default {
 
               if (this.$config.requireGPXElevation && this.track.gain === 0) {
                 this.gpxFileNoElevFlag = true
-                const t2 = this.$logger('CourseEdit|loadGPX getting elevation data')
+                logger.info('Getting elevation data')
                 try {
                   await this.addElevationData(this.track)
-                  this.$logger(`CourseEdit|loadGPX received elevation data for ${this.track.length} points`, t2)
-                } catch (err) {
+                  logger.info(`Received elevation data for ${this.track.length} points`)
+                } catch (error) {
                   this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
-                  this.$logger('CourseEdit|loadGPX failed to get elevation data.', t2)
-                  this.$gtag.exception({ description: err.message || err, fatal: false })
+                  logger.error(error.stack || error)
                   this.$status.processing = false
                   return
                 }
@@ -686,12 +701,12 @@ export default {
               this.newTrack = true
             }
           } catch (error) {
-            this.$error.handle(error)
+            logger.error(error.stack || error)
           }
           this.$status.processing = false
         })
       } catch (error) {
-        this.$error.handle(error)
+        logger.error(error.stack || error)
         this.$status.processing = false
       }
     },
