@@ -221,6 +221,7 @@ export default {
   data () {
     return {
       clearing: false,
+      logger: this.$log.child({ file: 'SegmentTable.vue' }),
       visibleTrigger: 0,
       factorLables: { gF: 'Grade', tF: 'Terrain', aF: 'Altitude', hF: 'Heat', dF: 'Drift', dark: 'Darkness' },
       visibleSubWaypoints: []
@@ -459,21 +460,22 @@ export default {
       this.$emit('select', this.mode, [])
     },
     selectRow: function (row) {
-      const showing = Boolean(row._showDetails)
-      this.rows.filter(r => r._showDetails).forEach(r => {
-        this.$set(r, '_showDetails', false)
-      })
-      this.$set(row, '_showDetails', !showing)
-      const len = this.mode === 'segments'
-        ? row.len
-        : 1 / this.$units.distScale
-      this.$emit(
-        'select',
-        this.mode,
-        [row.end - len, row.end]
-      )
-      if (!row._showDetails) {
-        this.$emit('select', this.mode, [])
+      try {
+        const showing = Boolean(row._showDetails)
+        this.rows.filter(r => r._showDetails).forEach(r => {
+          this.$set(r, '_showDetails', false)
+        })
+        this.$set(row, '_showDetails', !showing)
+        this.$emit(
+          'select',
+          this.mode,
+          [row.end - row.len, row.end]
+        )
+        if (!row._showDetails) {
+          this.$emit('select', this.mode, [])
+        }
+      } catch (error) {
+        this.logger.child({ method: 'selectRow' }).error(error.stack)
       }
     },
     sec2string: function (s, f) {

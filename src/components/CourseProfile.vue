@@ -55,6 +55,7 @@ export default {
     return {
       chartProfile: [],
       chartGrade: [],
+      logger: this.$log.child({ file: 'CourseProfile.vue' }),
       pmax: 500
     }
   },
@@ -232,7 +233,24 @@ export default {
       return cF
     },
     xs: function () {
-      return Array(this.pmax + 1).fill(0).map((e, i) => i++ * this.course.dist / this.pmax)
+      // return an array of all the x values to use in chart
+      // include pmax points, plus exact x's for waypoints and splits
+      let arr = []
+      try {
+        // get an array filled over pmax points:
+        arr = Array(this.pmax + 1).fill(0).map((e, i) => i++ * this.course.dist / this.pmax)
+
+        // add the splits x values:
+        arr.push(...Array.from(Array(Math.floor(this.$units.distf(this.course.dist)) + 1).keys()).map(x => { return x / this.$units.distScale }))
+
+        // add  the waypoint x values
+        arr.push(...this.waypoints.map(wp => { return wp.loc * this.course.distScale }))
+
+        arr.sort(function (a, b) { return a - b })
+      } catch (error) {
+        this.logger.child({ method: 'xs' }).error(error.stack)
+      }
+      return arr
     },
     comparePoints: function () {
       if (this.$course.comparing) {

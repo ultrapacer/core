@@ -273,6 +273,7 @@
           :waypoints="visibleWaypoints"
           :focus="focus"
           :highlight-point="highlightPoint"
+          :show-focus-endpoints="tablesTab===2"
           @waypointClick="waypointClick"
         />
       </b-col>
