@@ -143,7 +143,8 @@ Vue.prototype.$status = Vue.observable({
 })
 Vue.prototype.$window = Vue.observable({
   height: window.innerHeight,
-  width: window.innerWidth
+  width: window.innerWidth,
+  isSmall: function () { return this.width < 768 }
 })
 Vue.prototype.$course = Vue.observable({
   view: 'plan',

@@ -103,15 +103,6 @@
     <router-view
       ref="routerView"
     />
-    <b-alert
-      v-model="smallScreenAlert"
-      class=" d-md-none position-fixed fixed-bottom m-0 rounded-0 pt-1 pb-1"
-      style="z-index: 1000"
-      variant="primary"
-      fade
-    >
-      Pro tip: ultraPacer is better on a desktop. Enjoy :]
-    </b-alert>
     <sponsor ref="sponsor" />
     <support
       ref="support"
@@ -144,8 +135,7 @@ export default {
       logger: this.$log.child({ file: 'App.vue' }),
       user: {},
       authInterval: null,
-      spinner: {},
-      smallScreenAlert: true
+      spinner: {}
     }
   },
   computed: {
@@ -183,7 +173,17 @@ export default {
       this.$window.width = window.innerWidth
       this.$window.height = window.innerHeight
     })
-    setTimeout(() => { this.smallScreenAlert = false }, 4000)
+    if (window.location.origin.includes('beta')) {
+      this.$alert.show(
+        'ultraPacer BETA VERSION -- for stable app, use https://ultrapacer.com',
+        { variant: 'warning' }
+      )
+    } else if (this.$window.isSmall()) {
+      this.$alert.show(
+        'Pro tip: ultraPacer is better on a desktop. Enjoy :]',
+        { variant: 'primary' }
+      )
+    }
   },
   methods: {
     login (query = {}) {
