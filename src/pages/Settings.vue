@@ -19,14 +19,14 @@
         />
         <b-input-group-append>
           <b-button
-            v-if="$user.membership.method==='patreon'"
+            v-if="membership === 'patreon'"
             variant="primary"
             @click="$parent.$refs.support.goToPatreon()"
           >
             <v-icon name="brands/patreon" />
           </b-button>
           <b-button
-            v-else-if="$user.membership.method==='buymeacoffee'"
+            v-else-if="membership === 'buymeacoffee'"
             variant="primary"
             @click="$parent.$refs.support.goToBuyMeACoffee()"
           >
@@ -145,14 +145,20 @@ export default {
         }
       ],
       altModel: Object.assign({}, this.$core.normFactor.defaults.alt),
+      logger: this.$log.child({ file: 'Settings.vue' }),
       model: {}
     }
   },
   computed: {
     membership: function () {
-      const s = this.$user.membership.method
-      if (this.$user.membership.active && s) return s.charAt(0).toUpperCase() + s.slice(1)
-      return 'Free'
+      try {
+        if (this.$user?.membership?.active && this.$user?.membership?.method) {
+          return this.$user.membership.method
+        }
+      } catch (error) {
+        this.logger.child({ method: 'membership' }).error(error.stack || error)
+      }
+      return 'free'
     }
   },
   watch: {
