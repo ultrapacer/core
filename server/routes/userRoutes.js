@@ -76,7 +76,7 @@ userRoutes.route('/:id').put(async function (req, res) {
     if (currentUser.admin || user.equals(currentUser)) {
       const fields = [
         'distUnits', 'elevUnits', 'altModel', 'email',
-        'membership.patreon', 'membership.last_annoyed', 'membership.next_annoy'
+        'membership.patreon', 'membership.lastAnnoyed', 'membership.nextAnnoy'
       ]
       if (currentUser.admin) {
         fields.push('membership', 'membership.active', 'membership.method')

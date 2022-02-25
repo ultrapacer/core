@@ -172,7 +172,7 @@ Vue.prototype.$gtage = (gtag, category, action, label, value) => {
 Vue.prototype.$config = Vue.observable({
   requireGPXElevation: true,
   testing: testing,
-  freeCoursesLimit: 5
+  freeCoursesLimit: 6
 })
 
 // add custom logger transport for analytics erros

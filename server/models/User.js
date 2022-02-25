@@ -37,10 +37,10 @@ const UserSchema = new Schema({
         // eg, patreon, paypal, lifetime, etc
         type: 'String'
       },
-      last_annoyed: {
+      lastAnnoyed: {
         type: Date
       },
-      next_annoy: {
+      nextAnnoy: {
         type: Date
       },
       buymeacoffee: {
