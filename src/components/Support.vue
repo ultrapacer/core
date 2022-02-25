@@ -126,12 +126,12 @@ export default {
         // this component should only be loaded if authenticated, but double check:
         if (!this.$user.isAuthenticated) return
 
-        if (this.$user.membership.active) {
+        if (this.$user.membership?.active) {
           logger.info('Already a member.')
           return
         }
 
-        const next = moment(this.$user.membership.next_annoy || 0)
+        const next = moment(this.$user.membership?.nextAnnoy || 0)
         const d = moment().diff(next, 'days')
         if (d >= 0) {
         // get user stats
@@ -190,8 +190,8 @@ export default {
           await this.$api.updateUser(
             this.$user._id,
             {
-              'membership.last_annoyed': moment().toDate(),
-              'membership.next_annoy': moment().add(delay, 'days').toDate()
+              'membership.lastAnnoyed': moment().toDate(),
+              'membership.nextAnnoy': moment().add(delay, 'days').toDate()
             }
           )
         } else {

@@ -222,7 +222,7 @@ export default {
     },
     async newCourse () {
       const ownedCourseTotal = this.courses.filter(c => c._users.includes(this.$user._id)).length
-      if (this.$user.membership.active || ownedCourseTotal < this.$config.freeCoursesLimit) {
+      if (this.$user.membership?.active || ownedCourseTotal < this.$config.freeCoursesLimit) {
         this.$refs.courseEdit.show()
       } else {
         this.$parent.$refs.support.courseLimit()
