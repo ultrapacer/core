@@ -8,11 +8,8 @@
     >
       <div>
         <p>
-          Hi!
-        </p>
-        <p>
           I'm happy you're using ultraPacer. Developing this site and course content has been a labor of love,
-          and I'm glad to provide it as a tool to the running community.
+          and I'm glad to provide it to the running community.
           Its free for your use, however providing it isn't free for me and
           requires a lot of my limited time.
         </p><p /><p v-if="mode==='courselimit'">
@@ -23,16 +20,20 @@
         </p>
         <p>
           If you've benefitted from ultraPacer, please consider reciprocating by
-          supporting the project. I can take donations via "Buy me a coffee" (preferred as they
-          take the least fees), or otherwise by Patreon membership and Paypal donations. Following the
-          "Buy me a coffee" link below, you can support by a one-time donation of "coffees", or select
-          the membership option to become a recurring member of ultraPacer. Please use the same email
+          supporting the project. I can take donations via "Buy me a coffee" (preferred),
+          or otherwise by Patreon membership and Paypal donations. The
+          "Buy me a coffee" link below provides support via a one-time donation or as
+          a monthly membership. Please use the same email
           address as your ultraPacer login so I can associate your donation.
         </p>
         <p>
-          Thanks for taking the time to read this. Happy trails!
+          You can also support by contributing feedback on features and courses, reporting bugs,
+          sharing races you've created, and helping with development or docs. Reach out
+          if you'd like to help with any of these.
         </p>
         <p>
+          Thanks for taking the time to read this. Happy trails!
+          <br>
           -Danny
         </p>
       </div>
@@ -47,7 +48,7 @@
         </div>
         <div
           style=" text-align:center; width:100%"
-          class="mt-3"
+          class="mt-2"
         >
           <b-button
             variant="primary"
@@ -67,7 +68,7 @@
           </b-button>
         </div>
         <div style="width:100%">
-          <p class="mt-4">
+          <p class="mt-2 mb-0">
             PS, if you're seeing this and you're already a member, let me know.
           </p>
         </div>
