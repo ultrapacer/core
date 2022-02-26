@@ -2,7 +2,6 @@ const { VueLoaderPlugin } = require('vue-loader')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const SitemapPlugin = require('sitemap-webpack-plugin').default
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
@@ -121,7 +120,6 @@ const config = {
     new webpack.DefinePlugin({
       'process.env.GPXPARSE_COV': 0 // because of a bug in gpx-parse
     }),
-    new FriendlyErrorsPlugin()
   ],
   resolve: {
     alias: {
