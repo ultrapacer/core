@@ -6,7 +6,6 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const SitemapPlugin = require('sitemap-webpack-plugin').default
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 const BoostrapVueLoader = require('bootstrap-vue-loader')
-const autoprefixer = require('autoprefixer')
 const prettydata = require('pretty-data')
 const path = require('path')
 const webpack = require('webpack')
@@ -62,12 +61,16 @@ const config = {
         test: /\.s?css$/,
         use: [
           'style-loader',
-          MiniCssExtractPlugin.loader,
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              esModule: false
+            }
+          },
           'css-loader',
           {
             loader: 'postcss-loader',
             options: {
-              plugins: () => [autoprefixer()],
               sourceMap: true
             }
           },
@@ -76,15 +79,7 @@ const config = {
       },
       {
         test: /\.(png|jpe?g|gif|webm|mp4|svg)$/,
-        use: [{
-          loader: 'file-loader',
-          options: {
-            name: '[name].[ext]',
-            outputPath: 'public/img',
-            esModule: false
-          }
-        }
-        ]
+        type: 'asset/resource'
       },
       {
         test: /\.(js|vue)$/,
@@ -119,7 +114,7 @@ const config = {
     }),
     new webpack.DefinePlugin({
       'process.env.GPXPARSE_COV': 0 // because of a bug in gpx-parse
-    }),
+    })
   ],
   resolve: {
     alias: {
@@ -135,7 +130,7 @@ const config = {
       path: false,
       zlib: false,
       http: false,
-      stream:  require.resolve('stream/'),  // this one is used by xml2js for creation of gpx files
+      stream: require.resolve('stream/'), // this one is used by xml2js for creation of gpx files
       crypto: false,
       os: false,
       assert: false,
