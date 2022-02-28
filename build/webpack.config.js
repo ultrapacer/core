@@ -40,7 +40,8 @@ const config = {
     filename: '[name].[hash].js',
     path: path.resolve(__dirname, '../dist'),
     chunkFilename: '[name].[hash].js',
-    publicPath: '/'
+    publicPath: '/',
+    assetModuleFilename: 'public/img/[name][ext]'
   },
   module: {
     rules: [
