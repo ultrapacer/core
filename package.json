@@ -8,7 +8,7 @@
     "dev": "webpack-dev-server --mode development --hot --config build/webpack.config.js",
     "lint": "eslint --ext .js,.vue,.md,.html server.js src server build core",
     "lintfix": "eslint --ext .js,.vue,.md,.html --fix server.js src server build core",
-    "prebuild-a": "npm run buildcomponent1",
+    "prebuild": "npm run buildcomponent1",
     "build": "webpack --mode production --env mode=production --config build/webpack.config.js",
     "buildcomponent1": "vue-cli-service build  --target wc-async --name up-table --no-clean ./src/embed/UpTable.vue --dest temp/js",
     "analyzer": "webpack --mode production --env mode=production --env analyzer=on --config build/webpack.config.js"
@@ -48,7 +48,7 @@
     "@vue/compiler-sfc": "^3.2.31",
     "@vue/web-component-wrapper": "^1.3.0",
     "@yaska-eu/jsurl2": "^2.1.0",
-    "axios": "^0.21.1",
+    "axios": "^0.26.0",
     "babel-core": "^6.22.1",
     "babel-eslint": "^8.2.1",
     "babel-loader": "^8.1.0",

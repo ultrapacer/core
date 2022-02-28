@@ -141,7 +141,6 @@ const config = {
     }
   },
   optimization: {
-    //    moduleIds: 'hashed',  // depreciated
     runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all'
@@ -162,9 +161,6 @@ const config = {
       }
     }
   }
-  // node: {
-  //  fs: 'empty'
-  // }
 }
 module.exports = (env) => {
   if (env.mode === 'development') {
