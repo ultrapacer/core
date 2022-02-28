@@ -1,3 +1,6 @@
+// this is used by the vue cli; for the uP build process
+// this is just used for building the components; the build/webpack.config.js file
+// is used for building the main front-end
 module.exports = {
   configureWebpack: {
     resolve: {
