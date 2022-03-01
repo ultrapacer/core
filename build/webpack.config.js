@@ -2,12 +2,10 @@ const { VueLoaderPlugin } = require('vue-loader')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const SitemapPlugin = require('sitemap-webpack-plugin').default
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 const BoostrapVueLoader = require('bootstrap-vue-loader')
-const autoprefixer = require('autoprefixer')
 const prettydata = require('pretty-data')
 const path = require('path')
 const webpack = require('webpack')
@@ -42,35 +40,38 @@ const config = {
     filename: '[name].[hash].js',
     path: path.resolve(__dirname, '../dist'),
     chunkFilename: '[name].[hash].js',
-    publicPath: '/'
+    publicPath: '/',
+    assetModuleFilename: 'public/img/[name][ext]'
   },
   module: {
     rules: [
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader'
-        }
+        use: ['babel-loader']
       },
       {
         test: /\.vue$/,
-        loader: 'vue-loader'
+        use: ['vue-loader']
       },
       {
         test: /\.md$/,
-        loader: 'vue-loader!vue-md-loader'
+        use: ['vue-loader', 'vue-md-loader']
       },
       {
         test: /\.s?css$/,
         use: [
           'style-loader',
-          MiniCssExtractPlugin.loader,
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              esModule: false
+            }
+          },
           'css-loader',
           {
             loader: 'postcss-loader',
             options: {
-              plugins: () => [autoprefixer()],
               sourceMap: true
             }
           },
@@ -78,17 +79,8 @@ const config = {
         ]
       },
       {
-        test: /\.(eot|ttf|woff|woff2)(\?\S*)?$/,
-        loader: 'file-loader'
-      },
-      {
         test: /\.(png|jpe?g|gif|webm|mp4|svg)$/,
-        loader: 'file-loader',
-        options: {
-          name: '[name].[ext]',
-          outputPath: 'public/img',
-          esModule: false
-        }
+        type: 'asset/resource'
       },
       {
         test: /\.(js|vue)$/,
@@ -99,10 +91,21 @@ const config = {
           formatter: require('eslint-friendly-formatter'),
           emitWarning: true
         }
+      },
+      {
+        test: /\.(js|mjs)$/,
+        enforce: 'pre',
+        use: ['source-map-loader']
       }
     ]
   },
   plugins: [
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer']
+    }),
+    new webpack.ProvidePlugin({
+      process: 'process/browser'
+    }),
     new BoostrapVueLoader(),
     new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
@@ -117,18 +120,33 @@ const config = {
     }),
     new webpack.DefinePlugin({
       'process.env.GPXPARSE_COV': 0 // because of a bug in gpx-parse
-    }),
-    new FriendlyErrorsPlugin()
+    })
   ],
   resolve: {
     alias: {
       vue$: 'vue/dist/vue.esm.js',
-      '@': resolve('src')
+      '@': resolve('src'),
+      'process/browser': 'process/browser.js' // this fixes issue with html2pdf.js
     },
-    extensions: ['*', '.js', '.vue', '.json']
+    extensions: ['*', '.js', '.vue', '.json'],
+    fallback: {
+      fs: false,
+      tls: false,
+      net: false,
+      path: false,
+      zlib: false,
+      http: false,
+      stream: require.resolve('stream/'), // this one is used by xml2js for creation of gpx files
+      crypto: false,
+      os: false,
+      assert: false,
+      url: false,
+      timers: false,
+      https: false,
+      util: require.resolve('util/')
+    }
   },
   optimization: {
-    moduleIds: 'hashed',
     runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all'
@@ -148,17 +166,14 @@ const config = {
         target: 'http://localhost:8080'
       }
     }
-  },
-  node: {
-    fs: 'empty'
   }
 }
-module.exports = (env, argv) => {
-  if (argv.mode === 'development') {
+module.exports = (env) => {
+  if (env.mode === 'development') {
     config.devtool = 'eval-cheap-module-source-map'
 
     // if running in development with front end only, proxy the api to actual server
-    if (argv.serverless) {
+    if (env.serverless) {
       Object.assign(
         config.devServer.proxy['/api'],
         {
@@ -168,25 +183,30 @@ module.exports = (env, argv) => {
       )
     }
   }
-  if (argv.mode === 'production') {
+  if (env.mode === 'production') {
     config.output.filename = 'public/js/[name].[contenthash:8].js'
     config.output.chunkFilename = 'public/js/[name].[contenthash:8].js'
     config.plugins.push(
-      new CopyWebpackPlugin([
-        {
-          from: path.resolve(__dirname, '../static'),
-          to: path.resolve(__dirname, '../dist/public'),
-          ignore: ['.*']
-        },
-        // copy over rendered web component javascript:
-        {
-          from: path.resolve(__dirname, '../temp'),
-          to: path.resolve(__dirname, '../dist/public/components'),
-          ignore: ['.*', '*.html']
-        }
-      ])
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: path.resolve(__dirname, '../static'),
+            to: path.resolve(__dirname, '../dist/public'),
+            globOptions: {
+              ignore: ['.*']
+            }
+          },
+          // copy over rendered web component javascript:
+          {
+            from: path.resolve(__dirname, '../temp'),
+            to: path.resolve(__dirname, '../dist/public/components'),
+            globOptions: {
+              ignore: ['.*', '*.html']
+            }
+          }
+        ]
+      })
     )
-
     // compile sitemap with all documentation:
     const paths = ['', 'races', 'docs']
     const docs = require('../src/docs/.config').docs
@@ -202,7 +222,7 @@ module.exports = (env, argv) => {
         }
       })
     )
-    if (argv.analyzer === 'on') {
+    if (env.analyzer === 'on') {
       config.plugins.push(
         new BundleAnalyzerPlugin()
       )

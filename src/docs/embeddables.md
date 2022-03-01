@@ -4,7 +4,6 @@ Add in the following code:
     <html>
       <head>
         ...
-        <script src="https://cdn.jsdelivr.net/npm/vue@2.6.13"></script>
         <script src="https://ultrapacer.com/public/components/js/up-table.min.js"></script>
         ...
       </head>
