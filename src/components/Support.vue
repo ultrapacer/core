@@ -21,7 +21,7 @@
         <p>
           If you've benefitted from ultraPacer, please consider reciprocating by
           supporting the project. I can take donations via "Buy me a coffee" (preferred),
-          or otherwise by Patreon membership and Paypal donations. The
+          or otherwise by Patreon, Paypal, & Venmo donations. The
           "Buy me a coffee" link below provides support via a one-time donation or as
           a monthly membership. Please use the same email
           address as your ultraPacer login so I can associate your donation.
@@ -52,7 +52,6 @@
         >
           <b-button
             variant="primary"
-            class="mr-2"
             @click="goToPaypal"
           >
             <v-icon name="brands/paypal" />
@@ -60,7 +59,14 @@
           </b-button>
           <b-button
             variant="primary"
-            class="ml-2"
+            class="ml-2 mr-2"
+            @click="goToVenmo"
+          >
+            <v-icon name="venmo" />
+            Venmo
+          </b-button>
+          <b-button
+            variant="primary"
             @click="goToPatreon"
           >
             <v-icon name="brands/patreon" />
@@ -182,6 +188,11 @@ export default {
       this.logger.child({ method: 'goToPaypal' }).info('execute')
       this.$refs.paypalForm.submit()
       this.$gtag.event('visit', { event_category: 'Paypal' })
+    },
+    async goToVenmo () {
+      this.logger.child({ method: 'goToVenmo' }).info('execute')
+      window.open('https://www.venmo.com/u/ultrapacer', '_blank')
+      this.$gtag.event('visit', { event_category: 'Venmo' })
     },
     async snoozeReminder (delay) {
       const logger = this.logger.child({ method: 'snoozeReminder' })
