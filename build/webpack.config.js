@@ -91,6 +91,11 @@ const config = {
           formatter: require('eslint-friendly-formatter'),
           emitWarning: true
         }
+      },
+      {
+        test: /\.(js|mjs)$/,
+        enforce: 'pre',
+        use: ['source-map-loader']
       }
     ]
   },
