@@ -1,8 +1,8 @@
 steps:
-- name: node:14.10.0
+- name: node
   entrypoint: npm
   args: ["install"]
-- name: node:14.10.0
+- name: node
   entrypoint: npm
   args: ["run", "build"]
   secretEnv: ['GOOGLE_ANALYTICS_KEY', 'THUNDERFOREST_API_KEY', 'AUTH0_DOMAIN', 'AUTH0_CLIENT_ID', 'AUTH0_AUDIENCE']

@@ -105,7 +105,7 @@
     "webpack-dev-server": "^4.7.4"
   },
   "engines": {
-    "nodejs14": ">= 14.0.0",
+    "nodejs16": ">= 16.0.0",
     "npm": ">= 3.0.0"
   },
   "browserslist": [
