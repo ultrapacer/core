@@ -19,7 +19,7 @@ router.auth.route('/').post(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
-    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const user = await getCurrentUser(req)
     const course = new Course(req.body)
     course._user = user // depreciated 2021.10.22
     course._users = [user]
@@ -462,7 +462,7 @@ async function getcourseGroupList (res, groupId, user = {}) {
   return courses
 }
 
-// function returns user and course based on req.params.id && req.user.sub
+// function returns user and course based on req fields
 async function getUserAndCourse (req, userFields = [], courseFields = []) {
   // add admin field to requested userFields
   userFields = [...userFields, 'admin']

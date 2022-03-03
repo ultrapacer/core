@@ -1,14 +1,14 @@
 // planRoutes.js
 const express = require('express')
 const planRoutes = express.Router()
-const User = require('../models/User')
 const Plan = require('../models/Plan')
+const { getCurrentUser } = require('../util')
 
 // SAVE NEW
 planRoutes.route('/').post(async function (req, res) {
   try {
     const plan = new Plan(req.body)
-    plan._user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    plan._user = await getCurrentUser(req)
     await plan.save()
     if (!plan._user._courses.find(x => plan._course.equals(x))) {
       plan._user._courses.push(plan._course)
@@ -26,7 +26,7 @@ planRoutes.route('/:id').get(async function (req, res) {
   try {
     const [plan, user] = await Promise.all([
       Plan.findById(req.params.id).populate([{ path: '_course', select: 'public' }]).exec(),
-      User.findOne({ auth0ID: req.user.sub }).select('admin').exec()
+      getCurrentUser(req, 'admin')
     ])
     if (plan._course.public || user.admin || user.equals(plan._user)) {
       res.json(plan)
@@ -43,7 +43,7 @@ planRoutes.route('/:id').get(async function (req, res) {
 planRoutes.route('/:id').put(async function (req, res) {
   try {
     const [user, plan] = await Promise.all([
-      User.findOne({ auth0ID: req.user.sub }).select('admin').exec(),
+      getCurrentUser(req, 'admin'),
       Plan.findById(req.params.id).select('_user').exec()
     ])
     if (user.admin || user.equals(plan._user)) {
@@ -71,7 +71,7 @@ planRoutes.route('/:id').put(async function (req, res) {
 // DELETE
 planRoutes.route('/:id').delete(async function (req, res) {
   try {
-    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const user = await getCurrentUser(req)
     const plan = await Plan.findById(req.params.id).select('_user').exec()
     if (user.equals(plan._user)) {
       await plan.remove()

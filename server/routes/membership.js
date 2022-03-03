@@ -9,6 +9,7 @@ const url = require('url')
 const { getSecret } = require('../secrets')
 const logger = require('winston').child({ file: 'membership.js' })
 const { routeName } = require('../util')
+const { getCurrentUser } = require('../util')
 
 const BMC = require('buymeacoffee.js') // add BMC package
 
@@ -16,7 +17,7 @@ const BMC = require('buymeacoffee.js') // add BMC package
 router.auth.route('/members/refresh').get(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
-    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const user = await getCurrentUser(req)
     if (!user.admin) {
       log.warn('No permission')
       res.status(403).send('No permission')
@@ -171,7 +172,7 @@ function getRedirect (host) {
 }
 
 router.auth.route('/patreon/url').get(async function (req, res) {
-  const user = await User.findOne({ auth0ID: req.user.sub }).select('admin').exec()
+  const user = await getCurrentUser(req, 'admin')
   const scopes = ['identity', 'identity[email]']
   if (user.admin) scopes.push('campaigns', 'campaigns.members', 'campaigns.members[email]')
 
@@ -209,7 +210,7 @@ router.auth.route('/patreon/user/:code').put(async function (req, res) {
     })
     const { rawJson } = await apiClient(apiurl)
     const { id } = rawJson.data
-    const user = await User.findOne({ auth0ID: req.user.sub }).exec()
+    const user = await getCurrentUser(req)
     user.set('membership.patreon', { id: id, token: accessToken })
     const isMember = Boolean(
       rawJson?.included?.length &&

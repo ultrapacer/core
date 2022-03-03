@@ -10,8 +10,7 @@ const waypointRoutes = require('./server/routes/waypointRoutes')
 const planRoutes = require('./server/routes/planRoutes')
 const publicRoutes = require('./server/routes/publicRoutes')
 const external = require('./server/routes/external')
-const jwt = require('express-jwt')
-const jwksRsa = require('jwks-rsa')
+const { auth } = require('express-oauth2-jwt-bearer')
 const membership = require('./server/routes/membership')
 const { getSecret } = require('./server/secrets')
 const logger = require('./server/log').child({ file: 'server.js' })
@@ -40,17 +39,9 @@ async function startUp () {
   app.use(cors())
   app.use(bodyParser.json({ limit: '50mb' }))
 
-  const checkJwt = jwt({
-    secret: jwksRsa.expressJwtSecret({
-      cache: true,
-      rateLimit: true,
-      jwksRequestsPerMinute: 5,
-      jwksUri: `https://${keys.AUTH0_DOMAIN}/.well-known/jwks.json`
-    }),
-
+  const checkJwt = auth({
     audience: keys.AUTH0_AUDIENCE,
-    issuer: `https://${keys.AUTH0_DOMAIN}/`,
-    algorithm: ['RS256']
+    issuerBaseURL: `https://${keys.AUTH0_DOMAIN}/`
   })
 
   app.use('/api/user', checkJwt, userRoutes)

@@ -3,7 +3,7 @@ const userRoutes = express.Router()
 const User = require('../models/User')
 const Course = require('../models/Course')
 const Plan = require('../models/Plan')
-const { isValidObjectId, getCurrentUser, getUser, routeName } = require('../util')
+const { isValidObjectId, getCurrentUser, getCurrentUserQuery, getUser, routeName } = require('../util')
 const logger = require('winston').child({ file: 'userRoutes.js' })
 
 // GET
@@ -11,14 +11,13 @@ userRoutes.route('/').get(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   log.verbose('run')
   try {
+    const query = getCurrentUserQuery(req)
     let user = await User.findOneAndUpdate(
-      { auth0ID: req.user.sub },
+      query,
       { last_login: new Date() }
     ).exec()
     if (user == null) {
-      user = new User({
-        auth0ID: req.user.sub
-      })
+      user = new User(query)
       log.info('creating new user')
       await user.save()
     }
@@ -70,7 +69,7 @@ userRoutes.route('/:id').put(async function (req, res) {
     // get user to update and currentUser (logged in)
     const [user, currentUser] = await Promise.all([
       User.findOne(q).exec(),
-      User.findOne({ auth0ID: req.user.sub }).select(['admin']).exec()
+      getCurrentUser(req, 'admin')
     ])
 
     if (currentUser.admin || user.equals(currentUser)) {

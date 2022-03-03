@@ -2,6 +2,10 @@ const ObjectId = require('mongoose').Types.ObjectId
 const User = require('./models/User')
 const logger = require('winston').child({ file: 'util.js' })
 
+function getCurrentUserQuery (req) {
+  return { auth0ID: req.auth.payload.sub }
+}
+
 function isValidObjectId (id) {
   if (ObjectId.isValid(id)) {
     if ((String)(new ObjectId(id)) === id) { return true }
@@ -11,7 +15,8 @@ function isValidObjectId (id) {
 }
 
 async function getCurrentUser (req, fields) {
-  const q = User.findOne({ auth0ID: req.user.sub })
+  const query = getCurrentUserQuery(req)
+  const q = User.findOne(query)
   if (fields) q.select(fields)
   return await q.exec()
 }
@@ -37,5 +42,6 @@ function routeName (req) {
 
 module.exports.isValidObjectId = isValidObjectId
 module.exports.getCurrentUser = getCurrentUser
+module.exports.getCurrentUserQuery = getCurrentUserQuery
 module.exports.getUser = getUser
 module.exports.routeName = routeName
