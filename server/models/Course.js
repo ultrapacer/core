@@ -139,6 +139,12 @@ const CourseSchema = new Schema({
     set: v => Math.round(v >= 1 ? v : 1) // ensure integer >= 1
   },
 
+  // group
+  group: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CourseGroup'
+  },
+
   // flag for whether course is for an organized race
   race: {
     type: Boolean,
@@ -160,7 +166,7 @@ CourseSchema.virtual('meta.deletable')
 CourseSchema.set('toJSON', { virtuals: true })
 CourseSchema.set('toObject', { virtuals: true })
 
-CourseSchema.methods.addData = async function (user = null, plan = null) {
+CourseSchema.methods.addData = async function (user = null) {
   logger.info(`Course addData for ${this._id}`)
   // adds waypoints, plans, altitude model, and selected plan to course object
   if (user) {
@@ -173,11 +179,6 @@ CourseSchema.methods.addData = async function (user = null, plan = null) {
     this.waypoints = await Waypoint.find({ _course: this }).sort('location').exec()
     this.plans = []
     this.altModel = null
-  }
-  if (plan) {
-    this._plan = plan
-  } else {
-    this._plan = null
   }
 
   if (!this.loops) this.loops = 1
@@ -266,8 +267,8 @@ CourseSchema.methods.isPermitted = function (permission, user) {
   const res = (
     (permission === 'view' && this.public) ||
     user.admin ||
-    user.equals(this._user) || // depreciated 2021.10.22
-    this._users?.find(u => user.equals(u))
+    user.equals?.(this._user) || // depreciated 2021.10.22
+    this._users?.find(u => user.equals?.(u))
   )
   logger.child({ method: 'isPermitted' }).info(res)
   return res

@@ -1,6 +1,7 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const Course = require('../models/Course')
+const CourseGroup = require('../models/CourseGroup')
 const User = require('../models/User')
 const Plan = require('../models/Plan')
 const Waypoint = require('../models/Waypoint')
@@ -8,10 +9,13 @@ const shallowEqual = require('../../core/util/shallow-equal')
 const { isValidObjectId, getCurrentUser, routeName } = require('../util')
 const logger = require('winston').child({ file: 'courseRoutes.js' })
 
-const courseRoutes = express.Router()
+const router = {
+  auth: express.Router(), // authenticated
+  open: express.Router() // unauthenticated
+}
 
 // SAVE NEW
-courseRoutes.route('/').post(async function (req, res) {
+router.auth.route('/').post(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
@@ -57,7 +61,7 @@ courseRoutes.route('/').post(async function (req, res) {
 })
 
 // GET COURSES
-courseRoutes.route('/').get(async function (req, res) {
+router.auth.route('/').get(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
@@ -104,7 +108,7 @@ courseRoutes.route('/').get(async function (req, res) {
 })
 
 // UPDATE
-courseRoutes.route('/:id').put(async function (req, res) {
+router.auth.route('/:id').put(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
@@ -142,7 +146,7 @@ courseRoutes.route('/:id').put(async function (req, res) {
 })
 
 // DELETE COURSE OR REMOVE COURSE FROM USER
-courseRoutes.route('/:id').delete(async function (req, res) {
+router.auth.route('/:id').delete(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
@@ -185,7 +189,7 @@ courseRoutes.route('/:id').delete(async function (req, res) {
 })
 
 // GET COURSE
-courseRoutes.route(['/:id', '/link/:id']).get(async function (req, res) {
+router.auth.route(['/:id', '/link/:id']).get(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
@@ -209,7 +213,7 @@ courseRoutes.route(['/:id', '/link/:id']).get(async function (req, res) {
 })
 
 // GET COURSE FIELD
-courseRoutes.route('/:id/field/:field').get(async function (req, res) {
+router.auth.route('/:id/field/:field').get(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
@@ -227,7 +231,7 @@ courseRoutes.route('/:id/field/:field').get(async function (req, res) {
 })
 
 // GET WAYPOINT LIST
-courseRoutes.route('/:id/waypoints').get(async function (req, res) {
+router.auth.route('/:id/waypoints').get(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
@@ -245,7 +249,7 @@ courseRoutes.route('/:id/waypoints').get(async function (req, res) {
 })
 
 // GET PLAN LIST
-courseRoutes.route('/:id/plans').get(async function (req, res) {
+router.auth.route('/:id/plans').get(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
@@ -264,7 +268,7 @@ courseRoutes.route('/:id/plans').get(async function (req, res) {
 })
 
 // COPY COURSE
-courseRoutes.route('/:id/copy').put(async function (req, res) {
+router.auth.route('/:id/copy').put(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
@@ -301,7 +305,7 @@ courseRoutes.route('/:id/copy').put(async function (req, res) {
 })
 
 // MODIFY COURSE USERS (OWNERS)
-courseRoutes.route('/:id/user/:action/:userId').put(async function (req, res) {
+router.auth.route('/:id/user/:action/:userId').put(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
@@ -346,6 +350,118 @@ courseRoutes.route('/:id/user/:action/:userId').put(async function (req, res) {
   }
 })
 
+// GROUP ADD
+router.auth.route(['/:id/group/add/course/:course', '/:id/group/add/group/:group']).put(async function (req, res) {
+  // params.id: ungrouped course database id or race link
+  // params.course: other course database id or race link to group with
+  // params.group: group database id
+
+  const log = logger.child({ method: routeName(req) })
+  try {
+    log.info('run')
+    const { user, course } = await getUserAndCourse(req, [], ['group'])
+
+    // make sure we have permission:
+    if (!course.isPermitted('modify', user)) {
+      log.warn('No permission')
+      res.status(403).send('No permission')
+      return
+    }
+
+    // make sure course isn't already in a group
+    if (course.group) {
+      const warn = `Course ${req.params.id} is already in a group.`
+      log.warn(warn)
+      res.status(400).send(warn)
+      return
+    }
+
+    let courseGroup
+
+    // if assigning by a group id:
+    if (req.params.group) {
+      log.verbose(`Finding course group by id: ${req.params.group}`)
+
+      courseGroup = await CourseGroup.findOne({ _id: req.params.group }).exec()
+
+      if (!courseGroup) {
+        const warn = `Course group ${req.params.group} not found.`
+        log.warn(warn)
+        res.status(404).send(warn)
+        return
+      }
+
+      // if assigning by a course id:
+    } else if (req.params.course) {
+      log.verbose(`Finding course group by course: ${req.params.course}`)
+
+      const { course: course2 } = await getUserAndCourse({ params: { id: req.params.course }, user: req.user }, [], ['group'])
+      if (!course2) {
+        const warn = `Course ${req.params.course} not found.`
+        log.warn(warn)
+        res.status(404).send(warn)
+        return
+      } else if (!course2.isPermitted('modify', user)) {
+        log.warn('No permission')
+        res.status(403).send('No permission')
+        return
+      }
+
+      // first see if other course has a group already:
+      if (course2.group) {
+        courseGroup = course2.group
+      } else {
+        courseGroup = new CourseGroup()
+        await courseGroup.save()
+        course2.group = courseGroup
+        await course2.save()
+        log.verbose(`Created new course group: ${courseGroup._id} with course ${course2._id}.`)
+      }
+    }
+
+    // finally, add our course to group
+    course.group = courseGroup
+    await course.save()
+
+    const msg = `Added course ${req.params.id} to course group ${courseGroup._id}.`
+    log.info(msg)
+    res.status(200).send(msg)
+  } catch (err) {
+    log.error(err)
+    res.status(500).send(err)
+  }
+})
+
+// GET LIST OF COURSES IN GROUP:
+router.auth.route('/group/:id/list').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  try {
+    log.info('run')
+    const user = await getCurrentUser(req)
+    const courses = await getcourseGroupList(res, req.params.id, user)
+    res.status(200).json(courses)
+  } catch (error) {
+    log.error(error.stack || error)
+    res.status(500).send(error)
+  }
+})
+router.open.route('/group/:id/list').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  try {
+    log.info('run')
+    const courses = await getcourseGroupList(res, req.params.id)
+    res.status(200).json(courses)
+  } catch (error) {
+    log.error(error.stack || error)
+    res.status(500).send(error)
+  }
+})
+async function getcourseGroupList (res, groupId, user = {}) {
+  let courses = await Course.find({ group: groupId }).select(['name', '_user', '_users', 'public', 'eventStart']).sort('-eventStart').exec()
+  courses = courses.filter(c => c.isPermitted('view', user))
+  return courses
+}
+
 // function returns user and course based on req.params.id && req.user.sub
 async function getUserAndCourse (req, userFields = [], courseFields = []) {
   // add admin field to requested userFields
@@ -376,4 +492,4 @@ async function getUserAndCourse (req, userFields = [], courseFields = []) {
   return { user: user, course: course }
 }
 
-module.exports = courseRoutes
+module.exports = router

@@ -230,11 +230,15 @@ Vue.prototype.$alert = Vue.observable({
   show: function (message, options = {}) {
     this.message = message
     this.variant = options.variant || 'primary'
+    this.click = options.click ? () => { options.click(); this.timer = 0 } : () => {}
+    this.class = options.click ? 'alert-link' : ''
     this.timer = options.timer || 5
   },
   message: '',
   timer: 0,
-  variant: ''
+  variant: '',
+  click: () => {},
+  class: ''
 })
 
 //  -----  VUE FILTERS  -----  //

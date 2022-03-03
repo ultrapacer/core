@@ -371,6 +371,32 @@
         No Pace Drift
       </p>
     </b-list-group-item>
+    <b-list-group-item v-if="courseGroupList.length > 1">
+      <h5 class="mb-1">
+        Grouped/Prior Courses
+      </h5>
+      <ul>
+        <li
+          v-for="c in courseGroupList"
+          :key="c._id"
+        >
+          <router-link
+            v-if="c._id !== course._id"
+            :to="{
+              name: 'Course',
+              params: {
+                course: c._id
+              }
+            }"
+          >
+            {{ formatCourseName(c, courseGroupList) }}
+          </router-link>
+          <span v-else>
+            {{ formatCourseName(c, courseGroupList) }}
+          </span>
+        </li>
+      </ul>
+    </b-list-group-item>
   </b-list-group>
 </template>
 
@@ -402,6 +428,10 @@ export default {
     course: {
       type: Object,
       required: true
+    },
+    courseGroupList: {
+      type: Array,
+      default: () => { return [] }
     },
     event: {
       type: Object,
@@ -598,7 +628,12 @@ export default {
       return sec2string(s, f)
     },
     gF: function (grade) { return this.$core.nF.gF(grade * (grade > 0 ? this.course.gainScale : this.course.lossScale)) },
-    aF: function (alt) { return this.$core.nF.aF(alt, this.course.altModel) }
+    aF: function (alt) { return this.$core.nF.aF(alt, this.course.altModel) },
+    formatCourseName (course, courses) {
+      const i = courses.findIndex(c => c._id === course._id)
+      if (i === 0) return course.name
+      return `${course.name} [${moment(course.eventStart).format('YYYY')}]`
+    }
   }
 }
 </script>

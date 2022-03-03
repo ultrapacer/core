@@ -115,7 +115,12 @@
       fade
       @dismissed="$alert.timer=0"
     >
-      <b>{{ $alert.message }}</b>
+      <div
+        :class="$alert.class"
+        @click="$alert.click"
+      >
+        <b>{{ $alert.message }}</b>
+      </div>
     </b-alert>
   </div>
 </template>
@@ -161,7 +166,10 @@ export default {
       }
     },
     '$course.mode': function () { this.refreshNavGuard() },
-    '$status.processing': function () { this.refreshNavGuard() }
+    '$status.processing': function () { this.refreshNavGuard() },
+    $route (to, from) {
+      this.$alert.timer = 0
+    }
   },
   async created () {
     try {
@@ -366,4 +374,9 @@ th {
 .vld-overlay.is-full-page {
   z-index: 1055 !important;
 }
+.alert-link {
+  padding: 0 !important;
+  cursor:pointer
+}
+
 </style>

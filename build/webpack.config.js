@@ -166,7 +166,10 @@ const config = {
         target: 'http://localhost:8080'
       }
     }
-  }
+  },
+
+  // TEMPORARY -- to silence warning due to html2pdf.js 0.10.1
+  ignoreWarnings: [/Failed to parse source map/]
 }
 module.exports = (env) => {
   if (env.mode === 'development') {

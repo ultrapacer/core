@@ -54,7 +54,8 @@ async function startUp () {
   })
 
   app.use('/api/user', checkJwt, userRoutes)
-  app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes)
+  app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes.auth)
+  app.use('/api/open/course', courseRoutes.open)
   app.use('/api/waypoint', checkJwt, waypointRoutes)
   app.use('/api/plan', checkJwt, planRoutes)
   app.use('/api/elevation', elevation)

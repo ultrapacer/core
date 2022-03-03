@@ -7,6 +7,17 @@ const client = axios.create({
 })
 
 export default {
+  async executeAuthOrOpen (method, resource, data) {
+    // function will call the api via authenticted path if authenticated
+    // or otherwise via the open path
+    if (Vue.prototype.$auth.isAuthenticated()) {
+      resource = `/api/${resource}`
+      return this.executeAuth(method, resource, data)
+    } else {
+      resource = `/api/open/${resource}`
+      return this.execute(method, resource, data)
+    }
+  },
   async executeAuth (method, resource, data) {
     const log = logger.child({ method: 'executeAuth' })
     log.info(`${resource} initiated`)
@@ -82,6 +93,16 @@ export default {
   },
   modifyCourseUsers (id, action, user) {
     return this.executeAuth('put', `/api/course/${id}/user/${action}/${user}`)
+  },
+  addCourseToGroup (id, refType, refId) {
+    // id: course id or link
+    // refType: either 'course' or 'group'
+    // refId: id of either course or group ref
+    return this.executeAuth('put', `/api/course/${id}/group/add/${refType}/${refId}`)
+  },
+  getCoursesInGroup (id) {
+    // id: course group id
+    return this.executeAuthOrOpen('get', `course/group/${id}/list`)
   },
   getWaypoints (courseID) {
     return this.executeAuth('get', `/api/course/${courseID}/waypoints`)

@@ -10,7 +10,7 @@
         <h3
           style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center"
         >
-          {{ course.name }}
+          {{ courseName }}
         </h3>
       </b-col>
       <b-col
@@ -240,6 +240,7 @@
             <plan-details
               ref="planDetails"
               :course="course"
+              :course-group-list="courseGroupList"
               :terrain-factors="terrainFactors"
               :event="event"
               :plan="plan"
@@ -397,6 +398,7 @@ export default {
     return {
       saving: false,
       course: {},
+      courseGroupList: [],
       event: new this.$core.events.Event({}),
       logger: this.$log.child({ file: 'Course.vue' }),
       plan: {},
@@ -593,6 +595,20 @@ export default {
     },
     pointsReady: function () {
       return Boolean(!this.$status.loading && this.course.points?.length)
+    },
+    courseName: function () {
+      try {
+        if (
+          !this.courseGroupList.length ||
+        this.courseGroupList.findIndex(c => c._id === this.course._id) === 0
+        ) {
+          return this.course.name
+        }
+        return `${this.course.name} [${moment(this.course.eventStart).format('YYYY')}]`
+      } catch (error) {
+        this.logger.child({ method: 'courseName' }).error(error.stack || error, { error: error })
+        return ''
+      }
     }
   },
   watch: {
@@ -636,6 +652,10 @@ export default {
         }
         this.updateFlag = false
       }
+    },
+    $route (to, from) {
+      // reload course on url change
+      if (to.params.course !== from.params.course) { this.initialize() }
     }
   },
   async created () {
@@ -776,7 +796,10 @@ export default {
           }, 1000)
         }
 
-        log.info('comlete')
+        // populate course group list:
+        this.getCourseGroupList()
+
+        log.info('complete')
       } catch (error) {
         this.$error.handle(error, 'Course|initialize', true)
         this.$status.processing = false
@@ -1444,6 +1467,35 @@ export default {
         this.$refs.emailOwner.show()
       } else {
         this.$parent.login({ after: 'emailOwner' })
+      }
+    },
+    async getCourseGroupList () {
+      const log = this.logger.child({ method: 'getCourseGroupList' })
+      try {
+        log.info('run')
+        if (this.course.group) {
+          this.courseGroupList = await this.$api.getCoursesInGroup(this.course.group)
+          const i = this.courseGroupList.findIndex(c => this.course._id === c._id)
+          console.log(i)
+
+          if (i > 0) {
+            log.info('Showing newer course alert.')
+            const route = { name: 'Course', params: { course: this.courseGroupList[0]._id } }
+            this.$alert.show(
+              'A newer course is available. Click here to go.',
+              {
+                variant: 'warning',
+                timer: 8,
+                click: () => {
+                  log.info('Navigating to new course.')
+                  this.$router.replace(route)
+                }
+              }
+            )
+          }
+        }
+      } catch (error) {
+        log.error(error.stack || error, { error: error })
       }
     }
   }
