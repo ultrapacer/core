@@ -114,7 +114,7 @@ router.auth.route('/').get(async function (req, res) {
       ]
     }
     const courses = await Course.find(q)
-      .select(['name', 'distance', 'gain', 'loss', 'loops', 'override', 'link', '_user', '_users'])
+      .select(['name', 'distance', 'gain', 'loss', 'loops', 'override', 'link', '_user', '_users', 'group', 'eventStart'])
       .exec()
     log.info(`${courses.length} courses found`)
 

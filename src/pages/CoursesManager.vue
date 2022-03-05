@@ -116,6 +116,7 @@
 
 <script>
 import api from '@/api'
+import moment from 'moment-timezone'
 import DeleteModal from '../components/DeleteModal'
 export default {
   title: 'My Courses',
@@ -132,7 +133,14 @@ export default {
           class: 'text-truncate coursetitlecolumn',
           key: 'name',
           label: 'Name',
-          sortable: true
+          sortable: true,
+          formatter: (value, key, item) => {
+            if (item.group && item.eventStart) {
+              return `${item.name} [${moment(item.eventStart).format('YYYY')}]`
+            } else {
+              return item.name
+            }
+          }
         },
         {
           key: 'distance',
