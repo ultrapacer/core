@@ -92,7 +92,7 @@
     "vue-headful": "^2.1.0",
     "vue-loader": "^15.9.8",
     "vue-loading-overlay": "^3.4.2",
-    "vue-md-loader": "^1.1.10",
+    "vue-md-loader": "^2.0.2",
     "vue-page-title": "^1.2.4",
     "vue-style-loader": "^3.0.1",
     "vue-template-babel-compiler": "^1.1.3",
