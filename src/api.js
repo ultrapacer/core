@@ -7,10 +7,10 @@ const client = axios.create({
 })
 
 export default {
-  async executeAuthOrOpen (method, resource, data) {
+  async executeAuthOrOpen (method, resource, data, tryAuth = true) {
     // function will call the api via authenticted path if authenticated
     // or otherwise via the open path
-    if (Vue.prototype.$auth.isAuthenticated()) {
+    if (tryAuth && Vue.prototype.$auth.isAuthenticated()) {
       resource = `/api/${resource}`
       return this.executeAuth(method, resource, data)
     } else {
@@ -66,18 +66,10 @@ export default {
   },
   async getCourse (id, key = 'course') {
     const sub = (key === 'course') ? '' : key + '/'
-    if (Vue.prototype.$auth.isAuthenticated()) {
-      return this.executeAuth('get', `/api/course/${sub}${id}`)
-    } else {
-      return this.execute('get', `/api-public/course/${sub}${id}`)
-    }
+    return this.executeAuthOrOpen('get', `course/${sub}${id}`)
   },
   async getCourseField (id, field, tryAuth = true) {
-    if (tryAuth && Vue.prototype.$auth.isAuthenticated()) {
-      return this.executeAuth('get', `/api/course/${id}/field/${field}`)
-    } else {
-      return this.execute('get', `/api-public/course/${id}/field/${field}`)
-    }
+    return this.executeAuthOrOpen('get', `course/${id}/field/${field}`, {}, tryAuth)
   },
   createCourse (data) {
     return this.executeAuth('post', '/api/courses', data)
@@ -103,6 +95,9 @@ export default {
   getCoursesInGroup (id) {
     // id: course group id
     return this.executeAuthOrOpen('get', `course/group/${id}/list`)
+  },
+  getTrack (id) {
+    return this.executeAuthOrOpen('get', `track/${id}`)
   },
   getWaypoints (courseID) {
     return this.executeAuth('get', `/api/course/${courseID}/waypoints`)
@@ -137,9 +132,6 @@ export default {
   },
   batch (data) {
     return this.executeAuth('post', '/api/batch/', data)
-  },
-  isPublic (type, id) {
-    return this.execute('get', `/api-public/ispublic/${type}/${id}`)
   },
   courseUserCount (id) {
     return this.execute('get', `/api-public/course/${id}/countusers`)

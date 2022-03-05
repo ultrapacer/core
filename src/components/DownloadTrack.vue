@@ -162,7 +162,7 @@ export default {
             lon: this.$math.round(p.lon, 8)
           }
         }
-        if (!this.course.source || this.course.source.alt !== 'google') {
+        if (this.course.db?.track?.source?.alt !== 'google') {
           o.ele = this.$math.round(p.alt, 2)
         }
         if (this.hasTime) {
@@ -203,7 +203,7 @@ export default {
           },
           DistanceMeters: this.$math.round(p.loc * 1000, 2)
         }
-        if (this.course.source && this.course.source.alt !== 'google') {
+        if (this.course.db?.track?.source?.alt !== 'google') {
           o.AltitudeMeters = this.$math.round(p.alt, 2)
         }
         if (this.hasTime) {
@@ -227,7 +227,7 @@ export default {
             LongitudeDegrees: this.$math.round(s.waypoint.lon, 8)
           }
         }
-        if (this.course.source && this.course.source.alt !== 'google') {
+        if (this.course.db?.track?.source?.alt !== 'google') {
           o.AltitudeMeters = this.$math.round(s.waypoint.alt, 2)
         }
         if (this.hasTime) {

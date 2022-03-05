@@ -95,6 +95,7 @@
     "vue-md-loader": "^1.1.10",
     "vue-page-title": "^1.2.4",
     "vue-style-loader": "^3.0.1",
+    "vue-template-babel-compiler": "^1.1.3",
     "vue-template-compiler": "^2.6.14",
     "vue-the-mask": "^0.11.1",
     "vue2-leaflet": "^2.7.1",

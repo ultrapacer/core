@@ -13,11 +13,11 @@
         The <b>{{ course.name }}</b> course covers <b>{{ $units.distf(course.scaledDist, 1) }} {{ $units.dist }}</b> with <b>{{ $units.altf(course.scaledGain, 0) | commas }} {{ $units.alt }}</b> of climbing.
       </span>
       <span
-        v-if="course.source.alt"
+        v-if="course.db.track?.source?.alt"
         class="mb-0"
       >
         <br>
-        Elevation data is {{ elevationDatasets[course.source.alt] }}.
+        Elevation data is {{ elevationDatasets[course.db.track.source.alt] }}.
       </span>
       <span
         v-if="userCount > 9"
@@ -631,7 +631,7 @@ export default {
     aF: function (alt) { return this.$core.nF.aF(alt, this.course.altModel) },
     formatCourseName (course, courses) {
       const i = courses.findIndex(c => c._id === course._id)
-      if (i === 0) return course.name
+      if (i === 0 || !course.eventStart) return course.name
       return `${course.name} [${moment(course.eventStart).format('YYYY')}]`
     }
   }

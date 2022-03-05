@@ -4,6 +4,8 @@ const Course = require('../models/Course')
 const CourseGroup = require('../models/CourseGroup')
 const User = require('../models/User')
 const Plan = require('../models/Plan')
+const Track = require('../models/Track')
+const Points = require('../models/Points')
 const Waypoint = require('../models/Waypoint')
 const shallowEqual = require('../../core/util/shallow-equal')
 const { isValidObjectId, getCurrentUser, routeName } = require('../util')
@@ -14,49 +16,82 @@ const router = {
   open: express.Router() // unauthenticated
 }
 
+// utliity function to reformat points array for database insertion
+function reformatPoints (points) {
+  return {
+    lat: points.map(x => x[0]),
+    lon: points.map(x => x[1]),
+    alt: points.map(x => x[2])
+  }
+}
+
+// utility function to check permission and respond if needed
+function checkPermission (res, log, course, user, perm) {
+  if (!course.isPermitted(perm, user)) {
+    log.warn('No permission')
+    res.status(403).send('No permission')
+    return false
+  }
+  return true
+}
+
 // SAVE NEW
 router.auth.route('/').post(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
     log.info('run')
     const user = await getCurrentUser(req)
-    const course = new Course(req.body)
+    const course = new Course(req.body.course)
+    const track = new Track(req.body.track)
+    const points = new Points(reformatPoints(req.body.track.points))
+
     course._user = user // depreciated 2021.10.22
     course._users = [user]
-    await course.save()
-    log.info('Course saved')
 
-    // create start and finish waypoints:
+    // create start waypoint:
     const ws = new Waypoint({
       name: 'Start',
       type: 'start',
       location: 0,
       percent: 0,
       _course: course,
-      lat: course.points[0][0],
-      lon: course.points[0][1],
-      elevation: course.points[0][2]
+      lat: points.lat[0],
+      lon: points.lon[0],
+      elevation: points.alt[0]
     })
-    await ws.save()
-    log.info('Start waypoint created')
 
+    // create finish waypoint:
+    const last = points.lat.length - 1
     const wf = new Waypoint({
       name: 'Finish',
       type: 'finish',
       location: course.distance,
       percent: 1,
       _course: course,
-      lat: course.points[course.points.length - 1][0],
-      lon: course.points[course.points.length - 1][1],
-      elevation: course.points[course.points.length - 1][2]
+      lat: points.lat[last],
+      lon: points.lon[last],
+      elevation: points.alt[last]
     })
+
+    await points.save()
+    track.points = points
+
+    await track.save()
+    course.track = track
+
+    await course.save()
+    log.info('Course saved')
+
+    await ws.save()
+    log.info('Start waypoint created')
+
     await wf.save()
     log.info('Finish waypoint created')
 
     res.status(200).json({ id: course._id, post: 'Course added successfully' })
-  } catch (err) {
-    log.error(err)
-    res.status(400).send(err)
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error creating course.')
   }
 })
 
@@ -102,8 +137,8 @@ router.auth.route('/').get(async function (req, res) {
 
     res.status(200).json(courses)
   } catch (error) {
-    log.error(error)
-    res.status(400).send('Error retrieving courses.')
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error retrieving course list.')
   }
 })
 
@@ -111,37 +146,69 @@ router.auth.route('/').get(async function (req, res) {
 router.auth.route('/:id').put(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
-    log.info('run')
-    const { user, course } = await getUserAndCourse(req, [], ['-raw', '-points', '-splits'])
-    if (course.isPermitted('modify', user)) {
+    log.info(req.params.id)
+
+    // execute database functions
+    const [user, course] = await Promise.all([
+      getCurrentUser(req, 'admin'),
+      Course.findOne(courseQuery(req.params.id)).populate({
+        path: 'track',
+        populate: { path: 'points', select: '_id' }
+      }).exec()
+    ])
+
+    if (!checkPermission(res, log, course, user, 'modify')) return
+
+    if (req.body.track) {
+      const llas = reformatPoints(req.body.track.points)
+
+      const courses = await Course.find({ track: course.track }).select('_id').exec()
+      log.verbose(`${courses.length} course(s) are using track ${course.track._id}.`)
+
+      if (courses.length > 1) {
+        log.info('Creating new database objects for track & points.')
+        const points = new Points(llas)
+        await points.save()
+
+        const track = new Track({ source: req.body.track.source })
+        track.points = points
+        await track.save()
+
+        course.track = track
+      } else {
+        course.track.source = req.body.track.source
+        ;['lat', 'lon', 'alt'].forEach(x => { course.track.points[x] = llas[x] })
+
+        await course.track.points.save()
+        await course.track.save()
+      }
+    }
+
+    if (req.body.course) {
       // define available fields
-      const fields = [
-        'name', 'description', 'public', 'source', 'cutoff',
+      const courseFields = [
+        'name', 'description', 'public', 'cutoff',
         'race', 'eventStart', 'eventTimezone',
-        'override', 'points',
-        'distance', 'gain', 'loss', 'loops'
+        'override', 'distance', 'gain', 'loss', 'loops'
       ]
-      if (user.admin) fields.push('_user', 'link')
+      if (user.admin) courseFields.push('_user', 'link')
 
       //  add values from req to course model
-      fields.forEach(f => {
-        if (req.body[f] !== undefined) {
-          if (!shallowEqual(req.body[f], course[f])) course[f] = req.body[f]
+      courseFields.forEach(f => {
+        if (req.body.course[f] !== undefined) {
+          if (!shallowEqual(req.body.course[f], course[f])) course[f] = req.body.course[f]
         }
       })
 
       // update database
       await course.save()
-
-      // respond to request
-      res.status(200).json('Update complete')
-    } else {
-      log.warn('No permission')
-      res.status(403).send('No permission')
     }
-  } catch (err) {
-    log.error(err)
-    res.status(400).send(err)
+
+    // respond to request
+    res.status(200).json('Update complete')
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error updating course.')
   }
 })
 
@@ -149,8 +216,19 @@ router.auth.route('/:id').put(async function (req, res) {
 router.auth.route('/:id').delete(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
-    log.info('run')
-    const { user, course } = await getUserAndCourse(req, ['_courses'], [])
+    log.info(`id: ${req.params.id}`)
+
+    const cq = courseQuery(req.params.id)
+
+    // execute database functions
+    const [user, course] = await Promise.all([
+      getCurrentUser(req, ['admin', '_courses']),
+      Course.findOne(cq).populate({
+        // populate track & patch objects for cascading removals
+        path: 'track',
+        populate: { path: 'points', select: '_id' }
+      }).exec()
+    ])
 
     // remove course from user
     await user.removeCourse(course)
@@ -182,53 +260,97 @@ router.auth.route('/:id').delete(async function (req, res) {
     } else {
       res.status(200).json('Course removed from user')
     }
-  } catch (err) {
-    log.error(err)
-    res.status(400).send('Error removing course.')
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error removing course.')
   }
 })
 
 // GET COURSE
 router.auth.route(['/:id', '/link/:id']).get(async function (req, res) {
-  const log = logger.child({ method: routeName(req) })
-  try {
-    log.info('run')
-    const { user, course } = await getUserAndCourse(req, [], ['-points', '-raw'])
-    if (course.isPermitted('view', user)) {
-      await course.addData(user, null)
-      if (!course.hasCache()) { await course.updateCache() }
-
-      // set deletable metadata:
-      await course.isDeletable(user)
-
-      res.status(200).json(course)
-    } else {
-      log.warn('No permission')
-      res.status(403).send('No permission')
-    }
-  } catch (err) {
-    log.error(err)
-    res.status(400).send('Error getting course.')
-  }
+  getCourse(true, req, res, req.params.id)
 })
+router.open.route(['/:id', '/link/:id']).get(async function (req, res) {
+  getCourse(false, req, res, req.params.id)
+})
+async function getCourse (auth, req, res, id) {
+  const log = logger.child({ method: `getCourse-${auth ? 'auth' : 'open'}` })
+  try {
+    log.info(id)
+
+    const cq = courseQuery(id)
+    const queries = [Course.findOne(cq).populate(['track']).exec()]
+
+    // if auth, also get user, otherwise empty user
+    queries.push(auth ? getCurrentUser(req, 'admin') : {})
+
+    // execute database functions
+    const [course, user] = await Promise.all(queries)
+
+    // check permissions
+    if (!checkPermission(res, log, course, user, 'view')) return
+
+    // TEMPORARY, if no track object create one (for 1.2.0 migration)
+    if (!course.track) {
+      log.warn('TEMPORARY: creating Track from Course.points')
+      const c = await Course.findOne(cq).exec()
+      const points = new Points(reformatPoints(c.points))
+      await points.save()
+      const track = new Track({ source: c.source })
+      track.points = points
+      await track.save()
+      course.track = track
+
+      course.source = undefined
+      course.points = undefined
+      course.raw = undefined
+
+      course.save()
+    }
+
+    await course.addData(auth ? user : null)
+    if (!course.hasCache()) { await course.updateCache() }
+
+    // set deletable metadata:
+    if (auth) await course.isDeletable(user)
+
+    res.status(200).json(course)
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error retrieving course.')
+  }
+}
 
 // GET COURSE FIELD
 router.auth.route('/:id/field/:field').get(async function (req, res) {
-  const log = logger.child({ method: routeName(req) })
-  try {
-    log.info('run')
-    const { user, course } = await getUserAndCourse(req, [], [req.params.field])
-    if (course.isPermitted('view', user)) {
-      res.status(200).json(course[req.params.field])
-    } else {
-      log.warn('No permission')
-      res.status(403).send('No permission')
-    }
-  } catch (err) {
-    log.error(err)
-    res.status(400).send(err)
-  }
+  getCourseField(true, req, res, req.params.id, req.params.field)
 })
+router.open.route('/:id/field/:field').get(async function (req, res) {
+  getCourseField(false, req, res, req.params.id, req.params.field)
+})
+async function getCourseField (auth, req, res, id, field) {
+  const log = logger.child({ method: `getCourseField-${auth ? 'auth' : 'open'}` })
+  try {
+    log.info(`Course: ${id}, Field: ${field}`)
+
+    const cq = courseQuery(id)
+    const queries = [Course.findOne(cq).select(['_user', '_users', 'public', field]).exec()]
+
+    // if auth, also get user, otherwise empty user
+    queries.push(auth ? getCurrentUser(req, 'admin') : {})
+
+    // execute database functions
+    const [course, user] = await Promise.all(queries)
+
+    // check permissions (a check for 'public' is allowed for anybody)
+    if (field !== 'public' && !checkPermission(res, log, course, user, 'view')) return
+
+    res.status(200).json(course[field])
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error retrieving field.')
+  }
+}
 
 // GET WAYPOINT LIST
 router.auth.route('/:id/waypoints').get(async function (req, res) {
@@ -236,15 +358,15 @@ router.auth.route('/:id/waypoints').get(async function (req, res) {
   try {
     log.info('run')
     const { user, course } = await getUserAndCourse(req)
-    if (course.isPermitted('view', user)) {
-      const waypoints = await Waypoint.find({ _course: course }).sort('percent location').exec()
-      res.status(200).json(waypoints)
-    } else {
-      res.status(403).send('No permission')
-    }
-  } catch (err) {
-    log.error(err)
-    res.status(400).send(err)
+
+    // check permissions
+    if (!checkPermission(res, log, course, user, 'view')) return
+
+    const waypoints = await Waypoint.find({ _course: course }).sort('percent location').exec()
+    res.status(200).json(waypoints)
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error retrieving waypoints.')
   }
 })
 
@@ -254,16 +376,15 @@ router.auth.route('/:id/plans').get(async function (req, res) {
   try {
     log.info('run')
     const { user, course } = await getUserAndCourse(req)
-    if (course.isPermitted('view', user)) {
-      const plans = await Plan.find({ _course: course, _user: user }).sort('name').exec()
-      res.status(200).json(plans)
-    } else {
-      log.warn('No permission')
-      res.status(403).send('No permission')
-    }
-  } catch (err) {
-    log.error(err)
-    res.status(400).send('Error retrieving plans')
+
+    // check permissions
+    if (!checkPermission(res, log, course, user, 'view')) return
+
+    const plans = await Plan.find({ _course: course, _user: user }).sort('name').exec()
+    res.status(200).json(plans)
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error retrieving plans.')
   }
 })
 
@@ -271,36 +392,39 @@ router.auth.route('/:id/plans').get(async function (req, res) {
 router.auth.route('/:id/copy').put(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   try {
-    log.info('run')
-    const { user, course } = await getUserAndCourse(req, [], ['-raw'])
-    if (course.isPermitted('view', user)) {
-      console.log('course1 ' + course._id)
-      const wps = await Waypoint.find({ _course: course }).exec()
-      const course2 = new Course(course)
-      course2._id = mongoose.Types.ObjectId()
-      course2.isNew = true
-      course2._user = undefined // depreciated 2021.10.22
-      course2._users = [user]
-      course2.name = `${course2.name} [copy]`
-      course2.link = null
-      await course2.save()
-      await course2.clearCache()
-      console.log('course2 ' + course2._id)
-      wps.forEach(async wp => {
-        const wp2 = new Waypoint(wp)
-        wp2._id = mongoose.Types.ObjectId()
-        wp2.isNew = true
-        wp2._course = course2
-        await wp2.save()
-      })
-      res.status(200).send('Course copied')
-    } else {
-      log.warn('No permission')
-      res.status(403).send('No permission')
-    }
-  } catch (err) {
-    log.error(err)
-    res.status(400).send('Error copying course')
+    log.info(`id: ${req.params.id}`)
+
+    const [user, course] = await Promise.all([
+      getCurrentUser(req, 'admin'),
+      Course.findOne(courseQuery(req.params.id)).exec()
+    ])
+
+    // check permissions
+    if (!checkPermission(res, log, course, user, 'view')) return
+
+    log.verbose('Copying course')
+    const course2 = new Course(course)
+    course2._id = mongoose.Types.ObjectId()
+    course2.isNew = true
+    course2._users = [user]
+    course2.name = req.body.name || `${course2.name} [copy]`
+    course2.link = null
+    await course2.save()
+    await course2.clearCache()
+
+    log.verbose('Copying waypoints')
+    const wps = await Waypoint.find({ _course: course }).exec()
+    wps.forEach(async wp => {
+      const wp2 = new Waypoint(wp)
+      wp2._id = mongoose.Types.ObjectId()
+      wp2.isNew = true
+      wp2._course = course2
+      await wp2.save()
+    })
+    res.status(200).send(course2._id)
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error copying course.')
   }
 })
 
@@ -344,9 +468,9 @@ router.auth.route('/:id/user/:action/:userId').put(async function (req, res) {
       log.warn('No permission')
       res.status(403).send('No permission')
     }
-  } catch (err) {
-    log.error(err)
-    res.status(400).send('Error modifying course users')
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error modifying course owners.')
   }
 })
 
@@ -362,11 +486,7 @@ router.auth.route(['/:id/group/add/course/:course', '/:id/group/add/group/:group
     const { user, course } = await getUserAndCourse(req, [], ['group'])
 
     // make sure we have permission:
-    if (!course.isPermitted('modify', user)) {
-      log.warn('No permission')
-      res.status(403).send('No permission')
-      return
-    }
+    if (!checkPermission(res, log, course, user, 'modify')) return
 
     // make sure course isn't already in a group
     if (course.group) {
@@ -395,17 +515,16 @@ router.auth.route(['/:id/group/add/course/:course', '/:id/group/add/group/:group
     } else if (req.params.course) {
       log.verbose(`Finding course group by course: ${req.params.course}`)
 
-      const { course: course2 } = await getUserAndCourse({ params: { id: req.params.course }, user: req.user }, [], ['group'])
+      const course2 = await Course.findOne(courseQuery(req.params.course)).exec()
       if (!course2) {
         const warn = `Course ${req.params.course} not found.`
         log.warn(warn)
         res.status(404).send(warn)
         return
-      } else if (!course2.isPermitted('modify', user)) {
-        log.warn('No permission')
-        res.status(403).send('No permission')
-        return
       }
+
+      // make sure we have permission:
+      if (!checkPermission(res, log, course2, user, 'modify')) return
 
       // first see if other course has a group already:
       if (course2.group) {
@@ -426,40 +545,45 @@ router.auth.route(['/:id/group/add/course/:course', '/:id/group/add/group/:group
     const msg = `Added course ${req.params.id} to course group ${courseGroup._id}.`
     log.info(msg)
     res.status(200).send(msg)
-  } catch (err) {
-    log.error(err)
-    res.status(500).send(err)
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error grouping course.')
   }
 })
 
 // GET LIST OF COURSES IN GROUP:
 router.auth.route('/group/:id/list').get(async function (req, res) {
-  const log = logger.child({ method: routeName(req) })
-  try {
-    log.info('run')
-    const user = await getCurrentUser(req)
-    const courses = await getcourseGroupList(res, req.params.id, user)
-    res.status(200).json(courses)
-  } catch (error) {
-    log.error(error.stack || error)
-    res.status(500).send(error)
-  }
+  getcourseGroupList(true, req, res, req.params.id)
 })
 router.open.route('/group/:id/list').get(async function (req, res) {
-  const log = logger.child({ method: routeName(req) })
+  getcourseGroupList(false, req, res, req.params.id)
+})
+async function getcourseGroupList (auth, req, res, id) {
+  const log = logger.child({ method: `getcourseGroupList-${auth ? 'auth' : 'open'}` })
   try {
-    log.info('run')
-    const courses = await getcourseGroupList(res, req.params.id)
+    log.verbose(`id: ${req.params.id}`)
+    const queries = [Course.find({ group: id }).select(['name', '_users', 'public', 'eventStart']).sort('-eventStart').exec()]
+
+    // if auth, also get user, otherwise empty user
+    queries.push(auth ? getCurrentUser(req, 'admin') : {})
+
+    // execute database functions
+    let [courses, user] = await Promise.all(queries)
+
+    // filter by permissions
+    courses = courses.filter(c => c.isPermitted('view', user))
+
     res.status(200).json(courses)
   } catch (error) {
-    log.error(error.stack || error)
-    res.status(500).send(error)
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error retrieving course group list.')
   }
-})
-async function getcourseGroupList (res, groupId, user = {}) {
-  let courses = await Course.find({ group: groupId }).select(['name', '_user', '_users', 'public', 'eventStart']).sort('-eventStart').exec()
-  courses = courses.filter(c => c.isPermitted('view', user))
-  return courses
+}
+
+function courseQuery (id) {
+  return isValidObjectId(id)
+    ? { _id: id }
+    : { link: id }
 }
 
 // function returns user and course based on req fields
@@ -478,14 +602,12 @@ async function getUserAndCourse (req, userFields = [], courseFields = []) {
   }
 
   // query course by id or link:
-  const courseQuery = isValidObjectId(req.params.id)
-    ? { _id: req.params.id }
-    : { link: req.params.id }
+  const cq = courseQuery(req.params.id)
 
   // pull database
   const [user, course] = await Promise.all([
     getCurrentUser(req, userFields),
-    Course.findOne(courseQuery).select(courseFields).exec()
+    Course.findOne(cq).select(courseFields).exec()
   ])
 
   // return user and course

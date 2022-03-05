@@ -20,7 +20,7 @@ const CourseSchema = new Schema({
     type: Number,
     default: 1
   },
-  _user: {
+  _user: { // DEPRECIATED
     // depreciated 2021.10.22, replaced by _users array
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
@@ -92,13 +92,17 @@ const CourseSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Plan'
   }],
-  points: [],
+  points: [], // DEPRECIATED
   reduced: {
     type: Boolean,
     default: false
   },
-  source: {},
-  altModel: {},
+  track: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Track'
+  },
+  source: {}, // DEPRECIATED
+  altModel: {}, // DEPRECIATED
   waypoints: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Waypoint'
@@ -174,11 +178,9 @@ CourseSchema.methods.addData = async function (user = null) {
       await Waypoint.find({ _course: this }).sort('percent location').exec(),
       await Plan.find({ _course: this, _user: user }).sort('name').exec()
     ])
-    this.altModel = user.altModel
   } else {
     this.waypoints = await Waypoint.find({ _course: this }).sort('location').exec()
     this.plans = []
-    this.altModel = null
   }
 
   if (!this.loops) this.loops = 1
@@ -207,8 +209,21 @@ CourseSchema.methods.updateCache = async function () {
   logger.info(`Course|updateCache: updating cache for course ${this._id}`)
   const [waypoints, course] = await Promise.all([
     await Waypoint.find({ _course: this }).sort('location').exec(),
-    await mongoose.model('Course').findOne({ _id: this._id }).select('points').exec()
+    await mongoose.model('Course')
+      .findOne({ _id: this._id })
+      .populate({ path: 'track', populate: { path: 'points' } })
+      .exec()
   ])
+
+  // reformat points database to [lat][lon][alt] array
+  const llas = course.track.points.lat.map(
+    (x, i) =>
+      [
+        course.track.points.lat[i],
+        course.track.points.lon[i],
+        course.track.points.alt[i]
+      ]
+  )
 
   // temporary; for legacy courses that were reduced
   if (this.reduced || this.override?.enabled) {
@@ -225,7 +240,7 @@ CourseSchema.methods.updateCache = async function () {
   addPercentage(waypoints)
   this.waypoints = waypoints
   const loops = this.loops || 1
-  const points = await core.tracks.create(course.points, { loops: loops })
+  const points = await core.tracks.create(llas, { loops: loops })
   const c = new core.courses.Course(this)
   c.addTrack(points)
   ;({ dist: this.distance, gain: this.gain, loss: this.loss } = c.track)
@@ -290,37 +305,51 @@ CourseSchema.methods.isDeletable = async function (user) {
 }
 
 CourseSchema.pre('save', async function (next) {
-  // if important fields are changed, clear course cache before saving
+  this.wasNew = this.isNew
 
-  // get list of changed fields
-  let changes = this.modifiedPaths()
+  if (!this.isNew) {
+    // get list of changed fields
+    let changes = this.modifiedPaths()
 
-  // these are the important fields
-  const fields = ['override', 'points', 'distance', 'gain', 'loss', 'loops']
+    // these are the important fields
+    const fields = ['override', 'distance', 'gain', 'loss', 'loops']
 
-  // if any of the changed fields are important, clear the cache
-  changes = changes.filter(c => fields.includes(c))
-  if (changes.length) {
-    logger.child({ method: 'pre-save' }).info(`${changes.join(', ')} changed, clearing cache.`)
-    await this.clearCache()
+    // if any of the changed fields are important, clear the cache
+    changes = changes.filter(c => fields.includes(c))
+    if (changes.length) {
+      logger.child({ method: 'pre-save' }).info(`${changes.join(', ')} changed, clearing cache.`)
+      await this.clearCache()
+    }
   }
 
   next()
 })
 
+CourseSchema.post('save', async function () {
+  logger.child({ method: 'post-save' })
+    .info(`Course ${this._id} ${this.wasNew ? 'created' : 'updated'} successfully.`)
+})
+
 CourseSchema.pre('remove', async function () {
   const log = logger.child({ method: 'pre-remove' })
-  const [p, w] = await Promise.all([
+
+  const actions = [
     Plan.deleteMany({ _course: this._id }).exec(),
     Waypoint.deleteMany({ _course: this._id }).exec()
-  ])
-  log.log(p.deletedCount ? 'warn' : 'info', `${p.deletedCount} plans deleted.`)
-  log.log(w.deletedCount ? 'warn' : 'info', `${w.deletedCount} waypoints deleted.`)
+  ]
+
+  // find out if we need to remove track:
+  const courses = this.track ? await mongoose.model('Course').find({ track: this.track }).exec() : []
+  if (courses.length === 1) actions.push(this.track.remove())
+
+  const totals = await Promise.all(actions)
+  log.log(totals[0].deletedCount ? 'warn' : 'info', `${totals[0].deletedCount} plans deleted.`)
+  log.log(totals[1].deletedCount ? 'warn' : 'info', `${totals[1].deletedCount} waypoints deleted.`)
 })
 
 CourseSchema.post('init', async function () {
   const log = logger.child({ method: 'post-init' })
-  log.verbose('run')
+  log.verbose(`id: ${this._id}`)
 
   // add meta
   this.__meta = {}

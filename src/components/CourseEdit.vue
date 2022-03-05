@@ -17,30 +17,30 @@
         @submit.prevent=""
       >
         <selectable-label-input
-          v-model="model.source.type"
+          v-model="trackModel.source.type"
           :options="sourceOptions"
           @input="sourceChange"
         >
           <b-form-file
-            v-if="model.source.type==='gpx'"
+            v-if="trackModel.source.type==='gpx'"
             v-model="gpxFile"
-            :placeholder="(model.source) ? model.source.name : 'Choose a GPX file...'"
+            :placeholder="(trackModel.source) ? trackModel.source.name : 'Choose a GPX file...'"
             accept=".gpx"
             no-drop
-            :required="!Boolean(model.source)"
+            :required="!Boolean(trackModel.source)"
             :state="!Boolean(gpxFileInvalidMsg)"
             @change="loadFile"
           />
           <b-form-invalid-feedback :state="!Boolean(gpxFileInvalidMsg)">
             {{ gpxFileInvalidMsg }}
           </b-form-invalid-feedback>
-          <form-tip v-if="model.source.type==='gpx' && showTips">
+          <form-tip v-if="trackModel.source.type==='gpx' && showTips">
             Required: ".gpx" format file exported from a GPS track or route builder.
           </form-tip>
           <strava-route-input
-            v-if="model.source.type==='strava-route'"
+            v-if="trackModel.source.type==='strava-route'"
             ref="stravaRouteInput"
-            v-model="model.source"
+            v-model="trackModel.source"
             :show-tips="showTips"
             class="mb-0"
             @loadGPX="loadGPX"
@@ -53,14 +53,14 @@
             class="mt-1"
           >
             <b-form-select
-              v-model="model.source.alt"
+              v-model="trackModel.source.alt"
               type="number"
               :options="altSourceOptions"
               required
               @input="changeAltSource"
             />
           </b-input-group>
-          <form-tip v-if="model.source.type==='gpx' && showTips">
+          <form-tip v-if="trackModel.source.type==='gpx' && showTips">
             Required: data source for elevation.
           </form-tip>
           <b-input-group
@@ -402,8 +402,7 @@ export default {
           enabled: false,
           distUnit: 'mi',
           elevUnit: 'ft'
-        },
-        source: { type: 'gpx' }
+        }
       },
       distUnits: [
         { value: 'mi', text: 'mi' },
@@ -419,9 +418,11 @@ export default {
       gpxFileNoElevFlag: false,
       logger: this.$log.child({ file: 'CourseEdit.vue' }),
       loopEnabled: false,
-      model: { source: {} },
+      model: {},
       moment: null,
       track: [],
+      trackModel: { source: { type: 'gpx' } },
+      trackDefaults: { source: { type: 'gpx' } },
       showTips: false,
       distf: null,
       gainf: null,
@@ -435,10 +436,10 @@ export default {
   computed: {
     altSourceOptions: function () {
       const arr = []
-      if (this.model.source) {
-        if (this.model.source.type === 'strava-route') {
+      if (this.trackModel.source) {
+        if (this.trackModel.source.type === 'strava-route') {
           arr.push({ value: 'strava-route', text: 'Strava Route' })
-        } else if (this.model.source.alt === 'gpx' || (this.file && !this.gpxFileNoElevFlag)) {
+        } else if (this.trackModel.source.alt === 'gpx' || (this.file && !this.gpxFileNoElevFlag)) {
           arr.push({ value: 'gpx', text: 'GPX File' })
         }
         arr.push(
@@ -471,7 +472,9 @@ export default {
       this.gpxFileInvalidMsg = ''
       if (id) {
         this.model = await api.getCourse(id, 'course')
-        if (!this.model.source.alt) this.$set(this.model.source, 'alt', this.model.source.type)
+        this.trackModel = this.model.track
+
+        if (!this.trackModel.source.alt) this.$set(this.trackModel.source, 'alt', this.trackModel.source.type)
         const tz = this.model.eventTimezone || moment.tz.guess()
         if (this.model.eventStart) {
           this.moment = moment(this.model.eventStart).tz(tz)
@@ -484,6 +487,7 @@ export default {
       } else {
         this.moment = moment(0).tz(moment.tz.guess())
         this.model = JSON.parse(JSON.stringify(this.defaults))
+        this.trackModel = JSON.parse(JSON.stringify(this.trackDefaults))
         this.loopEnabled = false
       }
       this.$refs.modal.show()
@@ -496,10 +500,15 @@ export default {
       }
     },
     async reloadTrack () {
-      const arr = await api.getCourseField(this.model._id, 'points')
-      this.track = await this.$core.tracks.create(arr)
-      this.trackLoaded = true
-      return true
+      const log = this.logger.child({ method: 'reloadTrack' })
+      try {
+        const track = await api.getTrack(this.model.track._id || this.model.track)
+        const llas = track.points.lat.map((x, i) => [track.points.lat[i], track.points.lon[i], track.points.alt[i]])
+        this.track = await this.$core.tracks.create(llas)
+        this.trackLoaded = true
+      } catch (error) {
+        log.error(error.stack || error, { error: error })
+      }
     },
     async save () {
       if (this.$status.processing) { return }
@@ -507,7 +516,7 @@ export default {
       try {
         // if we have new track data, format and update:
         if (this.trackLoaded && this.track.length) {
-          this.model.points = this.track.map(x => {
+          this.trackModel.points = this.track.map(x => {
             return [
               this.$math.round(x.lat, 6),
               this.$math.round(x.lon, 6),
@@ -546,15 +555,18 @@ export default {
           ]
 
           // only include new track info if we have a new course source:
-          if (this.trackLoaded) {
-            fields.push('source', 'points')
-          }
           fields.forEach(f => {
             if (this.model[f] !== undefined) {
               updateModel[f] = this.model[f]
             }
           })
-          await api.updateCourse(this.model._id, updateModel)
+          const updateModels = {
+            course: updateModel
+          }
+          if (this.trackLoaded) {
+            updateModels.track = this.trackModel
+          }
+          await api.updateCourse(this.model._id, updateModels)
           this.$gtag.event('edit', { event_category: 'Course' })
 
           // update all waypoints to fit updated course:
@@ -585,7 +597,10 @@ export default {
           }
           this.$nextTick(async () => { await this.$core.util.sleep(100); this.$emit('afterEdit') })
         } else {
-          const { id } = await api.createCourse(this.model)
+          const { id } = await api.createCourse({
+            course: this.model,
+            track: this.trackModel
+          })
           this.$gtag.event('create', { event_category: 'Course' })
           this.$nextTick(() => { this.$emit('afterCreate', { _id: id }) })
         }
@@ -600,6 +615,7 @@ export default {
     clear () {
       this.track = []
       this.model = JSON.parse(JSON.stringify(this.defaults))
+      this.trackModel = JSON.parse(JSON.stringify(this.trackDefaults))
       this.file = null
       this.trackLoaded = false
       this.newTrack = false
@@ -645,7 +661,7 @@ export default {
               throw error
             } else {
               logger.info('GPX parsed')
-              this.model.source = { ...source }
+              this.trackModel.source = { ...source }
 
               // choose source from GPX:
               let arr = []
@@ -694,7 +710,7 @@ export default {
               this.gpxFileInvalidMsg = ''
               this.updateModelGainLoss()
               if (!this.model.name) {
-                this.model.name = this.model.source.name
+                this.model.name = this.trackModel.source.name
               }
               await this.defaultTimezone(this.track[0].lat, this.track[0].lon)
               this.trackLoaded = true
@@ -714,7 +730,7 @@ export default {
       this.$logger(`CourseEdit|changeAltSource to ${val}`)
       if (!this.track.length) await this.reloadTrack()
       if (this.track.length) {
-        this.$set(this.model.source, 'alt', val)
+        this.$set(this.trackModel.source, 'alt', val)
         if (val === 'strava-route') {
           this.$refs.stravaRouteInput.getStravaRoute()
         } else if (val === 'gpx') {
@@ -802,8 +818,8 @@ export default {
       this.gpxFile = null
       this.track = []
       this.trackLoaded = false
-      delete this.model.source.name
-      this.model.source.alt = val
+      delete this.trackModel.source.name
+      this.trackModel.source.alt = val
     },
     async addElevationData (track, source) {
       const lls = track.map(p => {
@@ -821,7 +837,7 @@ export default {
           p.alt = data.alts[i]
         })
         track.calcStats()
-        this.$set(this.model.source, 'alt', data.source)
+        this.$set(this.trackModel.source, 'alt', data.source)
         this.$gtag.event('addElevationData', { event_category: 'Course', event_label: data.source })
       } else {
         throw new Error('Elevation data returned does not match.')

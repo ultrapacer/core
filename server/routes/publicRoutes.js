@@ -8,57 +8,6 @@ const xml2js = require('xml2js')
 const logger = require('winston').child({ file: 'publicRoutes.js' })
 const { routeName } = require('../util')
 
-// GET COURSE
-publicRoutes.route(['/course/:_id', '/course/link/:link']).get(async function (req, res) {
-  try {
-    const q = { public: true }
-    if (req.params._id) {
-      q._id = req.params._id
-    } else {
-      q.link = req.params.link
-    }
-    const course = await Course.findOne(q).select(['-points', '-raw']).exec()
-    await course.addData()
-    if (!course.hasCache()) { await course.updateCache() }
-    res.json(course)
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
-  }
-})
-
-// GET COURSE FIELD
-publicRoutes.route('/course/:course/field/:field').get(async function (req, res) {
-  try {
-    const q = {
-      _id: req.params.course,
-      public: true
-    }
-    const course = await Course.findOne(q).select(req.params.field).exec()
-    res.status(200).json(course[req.params.field])
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(`Error retrieving ${req.params.field}`)
-  }
-})
-
-// GET COURSE FIELDS
-publicRoutes.route(['/course/:_id/fields', '/course/link/:link/fields']).put(async function (req, res) {
-  try {
-    const q = { public: true }
-    if (req.params._id) {
-      q._id = req.params._id
-    } else {
-      q.link = req.params.link
-    }
-    const course = await Course.findOne(q).select(req.body).exec()
-    res.json(course)
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
-  }
-})
-
 // GET COURSE USER COUNT
 publicRoutes.route('/course/:course/countusers').get(async function (req, res) {
   try {
@@ -67,27 +16,6 @@ publicRoutes.route('/course/:course/countusers').get(async function (req, res) {
     }
     const plans = await Plan.find(q).distinct('_user').exec()
     res.json(plans.length)
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
-  }
-})
-
-// GET COURSE PUBLIC
-publicRoutes.route('/ispublic/:type/:id').get(async function (req, res) {
-  try {
-    let course = {}
-    if (req.params.type === 'course') {
-      course = await Course.findById(req.params.id)
-        .select(['public'])
-        .exec()
-    } else {
-      const plan = await Plan.findById(req.params.id)
-        .populate([{ path: '_course', select: 'public' }])
-        .exec()
-      course = plan._course
-    }
-    res.json(course.public)
   } catch (err) {
     console.log(err)
     res.status(400).send(err)

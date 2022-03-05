@@ -52,7 +52,13 @@ const config = {
       },
       {
         test: /\.vue$/,
-        use: ['vue-loader']
+        use: [{
+          loader: 'vue-loader',
+          options: {
+            // this allows for optional chaining in templates:
+            compiler: require('vue-template-babel-compiler')
+          }
+        }]
       },
       {
         test: /\.md$/,

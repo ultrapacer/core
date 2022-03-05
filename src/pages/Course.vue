@@ -410,6 +410,7 @@ export default {
       highlightPoint: null,
       tablesTab: 0,
       updateFlag: false,
+      routeWatchEnabled: false,
       showMenu: false,
       saveButtonVisible: false,
       updates: { count: 0 },
@@ -600,7 +601,8 @@ export default {
       try {
         if (
           !this.courseGroupList.length ||
-        this.courseGroupList.findIndex(c => c._id === this.course._id) === 0
+          !this.course.eventStart ||
+          this.courseGroupList.findIndex(c => c._id === this.course._id) === 0
         ) {
           return this.course.name
         }
@@ -655,7 +657,12 @@ export default {
     },
     $route (to, from) {
       // reload course on url change
-      if (to.params.course !== from.params.course) { this.initialize() }
+      if (
+        this.routeWatchEnabled &&
+      to.params.course !== from.params.course
+      ) {
+        this.initialize()
+      }
     }
   },
   async created () {
@@ -717,7 +724,8 @@ export default {
         }
 
         // download course track:
-        const llas = await api.getCourseField(this.course._id, 'points')
+        const trk = await api.getTrack(this.course.db.track._id || this.course.db.track)
+        const llas = trk.points.lat.map((x, i) => [trk.points.lat[i], trk.points.lon[i], trk.points.alt[i]])
         log.info(`downloaded (${llas.length} points)`)
 
         // if looped course, repeat points array
@@ -798,6 +806,9 @@ export default {
 
         // populate course group list:
         this.getCourseGroupList()
+
+        // enable monitoring for route changes on page
+        this.routeWatchEnabled = true
 
         log.info('complete')
       } catch (error) {
@@ -1476,8 +1487,6 @@ export default {
         if (this.course.group) {
           this.courseGroupList = await this.$api.getCoursesInGroup(this.course.group)
           const i = this.courseGroupList.findIndex(c => this.course._id === c._id)
-          console.log(i)
-
           if (i > 0) {
             log.info('Showing newer course alert.')
             const route = { name: 'Course', params: { course: this.courseGroupList[0]._id } }

@@ -5,6 +5,7 @@ import Callback from '@/pages/Callback'
 import auth from './auth/authService'
 import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import api from '@/api'
+const logger = require('winston').child({ file: 'router.js' })
 
 // this avoids redundant navigation error if pushing/replacing a URL
 const originalPush = Router.prototype.push
@@ -108,30 +109,31 @@ const router = new Router({
 })
 
 router.beforeEach(async (to, from, next) => {
-  const isAuthenticated = auth.isAuthenticated()
+  const log = logger.child({ method: 'beforeEach' })
+  try {
+    const isAuthenticated = auth.isAuthenticated()
 
-  // if navigating to a course, check if public and login otherwise:
-  if (!isAuthenticated && (to.name === 'Course' || to.name === 'Plan')) {
-    try {
-      const id = to.name === 'Course' ? to.params.course : to.params.plan
-      const ispublic = await api.isPublic(to.name.toLowerCase(), id)
+    // if navigating to a course, check if public and login otherwise:
+    if (to.name === 'Course' && !isAuthenticated) {
+      const ispublic = await api.getCourseField(to.params.course, 'public', false)
       to.meta.requiresAuth = !ispublic
-    } catch (err) {
-      console.log(err)
+      logger.verbose(`Course ${to.params.course} is ${ispublic ? '' : 'not '} public.`)
     }
-  }
-  if (isAuthenticated && to.name === 'Home') {
-    next({ name: 'CoursesManager' })
-  }
-  if (!to.meta.requiresAuth || isAuthenticated) {
-    return next()
-  }
-  // Specify the current path as the customState parameter, meaning it
-  // will be returned to the application after auth
-  if (to.query == null) {
-    auth.login({ target: to.path })
-  } else {
-    auth.login({ target: to.path, query: to.query })
+    if (isAuthenticated && to.name === 'Home') {
+      next({ name: 'CoursesManager' })
+    }
+    if (!to.meta.requiresAuth || isAuthenticated) {
+      return next()
+    }
+    // Specify the current path as the customState parameter, meaning it
+    // will be returned to the application after auth
+    if (to.query == null) {
+      auth.login({ target: to.path })
+    } else {
+      auth.login({ target: to.path, query: to.query })
+    }
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
   }
 })
 

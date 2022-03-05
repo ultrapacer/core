@@ -10,7 +10,7 @@
     />
     <div style=" width: 100%; display: flex; justify-content: flex-end;">
       <img
-        v-if="course && course.source && course.source.alt === 'google'"
+        v-if="course.db?.track?.source?.alt === 'google'"
         src="../assets/powered_by_google_on_white.png"
         style="margin-top: -50px; position: absolute; padding-right: 38px;"
       >
