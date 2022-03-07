@@ -52,6 +52,9 @@ const UserSchema = new Schema({
         id: {
           type: 'String'
         }
+      },
+      expiration: {
+        type: Date,
       }
     },
     default: {
