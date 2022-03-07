@@ -16,12 +16,14 @@ const router = {
   open: express.Router() // unauthenticated
 }
 
-// utliity function to reformat points array for database insertion
+// utility function to reformat points array for database insertion
 function reformatPoints (points) {
+  // there was an older format w/ array of 5
+  const adjust = points[0].length === 5 ? 1 : 0
   return {
-    lat: points.map(x => x[0]),
-    lon: points.map(x => x[1]),
-    alt: points.map(x => x[2])
+    lat: points.map(x => x[0 + adjust]),
+    lon: points.map(x => x[1 + adjust]),
+    alt: points.map(x => x[2 + adjust])
   }
 }
 
