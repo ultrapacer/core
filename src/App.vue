@@ -168,7 +168,9 @@ export default {
     '$course.mode': function () { this.refreshNavGuard() },
     '$status.processing': function () { this.refreshNavGuard() },
     $route (to, from) {
-      this.$alert.timer = 0
+      if (!this.$alert.persistOnPageChange) {
+        this.$alert.timer = 0
+      }
     }
   },
   async created () {

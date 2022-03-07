@@ -233,12 +233,14 @@ Vue.prototype.$alert = Vue.observable({
     this.click = options.click ? () => { options.click(); this.timer = 0 } : () => {}
     this.class = options.click ? 'alert-link' : ''
     this.timer = options.timer || 5
+    this.persistOnPageChange = options.persistOnPageChange || false
   },
   message: '',
   timer: 0,
   variant: '',
   click: () => {},
-  class: ''
+  class: '',
+  persistOnPageChange: false
 })
 
 //  -----  VUE FILTERS  -----  //

@@ -86,6 +86,9 @@ export default {
   modifyCourseUsers (id, action, user) {
     return this.executeAuth('put', `/api/course/${id}/user/${action}/${user}`)
   },
+  getCoursePermission (id, permission) {
+    return this.executeAuthOrOpen('get', `course/${id}/permission/${permission}`)
+  },
   addCourseToGroup (id, refType, refId) {
     // id: course id or link
     // refType: either 'course' or 'group'

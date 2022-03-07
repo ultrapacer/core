@@ -111,16 +111,37 @@ const router = new Router({
 router.beforeEach(async (to, from, next) => {
   const log = logger.child({ method: 'beforeEach' })
   try {
-    const isAuthenticated = auth.isAuthenticated()
+    const isAuthenticated = await auth.isAuthenticated()
 
     // if navigating to a course, check if public and login otherwise:
-    if (to.name === 'Course' && !isAuthenticated) {
-      const ispublic = await api.getCourseField(to.params.course, 'public', false)
-      to.meta.requiresAuth = !ispublic
-      logger.verbose(`Course ${to.params.course} is ${ispublic ? '' : 'not '} public.`)
+    if (to.name === 'Course' || to.name === 'Race') {
+      log.verbose(`${isAuthenticated ? 'Authenticated' : 'Unauthenticated'}. Navigating to course ${to.params.course || to.params.permalink}.`)
+
+      // see if they have permission to view course:
+      let hasPermission = false
+      try {
+        hasPermission = await api.getCoursePermission(to.params.course || to.params.permalink, 'view')
+      } catch (error) {
+        if (error.response?.status === 404) {
+          Vue.prototype.$alert.show('Course not found.', { variant: 'danger', timer: 6, persistOnPageChange: true })
+          return next({ name: 'Home' })
+        } else {
+          Vue.prototype.$alert.show('Error retrieving course.', { variant: 'danger', timer: 6, persistOnPageChange: true })
+          return next({ name: 'Home' })
+        }
+      }
+
+      if (!hasPermission) {
+        if (isAuthenticated) {
+          Vue.prototype.$alert.show('No permission to view course.', { variant: 'danger', timer: 6, persistOnPageChange: true })
+          return next({ name: 'CoursesManager' })
+        } else {
+          to.meta.requiresAuth = true
+        }
+      }
     }
     if (isAuthenticated && to.name === 'Home') {
-      next({ name: 'CoursesManager' })
+      return next({ name: 'CoursesManager' })
     }
     if (!to.meta.requiresAuth || isAuthenticated) {
       return next()

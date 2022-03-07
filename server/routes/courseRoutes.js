@@ -35,6 +35,16 @@ function checkPermission (res, log, course, user, perm) {
   return true
 }
 
+// utility funciton to check course existence and respond 404 if needed
+function checkExists (res, log, course) {
+  if (!course) {
+    log.warn('Not found')
+    res.status(404).send('Not found')
+    return false
+  }
+  return true
+}
+
 // SAVE NEW
 router.auth.route('/').post(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
@@ -287,6 +297,9 @@ async function getCourse (auth, req, res, id) {
     // execute database functions
     const [course, user] = await Promise.all(queries)
 
+    // make sure it exists
+    if (!checkExists(res, log, course)) return
+
     // check permissions
     if (!checkPermission(res, log, course, user, 'view')) return
 
@@ -473,6 +486,41 @@ router.auth.route('/:id/user/:action/:userId').put(async function (req, res) {
     res.status(500).send('Error modifying course owners.')
   }
 })
+
+// HAS COURSE PERMISSION
+router.auth.route('/:id/permission/:permission').get(async function (req, res) {
+  getCoursePermission(true, req, res, req.params.id, req.params.permission)
+})
+router.open.route('/:id/permission/:permission').get(async function (req, res) {
+  getCoursePermission(false, req, res, req.params.id, req.params.permission)
+})
+async function getCoursePermission (auth, req, res, id, permission) {
+  const log = logger.child({ method: `getCoursePermission-${auth ? 'auth' : 'open'}` })
+  try {
+    log.verbose(`Course: ${id}, Permission: ${permission}`)
+    const cq = courseQuery(id)
+    const queries = [Course.findOne(cq).select(['_user', '_users', 'public']).exec()]
+
+    // if auth, also get user, otherwise empty user
+    queries.push(auth ? getCurrentUser(req, 'admin') : {})
+
+    // execute database functions
+    const [course, user] = await Promise.all(queries)
+
+    // make sure course exists
+    if (!checkExists(res, log, course)) return
+
+    // check permissions
+    const hasPermission = course.isPermitted(permission, user)
+    log.verbose(`Course: ${id}, Permission: ${permission}, Result: ${hasPermission}`)
+
+    // respond
+    res.status(200).json(hasPermission)
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error retrieving field.')
+  }
+}
 
 // GROUP ADD
 router.auth.route(['/:id/group/add/course/:course', '/:id/group/add/group/:group']).put(async function (req, res) {

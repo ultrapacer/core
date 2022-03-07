@@ -279,7 +279,7 @@ CourseSchema.methods.hasCache = function (type) {
 // isPermitted method returns whether the passed permission is allowed
 // for the passed user
 CourseSchema.methods.isPermitted = function (permission, user) {
-  const res = (
+  const res = Boolean(
     (permission === 'view' && this.public) ||
     user.admin ||
     user.equals?.(this._user) || // depreciated 2021.10.22
