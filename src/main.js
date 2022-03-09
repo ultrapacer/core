@@ -203,11 +203,13 @@ class FrontendErrorTransport extends Transport {
       description: logStr.split(/\r?\n/)[0]
     })
 
-    // alert user:
-    Vue.prototype.$alert.show(
-      'Error performing action. Please report errors to help development.',
-      { variant: 'danger' }
-    )
+    // alert user if silent option is not passed:
+    if (!info.silent) {
+      Vue.prototype.$alert.show(
+        'Error performing action. Please report errors to help development.',
+        { variant: 'danger' }
+      )
+    }
 
     callback()
   }
