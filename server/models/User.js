@@ -54,7 +54,7 @@ const UserSchema = new Schema({
         }
       },
       expiration: {
-        type: Date,
+        type: Date
       }
     },
     default: {

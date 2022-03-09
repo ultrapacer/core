@@ -5,7 +5,10 @@ if (window?.location?.origin?.includes?.('localhost')) {
   winston.level = 'verbose'
 
 // use info logging on published beta:
-} else if (window?.location?.origin?.includes?.('appspot.com')) {
+} else if (
+  window?.location?.origin?.includes?.('appspot.com') ||
+  window?.location?.origin?.includes?.('beta.')
+) {
   winston.level = 'info'
 
 // use warn logging in production
