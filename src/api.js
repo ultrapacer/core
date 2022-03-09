@@ -53,6 +53,7 @@ export default {
     return this.executeAuth('get', '/api/user/stats')
   },
   updateUser (id, data) {
+    if (!id || !data) throw new Error('Invalid arguments')
     return this.executeAuth('put', `/api/user/${id}`, data)
   },
   modifyUserCourses (id, action, course) {

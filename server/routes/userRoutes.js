@@ -61,7 +61,7 @@ userRoutes.route('/stats').get(async function (req, res) {
 // UPDATE
 userRoutes.route('/:id').put(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
-  log.verbose('run')
+  log.info(`id: ${req.params.id}`)
   try {
     // search by id or email:
     const q = isValidObjectId(req.params.id) ? { _id: req.params.id } : { email: req.params.id }

@@ -130,6 +130,9 @@ export default {
     async initiate () {
       const logger = this.logger.child({ method: 'initiate' })
       try {
+        // refresh auth
+        await this.$parent.refreshAuth()
+
         // this component should only be loaded if authenticated, but double check:
         if (!this.$user.isAuthenticated) return
 
@@ -158,7 +161,7 @@ export default {
           logger.info(`Remind again in ${-d} days`)
         }
       } catch (error) {
-        logger.error(error.stack)
+        logger.error(error.stack || error, { error: error, silent: true })
       }
     },
     async show (arg = null) {
@@ -197,6 +200,9 @@ export default {
     async snoozeReminder (delay) {
       const logger = this.logger.child({ method: 'snoozeReminder' })
       try {
+        // refresh auth
+        await this.$parent.refreshAuth()
+
         if (this.$user.isAuthenticated) {
           logger.info(`Snoozed ${delay} days.`)
           await this.$api.updateUser(
@@ -210,7 +216,7 @@ export default {
           logger.info('User not authenticated.')
         }
       } catch (error) {
-        logger.error(error.stack)
+        logger.error(error.stack || error, { error: error, silent: true })
       }
     },
 
