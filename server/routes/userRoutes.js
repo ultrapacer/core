@@ -1,13 +1,16 @@
 const express = require('express')
-const userRoutes = express.Router()
 const User = require('../models/User')
 const Course = require('../models/Course')
 const Plan = require('../models/Plan')
 const { isValidObjectId, getCurrentUser, getCurrentUserQuery, getUser, routeName } = require('../util')
 const logger = require('winston').child({ file: 'userRoutes.js' })
+const router = {
+  auth: express.Router(), // authenticated
+  open: express.Router() // unauthenticated
+}
 
 // GET
-userRoutes.route('/').get(async function (req, res) {
+router.auth.route('/').get(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   log.verbose('run')
   try {
@@ -21,6 +24,7 @@ userRoutes.route('/').get(async function (req, res) {
       log.info('creating new user')
       await user.save()
     }
+
     res.json(user)
   } catch (err) {
     log.error(err)
@@ -29,7 +33,7 @@ userRoutes.route('/').get(async function (req, res) {
 })
 
 // GET STATS
-userRoutes.route('/stats').get(async function (req, res) {
+router.auth.route('/stats').get(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   log.verbose('run')
   try {
@@ -59,7 +63,7 @@ userRoutes.route('/stats').get(async function (req, res) {
 })
 
 // UPDATE
-userRoutes.route('/:id').put(async function (req, res) {
+router.auth.route('/:id').put(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   log.info(`id: ${req.params.id}`)
   try {
@@ -74,7 +78,7 @@ userRoutes.route('/:id').put(async function (req, res) {
 
     if (currentUser.admin || user.equals(currentUser)) {
       const fields = [
-        'distUnits', 'elevUnits', 'altModel', 'email',
+        'distUnits', 'elevUnits', 'altModel', 'email', 'unsubscriptions',
         'membership.patreon', 'membership.lastAnnoyed', 'membership.nextAnnoy'
       ]
       if (currentUser.admin) {
@@ -104,7 +108,7 @@ userRoutes.route('/:id').put(async function (req, res) {
 })
 
 // UPDATE USER COURSES LIST:
-userRoutes.route('/:id/course/:action/:courseId').put(async function (req, res) {
+router.auth.route('/:id/course/:action/:courseId').put(async function (req, res) {
   const log = logger.child({ method: routeName(req) })
   log.info('run')
   const { id, action, courseId } = req.params
@@ -134,4 +138,64 @@ userRoutes.route('/:id/course/:action/:courseId').put(async function (req, res) 
   }
 })
 
-module.exports = userRoutes
+// GET EMAIL UNSUBSCRIPTIONS
+router.open.route('/unsubscriptions/:email/:token').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  try {
+    const { email, token } = req.params
+    log.info(`email: ${email}`)
+
+    // get user to update and currentUser (logged in)
+    const user = await User.findOne({ email: email, publicKey: token }).select(['publicKey', 'unsubscriptions']).exec()
+
+    if (!user) {
+      log.warn('Not found')
+      res.status(404).send('Not found')
+      return
+    }
+
+    res.status(200).json(user.unsubscriptions || {})
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error getting subscriptions.')
+  }
+})
+// PUT EMAIL UNSUBSCRIPTIONS
+router.open.route('/unsubscriptions/:email/:token').put(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  try {
+    const { email, token } = req.params
+    log.info(`email: ${email}`)
+
+    // get user to update and currentUser (logged in)
+    const user = await User.findOne({ email: email, publicKey: token }).select('unsubscriptions').exec()
+
+    if (!user) {
+      log.warn('Not found')
+      res.status(404).send('Not found')
+      return
+    }
+
+    const categories = ['news', 'event', 'tips']
+    user.unsubscriptions = {
+      all: Boolean(req.body.all),
+      categories: categories.filter(c => req.body.categories.includes(c))
+    }
+    const logstr = user.unsubscriptions.all
+      ? 'all'
+      : (
+          user.unsubscriptions.categories.length
+            ? user.unsubscriptions.categories.join(', ')
+            : 'none'
+        )
+    log.info(`Unsubscribed from ${logstr}.`)
+    await user.save()
+
+    res.status(200).send('Email subscriptions updated')
+  } catch (error) {
+    log.error(error.stack || error, { error: error })
+    res.status(500).send('Error updating subscriptions.')
+  }
+})
+
+module.exports = router

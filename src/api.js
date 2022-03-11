@@ -56,6 +56,14 @@ export default {
     if (!id || !data) throw new Error('Invalid arguments')
     return this.executeAuth('put', `/api/user/${id}`, data)
   },
+  getUserUnsubscriptions (email, token) {
+    // open api to get unsubscriptions by email with token
+    return this.execute('get', `/api/open/user/unsubscriptions/${email}/${token}`)
+  },
+  updateUserUnsubscriptions (email, token, data) {
+    // open api to get unsubscriptions by email with token
+    return this.execute('put', `/api/open/user/unsubscriptions/${email}/${token}`, data)
+  },
   modifyUserCourses (id, action, course) {
     return this.executeAuth('put', `/api/user/${id}/course/${action}/${course}`)
   },

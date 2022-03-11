@@ -45,7 +45,8 @@ async function startUp () {
     issuerBaseURL: `https://${keys.AUTH0_DOMAIN}/`
   })
 
-  app.use('/api/user', checkJwt, userRoutes)
+  app.use('/api/user', checkJwt, userRoutes.auth)
+  app.use('/api/open/user', userRoutes.open)
   app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes.auth)
   app.use('/api/open/course', courseRoutes.open)
   app.use('/api/track', checkJwt, trackRoutes.auth)

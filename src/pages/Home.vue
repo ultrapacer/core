@@ -32,6 +32,9 @@ export default {
   title: 'Home',
   components: {
     AboutContent
+  },
+  async created () {
+    this.$status.loading = false
   }
 }
 </script>

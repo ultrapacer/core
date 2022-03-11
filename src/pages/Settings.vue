@@ -59,23 +59,26 @@
       class="mt-2"
     >
       <h4>User Settings</h4>
-      <form @submit.prevent="saveSettings">
+      <form @submit.prevent="save">
         <b-form-group label="Distance Units">
           <b-form-select
             v-model="model.distUnits"
             :options="distUnits"
+            @input="status='changed'"
           />
         </b-form-group>
         <b-form-group label="Elevation Units">
           <b-form-select
             v-model="model.elevUnits"
             :options="elevUnits"
+            @input="status='changed'"
           />
         </b-form-group>
         <b-form-group label="Custom Altitude Factor">
           <b-form-checkbox
             v-model="customAltModel"
             :unchecked-value="false"
+            @input="status='changed'"
           >
             Use Custom Altitude Factor
           </b-form-checkbox>
@@ -90,6 +93,7 @@
               min="0"
               step="0.01"
               required
+              @input="status='changed'"
             />
           </b-form-group>
           <b-form-group label="Starting at altitude of [m]">
@@ -97,18 +101,37 @@
               v-model="altModel.th"
               type="number"
               required
+              @input="status='changed'"
             />
           </b-form-group>
         </b-card>
-        <div>
-          <b-button
-            type="submit"
-            variant="success"
-          >
-            Save Settings
-          </b-button>
-        </div>
       </form>
+    </b-card>
+    <b-card
+      class="mt-2"
+    >
+      <h4>Email Preferences</h4>
+      <email-preferences-input
+        v-model="model.unsubscriptions"
+        @input="status='changed'"
+      />
+    </b-card>
+    <b-card
+      v-if="status!=='none'"
+      class="mt-2"
+    >
+      <b-button
+        v-if="status==='changed'"
+        type="submit"
+        variant="success"
+        @click="save"
+      >
+        Save Changes
+      </b-button>
+
+      <p v-else-if="status==='success'">
+        <b>Settings updated.</b>
+      </p>
     </b-card>
     <vue-headful
       description="My ultraPacer settings."
@@ -118,8 +141,12 @@
 </template>
 
 <script>
+import EmailPreferencesInput from '../forms/EmailPreferencesInput'
 export default {
   title: 'Settings',
+  components: {
+    EmailPreferencesInput
+  },
   data () {
     return {
       customAltModel: false,
@@ -146,7 +173,8 @@ export default {
       ],
       altModel: Object.assign({}, this.$core.normFactor.defaults.alt),
       logger: this.$log.child({ file: 'Settings.vue' }),
-      model: {}
+      model: {},
+      status: 'none'
     }
   },
   computed: {
@@ -171,7 +199,7 @@ export default {
     this.populateForm()
   },
   methods: {
-    async saveSettings () {
+    async save () {
       this.$status.processing = true
       if (!this.customAltModel) {
         this.model.altModel = null

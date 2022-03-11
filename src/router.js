@@ -102,6 +102,11 @@ const router = new Router({
       component: lazyLoad('Docs')
     },
     {
+      path: '/emailpreferences',
+      name: 'EmailPreferences',
+      component: lazyLoad('EmailPreferences')
+    },
+    {
       path: '*',
       redirect: '/'
     }
