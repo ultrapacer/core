@@ -84,12 +84,12 @@ export default {
           Object.assign(this.unsubcriptions, unsubcriptions)
           log.verbose('Subscriptions retrieved.')
         } else {
-          return this.$router.push({ path: '/' })
+          return this.$router.push({ name: 'Home' })
         }
         this.$status.loading = false
       } catch (error) {
         log.error(error.stack || error, { error: error, silent: true })
-        this.$router.push({ path: '/' })
+        this.$router.push({ name: 'Home' })
       }
     }
   }

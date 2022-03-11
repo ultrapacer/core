@@ -20,7 +20,6 @@ async function startUp () {
   const elevation = require('./server/routes/elevation')
   const email = require('./server/routes/email')
   const strava = require('./server/routes/strava')
-  const mailer = require('./server/tasks/mailer')
   // connect to the database:
   mongoose.Promise = global.Promise
   mongoose.set('useFindAndModify', false)
@@ -65,8 +64,6 @@ async function startUp () {
   app.use('/api/timezone', checkJwt, require('./server/routes/timezone'))
 
   app.use('/api/external', external)
-
-  app.use('/tasks/mailer', mailer)
 
   // unauthenticated api routes:
   app.use('/api-public', publicRoutes)
