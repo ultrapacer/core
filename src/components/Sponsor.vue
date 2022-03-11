@@ -168,7 +168,6 @@ export default {
         },
         {
           name: ['Settings'],
-          element: 'settings',
           align: 'left',
           scrolling: false
         }
