@@ -93,6 +93,7 @@ export default {
   },
   data () {
     return {
+      logger: this.$log.child({ file: 'EmailUser.vue' }),
       message: '',
       name: '',
       replyTo: ''
@@ -111,6 +112,7 @@ export default {
       }
     },
     async send () {
+      const log = this.logger.child({ method: 'send' })
       if (this.$status.processing) { return }
       this.$status.processing = true
       try {
@@ -126,7 +128,7 @@ export default {
         this.$gtag.event('email', { event_category: capitalize(this.type), event_label: this.subject })
         this.$alert.show('Message sent!')
       } catch (error) {
-        this.$error.handle(error, 'EmailUser|send')
+        log.error(error)
       }
       this.$status.processing = false
       this.$refs.modal.hide()

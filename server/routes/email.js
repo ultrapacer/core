@@ -9,8 +9,11 @@ const path = require('path')
 const renderer = require('vue-server-renderer').createRenderer({
   template: fs.readFileSync(path.join(__dirname, '../templates/email.html'), 'utf-8')
 })
+const logger = require('winston').child({ file: 'email.js' })
+const { routeName } = require('../util')
 
 router.route('/').post(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
   try {
     const users = await User.find({ _id: { $in: req.body.toUserIds } }).select('email').exec()
 
@@ -25,6 +28,8 @@ router.route('/').post(async function (req, res) {
         pass: keys.SMTP_PASSWORD
       }
     })
+
+    // render html content:
     const html = await renderEmail(
       req.body.subject,
       'email.vue',
@@ -37,22 +42,22 @@ router.route('/').post(async function (req, res) {
         url: req.body.url
       }
     )
-    if (html) {
-      await transporter.sendMail({
-        from: '"ultraPacer" <no-reply@ultrapacer.com>',
-        to: users.map(u => { return u.email }),
-        subject: 'ultraPacer | ' + req.body.course,
-        text: req.body.message,
-        html: html,
-        replyTo: req.body.replyTo
-      })
-      res.status(200).json('Message Sent')
-    } else {
-      res.status(400).send('Not sent')
-    }
-  } catch (err) {
-    console.log(err)
-    res.status(400).send('Error sending email')
+
+    // send email:
+    await transporter.sendMail({
+      from: '"ultraPacer" <no-reply@ultrapacer.com>',
+      to: users.map(u => { return u.email }),
+      subject: 'ultraPacer | ' + req.body.course,
+      text: req.body.message,
+      html: html,
+      replyTo: req.body.replyTo
+    })
+
+    log.info(`Email sent for course: ${req.body.course}`)
+    res.status(200).json('Message Sent')
+  } catch (error) {
+    log.error(error)
+    res.status(500).send('Error sending email')
   }
 })
 
@@ -64,14 +69,7 @@ async function renderEmail (title, template, data) {
     data: data,
     template: fs.readFileSync(path.join(__dirname, `../templates/${template}`), 'utf-8')
   })
-  let res = ''
-  await renderer.renderToString(app, context, (err, html) => {
-    if (err) {
-      console.log(err)
-    } else {
-      res = html
-    }
-  })
+  const res = await renderer.renderToString(app, context)
   return res
 }
 

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { logger } from '../core/logger'
+const logger = require('winston').child({ file: 'api-external.js' })
 
 const client = axios.create({
   json: true
@@ -7,13 +7,14 @@ const client = axios.create({
 const host = window.location.origin.includes('localhost') ? '' : 'https://ultrapacer.com'
 export default {
   async execute (method, resource, data) {
-    const t = logger(`api|execute|${method}|${resource} initiated`)
+    const log = logger.child({ method: 'execute' })
+    log.info(`${method}|${resource} initiated`)
     return client({
       method,
       url: resource,
       data
     }).then(req => {
-      logger(`api|execute|${method}|${resource}`, t)
+      log.info(`${method}|${resource} completed`)
       return req.data
     })
   },

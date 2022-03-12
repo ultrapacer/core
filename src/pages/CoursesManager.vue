@@ -177,17 +177,19 @@ export default {
   },
   watch: {
     '$user._id': async function (v) {
+      const log = this.logger.child({ method: 'watch:$user._id' })
       try {
         if (v) {
           await this.refreshCourses()
         }
       } catch (error) {
-        this.$error.handle(error)
+        log.error(error)
       }
       this.$status.loading = false
     }
   },
   async created () {
+    const log = this.logger.child({ method: 'created' })
     try {
       this.$status.loading = true
       if (this.$user._id) {
@@ -195,7 +197,7 @@ export default {
         this.$status.loading = false
       }
     } catch (error) {
-      this.$error.handle(error, 'CoursesManager|created')
+      log.error(error)
     }
   },
   methods: {
@@ -241,6 +243,7 @@ export default {
       this.$refs.courseEdit.show(course._id)
     },
     async removeCourse (course, cb) {
+      const log = this.logger.child({ method: 'removeCourse' })
       this.$refs.delModal.show(
         {
           type: 'course',
@@ -248,7 +251,6 @@ export default {
           verb: 'remove'
         },
         async () => {
-          const log = this.logger.child({ method: 'removeCourse' })
           try {
             log.info(`course: ${course._id}`)
             // if user is also an owner, remove from course users list
@@ -266,7 +268,6 @@ export default {
             }
           } catch (error) {
             log.error(error)
-            this.$error.handle(error, 'CoursesManager|removeCourse')
           }
         },
         (err) => {

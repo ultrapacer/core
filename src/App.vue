@@ -174,10 +174,11 @@ export default {
     }
   },
   async created () {
+    const log = this.logger.child({ method: 'created' })
     try {
       await this.$auth.renewTokens()
     } catch (e) {
-      console.log(e)
+      log.warn(e)
     }
     window.addEventListener('resize', () => {
       this.$window.width = window.innerWidth

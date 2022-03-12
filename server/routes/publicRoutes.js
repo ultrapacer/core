@@ -16,9 +16,9 @@ publicRoutes.route('/course/:course/countusers').get(async function (req, res) {
     }
     const plans = await Plan.find(q).distinct('_user').exec()
     res.json(plans.length)
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+  } catch (error) {
+    logger.child({ method: routeName(req) }).error(error)
+    res.status(500).send('Error retrieving course user count')
   }
 })
 
@@ -36,9 +36,9 @@ publicRoutes.route('/plan/:id').get(async function (req, res) {
       log.warn('No permission')
       res.status(403).send('No permission')
     }
-  } catch (err) {
-    log.error(err)
-    res.status(400).send(err)
+  } catch (error) {
+    logger.child({ method: routeName(req) }).error(error)
+    res.status(500).send('Error getting plan')
   }
 })
 
@@ -52,9 +52,9 @@ publicRoutes.route('/races').get(async function (req, res) {
     }
     const races = await Course.find(q).select(['name', 'distance', 'gain', 'loss', 'loops', 'override', 'link', 'eventStart', 'eventTimezone']).sort('eventStart').exec()
     res.json(races)
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+  } catch (error) {
+    logger.child({ method: routeName(req) }).error(error)
+    res.status(500).send('Error getting races')
   }
 })
 
@@ -90,9 +90,9 @@ publicRoutes.route('/sitemap.xml').get(async function (req, res) {
     const xml = builder.buildObject(obj)
     res.type('text/plain')
     res.send(xml)
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+  } catch (error) {
+    logger.child({ method: routeName(req) }).error(error)
+    res.status(500).send('Error getting sitemap')
   }
 })
 
@@ -106,9 +106,9 @@ publicRoutes.route('/sponsor').get(async function (req, res) {
     } else {
       res.json(null)
     }
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+  } catch (error) {
+    logger.child({ method: routeName(req) }).error(error)
+    res.status(500).send('Error getting sponsor')
   }
 })
 

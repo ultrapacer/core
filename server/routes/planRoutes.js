@@ -2,7 +2,8 @@
 const express = require('express')
 const planRoutes = express.Router()
 const Plan = require('../models/Plan')
-const { getCurrentUser } = require('../util')
+const { getCurrentUser, routeName } = require('../util')
+const logger = require('winston').child({ file: 'planRoutes.js' })
 
 // SAVE NEW
 planRoutes.route('/').post(async function (req, res) {
@@ -15,9 +16,9 @@ planRoutes.route('/').post(async function (req, res) {
       await plan._user.save()
     }
     res.json(plan)
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+  } catch (error) {
+    logger.child({ method: routeName(req) }).error(error)
+    res.status(500).send('Error saving plan')
   }
 })
 
@@ -33,9 +34,9 @@ planRoutes.route('/:id').get(async function (req, res) {
     } else {
       res.status(403).send('No permission')
     }
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+  } catch (error) {
+    logger.child({ method: routeName(req) }).error(error)
+    res.status(500).send('Error retrieving plan')
   }
 })
 
@@ -63,8 +64,9 @@ planRoutes.route('/:id').put(async function (req, res) {
     } else {
       res.status(403).send('No permission')
     }
-  } catch (err) {
-    res.status(400).send(err)
+  } catch (error) {
+    logger.child({ method: routeName(req) }).error(error)
+    res.status(500).send('Error updating plan')
   }
 })
 
@@ -79,9 +81,9 @@ planRoutes.route('/:id').delete(async function (req, res) {
     } else {
       res.status(403).send('No permission')
     }
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+  } catch (error) {
+    logger.child({ method: routeName(req) }).error(error)
+    res.status(500).send('Error deleting plan')
   }
 })
 

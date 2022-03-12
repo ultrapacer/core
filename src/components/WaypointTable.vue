@@ -251,11 +251,7 @@ export default {
           this.$nextTick(() => { this.$refs.table.selectRow(this.rows.findIndex(row => row === item)) })
         }
       } catch (error) {
-        console.log(error)
-        this.$gtag.exception({
-          description: `WaypointTable|toggleRowDetails: ${error.toString()}`,
-          fatal: false
-        })
+        this.logger.child({ method: 'toggleRowDetails' }).error(error)
       }
     },
     shiftWaypoint: function (item, delta) {

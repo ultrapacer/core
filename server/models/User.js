@@ -118,7 +118,7 @@ UserSchema.post('init', async function () {
       log.info(`id: ${this._id}, created publicKey`)
     }
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
   }
 })
 

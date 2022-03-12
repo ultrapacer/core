@@ -184,7 +184,7 @@ export default {
           return this.$user.membership.method
         }
       } catch (error) {
-        this.logger.child({ method: 'membership' }).error(error.stack || error)
+        this.logger.child({ method: 'membership' }).error(error)
       }
       return 'free'
     }

@@ -336,7 +336,6 @@ export default {
                 const v = item.actualDelay(this.course.points)
                 return v >= 10 ? timeUtil.sec2string(v, '[h]:m:ss') : ''
               } catch (error) {
-                console.log(error)
                 return 'error'
               }
             },
@@ -365,9 +364,7 @@ export default {
       })
     },
     noteChange: async function (item) {
-      const log = this.logger.child({ method: 'noteChange' })
       const valid = item.text.length > 0
-      log.info(`note: ${item.text.substr(0, 100)}, valid: ${valid}`)
       this.$emit('change', 'Plan.notes', item, valid)
     },
     waypointDelayChange: async function (item) {

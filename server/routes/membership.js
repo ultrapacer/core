@@ -8,8 +8,7 @@ const User = require('../models/User')
 const url = require('url')
 const { getSecret } = require('../secrets')
 const logger = require('winston').child({ file: 'membership.js' })
-const { routeName } = require('../util')
-const { getCurrentUser } = require('../util')
+const { getCurrentUser, routeName } = require('../util')
 
 const BMC = require('buymeacoffee.js') // add BMC package
 
@@ -39,7 +38,7 @@ router.auth.route('/members/refresh').get(async function (req, res) {
         }
       })
     } catch (error) {
-      log.error('Error retrieving Buy Me a Coffee list.')
+      log.error(error)
     }
 
     // get array of patreon supporters
@@ -64,7 +63,7 @@ router.auth.route('/members/refresh').get(async function (req, res) {
         }
       })
     } catch (error) {
-      log.error('Error retrieving Patreon list.')
+      log.error(error)
     }
 
     const members = [...bmcSubscribors, ...patrons]
@@ -194,6 +193,7 @@ router.auth.route('/patreon/url').get(async function (req, res) {
 })
 
 router.auth.route('/patreon/user/:code').put(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
   try {
     // get keys
     const keys = await getSecret(['PATREON_CLIENT_ID', 'PATREON_CLIENT_SECRET'])
@@ -217,24 +217,25 @@ router.auth.route('/patreon/user/:code').put(async function (req, res) {
       rawJson.included.filter(i => i.attributes.patron_status === 'active_patron').length
     )
     if (isMember) {
-      console.log('api/patreon/user/:code : User has pledge for ultraPacer')
+      log.info('User has pledge for ultraPacer')
       if (!user.membership.active) user.set('membership.active', true)
       if (user.membership.method !== 'lifetime') user.set('membership.method', 'patreon')
     } else {
-      console.log('api/patreon/user/:code : User does not have pledge for ultraPacer')
+      log.info('User does not have pledge for ultraPacer')
     }
     await user.save()
     res.send(isMember)
   } catch (error) {
-    console.log(error)
-    res.status(400).send(error)
+    log.error(error)
+    res.status(500).send('Error retrieving user Patreon pledge data')
   }
 })
 
 router.open.route('/callback').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
   try {
     const { code } = req.query
-    console.log(`api/open/patreon/callback : Member code ${code}`)
+    log.info(`Member code ${code}`)
     const page = `
 <!DOCTYPE html>
 <html>
@@ -259,8 +260,8 @@ router.open.route('/callback').get(async function (req, res) {
 </html>`
     res.send(page)
   } catch (error) {
-    console.log(error)
-    res.status(400).send(error)
+    log.error(error)
+    res.status(500).send('Error connecting Patreon')
   }
 })
 

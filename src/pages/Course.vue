@@ -608,7 +608,7 @@ export default {
         }
         return `${this.course.name} [${moment(this.course.eventStart).format('YYYY')}]`
       } catch (error) {
-        this.logger.child({ method: 'courseName' }).error(error.stack || error, { error: error })
+        this.logger.child({ method: 'courseName' }).error(error)
         return ''
       }
     }
@@ -812,7 +812,7 @@ export default {
 
         log.info('complete')
       } catch (error) {
-        this.$error.handle(error, 'Course|initialize', true)
+        log.error(error)
         this.$status.processing = false
         this.$status.loading = false
         this.$router.push({ path: '/' })
@@ -895,11 +895,12 @@ export default {
         }, 2000)
         this.setUpdateFlag()
       } catch (error) {
-        this.$error.handle(error)
+        this.logger.child({ method: 'updateWaypointLocation' }).error(error)
       }
     },
     updateWaypointDelay (waypoint, delay) {
-      this.logger.child({ method: 'updateWaypointDelay' }).info('run')
+      const log = this.logger.child({ method: 'updateWaypointDelay' })
+      log.verbose('run')
       try {
         if (!this.plan || !this.plan.waypointDelays) return
 
@@ -916,11 +917,7 @@ export default {
         // update database
         this.$api.updatePlan(this.plan._id, { waypointDelays: this.plan.waypointDelays })
       } catch (error) {
-        console.log(error)
-        this.$gtag.exception({
-          description: `Course|updateWaypointDelay: ${error.toString()}`,
-          fatal: false
-        })
+        log.error(error)
       }
       this.$status.processing = true
       setTimeout(() => { this.updatePacing() }, 10)
@@ -1184,7 +1181,7 @@ export default {
           }
         }
       } catch (error) {
-        this.$error.handle(error)
+        log.error(error)
       }
       this.$status.processing = false
     },
@@ -1206,7 +1203,7 @@ export default {
     update: function (type, obj, valid) {
       const log = this.logger.child({ method: 'update' })
       try {
-        log.info(`type: ${type}`)
+        log.verbose(`type: ${type}`)
         const u = this.updates
         if (obj._id) {
           if (valid) {
@@ -1257,7 +1254,7 @@ export default {
             })
           }
         })
-        log.info(`${u.count} updates pending`)
+        log.verbose(`${u.count} updates pending`)
 
         if (type === 'Plan.delays') {
           this.$status.processing = true
@@ -1265,11 +1262,12 @@ export default {
         }
         this.$nextTick(() => { this.saveButtonVisible = u.count > 0 })
       } catch (error) {
-        this.$error.handle(error)
+        log.error(error)
       }
     },
     updateBatch: async function () {
-      this.logger.child({ method: 'updateBatch' }).info('run')
+      const log = this.logger.child({ method: 'updateBatch' })
+      log.info('run')
       try {
         this.$status.processing = true
         await this.$api.batch(this.updates)
@@ -1278,12 +1276,13 @@ export default {
           this.reloadCourse()
         })
       } catch (error) {
-        this.$error.handle(error)
+        log.error(error)
         this.$status.processing = false
       }
     },
     updateCancel: async function () {
-      this.logger.child({ method: 'updateCancel' }).info('run')
+      const log = this.logger.child({ method: 'updateCancel' })
+      log.info('run')
       try {
         if (this.updates.count) {
           this.$status.processing = true
@@ -1293,7 +1292,7 @@ export default {
         this.$course.mode = 'view'
         this.saveButtonVisible = false
       } catch (error) {
-        this.$error.handle(error)
+        log.error(error)
       }
       this.$status.processing = false
     },
@@ -1504,7 +1503,7 @@ export default {
           }
         }
       } catch (error) {
-        log.error(error.stack || error, { error: error })
+        log.error(error)
       }
     }
   }

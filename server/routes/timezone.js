@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const fetch = require('node-fetch')
 const { getSecret } = require('../secrets')
+const logger = require('winston').child({ file: 'timezone.js' })
+const { routeName } = require('../util')
 
 router.route('/').get(async function (req, res) {
   try {
@@ -16,8 +18,8 @@ router.route('/').get(async function (req, res) {
       res.status(200).send(json.zoneName)
     }
   } catch (error) {
-    console.log(error)
-    res.status(400).send(error)
+    logger.child({ method: routeName(req) }).error(error)
+    res.status(500).send('Error getting timezone')
   }
 })
 

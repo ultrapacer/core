@@ -69,7 +69,7 @@ export default {
         await this.$api.updateUserUnsubscriptions(this.email, this.token, this.unsubcriptions)
         this.status = 'success'
       } catch (error) {
-        log.error(error.stack || error, { error: error })
+        log.error(error)
       }
       this.$status.processing = false
     },
@@ -88,7 +88,7 @@ export default {
         }
         this.$status.loading = false
       } catch (error) {
-        log.error(error.stack || error, { error: error, silent: true })
+        log.error(error, { silent: true })
         this.$router.push({ name: 'Home' })
       }
     }

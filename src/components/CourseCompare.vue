@@ -93,6 +93,7 @@ export default {
   },
   data () {
     return {
+      logger: this.$log.child({ file: 'CourseCompare.vue' }),
       filename: '',
       gpxFile: null,
       gpxFileInvalidMsg: '',
@@ -119,6 +120,7 @@ export default {
       if (cancelEvents.includes(bvModalEvt.trigger)) this.$emit('cancel')
     },
     async load () {
+      const log = this.logger.child({ method: 'load' })
       this.$status.processing = true
       this.$nextTick(async () => {
         try {
@@ -130,43 +132,49 @@ export default {
             this.$refs['toast-match-error'].show()
           }
         } catch (error) {
-          this.$error.handle(error)
+          log.error(error)
         }
         this.$status.processing = false
       })
     },
     async loadGPX (f) {
-      this.$status.processing = true
-      await this.$core.util.sleep(100)
-      this.$nextTick(async () => {
-        const reader = new FileReader()
-        reader.onload = e => {
-          this.filename = this.gpxFile.name
-          this.$logger(`CourseCompare|loadGPX : loaded ${this.filename} loaded.`)
-          gpxParse.parseGpx(e.target.result, async (error, data) => {
-            if (error) {
-              this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
+      const log = this.logger.child({ method: 'loadGPX' })
+      try {
+        this.$status.processing = true
+        await this.$core.util.sleep(100)
+        this.$nextTick(async () => {
+          const reader = new FileReader()
+          reader.onload = e => {
+            this.filename = this.gpxFile.name
+            log.info(`${this.filename} loaded.`)
+            gpxParse.parseGpx(e.target.result, async (error, data) => {
+              if (error) {
+                this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
+                this.$status.processing = false
+                throw error
+              } else {
+                this.startTime = moment(data.tracks[0].segments[0][0].time)
+                const gpxpoints = data.tracks[0].segments[0].map(p => {
+                  return [p.lat, p.lon, p.elevation]
+                })
+                this.gpxPoints = await this.$core.tracks.create(gpxpoints, { clean: false })
+
+                // add in elapsed time:
+                this.gpxPoints.forEach((p, i) => {
+                  p.elapsed = moment(data.tracks[0].segments[0][i].time).diff(this.startTime, 'seconds')
+                })
+
+                this.gpxFileInvalidMsg = ''
+              }
               this.$status.processing = false
-              throw error
-            } else {
-              this.startTime = moment(data.tracks[0].segments[0][0].time)
-              const gpxpoints = data.tracks[0].segments[0].map(p => {
-                return [p.lat, p.lon, p.elevation]
-              })
-              this.gpxPoints = await this.$core.tracks.create(gpxpoints, { clean: false })
-
-              // add in elapsed time:
-              this.gpxPoints.forEach((p, i) => {
-                p.elapsed = moment(data.tracks[0].segments[0][i].time).diff(this.startTime, 'seconds')
-              })
-
-              this.gpxFileInvalidMsg = ''
-            }
-            this.$status.processing = false
-          })
-        }
-        reader.readAsText(f.target.files[0])
-      })
+            })
+          }
+          reader.readAsText(f.target.files[0])
+        })
+      } catch (error) {
+        log.error(error)
+        this.$status.processing = false
+      }
     },
     async stop () {
       this.$emit('stop', () => {

@@ -1,13 +1,15 @@
+const logger = require('winston').child({ file: 'secrets.js' })
+
 try {
   const keys = require('../config/keys')
   // hack to get rid of double+single quote format in keys.js file
   Object.keys(keys).forEach(k => {
     keys[k] = keys[k].replace(/'/g, '')
     process.env[k] = keys[k]
-    console.log(`Read secret ${k} from config file.`)
+    logger.info(`Read secret ${k} from config file.`)
   })
-} catch (err) {
-  console.log('no local secret file')
+} catch (error) {
+  logger.info('No local secret file')
 }
 
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager')
@@ -42,7 +44,7 @@ async function lookUp (name) {
   process.env[name] = val
 
   // log
-  console.log(`Read secret ${name} from config Secret Manager.`)
+  logger.child({ method: 'lookUp' }).info(`Read secret ${name} from config Secret Manager.`)
 
   // and return it
   return val

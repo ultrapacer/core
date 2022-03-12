@@ -48,6 +48,7 @@ export default {
   },
   data () {
     return {
+      logger: this.$log.child({ file: 'CourseShare.vue' }),
       manualShare: false,
       type: '',
       name: ''
@@ -67,33 +68,35 @@ export default {
       }
     },
     async share () {
-      this.name = this.course.name
-      if (this.type === 'plan') {
-        this.name = `${this.name}: ${this.plan.name}`
-      }
+      try {
+        this.name = this.course.name
+        if (this.type === 'plan') {
+          this.name = `${this.name}: ${this.plan.name}`
+        }
 
-      const route = this.course.link
-        ? { name: 'Race', params: { permalink: this.course.link } }
-        : { name: 'Course', params: { course: this.course._id } }
-      if (this.type === 'plan') {
-        route.query = { plan: this.plan._id }
-      }
-      this.url = `https://ultrapacer.com${this.$router.resolve(route).href}`
+        const route = this.course.link
+          ? { name: 'Race', params: { permalink: this.course.link } }
+          : { name: 'Course', params: { course: this.course._id } }
+        if (this.type === 'plan') {
+          route.query = { plan: this.plan._id }
+        }
+        this.url = `https://ultrapacer.com${this.$router.resolve(route).href}`
 
-      if (navigator.share) {
-        navigator.share({
-          title: `ultraPacer | ${this.name}`,
-          text: `ultraPacer | ${this.name}`,
-          url: this.url
-        }).then(() => {
+        if (navigator.share) {
+          await navigator.share({
+            title: `ultraPacer | ${this.name}`,
+            text: `ultraPacer | ${this.name}`,
+            url: this.url
+          })
           this.$gtage(this.$gtag, 'Course', 'share', this.course.name)
-        })
-          .catch(console.error)
-      } else {
-        this.manualShare = true
-        this.$nextTick(() => {
-          this.$refs.modal.show()
-        })
+        } else {
+          this.manualShare = true
+          this.$nextTick(() => {
+            this.$refs.modal.show()
+          })
+        }
+      } catch (error) {
+        this.logger.child({ method: 'share' }).error(error)
       }
     },
     async setPublic () {

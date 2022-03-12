@@ -156,7 +156,7 @@ router.open.route('/unsubscriptions/:email/:token').get(async function (req, res
 
     res.status(200).json(user.unsubscriptions || {})
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error getting subscriptions.')
   }
 })
@@ -193,7 +193,7 @@ router.open.route('/unsubscriptions/:email/:token').put(async function (req, res
 
     res.status(200).send('Email subscriptions updated')
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error updating subscriptions.')
   }
 })

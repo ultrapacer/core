@@ -258,6 +258,7 @@ export default {
   },
   data () {
     return {
+      logger: this.$log.child({ file: 'PlanEdit.vue' }),
       defaults: {
         pacingMethod: 'time',
         waypointDelay: 120,
@@ -334,6 +335,7 @@ export default {
       }
     },
     async save () {
+      const log = this.logger.child({ method: 'save' })
       if (this.$status.processing) { return }
       this.$status.processing = true
       try {
@@ -382,7 +384,7 @@ export default {
         })
       } catch (error) {
         this.$status.processing = false
-        this.$error.handle(error, 'PlanEdit|save')
+        log.error(error)
       }
     },
     clear () {

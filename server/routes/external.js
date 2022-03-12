@@ -3,6 +3,8 @@ const express = require('express')
 const routes = express.Router()
 const Course = require('../models/Course')
 const ObjectId = require('mongoose').Types.ObjectId
+const logger = require('winston').child({ file: 'external.js' })
+const { routeName } = require('../util')
 
 function isValidObjectId (id) {
   if (ObjectId.isValid(id)) {
@@ -12,9 +14,11 @@ function isValidObjectId (id) {
   return false
 }
 
-// GET COURSE PUBLIC
+// GET DATA FOR THE "UP TABLE" EXTERNAL COMPONENT
 routes.route('/up-table/:_id/:mode').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
   try {
+    log.info(`id: {req.params._id}, mode: ${req.params.mode}`)
     // search by link or id (if valid id):
     const q = [{
       link: req.params._id
@@ -46,9 +50,9 @@ routes.route('/up-table/:_id/:mode').get(async function (req, res) {
     await course.addData()
     if (!course.hasCache(req.params.mode)) { await course.updateCache() }
     res.json(course)
-  } catch (err) {
-    console.log(err)
-    res.status(400).send(err)
+  } catch (error) {
+    log.error(error)
+    res.status(500).send('Error retrieving data for component')
   }
 })
 

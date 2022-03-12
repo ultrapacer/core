@@ -2,9 +2,13 @@ const express = require('express')
 const router = express.Router()
 const fetch = require('node-fetch')
 const { getSecret } = require('../secrets')
+const logger = require('winston').child({ file: 'elevation.js' })
+const { routeName } = require('../util')
 
 router.route(['/', '/:source']).post(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
   const source = req.params.source || 'google' // api source
+  log.info(source)
   try {
     let config = {}
     if (source === 'google') {
@@ -48,7 +52,7 @@ router.route(['/', '/:source']).post(async function (req, res) {
     const alts = []
     const lls = req.body
     const packets = Math.ceil(lls.length / config.size)
-    console.log(`Getting elevation data for ${lls.length} points in ${packets} batch${packets > 1 ? 'es' : ''}`)
+    log.info(`Getting elevation data for ${lls.length} points in ${packets} batch${packets > 1 ? 'es' : ''}`)
     const options = {
       method: config.method,
       mode: 'cors',
@@ -68,14 +72,14 @@ router.route(['/', '/:source']).post(async function (req, res) {
       const results = config.results(data)
       alts.push(...results)
     }
-    console.log(`${packets} packet${packets > 1 ? 'es' : ''} received.`)
+    log.info(`${packets} packet${packets > 1 ? 'es' : ''} received.`)
     res.json({
       source: source,
       alts: alts
     })
-  } catch (err) {
-    console.log(err)
-    res.status(500).send(err)
+  } catch (error) {
+    log.error(error)
+    res.status(500).send('Error retrieving elevation data')
   }
 })
 

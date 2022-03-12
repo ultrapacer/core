@@ -159,7 +159,7 @@ router.beforeEach(async (to, from, next) => {
       auth.login({ target: to.path, query: to.query })
     }
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
   }
 })
 

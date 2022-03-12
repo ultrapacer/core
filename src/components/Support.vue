@@ -161,7 +161,7 @@ export default {
           logger.info(`Remind again in ${-d} days`)
         }
       } catch (error) {
-        logger.error(error.stack || error, { error: error, silent: true })
+        logger.error(error, { silent: true })
       }
     },
     async show (arg = null) {
@@ -216,19 +216,18 @@ export default {
           logger.info('User not authenticated.')
         }
       } catch (error) {
-        logger.error(error.stack || error, { error: error, silent: true })
+        logger.error(error, { silent: true })
       }
     },
 
     // these next methods are not currently being used, but may be useful later; for Patreon oath login:
     async getLoginURL () {
-      this.$logger('Patreon|getLoginURL : Getting Patreon login URL')
       try {
         const url = await this.$utils.timeout(this.$api.patreonGetLogin(), 5000)
         this.loginURL = url
       } catch (error) {
         // handle error:
-        this.$error.handle(error, 'Patreon|getLoginURL')
+        this.logger.child({ method: 'getLoginURL' }).error(error)
       }
     },
     async patreonOath () {
@@ -248,7 +247,7 @@ export default {
         window.addEventListener('message', this.receiveMessage, false)
       } catch (error) {
         // handle error:
-        this.$error.handle(error, 'Patreon|patreonOath')
+        this.logger.child({ method: 'patreonOath' }).error(error)
       }
     },
     async receiveMessage (event) {
@@ -259,7 +258,7 @@ export default {
       if (event?.data?.source === 'ultrapacer-patreon-callback') {
         // add patreon information to user, return membership active:
         const success = await this.$api.patreonUpdateUser(event.data.code)
-        this.$logger(`Patreon|receiveMessage : completed ${!success ? 'un' : ''}successfully.`)
+        this.logger.child({ method: 'receiveMessage' }).info(`Completed ${!success ? 'un' : ''}successfully.`)
 
         if (success) {
           // refresh user

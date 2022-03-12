@@ -227,7 +227,7 @@ export default {
           ...splitPoints
         ].sort((a, b) => a.loc - b.loc)
       } catch (error) {
-        this.logger.child({ method: 'points2' }).error(error.stack)
+        this.logger.child({ method: 'points2' }).error(error)
       }
 
       return arr
@@ -270,11 +270,10 @@ export default {
           this.focusLL2 = []
         }
       } catch (error) {
-        this.logger.child({ method: 'watch=>focus' }).error(error.stack)
+        this.logger.child({ method: 'watch=>focus' }).error(error)
       }
     },
     mapHeight: function () {
-      this.$logger('CourseMap|resized')
       this.$nextTick(function () {
         this.$refs.courseMap.mapObject.invalidateSize()
       })

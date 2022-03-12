@@ -193,15 +193,13 @@ class FrontendErrorTransport extends Transport {
     })
 
     // format log string:
-    const logStr = `${info.file ? ' [' + info.file + ']' : ''}${info.method ? '[' + info.method + ']' : ''} ${info.level.toUpperCase()}: ${info.message}`
+    const logStr = `${info.file ? '[' + info.file + ']' : ''}${info.method ? '[' + info.method + ']' : ''} ${info.message.toString()}`
 
     // report error to backend via api:
     Vue.prototype.$api.reportError({ error: logStr })
 
     // report to analytics:
-    Vue.prototype.$gtag.exception({
-      description: logStr.split(/\r?\n/)[0]
-    })
+    Vue.prototype.$gtag.exception({ description: logStr })
 
     // alert user if silent option is not passed:
     if (!info.silent) {
@@ -215,18 +213,6 @@ class FrontendErrorTransport extends Transport {
   }
 }
 logger.add(new FrontendErrorTransport({ level: 'error' }))
-
-Vue.prototype.$error = Vue.observable({
-  // this is depreciated as of 2/23/2022
-  // instead just use logger.error(error.stack)
-  handle: function (error, location) {
-    try {
-      logger.error(error.stack || error)
-    } catch (err) {
-      logger.error(err)
-    }
-  }
-})
 
 Vue.prototype.$alert = Vue.observable({
   show: function (message, options = {}) {
@@ -260,7 +246,6 @@ Vue.filter('timef', function (value, format) {
 })
 
 Vue.prototype.$api = api
-Vue.prototype.$logger = logger.info // depreciated 10.29.2021
 Vue.prototype.$log = logger
 Vue.use(UnitsPlugin)
 

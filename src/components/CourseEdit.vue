@@ -507,10 +507,11 @@ export default {
         this.track = await this.$core.tracks.create(llas)
         this.trackLoaded = true
       } catch (error) {
-        log.error(error.stack || error, { error: error })
+        log.error(error)
       }
     },
     async save () {
+      const log = this.logger.child({ method: 'save' })
       if (this.$status.processing) { return }
       this.$status.processing = true
       try {
@@ -576,7 +577,7 @@ export default {
             let waypoints = await api.getWaypoints(this.model._id)
             waypoints = waypoints.map(wp => { return new this.$core.waypoints.Waypoint(wp, course) })
             // if the course changed, map them to the new course LLA's
-            this.$logger('CourseEdit|save: mapping waypoints to new course')
+            log.info('Mapping waypoints to new course')
             waypoints.forEach(wp => {
               if (this.newTrack) {
                 if (wp.type !== 'start' && wp.type !== 'finish') {
@@ -592,7 +593,7 @@ export default {
             // save them all
             await Promise.all(waypoints.map(async wp => {
               await api.updateWaypoint(wp.site._id, wp.site)
-              this.$logger(`CourseEdit|save: updated waypoint ${wp.name}`)
+              log.info(`Updated waypoint ${wp.name}`)
             }))
           }
           this.$nextTick(async () => { await this.$core.util.sleep(100); this.$emit('afterEdit') })
@@ -608,7 +609,7 @@ export default {
         this.clear()
         this.$refs.modal.hide()
       } catch (error) {
-        this.$error.handle(error)
+        log.error(error)
         this.$status.processing = false
       }
     },
@@ -630,12 +631,12 @@ export default {
       })
     },
     async loadFile (f) {
+      const log = this.logger.child({ method: 'loadFile' })
       this.file = f
-      const t = this.$logger()
       this.$nextTick(async () => {
         const reader = new FileReader()
         reader.onload = e => {
-          this.$logger('CourseEdit|GPX file read', t)
+          log.info('GPX file read')
           const source = {
             type: 'gpx',
             name: this.gpxFile.name.split('.')[0],
@@ -702,7 +703,7 @@ export default {
                   logger.info(`Received elevation data for ${this.track.length} points`)
                 } catch (error) {
                   this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
-                  logger.error(error.stack || error)
+                  logger.error(error)
                   this.$status.processing = false
                   return
                 }
@@ -717,43 +718,42 @@ export default {
               this.newTrack = true
             }
           } catch (error) {
-            logger.error(error.stack || error)
+            logger.error(error)
           }
           this.$status.processing = false
         })
       } catch (error) {
-        logger.error(error.stack || error)
+        logger.error(error)
         this.$status.processing = false
       }
     },
     changeAltSource: async function (val) {
-      this.$logger(`CourseEdit|changeAltSource to ${val}`)
-      if (!this.track.length) await this.reloadTrack()
-      if (this.track.length) {
-        this.$set(this.trackModel.source, 'alt', val)
-        if (val === 'strava-route') {
-          this.$refs.stravaRouteInput.getStravaRoute()
-        } else if (val === 'gpx') {
-          this.loadFile(this.file)
-        } else {
-          this.$status.processing = true
-          const t2 = this.$logger('CourseEdit|changeAltSource getting elevation data')
-          try {
+      const log = this.logger.child({ method: 'changeAltSource' })
+      log.info(val)
+      try {
+        if (!this.track.length) await this.reloadTrack()
+        if (this.track.length) {
+          this.$set(this.trackModel.source, 'alt', val)
+          if (val === 'strava-route') {
+            this.$refs.stravaRouteInput.getStravaRoute()
+            this.trackLoaded = true
+          } else if (val === 'gpx') {
+            this.loadFile(this.file)
+            this.trackLoaded = true
+          } else {
+            this.$status.processing = true
+            log.info('Getting elevation data')
             await this.addElevationData(this.track, val)
-            this.$logger(`CourseEdit|changeAltSource received elevation data for ${this.track.length} points`, t2)
+            log.info(`Received elevation data for ${this.track.length} points`)
             this.track.calcStats()
             this.updateModelGainLoss()
-          } catch (err) {
-            this.gpxFileInvalidMsg = 'Elevation data and data is not available.'
-            this.$logger('CourseEdit|changeAltSource failed to get elevation data.', t2)
-            this.$gtag.exception({ description: err.message || err, fatal: false })
-            this.$status.processing = false
-            return
           }
-          this.$status.processing = false
         }
-        this.trackLoaded = true
+      } catch (error) {
+        this.gpxFileInvalidMsg = 'Error getting elevation data.'
+        log.error(error)
       }
+      this.$status.processing = false
     },
     updateModelGainLoss: function () {
       if (!this.model.override?.enabled) {
@@ -794,6 +794,7 @@ export default {
       this.lossf = -this.$math.round(this.model.override.loss * ((val === 'ft') ? 3.28084 : 1), 0)
     },
     async defaultTimezone (lat, lon) {
+      const log = this.logger.child({ method: 'defaultTimezone' })
       try {
         const tz = await this.$utils.timeout(
           api.getTimeZone(lat, lon),
@@ -805,7 +806,7 @@ export default {
           this.moment = moment(0).tz(tz)
         }
       } catch (error) {
-        this.$error.handle(error)
+        log.error(error)
       }
     },
     showHelp () {

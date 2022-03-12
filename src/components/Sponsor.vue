@@ -55,6 +55,7 @@ export default {
   },
   data () {
     return {
+      logger: this.$log.child({ file: 'Sponsor.vue' }),
       align: 'right',
       element: null,
       el: null,
@@ -140,7 +141,7 @@ export default {
       axios.get('/api-public/sponsor').then(res => {
         this.sponsor = res.data
         if (this.sponsor) {
-          this.$logger('Sponsored by ' + this.sponsor.name)
+          this.logger.child({ method: 'getSponsor' }).info('Sponsored by ' + this.sponsor.name)
           if (this.layout !== 'card') {
             this.setUp()
           }
@@ -152,6 +153,7 @@ export default {
       window.open(this.sponsor.href, '_blank')
     },
     setUp () {
+      const log = this.logger.child({ method: 'setUp' })
       // set up listeners for when to show sponsor info
       // get settings for this page
       const settings = [
@@ -196,7 +198,7 @@ export default {
               !this.$parent.$refs.routerView.initializing
               )
             ) {
-              this.$logger('Sponsor|checker setting watched element')
+              log.info('checker: setting watched element')
               this.enabled = true
               clearInterval(this.checker)
               this.checker = null
@@ -214,7 +216,7 @@ export default {
               this.addListeners()
               this.checker2 = setInterval(() => {
                 if (!this.el.clientHeight) {
-                  this.$logger('Sponsor|checker2 watched element removed, retrying')
+                  log.warn('checker2: watched element removed, retrying')
                   clearInterval(this.checker2)
                   this.checker2 = null
                   this.setUp()

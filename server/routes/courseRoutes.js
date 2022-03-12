@@ -102,7 +102,7 @@ router.auth.route('/').post(async function (req, res) {
 
     res.status(200).json({ id: course._id, post: 'Course added successfully' })
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error creating course.')
   }
 })
@@ -149,7 +149,7 @@ router.auth.route('/').get(async function (req, res) {
 
     res.status(200).json(courses)
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error retrieving course list.')
   }
 })
@@ -219,7 +219,7 @@ router.auth.route('/:id').put(async function (req, res) {
     // respond to request
     res.status(200).json('Update complete')
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error updating course.')
   }
 })
@@ -273,7 +273,7 @@ router.auth.route('/:id').delete(async function (req, res) {
       res.status(200).json('Course removed from user')
     }
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error removing course.')
   }
 })
@@ -331,7 +331,7 @@ async function getCourse (auth, req, res, id) {
 
     res.status(200).json(course)
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error retrieving course.')
   }
 }
@@ -362,7 +362,7 @@ async function getCourseField (auth, req, res, id, field) {
 
     res.status(200).json(course[field])
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error retrieving field.')
   }
 }
@@ -380,7 +380,7 @@ router.auth.route('/:id/waypoints').get(async function (req, res) {
     const waypoints = await Waypoint.find({ _course: course }).sort('percent location').exec()
     res.status(200).json(waypoints)
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error retrieving waypoints.')
   }
 })
@@ -398,7 +398,7 @@ router.auth.route('/:id/plans').get(async function (req, res) {
     const plans = await Plan.find({ _course: course, _user: user }).sort('name').exec()
     res.status(200).json(plans)
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error retrieving plans.')
   }
 })
@@ -438,7 +438,7 @@ router.auth.route('/:id/copy').put(async function (req, res) {
     })
     res.status(200).send(course2._id)
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error copying course.')
   }
 })
@@ -484,7 +484,7 @@ router.auth.route('/:id/user/:action/:userId').put(async function (req, res) {
       res.status(403).send('No permission')
     }
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error modifying course owners.')
   }
 })
@@ -519,7 +519,7 @@ async function getCoursePermission (auth, req, res, id, permission) {
     // respond
     res.status(200).json(hasPermission)
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error retrieving field.')
   }
 }
@@ -596,7 +596,7 @@ router.auth.route(['/:id/group/add/course/:course', '/:id/group/add/group/:group
     log.info(msg)
     res.status(200).send(msg)
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error grouping course.')
   }
 })
@@ -625,7 +625,7 @@ async function getcourseGroupList (auth, req, res, id) {
 
     res.status(200).json(courses)
   } catch (error) {
-    log.error(error.stack || error, { error: error })
+    log.error(error)
     res.status(500).send('Error retrieving course group list.')
   }
 }

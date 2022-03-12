@@ -475,7 +475,7 @@ export default {
           this.$emit('select', this.mode, [])
         }
       } catch (error) {
-        this.logger.child({ method: 'selectRow' }).error(error.stack)
+        this.logger.child({ method: 'selectRow' }).error(error)
       }
     },
     sec2string: function (s, f) {

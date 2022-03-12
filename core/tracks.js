@@ -1,6 +1,6 @@
 const { round, interp, wlslr } = require('./math')
 const gpxParse = require('gpx-parse')
-const logger = require('winston').child({ component: 'tracks.js' })
+const logger = require('winston').child({ file: 'tracks.js' })
 const { latlon: LatLon } = require('sgeo')
 const { makeReactive } = require('./util')
 const { Point, interpolatePoint } = require('./points')
@@ -85,7 +85,7 @@ class Track extends Array {
 
   addGrades () {
   // add grade field to points array
-    logger.info('Track|addGrades')
+    logger.child({ method: 'Track.addGrades' }).verbose('executed')
     const locs = Array(...this).map(x => x.loc)
     const lsq = this.getSmoothedProfile(locs, 0.05)
     this.forEach((p, i) => {
@@ -95,7 +95,7 @@ class Track extends Array {
 
   calcStats () {
     // return course { gain, loss, dist }
-    logger.info('Track|calcStats')
+    const log = logger.child({ method: 'Track.calcStats' })
     const d = this.last.loc
     let gain = 0
     let loss = 0
@@ -116,7 +116,7 @@ class Track extends Array {
       dist: d
     }
     ;({ dist: this.dist, gain: this.gain, loss: this.loss } = stats)
-    logger.info(`Track|calcStats ${round(stats.dist, 2)} km ${round(stats.gain, 0)}/${round(stats.loss, 0)} m`)
+    log.info(`${round(stats.dist, 2)} km ${round(stats.gain, 0)}/${round(stats.loss, 0)} m`)
     return stats
   }
 
@@ -125,12 +125,13 @@ class Track extends Array {
     // location : distance or array of distances in km
     // opts :
     //   start : optional start index to speed up search; only for single location
+    const log = logger.child({ method: 'Track.calcStats' })
 
     // if location is already array, copy, otherwise make it one:
     const isArray = Array.isArray(location)
     const locs = isArray ? [...location] : [location]
 
-    logger.info(`Track|getLLA for ${locs.length} location(s).`)
+    log.verbose(`Executed for ${locs.length} location(s).`)
 
     // if track has loops, just look at location within first loop (eg track)
     locs.forEach((l, i) => { if (l > this.dist) locs[i] = l % this.dist })
@@ -182,7 +183,7 @@ class Track extends Array {
   }
 
   getNearestPoint (latlon, start, limit) {
-    logger.child({ method: 'Track|getNearestPoint' }).verbose([start._index, limit])
+    logger.child({ method: 'Track.getNearestPoint' }).verbose([start._index, limit])
     // iterate to new location based on waypoint lat/lon
     // latlon: sgeo LatLon object
     // start: starting point in current track
@@ -229,7 +230,7 @@ class Track extends Array {
   }
 
   getNearestLoc (ll, start, limit) {
-    logger.info(['Track|getNearestLoc', ll, start, limit])
+    logger.child({ method: 'Track.getNearestLoc' }).verbose('run')
     // iterate to new location based on waypoint lat/lon
     // ll: [lat, lon] array
     // start: starting location in meters
@@ -262,7 +263,8 @@ class Track extends Array {
   getSmoothedProfile (locs, gt) {
     // locs: array of locations (km)
     // gt: grade smoothing threshold
-    logger.info('Track|getSmoothedProfile')
+    logger.child({ method: 'Track.getSmoothedProfile' }).verbose('executed')
+
     const mbs = wlslr(
       this.map(p => { return p.loc }),
       this.map(p => { return p.alt }),
@@ -285,7 +287,7 @@ class Track extends Array {
   async reduceDensity () {
   // reduce density of points for processing
   // correct distance
-    logger.info('Track|reduceDensity')
+    const log = logger.child({ method: 'Track|reduceDensity' })
     const spacing = 0.025 // meters between points
 
     // only reformat if it cuts the size down in half
@@ -309,17 +311,20 @@ class Track extends Array {
         { clean: false }
       )
 
-      logger.info(`Track|reduceDensity: Reduced from ${this.length} to ${track.length} points`)
+      log.info(`Reduced from ${this.length} to ${track.length} points`)
       return track
     } else {
+      log.info('Reduction not required')
       return this
     }
   }
 }
 
 async function create (arr, opts = {}) {
+  const log = logger.child({ method: 'create' })
+
   const clean = opts.clean !== false // default to true
-  logger.info(`track|create for ${arr.length} points. clean=${clean}.`)
+  log.info(`${arr.length} points. clean=${clean}.`)
   let points = arr.map(p => { return new Point(p) })
 
   if (clean) {
@@ -330,7 +335,7 @@ async function create (arr, opts = {}) {
       round(p.lon - points[i - 1].lon, 8) !== 0
     )
     if (prev > points.length) {
-      logger.info(`tracks|create: removed ${prev - points.length} zero-distance points`)
+      log.info(`Removed ${prev - points.length} zero-distance points`)
     }
   }
 

@@ -49,7 +49,7 @@ async function getTrack (auth, req, res, id, user = {}) {
     // return json
     res.status(200).json(track)
   } catch (error) {
-    log.error(error.stack || error)
+    log.error(error)
     res.status(500).send('Error retrieving track.')
   }
 }

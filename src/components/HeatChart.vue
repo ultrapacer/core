@@ -29,6 +29,11 @@ export default {
       default: () => { return null }
     }
   },
+  data () {
+    return {
+      logger: this.$log.child({ file: 'HeatChart.vue' })
+    }
+  },
   computed: {
     ps: function () {
       // get distance and tod pairs from kilometer splits
@@ -213,8 +218,7 @@ export default {
           m = locs.map((x, i) => { return { x: x, y: model2[i].y } })
         }
       } catch (error) {
-        console.log(error)
-        this.$gtag.exception({ description: `HeatChart|modelByDistance: ${error.toString()}`, fatal: false })
+        this.logger.child({ method: 'modelByDistance' }).error(error)
       }
       return m
     },

@@ -86,6 +86,7 @@ export default {
   },
   data () {
     return {
+      logger: this.$log.child({ file: 'StravaRouteInput.vue' }),
       stravaRouteId: null,
       stravaRouteName: null,
       stravaRouteDate: null,
@@ -122,8 +123,8 @@ export default {
         this.stravaRouteDate = route.updated_at
 
         this.$emit('loadGPX', gpx, this.mysource)
-      } catch (err) {
-        console.log(err)
+      } catch (error) {
+        this.logger.child({ method: 'getStravaRoute' }).error(error)
         this.stravaRouteName = null
         this.stravaRouteDate = null
 
