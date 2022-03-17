@@ -249,6 +249,8 @@ Vue.prototype.$api = api
 Vue.prototype.$log = logger
 Vue.use(UnitsPlugin)
 
+Vue.prototype.$helpers = require('./util/helpers')
+
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
