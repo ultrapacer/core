@@ -1270,6 +1270,7 @@ export default {
       log.info('run')
       try {
         this.$status.processing = true
+        await this.$core.util.sleep(200)
         await this.$api.batch(this.updates)
         this.$status.processing = false
         this.$nextTick(() => {

@@ -26,11 +26,11 @@
       <template #cell(delayInput)="row">
         <time-input
           v-if="row.item.type !== 'finish' && (row.item.loop > 1 || row.item.type !== 'start')"
-          v-model="plan.getDelayAtWaypoint(row.item).delay"
+          v-model="waypointDelays[row.index]"
           format="mm:ss"
           :default="plan.getTypicalDelayAtWaypoint(row.item)"
           style="width: 50px"
-          @input="waypointDelayChange(plan.getDelayAtWaypoint(row.item))"
+          @input="waypointDelayChange(plan.getDelayAtWaypoint(row.item), waypointDelays[row.index])"
         />
       </template>
       <template #row-details="row">
@@ -49,10 +49,10 @@
               class="d-md-none mb-1"
             >
               <time-input
-                v-model="plan.getDelayAtWaypoint(row.item).delay"
+                v-model="waypointDelays[row.index]"
                 format="hh:mm:ss"
                 :default="plan.getTypicalDelayAtWaypoint(row.item)"
-                @input="waypointDelayChange(plan.getDelayAtWaypoint(row.item))"
+                @input="waypointDelayChange(plan.getDelayAtWaypoint(row.item), waypointDelays[row.index])"
               />
             </b-input-group>
             <b-input-group
@@ -60,10 +60,11 @@
               prepend="Notes"
             >
               <b-form-textarea
-                v-model="plan.getNoteAtWaypoint(row.item).text"
+                v-model="waypointNotes[row.index]"
                 rows="2"
                 max-rows="30"
-                @input="noteChange(plan.getNoteAtWaypoint(row.item))"
+                @input="$emit('input')"
+                @change="noteChange(plan.getNoteAtWaypoint(row.item), waypointNotes[row.index])"
               />
             </b-input-group>
           </form>
@@ -345,6 +346,18 @@ export default {
         }
       }
       return f
+    },
+
+    // array of waypoint delays for input fields
+    waypointDelays: function () {
+      this.logger.child({ method: 'waypointDelays' }).debug('compute')
+      return this.rows.map(row => this.plan.getDelayAtWaypoint(row).delay)
+    },
+
+    // array of waypoint notes for input fields
+    waypointNotes: function () {
+      this.logger.child({ method: 'waypointNotes' }).debug('compute')
+      return this.rows.map(row => this.plan.getNoteAtWaypoint(row).text)
     }
   },
   methods: {
@@ -363,17 +376,28 @@ export default {
         this.$nextTick(() => { this.$refs.table.selectRow(i) })
       })
     },
-    noteChange: async function (item) {
-      const valid = item.text.length > 0
-      this.$emit('change', 'Plan.notes', item, valid)
+    noteChange: async function (item, val) {
+      const log = this.logger.child({ method: 'noteChange' })
+      try {
+        log.debug('run')
+        item.text = val
+        const valid = item.text.length > 0
+        this.$emit('change', 'Plan.notes', item, valid)
+      } catch (error) {
+        log.error(error)
+      }
     },
-    waypointDelayChange: async function (item) {
+    waypointDelayChange: async function (item, val) {
       const log = this.logger.child({ method: 'waypointDelayChange' })
-      const wp = this.waypoints.find(wp => wp.site._id === item._waypoint && wp.loop === item.loop)
-      if (!wp) throw new Error('ahhh')
-      const valid = item.delay !== null && item.delay !== this.plan.getTypicalDelayAtWaypoint(wp)
-      log.info(`delay: ${item.delay}, valid: ${valid}`)
-      this.$emit('change', 'Plan.delays', item, valid)
+      try {
+        item.delay = val
+        const wp = this.waypoints.find(wp => wp.site._id === item._waypoint && wp.loop === item.loop)
+        const valid = item.delay !== null && item.delay !== this.plan.getTypicalDelayAtWaypoint(wp)
+        log.info(`delay: ${item.delay}, valid: ${valid}`)
+        this.$emit('change', 'Plan.delays', item, valid)
+      } catch (error) {
+        log.error(error)
+      }
     }
   }
 }
@@ -388,7 +412,11 @@ export default {
   justify-content: flex-end;
 }
 .inlineTableInput input {
+  padding: 0.05rem 0.3rem !important;
   background-image: none !important;
+}
+.inlineTableInput input.is-valid {
+  padding: 0.05rem 0.3rem !important;
 }
 .b-table-details td:empty {
   display:none !important;
