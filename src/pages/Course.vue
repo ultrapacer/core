@@ -95,7 +95,7 @@
 
                 <!-- PLAN SELECT --->
                 <course-plan-select
-                  v-if="$course.view!=='edit'&& $course.mode !=='edit' && (plans.length || plansByOthers.length)"
+                  v-if="$course.view!=='edit'&& $course.mode !=='edit' && (plans.length || plansByOthers.length) && plan._id"
                   :plan="plan"
                   :plans="plans"
                   :plans-by-others="plansByOthers"

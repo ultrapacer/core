@@ -15,18 +15,20 @@
         ref="planform"
         @submit.prevent=""
       >
-        <b-input-group
-          prepend="Name"
-        >
-          <b-form-input
-            v-model="model.name"
-            type="text"
-            required
-          />
-        </b-input-group>
-        <form-tip v-if="showTips">
-          Required: title for this plan; for example "A goal" or "Qualify" or "24-hour finish".
-        </form-tip>
+        <div v-if="$user.isAuthenticated">
+          <b-input-group
+            prepend="Name"
+          >
+            <b-form-input
+              v-model="model.name"
+              type="text"
+              required
+            />
+          </b-input-group>
+          <form-tip v-if="showTips">
+            Required: title for this plan; for example "A goal" or "Qualify" or "24-hour finish".
+          </form-tip>
+        </div>
         <b-input-group
           prepend="Pacing Method"
           class="mt-1"
@@ -70,8 +72,7 @@
         </b-input-group>
         <form-tip v-if="showTips">
           Optional: typical aid station delay or time spent at each aid station. Also
-          applies to water sources. Unique delays for specific waypoints may be set in the
-          Waypoints tab.
+          applies to water sources. Unique delays for specific waypoints may set later.
         </form-tip>
         <b-form-group
           v-if="Boolean(course.eventStart)"
@@ -105,60 +106,68 @@
             Optional: start date of your activity; many pacing factors will only be applied if a date and time are specified.
           </template>
         </date-time-input>
-        <b-form-checkbox
-          v-model="enableDrift"
-          :value="true"
-          class="mt-1"
-          :unchecked-value="false"
-        >
-          Apply pace drift
-        </b-form-checkbox>
-        <form-tip v-if="showTips && !enableDrift">
-          Optional: enable to add a linear change in speed throughout the race.
-        </form-tip>
-        <drift-input
-          v-if="enableDrift"
-          v-model="model.drift"
-          class="mt-1 pl-3"
-          :show-tips="showTips"
-          :course-distance="course.dist"
-        />
-        <b-form-group
-          v-if="Boolean(course.eventStart) || (moment !== null && Number(moment.format('YYYY') > 1970))"
-          class="mb-0"
-        >
+        <div v-if="$user.isAuthenticated">
           <b-form-checkbox
-            v-model="enableHeat"
+            v-model="enableDrift"
             :value="true"
             class="mt-1"
             :unchecked-value="false"
           >
-            Apply heat factor
+            Apply pace drift
           </b-form-checkbox>
-          <form-tip v-if="showTips && !enableHeat">
-            Optional: pace modifier for heat and sun exposure. Requires date
-            and time to be specified.
+          <form-tip v-if="showTips && !enableDrift">
+            Optional: enable to add a linear change in speed throughout the race.
           </form-tip>
-          <heat-input
-            v-if="enableHeat"
-            v-model="model.heatModel"
+          <drift-input
+            v-if="enableDrift"
+            v-model="model.drift"
             class="mt-1 pl-3"
             :show-tips="showTips"
-            :sun="event.sun"
+            :course-distance="course.dist"
           />
-        </b-form-group>
-        <b-input-group
-          prepend="Notes"
-          class="mt-1"
+          <b-form-group
+            v-if="Boolean(course.eventStart) || (moment !== null && Number(moment.format('YYYY') > 1970))"
+            class="mb-0"
+          >
+            <b-form-checkbox
+              v-model="enableHeat"
+              :value="true"
+              class="mt-1"
+              :unchecked-value="false"
+            >
+              Apply heat factor
+            </b-form-checkbox>
+            <form-tip v-if="showTips && !enableHeat">
+              Optional: pace modifier for heat and sun exposure. Requires date
+              and time to be specified.
+            </form-tip>
+            <heat-input
+              v-if="enableHeat"
+              v-model="model.heatModel"
+              class="mt-1 pl-3"
+              :show-tips="showTips"
+              :sun="event.sun"
+            />
+          </b-form-group>
+          <b-input-group
+            prepend="Notes"
+            class="mt-1"
+          >
+            <b-form-textarea
+              v-model="model.description"
+              rows="2"
+            />
+          </b-input-group>
+          <form-tip v-if="showTips">
+            Optional: any miscellaneous notes for this Plan.
+          </form-tip>
+        </div>
+        <div
+          v-else
+          class="mt-2"
         >
-          <b-form-textarea
-            v-model="model.description"
-            rows="2"
-          />
-        </b-input-group>
-        <form-tip v-if="showTips">
-          Optional: any miscellaneous notes for this Plan.
-        </form-tip>
+          Log in for additional parameters and options.
+        </div>
       </form>
       <template #modal-footer="{ ok, cancel }">
         <div

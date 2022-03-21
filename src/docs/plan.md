@@ -36,8 +36,8 @@ Enter the typical dwell time you plan to spend at each Aid Station. This time
 also applies to Waypoints designated as "Water Sources".\
 Other Waypoint types such as "Junctions" or "Landmarks" do not include the
 typical delay.
-Unique delays for specific waypoints may be set in the Waypoints tab
-by clicking on specific waypoints, for
+Unique delays for specific waypoints may be set in the Plan tab
+by clicking "Edit" at the top of the page, for
 example, if you are planning a short catnap somewhere or more involved
 crewing/resupply in certain locations.
 
