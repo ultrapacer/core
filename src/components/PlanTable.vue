@@ -70,14 +70,14 @@
           </form>
         </b-card>
         <b-card
-          v-else-if="getNote(row.item, 'text')"
+          v-else-if="planAssigned && waypointNotes[row.index]"
           no-body
           class="ml-1 p-1"
         >
           <p
             class="p-1 m-0"
           >
-            <span style="white-space: pre-wrap">{{ getNote(row.item, 'text') }}</span>
+            <span style="white-space: pre-wrap">{{ waypointNotes[row.index] }}</span>
           </p>
         </b-card>
       </template>
@@ -138,6 +138,7 @@ export default {
   },
   computed: {
     rows: function () {
+      this.logger.child({ method: 'rows' }).debug('computed')
       const arr = this.waypoints.filter(x => (x.tier === 1)).sort((a, b) => a.loc - b.loc)
 
       // clear variants from any cells that have them:
@@ -360,12 +361,13 @@ export default {
       return this.rows.map(row => this.plan.getNoteAtWaypoint(row).text)
     }
   },
+  created () {
+    this.logger.debug('created')
+  },
+  mounted () {
+    this.logger.debug('mounted')
+  },
   methods: {
-    getNote (waypoint, field) {
-      const note = this.plan?.notes?.find(n => n._waypoint === waypoint.site._id)
-      if (!note) return null
-      return field ? note[field] : note
-    },
     selectWaypoint: function (waypoints) {
       if (!Array.isArray(waypoints)) {
         waypoints = [waypoints]

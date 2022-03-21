@@ -644,6 +644,7 @@ export default {
       }
     },
     tablesTab: function (val) {
+      this.logger.child({ method: 'watch-tablesTab' }).debug(val)
       this.focus = []
       // if editing and navigating away from waypoint table, recalc
       if (this.updateFlag && this.tablesTab > 0) {
