@@ -7,9 +7,9 @@ const routes = express.Router()
 routes.route('/').post(async function (req, res) {
   try {
     const { error } = req.body
+    logger.error(new Error(error))
+  } catch (error) {
     logger.error(error)
-  } catch (err) {
-    logger.error(err)
   }
   res.status(200).send('error reported')
 })

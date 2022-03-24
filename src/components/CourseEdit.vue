@@ -657,66 +657,70 @@ export default {
         gpxParse.parseGpx(f, async (error, data) => {
           try {
             if (error) {
-              this.gpxFileInvalidMsg = `File format invalid: ${error.toString()}`
+              this.gpxFileInvalidMsg = 'File format invalid.'
+              logger.warn(`File format invalid: ${error.toString()}`)
               this.$status.processing = false
-              throw error
-            } else {
-              logger.info('GPX parsed')
-              this.trackModel.source = { ...source }
-
-              // choose source from GPX:
-              let arr = []
-              if (data.tracks.length) {
-                logger.info('Using GPX track')
-                arr = data.tracks[0].segments[0]
-              } else if (data.routes.length) {
-                logger.info('Using GPX route')
-                arr = data.routes[0].points
-              } else {
-                throw new Error('GPX file contains no tracks or routes')
-              }
-
-              // map to LLA array
-              const llas = arr.map(p => {
-                return [p.lat, p.lon, p.elevation]
-              })
-
-              if (llas.length < 100) {
-                this.gpxFileInvalidMsg = 'GPX file has too few points.'
-                this.$status.processing = false
-                return
-              }
-              if (llas.length > this.$config.maxGPXPoints) {
-                this.gpxFileInvalidMsg = 'File exceeds size limit of {this.$config.maxGPXPoints} points. If this is a valid file, contact me for help.'
-                this.$status.processing = false
-                return
-              }
-              const track = await this.$core.tracks.create(llas)
-              const reduced = await track.reduceDensity()
-              this.track = (reduced.length < track.length) ? reduced : track
-
-              if (this.$config.requireGPXElevation && this.track.gain === 0) {
-                this.gpxFileNoElevFlag = true
-                logger.info('Getting elevation data')
-                try {
-                  await this.addElevationData(this.track)
-                  logger.info(`Received elevation data for ${this.track.length} points`)
-                } catch (error) {
-                  this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
-                  logger.error(error)
-                  this.$status.processing = false
-                  return
-                }
-              }
-              this.gpxFileInvalidMsg = ''
-              this.updateModelGainLoss()
-              if (!this.model.name) {
-                this.model.name = this.trackModel.source.name
-              }
-              await this.defaultTimezone(this.track[0].lat, this.track[0].lon)
-              this.trackLoaded = true
-              this.newTrack = true
+              return
             }
+
+            logger.info('GPX parsed')
+            this.trackModel.source = { ...source }
+
+            // choose source from GPX:
+            let arr = []
+            if (data.tracks.length) {
+              logger.info('Using GPX track')
+              arr = data.tracks[0].segments[0]
+            } else if (data.routes.length) {
+              logger.info('Using GPX route')
+              arr = data.routes[0].points
+            } else {
+              this.gpxFileInvalidMsg = 'GPX file contains no tracks or routes'
+              logger.warn(`File format invalid: ${this.gpxFileInvalidMsg}`)
+              this.$status.processing = false
+              return
+            }
+
+            // map to LLA array
+            const llas = arr.map(p => {
+              return [p.lat, p.lon, p.elevation]
+            })
+
+            if (llas.length < 100) {
+              this.gpxFileInvalidMsg = 'GPX file has too few points.'
+              this.$status.processing = false
+              return
+            }
+            if (llas.length > this.$config.maxGPXPoints) {
+              this.gpxFileInvalidMsg = 'File exceeds size limit of {this.$config.maxGPXPoints} points. If this is a valid file, contact me for help.'
+              this.$status.processing = false
+              return
+            }
+            const track = await this.$core.tracks.create(llas)
+            const reduced = await track.reduceDensity()
+            this.track = (reduced.length < track.length) ? reduced : track
+
+            if (this.$config.requireGPXElevation && this.track.gain === 0) {
+              this.gpxFileNoElevFlag = true
+              logger.info('Getting elevation data')
+              try {
+                await this.addElevationData(this.track)
+                logger.info(`Received elevation data for ${this.track.length} points`)
+              } catch (error) {
+                this.gpxFileInvalidMsg = 'File does not contain elevation data and data is not available.'
+                logger.error(error)
+                this.$status.processing = false
+                return
+              }
+            }
+            this.gpxFileInvalidMsg = ''
+            this.updateModelGainLoss()
+            if (!this.model.name) {
+              this.model.name = this.trackModel.source.name
+            }
+            await this.defaultTimezone(this.track[0].lat, this.track[0].lon)
+            this.trackLoaded = true
+            this.newTrack = true
           } catch (error) {
             logger.error(error)
           }
