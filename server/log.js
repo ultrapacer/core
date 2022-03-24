@@ -30,7 +30,21 @@ if (dev) {
   winston.level = 'debug'
 } else {
   const { LoggingWinston } = require('@google-cloud/logging-winston')
-  const loggingWinston = new LoggingWinston()
+  const loggingWinston = new LoggingWinston({
+    resource: {
+      type: 'cloud_run_revision',
+      labels: {
+        configuration_name: process.env.K_CONFIGURATION,
+        location: process.env.K_LOCATION,
+        revision_name: process.env.K_REVISION,
+        service_name: process.env.K_SERVICE
+      }
+    },
+    serviceContext: {
+      service: process.env.K_SERVICE,
+      version: process.env.K_REVISION
+    }
+  })
   winston.clear().add(loggingWinston)
   winston.child({ file: 'log.js' }).info('logging in production mode')
 }
