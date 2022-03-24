@@ -281,9 +281,9 @@ CourseSchema.methods.hasCache = function (type) {
 CourseSchema.methods.isPermitted = function (permission, user) {
   const res = Boolean(
     (permission === 'view' && this.public) ||
-    user.admin ||
-    user.equals?.(this._user) || // depreciated 2021.10.22
-    this._users?.find(u => user.equals?.(u))
+    user?.admin ||
+    user?.equals?.(this._user) || // depreciated 2021.10.22
+    this._users?.find(u => user?.equals?.(u))
   )
   logger.child({ method: 'isPermitted' }).info(res)
   return res

@@ -139,8 +139,11 @@ router.beforeEach(async (to, from, next) => {
         }
       }
 
+      log.info(`hasPermission=${hasPermission}`)
+
       if (!hasPermission) {
         if (isAuthenticated) {
+          log.warn('No permission to view course')
           Vue.prototype.$alert.show('No permission to view course.', { variant: 'danger', timer: 6, persistOnPageChange: true })
           return next({ name: 'CoursesManager' })
         } else {
