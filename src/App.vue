@@ -183,7 +183,7 @@ export default {
     try {
       await this.$auth.renewTokens()
     } catch (e) {
-      log.warn(e)
+      log.warn('Not logged in.')
     }
     window.addEventListener('resize', () => {
       this.$window.width = window.innerWidth
