@@ -692,7 +692,7 @@ export default {
               return
             }
             if (llas.length > this.$config.maxGPXPoints) {
-              this.gpxFileInvalidMsg = 'File exceeds size limit of {this.$config.maxGPXPoints} points. If this is a valid file, contact me for help.'
+              this.gpxFileInvalidMsg = `File exceeds size limit of ${this.$config.maxGPXPoints} points. If this is a valid file, contact me for help.`
               this.$status.processing = false
               return
             }
