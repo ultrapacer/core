@@ -118,6 +118,9 @@ router.beforeEach(async (to, from, next) => {
   try {
     const isAuthenticated = await auth.isAuthenticated()
 
+    // strip out any config items from query:
+    if (to.query) Vue.prototype.$config.update(to.query)
+
     // if navigating to a course, check if public and login otherwise:
     if (to.name === 'Course' || to.name === 'Race') {
       log.verbose(`${isAuthenticated ? 'Authenticated' : 'Unauthenticated'}. Navigating to course ${to.params.course || to.params.permalink}.`)
@@ -146,7 +149,7 @@ router.beforeEach(async (to, from, next) => {
       }
     }
     if (isAuthenticated && to.name === 'Home') {
-      return next({ name: 'CoursesManager' })
+      return next({ name: 'CoursesManager', query: to.query || null })
     }
     if (!to.meta.requiresAuth || isAuthenticated) {
       return next()

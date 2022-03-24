@@ -180,8 +180,28 @@ Vue.prototype.$gtage = (gtag, category, action, label, value) => {
 }
 Vue.prototype.$config = Vue.observable({
   requireGPXElevation: true,
-  testing: testing,
-  freeCoursesLimit: 6
+
+  // typical logging in production:
+  logLevel: 'warn',
+
+  // typical limit for courses/user
+  freeCourses: 6,
+  freeCoursesLimit: 50, // allow url query line config up to this
+
+  // typical limit for points/course
+  maxGPXPoints: 100000,
+  maxGPXPointsLimit: 1000000, // allow url query line config up to this
+
+  // routine to update config items from query object:
+  update (query) {
+    const fields = ['logLevel', 'freeCourses', 'maxGPXPoints']
+    if (fields.findIndex(f => Object.keys(query).includes(f)) >= 0) {
+      if (query.logLevel) this.logLevel = query.logLevel
+      if (query.freeCourses) this.freeCourses = Math.min(parseInt(query.freeCourses) || this.freeCourses, this.freeCoursesLimit)
+      if (query.maxGPXPoints) this.maxGPXPoints = Math.min(parseInt(query.maxGPXPoints) || this.maxGPXPoints, this.maxGPXPointsLimit)
+      Vue.prototype.$log.child({ file: 'main.js', method: '$config.update' }).info(`${fields.filter(f => Object.keys(query).includes(f)).map(k => `${k}=${this[k]}`).join(', ')}`)
+    }
+  }
 })
 
 // add custom logger transport for analytics erros

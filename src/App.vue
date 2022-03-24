@@ -167,6 +167,11 @@ export default {
     },
     '$course.mode': function () { this.refreshNavGuard() },
     '$status.processing': function () { this.refreshNavGuard() },
+
+    // if log level config item changes, update in winston:
+    '$config.logLevel': function (v) { this.$log.level = v },
+
+    // clear alerts when navigating:
     $route (to, from) {
       if (!this.$alert.persistOnPageChange) {
         this.$alert.timer = 0
