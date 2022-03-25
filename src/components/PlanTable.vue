@@ -352,12 +352,14 @@ export default {
     // array of waypoint delays for input fields
     waypointDelays: function () {
       this.logger.child({ method: 'waypointDelays' }).debug('compute')
+      if (!this.plan._id) return []
       return this.rows.map(row => this.plan.getDelayAtWaypoint(row).delay)
     },
 
     // array of waypoint notes for input fields
     waypointNotes: function () {
       this.logger.child({ method: 'waypointNotes' }).debug('compute')
+      if (!this.plan._id) return []
       return this.rows.map(row => this.plan.getNoteAtWaypoint(row).text)
     }
   },
