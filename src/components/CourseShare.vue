@@ -96,6 +96,7 @@ export default {
           })
         }
       } catch (error) {
+        if (error.toString().includes('AbortError')) return
         this.logger.child({ method: 'share' }).error(error)
       }
     },

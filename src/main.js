@@ -213,11 +213,13 @@ class FrontendErrorTransport extends Transport {
     })
 
     // format log string:
-    const messageString = typeof (info.message) === 'string'
-      ? info.message
-      : (info.message.toString === Object.prototype.toString)
-          ? JSON.stringify(info.message)
-          : info.message.toString()
+    const messageString = info.stack
+      ? info.stack.split('\n')[0]
+      : typeof (info.message) === 'string'
+        ? info.message
+        : (info.message.toString === Object.prototype.toString)
+            ? JSON.stringify(info.message)
+            : info.message.toString()
     const logStr = `${info.file ? '[' + info.file + ']' : ''}${info.method ? '[' + info.method + ']' : ''} ${messageString}`
 
     // report error to backend via api:
