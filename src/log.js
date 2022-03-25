@@ -10,7 +10,7 @@ const format = winston.format.combine(
       // and report error stack in develpment
       const message = dev && log.stack
         ? log.stack
-        : log.message.toString()
+        : log.message?.toString()
 
       // format the string:
       return `${log.timestamp}${log.file ? ' [' + log.file + ']' : ''}${log.method ? '[' + log.method + ']' : ''} ${log.level.toUpperCase()}: ${message}`

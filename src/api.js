@@ -20,6 +20,11 @@ export default {
   },
   async executeAuth (method, resource, data) {
     const log = logger.child({ method: 'executeAuth' })
+
+    if (!Vue.prototype.$auth.isAuthenticated()) {
+      throw new Error('Not authenticated')
+    }
+
     log.info(`${resource} initiated`)
     const accessToken = await Vue.prototype.$auth.getAccessToken()
     return client({
