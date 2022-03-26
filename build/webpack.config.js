@@ -165,9 +165,12 @@ const config = {
       '/api': {
         target: 'http://localhost:8080'
       },
-      '/tasks': {
+
+      // proxy to database-generated sitemap
+      '/sitemap.database.xml': {
         target: 'http://localhost:8080'
       },
+
       '/public/components': {
         target: 'http://localhost:8080'
       }

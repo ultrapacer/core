@@ -138,7 +138,7 @@ export default {
   methods: {
     async getSponsor () {
       // get sponsor from api
-      axios.get('/api-public/sponsor').then(res => {
+      axios.get('/api/sponsor').then(res => {
         this.sponsor = res.data
         if (this.sponsor) {
           this.logger.child({ method: 'getSponsor' }).info('Sponsored by ' + this.sponsor.name)

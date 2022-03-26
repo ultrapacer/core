@@ -40,8 +40,30 @@ function routeName (req) {
   }
 }
 
+// utility funciton to check course existence and respond 404 if needed
+function checkExists (res, log, item) {
+  if (!item) {
+    log.warn('Not found')
+    res.status(404).send('Not found')
+    return false
+  }
+  return true
+}
+
+// utility function to check permission and respond if needed
+function checkCoursePermission (res, log, course, user, perm) {
+  if (!course.isPermitted(perm, user)) {
+    log.warn('No permission')
+    res.status(403).send('No permission')
+    return false
+  }
+  return true
+}
+
 module.exports.isValidObjectId = isValidObjectId
 module.exports.getCurrentUser = getCurrentUser
 module.exports.getCurrentUserQuery = getCurrentUserQuery
 module.exports.getUser = getUser
 module.exports.routeName = routeName
+module.exports.checkExists = checkExists
+module.exports.checkCoursePermission = checkCoursePermission

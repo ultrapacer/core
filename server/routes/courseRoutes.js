@@ -8,7 +8,7 @@ const Track = require('../models/Track')
 const Points = require('../models/Points')
 const Waypoint = require('../models/Waypoint')
 const shallowEqual = require('../../core/util/shallow-equal')
-const { isValidObjectId, getCurrentUser, routeName } = require('../util')
+const { isValidObjectId, getCurrentUser, routeName, checkExists, checkCoursePermission: checkPermission } = require('../util')
 const logger = require('winston').child({ file: 'courseRoutes.js' })
 
 const router = {
@@ -25,26 +25,6 @@ function reformatPoints (points) {
     lon: points.map(x => x[1 + adjust]),
     alt: points.map(x => x[2 + adjust])
   }
-}
-
-// utility function to check permission and respond if needed
-function checkPermission (res, log, course, user, perm) {
-  if (!course.isPermitted(perm, user)) {
-    log.warn('No permission')
-    res.status(403).send('No permission')
-    return false
-  }
-  return true
-}
-
-// utility funciton to check course existence and respond 404 if needed
-function checkExists (res, log, course) {
-  if (!course) {
-    log.warn('Not found')
-    res.status(404).send('Not found')
-    return false
-  }
-  return true
 }
 
 // SAVE NEW
@@ -151,6 +131,24 @@ router.auth.route('/').get(async function (req, res) {
   } catch (error) {
     log.error(error)
     res.status(500).send('Error retrieving course list.')
+  }
+})
+
+// GET RACES
+router.open.route('/races').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  try {
+    log.debug('run')
+    const q = {
+      public: true,
+      link: { $nin: [null, ''] },
+      eventStart: { $nin: [null, ''] }
+    }
+    const races = await Course.find(q).select(['name', 'distance', 'gain', 'loss', 'loops', 'override', 'link', 'eventStart', 'eventTimezone']).sort('eventStart').exec()
+    res.status(200).json(races)
+  } catch (error) {
+    log.error(error)
+    res.status(500).send('Error getting races')
   }
 })
 
@@ -629,6 +627,33 @@ async function getcourseGroupList (auth, req, res, id) {
     res.status(500).send('Error retrieving course group list.')
   }
 }
+
+// GET COURSE USER COUNT
+router.open.route('/:id/countusers').get(async function (req, res) {
+  const log = logger.child({ method: routeName(req) })
+  try {
+    log.info(req.params.id)
+
+    // first we need to see if course is in a group:
+    const course = await Course
+      .findOne({ _id: req.params.id })
+      .select('group')
+      .populate({ path: 'group', populate: 'courses' })
+      .exec()
+
+    if (course.group) log.debug(`Course ${req.params.id} in group ${course.group._id}; finding all plans in group ${course.group._id}`)
+    const q = course.group
+      ? { _course: { $in: course.group.courses } }
+      : { _course: req.params.id }
+
+    const plans = await Plan.find(q).distinct('_user').exec()
+
+    res.status(200).json(plans.length)
+  } catch (error) {
+    log.error(error)
+    res.status(500).send('Error retrieving course user count')
+  }
+})
 
 function courseQuery (id) {
   return isValidObjectId(id)

@@ -9,7 +9,6 @@ const courseRoutes = require('./server/routes/courseRoutes')
 const trackRoutes = require('./server/routes/trackRoutes')
 const waypointRoutes = require('./server/routes/waypointRoutes')
 const planRoutes = require('./server/routes/planRoutes')
-const publicRoutes = require('./server/routes/publicRoutes')
 const external = require('./server/routes/external')
 const { auth } = require('express-oauth2-jwt-bearer')
 const membership = require('./server/routes/membership')
@@ -45,19 +44,33 @@ async function startUp () {
   })
 
   app.use('/api/user', checkJwt, userRoutes.auth)
+
   app.use('/api/open/user', userRoutes.open)
-  app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes.auth)
-  app.use('/api/open/course', courseRoutes.open)
-  app.use('/api/track', checkJwt, trackRoutes.auth)
-  app.use('/api/open/track', trackRoutes.open)
-  app.use('/api/waypoint', checkJwt, waypointRoutes)
-  app.use('/api/plan', checkJwt, planRoutes)
+
+  app.use(['/api/course', '/api/courses'], checkJwt, courseRoutes.auth) // authenticated
+  app.use(['/api/open/course', '/api/open/courses'], courseRoutes.open) // unauthenticated
+
+  app.use('/api/track', checkJwt, trackRoutes.auth) // authenticated
+  app.use('/api/open/track', trackRoutes.open) // unauthenticated
+
+  app.use('/api/waypoint', checkJwt, waypointRoutes) // unauthenticated
+
+  app.use('/api/plan', checkJwt, planRoutes.auth) // authenticated
+  app.use('/api/open/plan', planRoutes.open) // unauthenticated
+
   app.use('/api/elevation', elevation)
+
   app.use('/api/email', checkJwt, email)
-  app.use('/api/membership', checkJwt, membership.auth) // authenticated membership routes
-  app.use('/api/open/membership', membership.open) // unauthenticated membership routes
+
+  app.use('/api/membership', checkJwt, membership.auth) // authenticated
+  app.use('/api/open/membership', membership.open) // unauthenticated
+
   app.use('/api/strava', strava)
+
   app.use('/api/error', require('./server/routes/error'))
+
+  app.use('/api/sponsor', require('./server/routes/sponsor'))
+
   app.use('/api/batch', checkJwt, require('./server/routes/batch'))
 
   // get timezone
@@ -65,10 +78,10 @@ async function startUp () {
 
   app.use('/api/external', external)
 
-  // unauthenticated api routes:
-  app.use('/api-public', publicRoutes)
+  // serve the database-generated sitemap of races:
+  app.use('/sitemap.database.xml', require('./server/routes/sitemap'))
 
-  // redirect static files:
+  // REDIRECT STATIC FILES:
   app.get('/robots.txt', function (req, res) {
     res.sendFile(path.join(DIST_DIR, '/public/robots.txt'))
   })

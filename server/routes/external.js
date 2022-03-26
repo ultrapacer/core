@@ -1,4 +1,3 @@
-// publicRoutes.js
 const express = require('express')
 const routes = express.Router()
 const Course = require('../models/Course')

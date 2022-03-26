@@ -76,7 +76,7 @@ export default {
     return this.executeAuth('get', '/api/courses')
   },
   getRaces () {
-    return this.execute('get', '/api-public/races')
+    return this.execute('get', '/api/open/courses/races')
   },
   async getCourse (id, key = 'course') {
     const sub = (key === 'course') ? '' : key + '/'
@@ -128,12 +128,8 @@ export default {
   deleteWaypoint (id) {
     return this.executeAuth('delete', `/api/waypoint/${id}`)
   },
-  async getPlan (id) {
-    if (Vue.prototype.$auth.isAuthenticated()) {
-      return this.executeAuth('get', `/api/plan/${id}`)
-    } else {
-      return this.execute('get', `/api-public/plan/${id}`)
-    }
+  getPlan (id) {
+    return this.executeAuthOrOpen('get', `/plan/${id}`)
   },
   getPlans (courseID) {
     return this.executeAuth('get', `/api/course/${courseID}/plans`)
@@ -151,7 +147,7 @@ export default {
     return this.executeAuth('post', '/api/batch/', data)
   },
   courseUserCount (id) {
-    return this.execute('get', `/api-public/course/${id}/countusers`)
+    return this.execute('get', `/api/open/course/${id}/countusers`)
   },
   getTimeZone (lat, lon) {
     return this.executeAuth('get', `/api/timezone?lat=${lat}&lon=${lon}`)

@@ -1,12 +1,16 @@
 // planRoutes.js
 const express = require('express')
-const planRoutes = express.Router()
 const Plan = require('../models/Plan')
-const { getCurrentUser, routeName } = require('../util')
+const { getCurrentUser, routeName, checkExists, checkCoursePermission } = require('../util')
 const logger = require('winston').child({ file: 'planRoutes.js' })
 
+const router = {
+  auth: express.Router(), // authenticated
+  open: express.Router() // unauthenticated
+}
+
 // SAVE NEW
-planRoutes.route('/').post(async function (req, res) {
+router.auth.route('/').post(async function (req, res) {
   try {
     const plan = new Plan(req.body)
     plan._user = await getCurrentUser(req)
@@ -23,25 +27,40 @@ planRoutes.route('/').post(async function (req, res) {
 })
 
 // GET PLAN
-planRoutes.route('/:id').get(async function (req, res) {
+router.auth.route('/:id').get(async function (req, res) {
+  getPlan(true, req, res, req.params.id)
+})
+router.open.route('/:id').get(async function (req, res) {
+  getPlan(false, req, res, req.params.id)
+})
+async function getPlan (auth, req, res, id) {
+  const log = logger.child({ method: `getPlan-${auth ? 'auth' : 'open'}` })
   try {
-    const [plan, user] = await Promise.all([
-      Plan.findById(req.params.id).populate([{ path: '_course', select: 'public' }]).exec(),
-      getCurrentUser(req, 'admin')
-    ])
-    if (plan._course.public || user.admin || user.equals(plan._user)) {
-      res.json(plan)
-    } else {
-      res.status(403).send('No permission')
-    }
+    log.info(id)
+
+    const queries = [Plan.findOne({ _id: id }).populate({ path: '_course', select: ['user', '_users', 'public'] }).exec()]
+
+    // if auth, also get user, otherwise empty user
+    queries.push(auth ? getCurrentUser(req, 'admin') : {})
+
+    // execute database functions
+    const [plan, user] = await Promise.all(queries)
+
+    // make sure it exists
+    if (!checkExists(res, log, plan)) return
+
+    // check permissions
+    if (!checkCoursePermission(res, log, plan._course, user, 'view')) return
+
+    res.status(200).json(plan)
   } catch (error) {
-    logger.child({ method: routeName(req) }).error(error)
+    log.error(error)
     res.status(500).send('Error retrieving plan')
   }
-})
+}
 
 //  UPDATE
-planRoutes.route('/:id').put(async function (req, res) {
+router.auth.route('/:id').put(async function (req, res) {
   try {
     const [user, plan] = await Promise.all([
       getCurrentUser(req, 'admin'),
@@ -71,7 +90,7 @@ planRoutes.route('/:id').put(async function (req, res) {
 })
 
 // DELETE
-planRoutes.route('/:id').delete(async function (req, res) {
+router.auth.route('/:id').delete(async function (req, res) {
   try {
     const user = await getCurrentUser(req)
     const plan = await Plan.findById(req.params.id).select('_user').exec()
@@ -87,4 +106,4 @@ planRoutes.route('/:id').delete(async function (req, res) {
   }
 })
 
-module.exports = planRoutes
+module.exports = router
