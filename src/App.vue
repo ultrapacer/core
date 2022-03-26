@@ -162,7 +162,7 @@ export default {
           zIndex: 1055
         })
       } else {
-        this.spinner.hide()
+        this.spinner.hide?.()
       }
     },
     '$course.mode': function () { this.refreshNavGuard() },

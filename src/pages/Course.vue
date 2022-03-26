@@ -353,6 +353,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import api from '@/api'
 import CourseShare from '../components/CourseShare'
 import DeleteModal from '../components/DeleteModal'
@@ -366,6 +367,31 @@ import isbot from 'isbot'
 import moment from 'moment-timezone'
 const JSURL = require('@yaska-eu/jsurl2')
 let html2pdf // will lazy load later
+
+function initialState () {
+  return {
+    saving: false,
+    course: {},
+    courseGroupList: [],
+    event: new Vue.prototype.$core.events.Event({}),
+    logger: Vue.prototype.$log.child({ file: 'Course.vue' }),
+    plan: {},
+    plans: [],
+    plansByOthers: [],
+    printing: false,
+    waypoint: {},
+    focus: [],
+    highlightPoint: null,
+    tablesTab: 0,
+    updateFlag: false,
+    routeWatchEnabled: false,
+    saveButtonVisible: false,
+    updates: { count: 0 },
+    updatingWaypointTimeout: null,
+    updatingWaypointTimeoutID: null,
+    url: ''
+  }
+}
 
 export default {
   title: 'Course',
@@ -395,29 +421,7 @@ export default {
     return next()
   },
   data () {
-    return {
-      saving: false,
-      course: {},
-      courseGroupList: [],
-      event: new this.$core.events.Event({}),
-      logger: this.$log.child({ file: 'Course.vue' }),
-      plan: {},
-      plans: [],
-      plansByOthers: [],
-      printing: false,
-      waypoint: {},
-      focus: [],
-      highlightPoint: null,
-      tablesTab: 0,
-      updateFlag: false,
-      routeWatchEnabled: false,
-      showMenu: false,
-      saveButtonVisible: false,
-      updates: { count: 0 },
-      updatingWaypointTimeout: null,
-      updatingWaypointTimeoutID: null,
-      url: ''
-    }
+    return initialState()
   },
   computed: {
     tableTabNames: function () {
@@ -660,9 +664,9 @@ export default {
       // reload course on url change
       if (
         this.routeWatchEnabled &&
-      to.params.course !== from.params.course
+        to.params.course !== from.params.course
       ) {
-        this.initialize()
+        this.reloadCourse()
       }
     }
   },
@@ -682,6 +686,7 @@ export default {
       log.info('run')
       this.$status.processing = true
       this.$status.loading = true
+
       try {
         await this.$auth.getAccessToken()
       } catch (err) {}
@@ -824,10 +829,11 @@ export default {
       this.$refs.courseEdit.show(this.course._id)
     },
     async reloadCourse () {
-      // reload current page
+      this.logger.child({ method: 'reloadCourse' }).info('run')
       this.$status.loading = true
       window.onbeforeunload = null
-      this.$router.go()
+      Object.assign(this.$data, initialState())
+      this.initialize()
     },
     async deleteCourse (course, cb) {
       this.$refs.delModal.show(

@@ -116,6 +116,9 @@ const router = new Router({
 router.beforeEach(async (to, from, next) => {
   const log = logger.child({ method: 'beforeEach' })
   try {
+    // bypass all of this if not changing actual path:
+    if (to.path === from.path) return next()
+
     const isAuthenticated = await auth.isAuthenticated()
 
     // strip out any config items from query:
@@ -128,6 +131,7 @@ router.beforeEach(async (to, from, next) => {
       // see if they have permission to view course:
       let hasPermission = false
       try {
+        Vue.prototype.$status.loading = true
         hasPermission = await api.getCoursePermission(to.params.course || to.params.permalink, 'view')
       } catch (error) {
         if (error.response?.status === 404) {
