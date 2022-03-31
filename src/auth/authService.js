@@ -1,18 +1,21 @@
 import auth0 from 'auth0-js'
 import { EventEmitter } from 'events'
 
+// eslint-disable-next-line no-undef
+const secrets = SECRETS // from webpack config
+
 // if environment parameters undefined, no auth
-const enableAuth = Boolean(process.env.AUTH0_DOMAIN)
+const enableAuth = Boolean(secrets.AUTH0_DOMAIN)
 
 let webAuth
 if (enableAuth) {
   webAuth = new auth0.WebAuth({
-    domain: process.env.AUTH0_DOMAIN,
+    domain: secrets.AUTH0_DOMAIN,
     redirectUri: `${window.location.origin}/callback`,
-    clientID: process.env.AUTH0_CLIENT_ID,
+    clientID: secrets.AUTH0_CLIENT_ID,
     responseType: 'token id_token',
     scope: 'openid profile email',
-    audience: process.env.AUTH0_AUDIENCE
+    audience: secrets.AUTH0_AUDIENCE
   })
 }
 

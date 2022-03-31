@@ -22,7 +22,7 @@ module.exports = {
         url: false,
         timers: false,
         https: false,
-        util: require.resolve('util/'),
+        util: require.resolve('util/')
       }
     }
   }

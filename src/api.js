@@ -6,15 +6,18 @@ const client = axios.create({
   json: true
 })
 
+// eslint-disable-next-line no-undef
+const host = API_HOST // from webpack config:
+
 export default {
   async executeAuthOrOpen (method, resource, data, tryAuth = true) {
     // function will call the api via authenticted path if authenticated
     // or otherwise via the open path
     if (tryAuth && Vue.prototype.$auth.isAuthenticated()) {
-      resource = `/api/${resource}`
+      resource = `${host}/${resource}`
       return this.executeAuth(method, resource, data)
     } else {
-      resource = `/api/open/${resource}`
+      resource = `${host}/open/${resource}`
       return this.execute(method, resource, data)
     }
   },
@@ -52,31 +55,31 @@ export default {
     })
   },
   getUser () {
-    return this.executeAuth('get', '/api/user')
+    return this.executeAuth('get', `${host}/user`)
   },
   getUserStats () {
-    return this.executeAuth('get', '/api/user/stats')
+    return this.executeAuth('get', `${host}/user/stats`)
   },
   updateUser (id, data) {
     if (!id || !data) throw new Error('Invalid arguments')
-    return this.executeAuth('put', `/api/user/${id}`, data)
+    return this.executeAuth('put', `${host}/user/${id}`, data)
   },
   getUserUnsubscriptions (email, token) {
     // open api to get unsubscriptions by email with token
-    return this.execute('get', `/api/open/user/unsubscriptions/${email}/${token}`)
+    return this.execute('get', `${host}/open/user/unsubscriptions/${email}/${token}`)
   },
   updateUserUnsubscriptions (email, token, data) {
     // open api to get unsubscriptions by email with token
-    return this.execute('put', `/api/open/user/unsubscriptions/${email}/${token}`, data)
+    return this.execute('put', `${host}/open/user/unsubscriptions/${email}/${token}`, data)
   },
   modifyUserCourses (id, action, course) {
-    return this.executeAuth('put', `/api/user/${id}/course/${action}/${course}`)
+    return this.executeAuth('put', `${host}/user/${id}/course/${action}/${course}`)
   },
   getCourses () {
-    return this.executeAuth('get', '/api/courses')
+    return this.executeAuth('get', `${host}/courses`)
   },
   getRaces () {
-    return this.execute('get', '/api/open/courses/races')
+    return this.execute('get', `${host}/open/courses/races`)
   },
   async getCourse (id, key = 'course') {
     const sub = (key === 'course') ? '' : key + '/'
@@ -86,19 +89,19 @@ export default {
     return this.executeAuthOrOpen('get', `course/${id}/field/${field}`, {}, tryAuth)
   },
   createCourse (data) {
-    return this.executeAuth('post', '/api/courses', data)
+    return this.executeAuth('post', `${host}/courses`, data)
   },
   updateCourse (id, data) {
-    return this.executeAuth('put', `/api/courses/${id}`, data)
+    return this.executeAuth('put', `${host}/courses/${id}`, data)
   },
   deleteCourse (id) {
-    return this.executeAuth('delete', `/api/courses/${id}`)
+    return this.executeAuth('delete', `${host}/courses/${id}`)
   },
   copyCourse (id) {
-    return this.executeAuth('put', `/api/course/${id}/copy`)
+    return this.executeAuth('put', `${host}/course/${id}/copy`)
   },
   modifyCourseUsers (id, action, user) {
-    return this.executeAuth('put', `/api/course/${id}/user/${action}/${user}`)
+    return this.executeAuth('put', `${host}/course/${id}/user/${action}/${user}`)
   },
   getCoursePermission (id, permission) {
     return this.executeAuthOrOpen('get', `course/${id}/permission/${permission}`)
@@ -107,7 +110,7 @@ export default {
     // id: course id or link
     // refType: either 'course' or 'group'
     // refId: id of either course or group ref
-    return this.executeAuth('put', `/api/course/${id}/group/add/${refType}/${refId}`)
+    return this.executeAuth('put', `${host}/course/${id}/group/add/${refType}/${refId}`)
   },
   getCoursesInGroup (id) {
     // id: course group id
@@ -117,67 +120,70 @@ export default {
     return this.executeAuthOrOpen('get', `track/${id}`)
   },
   getWaypoints (courseID) {
-    return this.executeAuth('get', `/api/course/${courseID}/waypoints`)
+    return this.executeAuth('get', `${host}/course/${courseID}/waypoints`)
   },
   createWaypoint (data) {
-    return this.executeAuth('post', '/api/waypoint', data)
+    return this.executeAuth('post', `${host}/waypoint`, data)
   },
   updateWaypoint (id, data) {
-    return this.executeAuth('put', `/api/waypoint/${id}`, data)
+    return this.executeAuth('put', `${host}/waypoint/${id}`, data)
   },
   deleteWaypoint (id) {
-    return this.executeAuth('delete', `/api/waypoint/${id}`)
+    return this.executeAuth('delete', `${host}/waypoint/${id}`)
   },
   getPlan (id) {
     return this.executeAuthOrOpen('get', `/plan/${id}`)
   },
   getPlans (courseID) {
-    return this.executeAuth('get', `/api/course/${courseID}/plans`)
+    return this.executeAuth('get', `${host}/course/${courseID}/plans`)
   },
   createPlan (data) {
-    return this.executeAuth('post', '/api/plan', data)
+    return this.executeAuth('post', `${host}/plan`, data)
   },
   updatePlan (id, data) {
-    return this.executeAuth('put', `/api/plan/${id}`, data)
+    return this.executeAuth('put', `${host}/plan/${id}`, data)
   },
   deletePlan (id) {
-    return this.executeAuth('delete', `/api/plan/${id}`)
+    return this.executeAuth('delete', `${host}/plan/${id}`)
   },
   batch (data) {
-    return this.executeAuth('post', '/api/batch/', data)
+    return this.executeAuth('post', `${host}/batch/`, data)
   },
   courseUserCount (id) {
-    return this.execute('get', `/api/open/course/${id}/countusers`)
+    return this.execute('get', `${host}/open/course/${id}/countusers`)
   },
   getTimeZone (lat, lon) {
-    return this.executeAuth('get', `/api/timezone?lat=${lat}&lon=${lon}`)
+    return this.executeAuth('get', `${host}/timezone?lat=${lat}&lon=${lon}`)
   },
   getElevation (coordinates, source) {
-    let url = '/api/elevation'
+    let url = `${host}/elevation`
     if (source) url = `${url}/${source}`
     return this.execute('post', url, coordinates)
   },
   getStravaRoute (id) {
     // return information for Strava route ID
-    return this.execute('get', `/api/strava/route/${id}`)
+    return this.execute('get', `${host}/strava/route/${id}`)
   },
   getStravaRouteGPX (id) {
     // return gpx file for Strava route ID
-    return this.execute('get', `/api/strava/route/${id}/gpx`)
+    return this.execute('get', `${host}/strava/route/${id}/gpx`)
   },
   emailUsers (data) {
-    return this.executeAuth('post', '/api/email', data)
+    return this.executeAuth('post', `${host}/email`, data)
   },
   patreonGetLogin () {
-    return this.executeAuth('get', '/api/membership/patreon/url')
+    return this.executeAuth('get', `${host}/membership/patreon/url`)
   },
   patreonUpdateUser (code) {
-    return this.executeAuth('put', `/api/membership/patreon/user/${code}`)
+    return this.executeAuth('put', `${host}/membership/patreon/user/${code}`)
   },
   membershipsRefresh () {
-    return this.executeAuth('get', '/api/membership/members/refresh')
+    return this.executeAuth('get', `${host}/membership/members/refresh`)
   },
   reportError (data) {
-    return this.execute('post', '/api/error', data)
+    return this.execute('post', `${host}/error`, data)
+  },
+  getSponsor () {
+    return this.execute('get', `${host}/sponsor`)
   }
 }

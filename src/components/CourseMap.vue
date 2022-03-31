@@ -139,7 +139,7 @@ export default {
           name: 'TF Outdoors',
           'max-zoom': 18,
           visible: true,
-          url: `https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png${process.env.THUNDERFOREST_API_KEY ? '?apikey=' + process.env.THUNDERFOREST_API_KEY : ''}`,
+          url: `https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png${this.$secrets.THUNDERFOREST_API_KEY ? '?apikey=' + this.$secrets.THUNDERFOREST_API_KEY : ''}`,
           attribution:
             'Maps: &copy; <a href="https://www.thunderforest.com/">Thunderforest</a>, Data &copy <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
         },

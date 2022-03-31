@@ -10,12 +10,12 @@ const prettydata = require('pretty-data')
 const path = require('path')
 const webpack = require('webpack')
 
-let keys = {}
+let secrets = {}
 try {
-  // try loading keys from config file:
-  keys = require('../config/keys')
+  // try loading secrets from config file:
+  secrets = require('../config/secrets')
 } catch (err) {
-  // set keys from environment variables
+  // set secrets from environment variables
   [
     'THUNDERFOREST_API_KEY',
     'GOOGLE_ANALYTICS_KEY',
@@ -23,7 +23,7 @@ try {
     'AUTH0_CLIENT_ID',
     'AUTH0_AUDIENCE'
   ].forEach(n => {
-    if (process.env[n] !== undefined) keys[n] = `'${process.env[n]}'`
+    if (process.env[n] !== undefined) secrets[n] = `'${process.env[n]}'`
   })
 }
 
@@ -122,7 +122,7 @@ const config = {
       template: path.resolve(__dirname, '../src', 'index.html')
     }),
     new webpack.DefinePlugin({
-      'process.env': keys
+      SECRETS: secrets
     }),
     new webpack.DefinePlugin({
       'process.env.GPXPARSE_COV': 0 // because of a bug in gpx-parse
@@ -162,10 +162,6 @@ const config = {
     historyApiFallback: true,
     port: 3000,
     proxy: {
-      '/api': {
-        target: 'http://localhost:8080'
-      },
-
       // proxy to database-generated sitemap
       '/sitemap.database.xml': {
         target: 'http://localhost:8080'
@@ -181,20 +177,14 @@ const config = {
   ignoreWarnings: [/Failed to parse source map/]
 }
 module.exports = (env) => {
-  if (env.mode === 'development') {
-    config.devtool = 'eval-cheap-module-source-map'
+  // configure API_HOST plugin/variable:
+  const host = env['api-host'] || 'https://api.ultrapacer.com'
+  config.plugins.push(
+    new webpack.DefinePlugin({
+      API_HOST: JSON.stringify(host)
+    })
+  )
 
-    // if running in development with front end only, proxy the api to actual server
-    if (env.serverless) {
-      Object.assign(
-        config.devServer.proxy['/api'],
-        {
-          target: 'https://ultrapacer.com',
-          changeOrigin: true
-        }
-      )
-    }
-  }
   if (env.mode === 'production') {
     config.output.filename = 'public/js/[name].[contenthash:8].js'
     config.output.chunkFilename = 'public/js/[name].[contenthash:8].js'
@@ -243,6 +233,8 @@ module.exports = (env) => {
     config.plugins.push(
       new CleanWebpackPlugin()
     )
+  } else {
+    config.devtool = 'eval-cheap-module-source-map'
   }
   return config
 }

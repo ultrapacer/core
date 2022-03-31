@@ -41,7 +41,6 @@
   </about-card>
 </template>
 <script>
-import axios from 'axios'
 import AboutCard from './AboutCard'
 export default {
   components: {
@@ -138,15 +137,17 @@ export default {
   methods: {
     async getSponsor () {
       // get sponsor from api
-      axios.get('/api/sponsor').then(res => {
-        this.sponsor = res.data
+      try {
+        this.sponsor = await this.$api.getSponsor()
         if (this.sponsor) {
           this.logger.child({ method: 'getSponsor' }).info('Sponsored by ' + this.sponsor.name)
           if (this.layout !== 'card') {
             this.setUp()
           }
         }
-      })
+      } catch (e) {
+        this.logger.child({ method: 'getSponsor' }).error(e, { silent: true })
+      }
     },
     goToSponsor () {
       this.$gtage(this.$gtag, 'Sponsor', 'click', this.sponsor.name)

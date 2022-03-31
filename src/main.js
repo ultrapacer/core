@@ -47,6 +47,9 @@ import math from '../core/math'
 Vue.prototype.$core = core
 Vue.prototype.$math = math
 
+// eslint-disable-next-line no-undef
+Vue.prototype.$secrets = SECRETS // from webpack config
+
 VIcon.register({
   venmo: {
     width: 162,
@@ -70,7 +73,7 @@ const testing = window.location.origin.includes('appspot.com') ||
   window.location.origin.includes('localhost')
 Vue.use(VueGtag, {
   enabled: !testing,
-  config: { id: process.env.GOOGLE_ANALYTICS_KEY },
+  config: { id: Vue.prototype.$secrets.GOOGLE_ANALYTICS_KEY },
   onReady () { this.set({ dimension1: false }) },
   pageTrackerExcludedRotues: ['/callback']
 }, router)

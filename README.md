@@ -37,9 +37,21 @@ Start front end in another console:
 npm run dev
 ```
 
-### To serve just the front-end
+### Webpack Dev Server, just the front-end (using official api)
 ``` bash
-npm run dev -- --serverless
+npm run dev
+```
+
+###  Webpack Dev Server, with your own api host
+To do this, you need to modify your hosts file to forward api.local.com to local IP
+``` bash
+npm run dev -- --env api-host="http://api.local.com:8080"
+```
+
+### Build and run
+``` bash
+npm run build
+nodemon start server development
 ```
 
 ## D. Accessing local site
