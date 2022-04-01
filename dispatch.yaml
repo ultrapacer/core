@@ -1,5 +1,5 @@
 dispatch:
-  - url: "beta.ultrapacer.com/api/*"
+  - url: "*.com/api/*"
     service: server
   - url: "www.ultrapacer.com/*"
     service: default
