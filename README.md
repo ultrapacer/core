@@ -18,8 +18,7 @@ npm install
 npm run dev
 ```
 
-###  Webpack Dev Server, with your own api host
-To do this, you need to modify your hosts file to forward api.local.com to local IP
+###  OR, Webpack Dev Server, with your own api host
 ``` bash
 npm run dev -- --env api-host="http://localhost:8080"
 ```
