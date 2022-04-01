@@ -84,7 +84,8 @@ Vue.use(VuePageTitle, {
 Vue.use(VueTheMask)
 Vue.prototype.$user = Vue.observable({
   _id: null,
-  isAuthenticated: false,
+  isAuthenticated: false, // authenticated
+  isValid: false, // both authenticated AND has id
   admin: false,
   email: '',
   membership: {

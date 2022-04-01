@@ -16,7 +16,7 @@
       >
         {{ $title }}
       </div>
-      <b-navbar-brand :href="$user.isAuthenticated ? '/about' : '/'">
+      <b-navbar-brand :href="$user.isValid ? '/about' : '/'">
         <div>
           <div
             class="navbar-logo"
@@ -41,7 +41,7 @@
       >
         <b-navbar-nav>
           <b-nav-item
-            v-if="$user.isAuthenticated"
+            v-if="$user.isValid"
             to="/courses"
           >
             My Courses
@@ -56,7 +56,7 @@
             Races
           </b-nav-item>
           <b-nav-item
-            v-if="$user.isAuthenticated"
+            v-if="$user.isValid"
             to="/settings"
           >
             Settings
@@ -65,7 +65,7 @@
             Docs
           </b-nav-item>
           <b-nav-item
-            v-if="$user.isAuthenticated"
+            v-if="$user.isValid"
             to="/about"
             class="d-block d-md-none d-lg-block"
           >
@@ -150,11 +150,16 @@ export default {
   },
   watch: {
     '$user.isAuthenticated': function (val) {
+      this.logger.child({ method: 'watch:$user.isAuthenticated' }).info(`$user.isAuthenticated=${val}`)
       if (val) {
         this.getUser()
       } else {
+        this.$user.isValid = false
         this.$router.push({ name: 'Home' })
       }
+    },
+    '$user.isValid': function (val) {
+      this.logger.child({ method: 'watch:$user.isValid' }).info(`$user.isValid=${val}`)
     },
     showSpinner: function (val) {
       if (val) {
@@ -231,6 +236,10 @@ export default {
       this.$user.admin = this.user.admin
       this.$user.email = this.user.email
       this.$user.membership = this.user.membership
+
+      const auth = await this.$auth.isAuthenticated()
+      if (auth) this.$user.isValid = true
+
       this.$units.setDist(this.user.distUnits)
       this.$units.setAlt(this.user.elevUnits)
       if (!this.user.email) {

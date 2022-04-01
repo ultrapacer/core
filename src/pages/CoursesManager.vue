@@ -176,10 +176,10 @@ export default {
     }
   },
   watch: {
-    '$user._id': async function (v) {
+    '$user.isValid': async function (v) {
       const log = this.logger.child({ method: 'watch:$user._id' })
       try {
-        if (this.$auth.isAuthenticated()) {
+        if (v) {
           await this.refreshCourses()
         }
       } catch (error) {
@@ -192,7 +192,7 @@ export default {
     const log = this.logger.child({ method: 'created' })
     try {
       this.$status.loading = true
-      if (this.$auth.isAuthenticated()) {
+      if (this.$user.isValid) {
         await this.refreshCourses()
         this.$status.loading = false
       }
