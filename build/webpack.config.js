@@ -162,12 +162,8 @@ const config = {
     historyApiFallback: true,
     port: 3000,
     proxy: {
-      // proxy to database-generated sitemap
-      '/sitemap.database.xml': {
-        target: 'http://localhost:8080'
-      },
-
-      '/public/components': {
+      // proxy api to server
+      '/api': {
         target: 'http://localhost:8080'
       }
     }

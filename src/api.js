@@ -7,7 +7,7 @@ const client = axios.create({
 })
 
 // eslint-disable-next-line no-undef
-const host = API_HOST // from webpack config:
+const host = '/api' // from webpack config:
 
 export default {
   async executeAuthOrOpen (method, resource, data, tryAuth = true) {

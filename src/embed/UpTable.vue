@@ -235,8 +235,10 @@ export default {
         }
     }
     const url = `https://api.ultrapacer.com/external/up-table/${this.courseId}/${mode}`
+    console.log(`Fetching data from ${url}`)
     const data = await axios.get(url)
-    this.course = new Course(data)
+    console.log('Received course data')
+    this.course = new Course(data.data)
     switch (this.mode) {
       case 'segments':
         this.segments = this.course.splits.segments
