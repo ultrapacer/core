@@ -164,7 +164,8 @@ const config = {
     proxy: {
       // proxy api to server
       '/api': {
-        target: 'http://localhost:8080'
+        target: 'https://server.ultrapacer.com',
+        changeOrigin: true
       }
     }
   },
@@ -173,13 +174,10 @@ const config = {
   ignoreWarnings: [/Failed to parse source map/]
 }
 module.exports = (env) => {
-  // configure API_HOST plugin/variable:
-  const host = env['api-host'] || 'https://api.ultrapacer.com'
-  config.plugins.push(
-    new webpack.DefinePlugin({
-      API_HOST: JSON.stringify(host)
-    })
-  )
+  // specify api host:
+  if (env['api-host']) {
+    config.devServer.proxy['/api'].target = env['api-host']
+  }
 
   if (env.mode === 'production') {
     config.output.filename = 'public/js/[name].[contenthash:8].js'
