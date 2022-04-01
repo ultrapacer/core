@@ -9,9 +9,6 @@ async function startUp () {
   const HTML_FILE = path.join(DIST_DIR, 'index.html')
   const STATIC_FOLDER = path.join(DIST_DIR, '/static')
 
-  // serve the database-generated sitemap of races:
-  app.use('/sitemap.database.xml', require('./server/routes/sitemap'))
-
   // REDIRECT STATIC FILES:
   app.get('/robots.txt', function (req, res) {
     res.sendFile(path.join(DIST_DIR, '/public/robots.txt'))

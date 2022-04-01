@@ -47,11 +47,11 @@ import Vue from 'vue'
 import Loading from 'vue-loading-overlay'
 
 import UnitsPlugin from '@/plugins/units'
-import api from '@/api-external'
 import { BLink, BTable } from 'bootstrap-vue'
 import { Course } from '../../core/courses'
 import { loopedWaypoints } from '../../core/waypoints'
 import { Segment, SuperSegment } from '../../core/segments'
+import axios from 'axios'
 
 Vue.use(UnitsPlugin)
 export default {
@@ -234,7 +234,9 @@ export default {
             mode = 'kilometers'
         }
     }
-    this.course = new Course(await api.getUpTable(this.courseId, mode))
+    const url = `https://api.ultrapacer.com/external/up-table/${this.courseId}/${mode}`
+    const data = await axios.get(url)
+    this.course = new Course(data)
     switch (this.mode) {
       case 'segments':
         this.segments = this.course.splits.segments
