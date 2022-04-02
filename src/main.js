@@ -224,12 +224,16 @@ class FrontendErrorTransport extends Transport {
         : (info.message.toString === Object.prototype.toString)
             ? JSON.stringify(info.message)
             : info.message.toString()
-    const logStr = `${info.file ? '[' + info.file + ']' : ''}${info.method ? '[' + info.method + ']' : ''} ${messageString}`
 
     // report error to backend via api:
-    Vue.prototype.$api.reportError({ error: logStr })
+    Vue.prototype.$api.reportError({
+      error: messageString,
+      file: info.file,
+      method: info.method
+    })
 
     // report to analytics:
+    const logStr = `${info.file ? '[' + info.file + ']' : ''}${info.method ? '[' + info.method + ']' : ''} ${messageString}`
     Vue.prototype.$gtag.exception({ description: logStr })
 
     // alert user if silent option is not passed:
