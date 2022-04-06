@@ -1,8 +1,13 @@
 import api from '../api'
-import moment from 'moment-timezone'
+let moment // will lazy load later
 
 // ROUTINE TO DUPLCIATE A RACE FOR FOLLOWING YEAR
 async function nextYear (id) {
+  if (!moment) {
+    await import(/* webpackPrefetch: true */ 'moment-timezone')
+      .then(mod => { moment = mod.default })
+  }
+
   const [name, link, eventStart, eventTimezone] = await Promise.all([
     api.getCourseField(id, 'name'),
     api.getCourseField(id, 'link'),
