@@ -240,7 +240,7 @@ class FrontendErrorTransport extends Transport {
     if (!info.silent) {
       Vue.prototype.$alert.show(
         'Error performing action. Please report errors to help development.',
-        { variant: 'danger' }
+        { variant: 'danger', persistOnPageChange: true }
       )
     }
 

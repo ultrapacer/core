@@ -136,9 +136,11 @@ router.beforeEach(async (to, from, next) => {
       } catch (error) {
         if (error.response?.status === 404) {
           Vue.prototype.$alert.show('Course not found.', { variant: 'danger', timer: 6, persistOnPageChange: true })
+          log.warn('Course not found')
           return next({ name: 'Home' })
         } else {
           Vue.prototype.$alert.show('Error retrieving course.', { variant: 'danger', timer: 6, persistOnPageChange: true })
+          log.warn('Error retrieving course')
           return next({ name: 'Home' })
         }
       }
