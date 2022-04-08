@@ -13,7 +13,7 @@
       >
         ultraPacer YouTube Channel.
       </b-link>
-      Send questions to
+      Send questions, report bugs, request features to
       <b-link href="mailto:danny@ultrapacer.com">
         danny@ultrapacer.com
       </b-link>
@@ -23,13 +23,6 @@
         target="_blank"
       >
         Facebook.
-      </b-link>
-      Report bugs, request features, or contribute on
-      <b-link
-        href="https://github.com/amokrunner/ultrapacer/issues"
-        target="_blank"
-      >
-        Github.
       </b-link>
     </p>
     <div

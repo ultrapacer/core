@@ -34,14 +34,6 @@
       <v-icon name="brands/strava" />
     </b-link>
     <b-link
-      v-b-popover.hover.blur.bottomright.d250.v-info="'Contribute to uP on Github!'"
-      href="https://github.com/amokrunner/ultrapacer"
-      target="_blank"
-      class="nav-link socialbutton"
-    >
-      <v-icon name="brands/github" />
-    </b-link>
-    <b-link
       v-b-popover.hover.blur.bottomright.d250.v-info="'Donate to uP with Paypal!'"
       target="_blank"
       class="nav-link socialbutton"

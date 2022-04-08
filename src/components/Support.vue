@@ -120,7 +120,7 @@ export default {
   },
   mounted () {
     this.timeout = setTimeout(() => {
-      this.initiate()
+      // this.initiate()
     }, this.delay)
   },
   beforeDestroy () {

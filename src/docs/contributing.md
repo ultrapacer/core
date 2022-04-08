@@ -11,15 +11,10 @@ Want to contribute to the ultraPacer project? Yes, please!
 
 #### Contribute Technically
 1. Send feedback! Tell me what you like and what you don't. Request features,
-  report bugs! Contact me directly, through
-  [Facebook](https://www.facebook.com/ultrapacer), or head over to the
-  [Github](https://github.com/amokrunner/ultrapacer/issues) page
-  to report issues.
+  report bugs! Contact me directly or through
+  [Facebook](https://www.facebook.com/ultrapacer).
 2. Help to update and maintain the database of races. Create courses for
   official races and submit them for addition to the races page.
-3. If you have the skills and interest to help out with code/bugs/features,
-  ultraPacer is open-source on
-  [Github](https://github.com/amokrunner/ultrapacer).
 
 #### Contribute Financially
 1. You can donate to the project via
