@@ -34,13 +34,20 @@ class Event {
     // timezone, lat, and lon fields must be set before setting start
     this.startMoment = moment.isMoment(val) ? val : moment(val).tz(this.timezone)
     this.startTime = string2sec(this.startMoment.format('kk:mm:ss'))
+
+    // add in sun events:
+    // run suncalc functions:
     const times = suncalc.getTimes(this.startMoment.toDate(), this.lat, this.lon)
-    this.sun = {
-      dawn: string2sec(moment(times.dawn).tz(this.timezone).format('HH:mm:ss')),
-      rise: string2sec(moment(times.sunrise).tz(this.timezone).format('HH:mm:ss')),
-      set: string2sec(moment(times.sunset).tz(this.timezone).format('HH:mm:ss')),
-      dusk: string2sec(moment(times.dusk).tz(this.timezone).format('HH:mm:ss'))
-    }
+    const nadirPosition = suncalc.getPosition(times.nadir, this.lat, this.lon)
+    // add data to sun object:
+    this.sun = {}
+    const keys = ['nadir', 'dawn', 'sunrise', 'dusk', 'sunset', 'solarNoon']
+    keys.forEach(k => {
+      if (!isNaN(times[k])) {
+        this.sun[k] = string2sec(moment(times[k]).tz(this.timezone).format('HH:mm:ss'))
+      }
+    })
+    this.sun.nadirAltitude = nadirPosition.altitude * 180 / Math.PI
   }
 
   get start () {

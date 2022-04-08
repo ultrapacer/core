@@ -344,40 +344,31 @@ function calcSunTime (data) {
   // data = {points, event}
 
   // time in sun zones:
-  let sunType0 = ''
-  let sunType = ''
   const s = {
-    sunEventsByLoc: [],
     sunTime: { day: 0, twilight: 0, dark: 0 },
     sunDist: { day: 0, twilight: 0, dark: 0 }
   }
   data.points.forEach((x, i) => {
     if (
-      x.tod <= data.event.sun.dawn ||
-      x.tod >= data.event.sun.dusk
+      !isNaN(data.event.sun.dawn) &&
+      !isNaN(data.event.sun.dusk) &&
+      (
+        x.tod <= data.event.sun.dawn ||
+        x.tod >= data.event.sun.dusk
+      )
     ) {
-      sunType = 'dark'
       s.sunTime.dark += x.dtime
       s.sunDist.dark += x.dloc
     } else if (
-      x.tod < data.event.sun.rise ||
-      x.tod > data.event.sun.set
+      x.tod < data.event.sun.sunrise ||
+      x.tod > data.event.sun.sunset
     ) {
-      sunType = 'twilight'
       s.sunTime.twilight += x.dtime
       s.sunDist.twilight += x.dloc
     } else {
-      sunType = 'day'
       s.sunTime.day += x.dtime
       s.sunDist.day += x.dloc
     }
-    if (sunType !== sunType0) {
-      s.sunEventsByLoc.push({
-        sunType: sunType,
-        loc: x.loc
-      })
-    }
-    sunType0 = sunType
   })
   return s
 }

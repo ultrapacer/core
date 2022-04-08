@@ -126,10 +126,10 @@ export default {
       return o
     },
     start: function () {
-      return this.$math.round(this.sun.rise, 0) + 1800
+      return this.$math.round(this.sun.sunrise, 0) + 1800
     },
     stop: function () {
-      return this.$math.round(this.sun.set, 0) + 3600
+      return this.$math.round(this.sun.sunset, 0) + 3600
     },
     chartModel: function () {
       const model = { ...this.heatModel }

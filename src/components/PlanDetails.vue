@@ -47,18 +47,20 @@
         :value="event.start | datetime(event.timezone)"
       />
       <details-row
+        v-if="!isNaN(event.sun.dawn)"
         description="Dawn"
         :value="sec2string(event.sun.dawn,'am/pm')"
       />
       <details-row
         description="Sunrise"
-        :value="sec2string(event.sun.rise, 'am/pm')"
+        :value="sec2string(event.sun.sunrise, 'am/pm')"
       />
       <details-row
         description="Sunset"
-        :value="sec2string(event.sun.set, 'am/pm')"
+        :value="sec2string(event.sun.sunset, 'am/pm')"
       />
       <details-row
+        v-if="!isNaN(event.sun.dusk)"
         description="Dusk"
         :value="sec2string(event.sun.dusk, 'am/pm')"
       />

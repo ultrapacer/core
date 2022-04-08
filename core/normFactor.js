@@ -99,42 +99,53 @@ function darkFactor (tod, tF, sun, model) {
   // returns a time-of-day based dark factor
   // tod: time of day in seconds
   // tF: terrainFactor
-  // sun: object w/ dawn, rise, set, dusk in time-of-day seconds
+  // sun: object w/ dawn, sunrise, sunset, dusk in time-of-day seconds
   // model format:
   //    scale: scaling factor for terrain factor
+  if (tF === 1) { return 1 }
   let t = 0
   if (Array.isArray(tod)) {
     t = (tod[0] + tod[1]) / 2
   } else {
     t = tod
   }
-  if (t >= sun.rise && t <= sun.set) {
+  if (t >= sun.sunrise && t <= sun.sunset) {
     return 1
   }
   if (model === null || typeof (model) === 'undefined') {
     model = defaults.dark
   }
-  const fdark = model.scale * (tF - 1) + 1
-  if (t <= sun.dawn || t >= sun.dusk) {
+  // max dark scaling if never gets fully dark
+  const maxDarkScaleFactor =
+    sun.nadirAltitude < -6
+      ? 1
+      : -(sun.nadirAltitude / 6)
+
+  // dark factor is a scaling of terrain
+  const fdark = (model.scale * ((tF - 1) * maxDarkScaleFactor)) + 1
+
+  // routine to address tod rollover at midnight
+  function offset (t) { return t < sun.solarNoon ? t + 86400 : t }
+
+  if (!isNaN(sun.dawn) && !isNaN(sun.dusk) && (t <= sun.dawn || t >= sun.dusk)) {
     return fdark
-  } else {
-    // during twilight, interpolate
+  } else { // twilight, interpolate
     let f = 0
-    if (t < sun.rise) {
+    if (offset(t) >= offset(sun.nadir)) { // dawn
       f = mathUtil.interp(
-        sun.dawn,
-        sun.rise,
+        offset(isNaN(sun.dawn) ? sun.nadir : sun.dawn),
+        offset(sun.sunrise),
         fdark,
         1,
-        t
+        offset(t)
       )
-    } else {
+    } else { // dusk
       f = mathUtil.interp(
-        sun.set,
-        sun.dusk,
+        offset(sun.sunset),
+        offset(isNaN(sun.dusk) ? sun.nadir : sun.dusk),
         1,
         fdark,
-        t
+        offset(t)
       )
     }
     return f

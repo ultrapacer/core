@@ -537,8 +537,8 @@ export default {
         !this.plan.heatModel
       ) { return null }
       const hM = { ...this.plan.heatModel }
-      hM.start = this.event.sun.rise + 1800
-      hM.stop = this.event.sun.set + 3600
+      hM.start = this.event.sun.sunrise + 1800
+      hM.stop = this.event.sun.sunset + 3600
       return hM
     },
     planAssigned: function () {

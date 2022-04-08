@@ -325,53 +325,88 @@ export default {
     }
   },
   watch: {
-    'plan.pacing.sunEventsByLoc': function (v) {
+    'plan.pacing': function (v) {
+      this.logger.child({ method: 'watch|plan.pacing' }).verbose('run')
       this.update()
     }
   },
   async created () {
     ChartJs.register({
+
+      // plugin to color background for day/darkness
       id: 'backgroundColorPlugin',
       beforeDraw: (chart, other) => {
-        if (!this.plan.pacing || !this.plan.pacing.sunEventsByLoc || !this.plan.pacing.sunEventsByLoc.length) return
-        const rules = this.plan.pacing.sunEventsByLoc.map(br => {
-          return {
-            loc: this.$units.distf(br.loc),
-            sunType: br.sunType
-          }
-        })
+        if (!this.plan.pacing) return
         const ctx = chart.ctx
         const yaxis = chart.scales['y-axis-2']
         const xaxis = chart.scales.x
         function distToPixels (d) {
           return d / (xaxis.max) * xaxis.width + xaxis.left
         }
+
+        const sun = this.course.event.sun // to make things easier
+        const hasDark = !(isNaN(sun.dawn) || isNaN(sun.dusk))
+
+        // routine to address tod rollover at midnight
+        function offset (t) { return t < sun.solarNoon ? t + 86400 : t }
+
+        // time in sun zones:
+        let sunType0 = ''
+        let sunType = ''
+        const rules = []
+        this.course.points.forEach((x, i) => {
+          if (x.tod > sun.sunrise && x.tod <= sun.sunset) {
+            sunType = 'day'
+          } else if (
+            hasDark &&
+            (
+              x.tod <= sun.dawn ||
+              x.tod >= sun.dusk
+            )
+          ) {
+            sunType = 'dark'
+          } else { // twilight
+            if (offset(x.tod) >= offset(sun.nadir)) {
+              sunType = 'dawn'
+            } else {
+              sunType = 'dusk'
+            }
+          }
+          if (sunType !== sunType0) {
+            rules.push({
+              sunType: sunType,
+              loc: this.$units.distf(x.loc)
+            })
+          }
+          sunType0 = sunType
+        })
         const colors = {
           day: this.$colors.white.transparentize(),
           twilight: this.$colors.black.transparentize(0.15),
           dark: this.$colors.black.transparentize(0.3)
         }
-        rules.forEach((r, i) => {
-          const x1 = distToPixels(r.loc)
-          const x2 = distToPixels(i < rules.length - 1 ? rules[i + 1].loc : xaxis.max)
-          if (r.sunType === 'twilight') {
+        for (let i = 0; i <= rules.length - 1; i++) {
+          const r1 = rules[i]
+          const r2 = rules[i + 1]
+
+          const x1 = distToPixels(r1.loc)
+          const x2 = distToPixels(r2 ? r2.loc : xaxis.max)
+
+          if (r1.sunType === 'dawn') {
             const grd = ctx.createLinearGradient(x1, 0, x2, 0)
-            if (
-              (i > 0 && rules[i - 1].sunType === 'day') ||
-                    (i < rules.length - 1 && rules[i + 1].sunType === 'dark')
-            ) {
-              grd.addColorStop(0, colors.day)
-              grd.addColorStop(1, colors.dark)
-            } else {
-              grd.addColorStop(0, colors.dark)
-              grd.addColorStop(1, colors.day)
-            }
+            grd.addColorStop(0, colors.dark)
+            grd.addColorStop(1, colors.day)
+            ctx.fillStyle = grd
+          } else if (r1.sunType === 'dusk') {
+            const grd = ctx.createLinearGradient(x1, 0, x2, 0)
+            grd.addColorStop(0, colors.day)
+            grd.addColorStop(1, colors.dark)
             ctx.fillStyle = grd
           } else {
-            ctx.fillStyle = colors[r.sunType]
+            ctx.fillStyle = colors[r1.sunType]
           }
           ctx.fillRect(x1, yaxis.top, x2 - x1, yaxis.height)
-        })
+        }
       }
     })
     ChartJs.register({
