@@ -1280,9 +1280,7 @@ export default {
         await this.$core.util.sleep(200)
         await this.$api.batch(this.updates)
         this.$status.processing = false
-        this.$nextTick(() => {
-          this.reloadCourse()
-        })
+        this.$course.mode = 'view'
       } catch (error) {
         log.error(error)
         this.$status.processing = false
