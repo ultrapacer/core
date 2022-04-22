@@ -1,0 +1,7 @@
+module.exports.events = require('./events.js')
+module.exports.segments = require('./segments.js')
+module.exports.points = require('./points.js')
+module.exports.tracks = require('./tracks.js')
+module.exports.waypoints = require('./waypoints.js')
+module.exports.courses = require('./courses.js')
+module.exports.plans = require('./plans.js')

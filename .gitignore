@@ -1,25 +1,2 @@
-.DS_Store
 node_modules/
-/dist/
-/public/
-config/
-temp/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-/test/unit/coverage/
-/test/e2e/reports/
-selenium-debug.log
-/uploads/
 desktop.ini
-
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.bak
-
-app.yaml
