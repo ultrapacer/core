@@ -1,4 +1,4 @@
-function heatFactor (time, model = null) {
+module.exports = function (time, model = null) {
   // returns heat factor
   // time is time of day in milliseconds
   // model format:
@@ -15,15 +15,11 @@ function heatFactor (time, model = null) {
   } else {
     t = time
   }
-  let hF = 1
+  let f = 1
   if (t > model.start && t < model.stop) {
     const theta = (t - model.start) / (model.stop - model.start) * Math.PI
-    hF += ((model.max - model.baseline) * Math.sin(theta)) / 100
+    f += ((model.max - model.baseline) * Math.sin(theta)) / 100
   }
-  hF += model.baseline / 100
-  return hF
-}
-
-module.exports = {
-  heatFactor: heatFactor
+  f += model.baseline / 100
+  return f
 }

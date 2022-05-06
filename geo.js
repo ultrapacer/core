@@ -1,29 +1,39 @@
 const models = require('./models')
-const { nF } = require('./factors')
+const factors = require('./factors')
 const { round } = require('./util/math')
 const { Segment } = models.segments
 const { interpolatePoint } = models.points
 
+const fKeys = factors.list
+
+// creates an object with keys from fKeys above with initial values of init
+function fObj (init) {
+  const obj = {}
+  fKeys.forEach(k => { const a = {}; a[k] = init; Object.assign(obj, a) })
+  return obj
+}
+
 function facts (a, b, data) {
   const hasTOD = typeof (a.tod) !== 'undefined' && typeof (b.tod) !== 'undefined'
   return {
-    gF: nF.gF(a.grade * (a.grade >= 0 ? data.course.gainScale : data.course.lossScale)),
-    aF: nF.aF([a.alt, b.alt], data.altModel),
-    tF: nF.tF([a.loc, b.loc], data.terrainFactors),
-    hF: hasTOD && data.heatModel ? nF.hF([a.tod, b.tod], data.heatModel) : 1,
-    dF: nF.dF(
+    grade: factors.grade(a.grade * (a.grade >= 0 ? data.course.gainScale : data.course.lossScale)),
+    altitude: factors.altitude([a.alt, b.alt], data.altModel),
+    terrain: factors.terrain([a.loc, b.loc], data.terrainFactors),
+    heat: hasTOD && data.heatModel ? factors.heat([a.tod, b.tod], data.heatModel) : 1,
+    fatigue: 1,
+    strategy: factors.strategy(
       [a.loc, b.loc],
-      data.drift,
+      data.strategy,
       data.distance
     ),
-    dark: hasTOD && data.sun ? nF.dark([a.tod, b.tod], nF.tF([a.loc, b.loc], data.terrainFactors), data.sun) : 1
+    dark: hasTOD && data.sun ? factors.dark([a.tod, b.tod], factors.terrain([a.loc, b.loc], data.terrainFactors), data.sun) : 1
   }
 }
 
 function calcSegments (p, breaks, pacing) {
   // p: points array of {loc, lat, lon, alt}
   // breaks: array of [loc,loc,...] to break on
-  // pacing: pacing object with np and drift fields
+  // pacing: pacing object with np and strategy fields
   const cLen = p[p.length - 1].loc
   const s = [] // segments array
   const alts = pacing.course.track.getLLA(breaks).map(lla => { return lla.alt })
@@ -43,21 +53,14 @@ function calcSegments (p, breaks, pacing) {
       time: 0,
       delay: 0,
       elapsed: 0,
-      factors: {
-        aF: 0,
-        gF: 0,
-        tF: 0,
-        hF: 0,
-        dark: 0,
-        dF: 0
-      }
+      factors: fObj(0)
     }))
   }
   const opts = {
     altModel: pacing.altModel,
     terrainFactors: pacing.tFs,
     distance: cLen,
-    drift: pacing.drift,
+    strategy: pacing.strategy,
     sun: pacing.sun,
     heatModel: pacing.heatModel,
     course: pacing.course
@@ -74,15 +77,6 @@ function calcSegments (p, breaks, pacing) {
     }
     return 0
   }
-  const factors = {
-    aF: 0, // altitude factor
-    gF: 0, // grade factor
-    tF: 0, // terrain factor
-    hF: 0, // heat factor
-    dark: 0, // dark factor
-    dF: 0 // drift factor
-  }
-  const fk = Object.keys(factors)
   const hasPacing = Boolean(pacing && typeof (pacing.np) !== 'undefined')
 
   i = 1
@@ -109,7 +103,7 @@ function calcSegments (p, breaks, pacing) {
         const fs = facts(a.p[0], a.p[1], opts)
         const len = a.p[1].loc - a.p[0].loc
         let f = 1
-        fk.forEach(key => {
+        fKeys.forEach(key => {
           a.s.factors[key] += fs[key] * len
           f = f * fs[key]
         })
@@ -170,58 +164,58 @@ function calcPacing (data) {
     terrainFactors: data.terrainFactors
   })
 
+  // if just the course info, return
+  if (!hasPlan || data.event.startTime === null) return pacing
+
   // locations for sensitivity test:
   const tests = []
   for (let i = 1; i <= testLocations; i++) {
     tests.push(Math.floor(i * (data.points.length - 1) / testLocations))
   }
 
-  // iterate solution:
-  if (hasPlan && data.event.startTime !== null) {
-    let lastTest = []
-    let i
-    for (i = 0; i < maxIterations; i++) {
-      pacing = iteratePaceCalc({
-        course: data.course,
-        plan: data.plan,
-        points: data.points,
-        pacing: pacing,
-        event: data.event,
-        delays: data.delays,
-        heatModel: data.heatModel,
-        terrainFactors: data.terrainFactors
-      })
-      const newTest = tests.map(x => { return data.points[x].elapsed })
-      if (
-        lastTest.length &&
-        newTest.findIndex((x, j) => Math.abs(x - lastTest[j]) > iterationThreshold) < 0
-      ) {
-        break
-      }
-      lastTest = [...newTest]
+  let lastTest = []
+  let i
+  for (i = 0; i < maxIterations; i++) {
+    pacing = iteratePaceCalc({
+      course: data.course,
+      plan: data.plan,
+      points: data.points,
+      pacing: pacing,
+      event: data.event,
+      delays: data.delays,
+      heatModel: data.heatModel,
+      terrainFactors: data.terrainFactors
+    })
+    const newTest = tests.map(x => { return data.points[x].elapsed })
+    if (
+      lastTest.length &&
+      newTest.findIndex((x, j) => Math.abs(x - lastTest[j]) > iterationThreshold) < 0
+    ) {
+      break
     }
-    if (data.event?.sun) {
-      const s = calcSunTime({
-        points: data.points,
-        event: data.event
-      })
-      pacing = { ...pacing, ...s }
-    }
+    lastTest = [...newTest]
   }
+  if (data.event?.sun) {
+    const s = calcSunTime({
+      points: data.points,
+      event: data.event
+    })
+    pacing = { ...pacing, ...s }
+  }
+
   return pacing
 }
 
 function iteratePaceCalc (data) {
   // data { course, plan: plan, points: points, pacing: pacing, event: event, delays, heatModel }
-  let plan = false
-  if (data.plan) { plan = true }
+  const plan = Boolean(data.plan)
 
   // calculate course normalizing factor:
   let tot = 0
-  const factors = { gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0 }
+  const factorValues = fObj(0)
   const fstats = {
-    max: { gF: 0, aF: 0, tF: 0, hF: 0, dark: 0, dF: 0 },
-    min: { gF: 100, aF: 100, tF: 100, hF: 100, dark: 100, dF: 100 }
+    max: fObj(0),
+    min: fObj(100)
   }
   const p = data.points
   let fs = {}
@@ -253,7 +247,7 @@ function iteratePaceCalc (data) {
     altModel: data.course.altModel,
     terrainFactors: data.terrainFactors,
     distance: data.course.dist,
-    drift: data.plan.drift,
+    strategy: data.plan.strategy,
     sun: data.event.sun,
     heatModel: data.heatModel,
     course: data.course
@@ -263,7 +257,7 @@ function iteratePaceCalc (data) {
     fs = facts(p[j - 1], p[j], opts)
     let f = 1 // combined segment factor
     Object.keys(fs).forEach(k => {
-      factors[k] += fs[k] * p[j].dloc
+      factorValues[k] += fs[k] * p[j].dloc
       f = f * fs[k]
       fstats.max[k] = Math.max(fstats.max[k], fs[k])
       fstats.min[k] = Math.min(fstats.min[k], fs[k])
@@ -280,8 +274,8 @@ function iteratePaceCalc (data) {
       }
     }
   }
-  Object.keys(factors).forEach(k => {
-    factors[k] = round(factors[k] / data.course.dist, 4)
+  fKeys.forEach(k => {
+    factorValues[k] = round(factorValues[k] / data.course.dist, 4)
   })
   const normFactor = (tot / data.course.dist)
 
@@ -315,13 +309,12 @@ function iteratePaceCalc (data) {
   const pacing = {
     time: time,
     delay: delay,
-    factors: factors,
+    factors: factorValues,
     fstats: fstats,
     moving: time - delay,
     pace: pace,
-    nF: nF,
     np: np,
-    drift: plan ? data.plan.drift : 0,
+    strategy: plan ? data.plan.strategy : 0,
     altModel: data.course.altModel,
     heatModel: data.heatModel,
     tFs: data.terrainFactors,

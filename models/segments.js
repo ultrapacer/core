@@ -1,4 +1,5 @@
 const math = require('../util/math')
+const { list: factors } = require('../factors')
 
 class Segment {
   constructor (obj) {
@@ -15,7 +16,6 @@ class Segment {
     return this.time / this.len
   }
 }
-const factors = ['gF', 'tF', 'aF', 'hF', 'dF', 'dark']
 
 // SuperSegment class contains multiple segments
 class SuperSegment {
