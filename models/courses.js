@@ -1,5 +1,6 @@
-const { isNumeric } = require('../util/math')
+const { isNumeric, round, interp } = require('../util/math')
 const { sleep } = require('../util')
+const { interpolatePoint } = require('./points')
 
 class CoursePoint {
   constructor (course, point, loop) {
@@ -13,8 +14,12 @@ class CoursePoint {
   get alt () { return this.point.alt }
   get latlon () { return this.point.latlon } // sgeo latlon object
   get grade () { return this.point.grade }
-  get dloc () { return this.point.dloc }
-  get loc () { return this.point.loc + (this.course.track.dist * this.loop) }
+
+  get loc () {
+    let l = this.point.loc
+    if (this.loop) l += this.course.track.dist * this.loop
+    return l
+  }
 
   has (field) {
     return isNumeric(this[field])
@@ -65,6 +70,35 @@ class Course {
     this.db.loss = this.track.loss
   }
 
+  // ROUTINE TO EITHER RETURN EXISTING POINT AT LOCATION OR INSERT IT, THEN RETURN
+  insertPoint (loc) {
+    const i3 = this.points.findIndex(p => rgte(p.loc, loc, 4))
+    const p3 = this.points[i3]
+
+    // if point exists, return it
+    if (req(p3.loc, loc, 4)) {
+      return p3
+    }
+
+    // add point and return it
+    const i1 = i3 - 1
+    const p1 = this.points[i1]
+    const p2 = new CoursePoint(this, interpolatePoint(p1, p3, loc), Math.floor(loc / this.dist))
+
+    // add in interpolated time values if they exist
+    if (!isNaN(p1.time) && !isNaN(p3.time)) {
+      const delay = (p3.elapsed - p3.time) - (p1.elapsed - p1.time)
+      p2.time = interp(p1.loc, p3.loc, p1.time + delay, p3.time, p3.loc)
+      p2.elapsed = p3.elapsed - (p3.time - p2.time)
+      if (!isNaN(p1.tod) && !isNaN(p3.tod)) {
+        p2.tod = (p3.tod - (p3.time - p2.time) + 86400) % 86400
+      }
+    }
+
+    this.points.splice(i3, 0, p2)
+    return p2
+  }
+
   // map array of actual times to this
   async addActuals (actual) {
     // where actual is an array of Points or CoursePoints
@@ -106,6 +140,13 @@ class Course {
       match: true
     }
   }
+}
+
+function req (a, b, r) {
+  return round(a, r) === round(b, r)
+}
+function rgte (a, b, r) {
+  return round(a, r) >= round(b, r)
 }
 
 module.exports = {

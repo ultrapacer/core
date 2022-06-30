@@ -5,5 +5,5 @@ module.exports = {
   grade: require('./grade'),
   heat: require('./heat'),
   terrain: require('./terrain'),
-  strategy: require('./strategy')
+  Strategy: require('./strategy')
 }

@@ -23,11 +23,9 @@ class Track extends Array {
     let d = 0
     let l = 0
     this[0].loc = 0
-    this[0].dloc = 0
     for (let i = 1, il = this.length; i < il; i++) {
       d = Number(this[i - 1].latlon.distanceTo(this[i].latlon))
       l += d
-      this[i].dloc = d
       this[i].loc = l
     }
   }
@@ -41,10 +39,12 @@ class Track extends Array {
     let i = 0
     // create array of step indices
     const steps = []
+    let dloc = 0
     for (let i = 1, il = this.length; i < il; i++) {
+      dloc = this[i].loc - this[i - 1].loc
       if (
         Math.abs((this[i].alt - this[i - 1].alt)) > at ||
-        Math.abs((this[i].alt - this[i - 1].alt) / this[i].dloc / 10) > gt
+        Math.abs((this[i].alt - this[i - 1].alt) / dloc / 10) > gt
       ) {
         steps.push(i)
       }

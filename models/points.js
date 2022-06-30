@@ -29,7 +29,6 @@ class Point {
 function interpolatePoint (p1, p2, loc) {
   const p3 = new Point([p1.lat, p1.lon, p1.alt])
   p3.loc = loc
-  p3.dloc = loc - Math.min(p1.loc, p2.loc)
 
   // lat lon interpolation:
   const p1LL = new LatLon(p1.lat, p1.lon)
