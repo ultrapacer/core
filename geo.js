@@ -1,6 +1,6 @@
 const models = require('./models')
 const factors = require('./factors')
-const { round } = require('./util/math')
+const { round, rlt, rgt, rgte, req } = require('./util/math')
 const { sleep } = require('./util')
 const { Segment } = models.segments
 const { interpolatePoint } = models.points
@@ -482,20 +482,6 @@ function adjustForCutoffs (data, i) {
     !added &&
     cutoffs.filter(c => c.point.elapsed - c.time >= 0.5).length === 0
   )
-}
-
-// shorthand comparisons to the r decimal place
-function rlt (a, b, r) {
-  return round(a, r) < round(b, r)
-}
-function rgt (a, b, r) {
-  return round(a, r) > round(b, r)
-}
-function rgte (a, b, r) {
-  return round(a, r) >= round(b, r)
-}
-function req (a, b, r) {
-  return round(a, r) === round(b, r)
 }
 
 function calcSunTime (data) {

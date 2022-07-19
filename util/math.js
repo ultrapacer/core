@@ -109,9 +109,31 @@ function wlslr (x1s, y1s, x2s, th) {
   return mbs
 }
 
+// shorthand comparisons to the r decimal place
+function rlt (a, b, r) {
+  return round(a, r) < round(b, r)
+}
+function rgt (a, b, r) {
+  return round(a, r) > round(b, r)
+}
+function rlte (a, b, r) {
+  return round(a, r) <= round(b, r)
+}
+function rgte (a, b, r) {
+  return round(a, r) >= round(b, r)
+}
+function req (a, b, r) {
+  return round(a, r) === round(b, r)
+}
+
 exports.isNumeric = isNumeric
 exports.linearRegression = linearRegression
 exports.round = round
 exports.interp = interp
 exports.interpArray = interpArray
 exports.wlslr = wlslr
+exports.rlt = rlt
+exports.rgt = rgt
+exports.rlte = rlte
+exports.rgte = rgte
+exports.req = req
