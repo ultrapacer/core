@@ -37,6 +37,11 @@ class Waypoint {
     }
   }
 
+  // scaled location
+  get sloc () {
+    return this.loc * this.course.distScale
+  }
+
   get lat () { return this.site.lat }
   get lon () { return this.site.lon }
   get alt () { return this.site.elevation }
@@ -216,7 +221,10 @@ class Waypoint {
   }
 
   // function updates the lat/lon/alt of a waypoint
-  refreshLLA (track, opts = {}) {
+  refreshLLA (track) {
+    if (!track) track = this.course?.track
+    if (!track) throw new Error('No track defined')
+
     let lat, lon, alt, ind
 
     // if start use start lla
@@ -229,8 +237,7 @@ class Waypoint {
 
     // otherwise interpolate the lla from track array
     } else {
-      opts.start = this.site.pointsIndex || 0
-      ;({ lat, lon, alt, ind } = track.getLLA(this.loc, opts))
+      ;({ lat, lon, alt, ind } = track.getLLA(this.loc, { start: this.site.pointsIndex || 0 }))
     }
     // update site values
     this.lat = lat
@@ -240,22 +247,4 @@ class Waypoint {
   }
 }
 
-// Returns an array of waypoints on the course including loops:
-function loopedWaypoints (waypoints, course) {
-  const wpls = []
-  for (let il = 1; il <= course.loops; il++) {
-    wpls.push(
-      ...waypoints.map(
-        wp => {
-          return new Waypoint(wp, course, il)
-        }
-      )
-    )
-  }
-  return wpls.filter(wpl => wpl.loop === course.loops || wpl.type !== 'finish')
-}
-
-module.exports = {
-  Waypoint: Waypoint,
-  loopedWaypoints: loopedWaypoints
-}
+module.exports = Waypoint

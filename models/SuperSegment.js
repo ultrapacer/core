@@ -1,28 +1,6 @@
 const math = require('../util/math')
 const { list: factors } = require('../factors')
 
-class Segment {
-  constructor (obj) {
-    Object.keys(obj).forEach(k => {
-      this[k] = obj[k]
-    })
-  }
-
-  get name () {
-    return this.waypoint ? this.waypoint.name : ''
-  }
-
-  get pace () {
-    return this.time / this.len
-  }
-
-  // time based fields require associated point1 & point2
-  get elapsed () { return this.point2.elapsed }
-  get time () { return this.point2.time - this.point1.time }
-  get tod () { return this.point2.tod }
-}
-
-// SuperSegment class contains multiple segments
 class SuperSegment {
   constructor (segments = []) {
     this.segments = segments
@@ -94,6 +72,4 @@ class SuperSegment {
     }).filter(f => math.round(f.value, 4) !== 1)
   }
 }
-
-exports.Segment = Segment
-exports.SuperSegment = SuperSegment
+module.exports = SuperSegment

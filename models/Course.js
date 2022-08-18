@@ -1,6 +1,9 @@
-const { isNumeric, round, interp } = require('../util/math')
+const { isNumeric, interp, req, rgte } = require('../util/math')
 const { sleep } = require('../util')
 const { interpolatePoint } = require('./points')
+const Waypoint = require('./Waypoint')
+const Event = require('./Event')
+const { createSegments, createSplits } = require('../geo')
 
 class CoursePoint {
   constructor (course, point, loop) {
@@ -29,10 +32,28 @@ class CoursePoint {
 class Course {
   constructor (db) {
     this.db = db
+
+    this.waypoints = []
+
     // other fields just pass along:
     Object.keys(db).forEach(k => {
       if (this[k] === undefined) this[k] = db[k]
     })
+
+    this.sites = db.sites
+
+    // create event property:
+    if (this.waypoints?.length) {
+      const s = this.waypoints.find(wp => wp.type === 'start' && wp.loop === 1)
+      this.event = new Event({
+        lat: s.lat,
+        lon: s.lon
+      })
+      if (db.eventStart) {
+        this.event.timezone = db.eventTimezone
+        this.event.start = db.eventStart
+      }
+    }
   }
 
   get loops () { return this.db?.loops || 1 }
@@ -54,6 +75,40 @@ class Course {
   get scaledGain () { return this.gain * this.gainScale }
   get scaledLoss () { return this.loss * this.lossScale }
 
+  // create waypoints from sites:
+  set sites (data) {
+    if (!data?.length) {
+      this.waypoints = []
+      return
+    }
+
+    let wps = []
+    for (let i = 1; i <= this.loops; i++) {
+      wps.push(
+        ...data.map(
+          site => {
+            return new Waypoint(site, this, i)
+          }
+        )
+      )
+    }
+    wps = wps
+      .sort((a, b) => a.loc - b.loc)
+      .filter(wp => wp.loop === this.loops || wp.type !== 'finish')
+    this.waypoints = wps
+
+    if (this.track?.constructor?.name === 'Track') {
+      this.refreshWaypointLLAs()
+    }
+
+    this.refreshTerrainFactors()
+    this.refreshCutoffs()
+  }
+
+  get sites () {
+    return this.waypoints?.filter(wp => wp.loop === 1 || wp.type === 'finish').map(wp => wp.site) || []
+  }
+
   // add track to course and create points array:
   addTrack (track) {
     this.track = track
@@ -68,6 +123,9 @@ class Course {
     this.db.distance = this.track.dist
     this.db.gain = this.track.gain
     this.db.loss = this.track.loss
+
+    // refresh waypoint LLAs after adding track
+    this.refreshWaypointLLAs()
   }
 
   // ROUTINE TO EITHER RETURN EXISTING POINT AT LOCATION OR INSERT IT, THEN RETURN
@@ -140,15 +198,77 @@ class Course {
       match: true
     }
   }
+
+  refreshWaypointLLAs () {
+    this.waypoints
+      .filter(wp => wp.loop === 1 || wp.type === 'finish')
+      .forEach(wp => { wp.refreshLLA() })
+  }
+
+  refreshTerrainFactors () {
+    let tF = this.waypoints[0].terrainFactor()
+    let tT = this.waypoints[0].terrainType()
+    this.terrainFactors = this.waypoints.filter((x, i) => i < this.waypoints.length - 1).map((x, i) => {
+      if (x.terrainFactor() !== null) tF = x.terrainFactor()
+      if (x.terrainType() !== null) tT = x.terrainType()
+      return new TerrainFactor({
+        startWaypoint: x,
+        endWaypoint: this.waypoints[i + 1],
+        tF: tF,
+        type: tT
+      })
+    })
+  }
+
+  refreshCutoffs () {
+    this.cutoffs = this.waypoints
+      .filter(wp => wp.cutoff)
+      .map(wp => new CourseCutoff({ waypoint: wp }))
+  }
+
+  // calculate and return splits for course
+  async calcSplits () {
+    const splits = {}
+    splits.segments = await createSegments(
+      this.points,
+      {
+        waypoints: this.waypoints,
+        course: this
+      }
+    )
+    const units = ['kilometers', 'miles']
+    await Promise.all(
+      units.map(async (unit) => {
+        splits[unit] = await createSplits(
+          this.points,
+          unit,
+          {
+            course: this
+          }
+        )
+      })
+    )
+    this.splits = splits
+    return this.splits
+  }
 }
 
-function req (a, b, r) {
-  return round(a, r) === round(b, r)
-}
-function rgte (a, b, r) {
-  return round(a, r) >= round(b, r)
+class CourseCutoff {
+  constructor (data) {
+    Object.assign(this, data)
+  }
+
+  get loc () { return this.waypoint.loc }
+  get time () { return this.waypoint.cutoff }
 }
 
-module.exports = {
-  Course: Course
+class TerrainFactor {
+  constructor (data) {
+    Object.assign(this, data)
+  }
+
+  get start () { return this.startWaypoint.loc }
+  get end () { return this.endWaypoint.loc }
 }
+
+module.exports = Course

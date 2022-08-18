@@ -74,7 +74,11 @@ class Track extends Array {
 
   addGrades () {
     // add grade field to points array
-    const locs = Array(...this).map(x => x.loc)
+    const locs = []
+    let i = 0
+    for (i = 0; i < this.length; i++) {
+      locs.push(this[i].loc)
+    }
     const lsq = this.getSmoothedProfile(locs, 0.05)
     this.forEach((p, i) => {
       p.grade = round(lsq[i].grade, 4)
@@ -211,33 +215,53 @@ class Track extends Array {
     }
   }
 
-  getNearestLoc (ll, start, limit) {
+  getNearestLoc (ll, start = null, limit) {
     // iterate to new location based on waypoint lat/lon
     // ll: [lat, lon] array
     // start: starting location in meters
     // limit: max distance it can move
     const steps = 5
-    let loc = Math.min(this.last.loc, start)
     const LLA1 = new LatLon(ll[0], ll[1])
-    while (limit > 0.025) {
-      const size = limit / steps
-      const locs = []
-      for (let i = -steps; i <= steps; i++) {
-        const l = loc + (size * i)
-        if (l > 0 && l <= this.last.loc) {
-          locs.push(l)
+
+    let min, loc
+    const iterateLoc = (start, limit) => {
+      loc = start
+      while (limit > 0.025) {
+        const size = limit / steps
+        let locs = []
+
+        for (let i = -steps; i <= steps; i++) {
+          const l = loc + (size * i)
+          if (l > 0 && l <= this.last.loc) {
+            locs.push(Math.max(0, Math.min(l, this.last.loc)))
+          }
         }
+        locs = locs.filter((v, i, s) => s.indexOf(v) === i)
+
+        const llas = this.getLLA(locs)
+        llas.forEach(lla => {
+          const LLA2 = new LatLon(lla.lat, lla.lon)
+          lla.dist = Number(LLA1.distanceTo(LLA2))
+        })
+        min = llas.reduce((min, b) => Math.min(min, b.dist), llas[0].dist)
+        const j = llas.findIndex(x => x.dist === min)
+        loc = locs[j]
+        limit = limit / steps // downsize iteration
       }
-      const llas = this.getLLA(locs)
-      llas.forEach(lla => {
-        const LLA2 = new LatLon(lla.lat, lla.lon)
-        lla.dist = Number(LLA1.distanceTo(LLA2))
-      })
-      const min = llas.reduce((min, b) => Math.min(min, b.dist), llas[0].dist)
-      const j = llas.findIndex(x => x.dist === min)
-      loc = locs[j]
-      limit = limit / steps // downsize iteration
     }
+
+    // try first getting something close
+    if (start !== null) {
+      start = Math.min(start, this.last.loc)
+      const limit = Math.max(0.5, 0.05 * this.last.loc)
+      iterateLoc(start, limit)
+      if (min < 0.1) return loc
+    }
+
+    // now try getting anything
+    start = this.last.loc / 2
+    limit = Math.max(this.last.loc - start, start)
+    iterateLoc(start, limit)
     return loc
   }
 
