@@ -9,7 +9,7 @@
     "lintfix": "eslint --ext .js --fix *.js factors models util"
   },
   "dependencies": {
-    "core-js": "^3.22.1",
+    "core-js": "^3.24.1",
     "moment-timezone": "^0.5.33",
     "regenerator-runtime": "^0.13.9",
     "sgeo": "^0.0.6",
