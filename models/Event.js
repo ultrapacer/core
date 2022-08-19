@@ -46,7 +46,7 @@ function dateToTODSeconds (date, timezone) {
     second: '2-digit',
     hour12: false,
     timeZone: timezone
-  }).split(':').map(v=>Number(v))
+  }).split(':').map(v => Number(v))
   return hms[0] * 60 * 60 + hms[1] * 60 + hms[2]
 }
 
