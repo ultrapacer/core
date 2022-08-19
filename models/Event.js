@@ -1,5 +1,4 @@
 const suncalc = require('suncalc')
-const { round } = require('../util/math')
 
 class Event {
   constructor (obj) {
@@ -11,13 +10,7 @@ class Event {
   // lat and lon fields must be set before setting start
   set start (val) {
     this.startDate = new Date(val)
-
-    const midnight = new Date(this.startDate)
-    midnight.setHours(0, 0, 0, 0)
-    this.midnightSeconds = midnight.getTime() / 1000
-
-    this.startTime = round(this.startDate.getTime() / 1000, 0) - this.midnightSeconds
-
+    this.startTime = dateToTODSeconds(this.startDate, this.timezone)
     this.updateSunEvents()
   }
 
@@ -38,11 +31,23 @@ class Event {
     const keys = ['nadir', 'dawn', 'sunrise', 'dusk', 'sunset', 'solarNoon']
     keys.forEach(k => {
       if (!isNaN(times[k])) {
-        this.sun[k] = round(times[k].getTime() / 1000, 0) - this.midnightSeconds
+        this.sun[k] = dateToTODSeconds(times[k], this.timezone)
       }
     })
     this.sun.nadirAltitude = nadirPosition.altitude * 180 / Math.PI
   }
+}
+
+// get time of day seconds in event timezone:
+function dateToTODSeconds (date, timezone) {
+  const hms = date.toLocaleString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: timezone
+  }).split(':').map(v=>Number(v))
+  return hms[0] * 60 * 60 + hms[1] * 60 + hms[2]
 }
 
 module.exports = Event
