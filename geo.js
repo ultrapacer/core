@@ -200,8 +200,6 @@ async function calcPacing (data) {
     })
   }
 
-  const hasPlan = Boolean(data.plan)
-
   data.pacing = data.plan.pacing || {}
   if (!data.pacing.status) data.pacing.status = {}
 
@@ -218,9 +216,6 @@ async function calcPacing (data) {
 
   const pacing = await iteratePaceCalc(data)
   Object.assign(data.pacing, pacing)
-
-  // if just the course info, return
-  if (!hasPlan || isNaN(data.plan.event.start)) return pacing
 
   // points for sensitivity test:
   const testPoints = options.testLocations.map(tl => data.plan.course.insertPoint(tl))
