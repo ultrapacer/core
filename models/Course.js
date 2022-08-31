@@ -1,4 +1,5 @@
 const { isNumeric, interp, req, rgte } = require('../util/math')
+const areSame = require('../util/areSame')
 const { sleep } = require('../util')
 const { interpolatePoint } = require('./points')
 const Waypoint = require('./Waypoint')
@@ -33,6 +34,7 @@ class Course {
   constructor (db) {
     this.db = db
 
+    // waypoints array gets populated by set sites()
     this.waypoints = []
 
     // other fields just pass along:
@@ -52,6 +54,21 @@ class Course {
       if (db.eventStart) {
         this.event.timezone = db.eventTimezone
         this.event.start = db.eventStart
+      }
+    }
+
+    // use cached splits if input:
+    if (db.cache) {
+      this.splits = db.cache
+
+      // sync waypoint objects
+      if (this.waypoints?.length && this.splits.segments?.length) {
+        this.splits.segments.forEach(s => {
+          const wp = this.waypoints.find(
+            wp => areSame(wp.site, s.waypoint.site) && wp.loop === s.waypoint.loop
+          )
+          if (wp) s.waypoint = wp
+        })
       }
     }
   }
@@ -214,7 +231,7 @@ class Course {
       return new TerrainFactor({
         startWaypoint: x,
         endWaypoint: this.waypoints[i + 1],
-        tF: tF,
+        tF,
         type: tT
       })
     })

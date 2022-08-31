@@ -1,6 +1,6 @@
 const Event = require('./Event')
 const { calcPacing, createSegments, createSplits } = require('../geo')
-const areSame = (a, b) => ((typeof (a) === 'object' ? String(a._id) : a) === (typeof (b) === 'object' ? String(b._id) : b))
+const areSame = require('../util/areSame')
 
 function getDelayAtWaypoint (delays, waypoint, typ) {
   // return delay object if it exists
@@ -92,7 +92,7 @@ class Plan {
   async calcPacing (options) {
     this.pacing = await calcPacing({
       plan: this,
-      options: options
+      options
     })
   }
 
@@ -138,8 +138,8 @@ class Plan {
       }
     } else {
       wpd = new PlanDelay({
-        waypoint: waypoint,
-        delay: delay
+        waypoint,
+        delay
       })
       this.delays.push(wpd)
 
@@ -160,8 +160,8 @@ class Plan {
       }
     } else {
       wpn = {
-        waypoint: waypoint,
-        text: text
+        waypoint,
+        text
       }
       this.notes.push(wpn)
 
