@@ -58,7 +58,7 @@ class SuperSegment extends Segment {
     const obj = {}
     factors.forEach(f => {
       const v = this.segments.reduce((v, s) => { return v + s.len * s.factors[f] }, 0)
-      obj[f] = v / this.len
+      if (!isNaN(v)) obj[f] = v / this.len
     })
     return obj
   }
