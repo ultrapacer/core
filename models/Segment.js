@@ -14,9 +14,9 @@ class Segment {
   }
 
   // time based fields require associated point1 & point2
-  get elapsed () { return this.point2.elapsed }
-  get time () { return this.point2.time - this.point1.time }
-  get tod () { return this.point2.tod }
+  get elapsed () { return this.point2 ? this.point2.elapsed : undefined }
+  get time () { return this.point1 && this.point2 ? this.point2.time - this.point1.time : undefined }
+  get tod () { return this.point2 ? this.point2.tod : undefined }
 }
 
 module.exports = Segment

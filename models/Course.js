@@ -4,6 +4,7 @@ const { sleep } = require('../util')
 const { interpolatePoint } = require('./points')
 const Waypoint = require('./Waypoint')
 const Event = require('./Event')
+const Segment = require('./Segment')
 const { createSegments, createSplits } = require('../geo')
 
 class CoursePoint {
@@ -59,7 +60,12 @@ class Course {
 
     // use cached splits if input:
     if (db.cache) {
-      this.splits = db.cache
+      // add splits, and make sure each is casted as a Segment
+      this.splits = {}
+      const types = ['segments', 'miles', 'kilometers']
+      types.forEach(type => {
+        this.splits[type] = db.cache[type].map(s => new Segment(s))
+      })
 
       // sync waypoint objects
       if (this.waypoints?.length && this.splits.segments?.length) {

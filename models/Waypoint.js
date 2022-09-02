@@ -5,7 +5,6 @@ class Waypoint {
     this.site = site
     this.course = course
     this.loop = loop
-    this.visible = site.tier === 1
   }
 
   get name () {
@@ -204,14 +203,6 @@ class Waypoint {
       if (!this.site.cutoffs) { this.site.cutoffs = [] }
       this.site.cutoffs.push({ time: v, loop: this.loop })
     }
-  }
-
-  show () {
-    this.visible = true
-  }
-
-  hide () {
-    this.visible = false
   }
 
   matchingSegment (segments) {

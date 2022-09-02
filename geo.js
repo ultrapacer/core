@@ -52,7 +52,7 @@ function calcSegments (p, breaks, pacing) {
     len = breaks[i] - breaks[i - 1]
     s.push(new Segment({
       end: breaks[i],
-      len: len,
+      len,
       gain: 0,
       loss: 0,
       alt: alts[i], // ending altitude
@@ -71,7 +71,7 @@ function calcSegments (p, breaks, pacing) {
     strategy: pacing.strategy,
     sun: pacing.sun,
     heatModel: pacing.plan?.heatModel || null,
-    course: course
+    course
   }
   const delays = (pacing && pacing.delays) ? [...pacing.delays] : []
   function getDelay (a, b) {
@@ -371,9 +371,9 @@ function iteratePaceCalc (data) {
       const pace = (time - delay) / data.plan.course.dist
       const np = pace / normFactor
       return {
-        time: time,
-        pace: pace,
-        np: np
+        time,
+        pace,
+        np
       }
     }
 
@@ -392,13 +392,13 @@ function iteratePaceCalc (data) {
   }
 
   const pacing = {
-    time: time,
-    delay: delay,
+    time,
+    delay,
     factors: factorValues,
-    fstats: fstats,
+    fstats,
     moving: time - delay,
-    pace: pace,
-    np: np,
+    pace,
+    np,
     strategy: data.strategy,
     altModel: data.plan.course.altModel,
     sun: data.plan.event.sun || null
@@ -527,9 +527,8 @@ function createSegments (points, data = null) {
   // determine all the stuff
   const segments = calcSegments(points, breaks, data)
 
-  // map in _index and waypoints
+  // map in waypoints
   segments.forEach((x, i) => {
-    x._index = i
     x.waypoint = wps[i + 1]
   })
 

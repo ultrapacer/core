@@ -3,17 +3,8 @@
   "version": "0.0.0",
   "description": "ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, and fatigue.",
   "author": "Danny Murphy <danny@ultrapacer.com>",
-  "scripts": {
-    "lint": "eslint-dirty",
-    "lintfix": "eslint-dirty --fix"
-  },
   "dependencies": {
     "sgeo": "^0.0.6",
     "suncalc": "^1.9.0"
-  },
-  "devDependencies": {
-    "eslint": "^8.23.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-dirty": "^0.0.3"
   }
 }

@@ -1,8 +1,9 @@
-const math = require('../util/math')
+const Segment = require('./Segment')
 const { list: factors } = require('../factors')
 
-class SuperSegment {
+class SuperSegment extends Segment {
   constructor (segments = []) {
+    super({})
     this.segments = segments
   }
 
@@ -20,10 +21,6 @@ class SuperSegment {
     return this.last.end
   }
 
-  get name () {
-    return this.last.waypoint.name
-  }
-
   get len () {
     return this.sum('len')
   }
@@ -38,10 +35,6 @@ class SuperSegment {
 
   get time () {
     return this.sum('time')
-  }
-
-  get pace () {
-    return this.time / this.len
   }
 
   get elapsed () {
@@ -62,14 +55,12 @@ class SuperSegment {
   }
 
   get factors () {
-    return factors.map(f => {
+    const obj = {}
+    factors.forEach(f => {
       const v = this.segments.reduce((v, s) => { return v + s.len * s.factors[f] }, 0)
-
-      return {
-        name: f,
-        value: v / this.len
-      }
-    }).filter(f => math.round(f.value, 4) !== 1)
+      obj[f] = v / this.len
+    })
+    return obj
   }
 }
 module.exports = SuperSegment
