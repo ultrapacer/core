@@ -22,6 +22,13 @@ class Event {
     return Boolean(this.startDate instanceof Date && !isNaN(this.startDate))
   }
 
+  // return a date object at [seconds] from start
+  dateAtElapsed (seconds) {
+    const d = new Date(this.start)
+    d.setTime(d.getTime() + (seconds * 1000))
+    return d
+  }
+
   updateSunEvents () {
     const times = suncalc.getTimes(this.startDate, this.lat, this.lon)
     const nadirPosition = suncalc.getPosition(times.nadir, this.lat, this.lon)
