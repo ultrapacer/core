@@ -1,6 +1,7 @@
 const Event = require('./Event')
 const { calcPacing, createSegments, createSplits } = require('../geo')
 const areSame = require('../util/areSame')
+const Segment = require('./Segment')
 
 function getDelayAtWaypoint (delays, waypoint, typ) {
   // return delay object if it exists
@@ -71,7 +72,32 @@ class Plan {
       this.cutoffs = this.course.cutoffs.map(c => new PlanCutoff({ courseCutoff: c, plan: this }))
     }
 
+    // use cached splits if input:
     this.splits = null
+    if (db.cache) {
+      try {
+        // add splits, and make sure each is casted as a Segment
+        this.splits = {}
+        const types = ['segments', 'miles', 'kilometers']
+        types.forEach(type => {
+          this.splits[type] = db.cache[type].map(s => { return new Segment(s) })
+        })
+
+        // sync waypoint objects
+        if (this.course?.waypoints?.length && this.splits.segments?.length) {
+          this.splits.segments.forEach(s => {
+            const wp = this.course.waypoints.find(
+              wp => areSame(wp.site, s.waypoint.site) && wp.loop === s.waypoint.loop
+            )
+            if (wp) s.waypoint = wp
+          })
+        }
+      } catch (e) {
+        console.log(e)
+        this.splits = null
+      }
+    }
+
     this.pacing = null
   }
 
