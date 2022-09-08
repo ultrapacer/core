@@ -60,21 +60,26 @@ class Course {
 
     // use cached splits if input:
     if (db.cache) {
-      // add splits, and make sure each is casted as a Segment
-      this.splits = {}
-      const types = ['segments', 'miles', 'kilometers']
-      types.forEach(type => {
-        this.splits[type] = db.cache[type].map(s => new Segment(s))
-      })
-
-      // sync waypoint objects
-      if (this.waypoints?.length && this.splits.segments?.length) {
-        this.splits.segments.forEach(s => {
-          const wp = this.waypoints.find(
-            wp => areSame(wp.site, s.waypoint.site) && wp.loop === s.waypoint.loop
-          )
-          if (wp) s.waypoint = wp
+      try {
+        // add splits, and make sure each is casted as a Segment
+        this.splits = {}
+        const types = ['segments', 'miles', 'kilometers']
+        types.forEach(type => {
+          if (db.cache[type]) this.splits[type] = db.cache[type].map(s => new Segment(s))
         })
+
+        // sync waypoint objects
+        if (this.waypoints?.length && this.splits.segments?.length) {
+          this.splits.segments.forEach(s => {
+            const wp = this.waypoints.find(
+              wp => areSame(wp.site, s.waypoint.site) && wp.loop === s.waypoint.loop
+            )
+            if (wp) s.waypoint = wp
+          })
+        }
+      } catch (e) {
+        console.log(e)
+        throw new Error('Malformed course cache.')
       }
     }
   }
