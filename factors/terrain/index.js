@@ -1,5 +1,7 @@
 const { rlte } = require('../../util/math')
 
+// TODO: instead of having tFs values as added % (eg 5, 10), change to percent eg (1.05, 1.10))
+
 module.exports = function (loc, tFs) {
   // returns terrain factor at a given location
   // loc: loc [km]

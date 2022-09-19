@@ -35,12 +35,20 @@ class Event {
 
     // add data to sun object, each in seconds since midnight:
     this.sun = {}
+
+    // names of keys from suncalc
     const keys = ['nadir', 'dawn', 'sunrise', 'dusk', 'sunset', 'solarNoon']
-    keys.forEach(k => {
+
+    // names to map for ultrapacer
+    const keys2 = ['nadir', 'dawn', 'sunrise', 'dusk', 'sunset', 'noon']
+
+    // set values in sun object
+    keys.forEach((k, i) => {
       if (!isNaN(times[k])) {
-        this.sun[k] = dateToTODSeconds(times[k], this.timezone)
+        this.sun[keys2[i]] = dateToTODSeconds(times[k], this.timezone)
       }
     })
+
     this.sun.nadirAltitude = nadirPosition.altitude * 180 / Math.PI
   }
 }

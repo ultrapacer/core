@@ -133,14 +133,6 @@ class Waypoint {
     return undefined
   }
 
-  actualElapsed (segments) {
-    // return actual elapsed time at waypoint, assume segments array includes waypoint
-    if (this.loc === 0) return 0
-    const segment = this.matchingSegment(segments)
-    if (segment) return segment.actualElapsed
-    return undefined
-  }
-
   get hasTypicalDelay () {
     return Boolean(
       this.type === 'aid' ||

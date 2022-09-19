@@ -1,5 +1,8 @@
 const adjust = require('./adjust')
 const def = require('./default')
+const _cloneDeep = require('lodash/cloneDeep')
+const _isNumber = require('lodash/isNumber')
+const _isArray = require('lodash/isArray')
 
 function getFact (loc, strategy, length) {
   let a = -adjust(strategy, length)
@@ -20,20 +23,41 @@ function getFact (loc, strategy, length) {
   return a
 }
 
+class StrategyAutoPoint {
+  constructor (arg = {}) {
+    Object.defineProperty(this, 'point', { enumerable: false, writable: true })
+    Object.assign(this, arg)
+  }
+}
+
 class Strategy {
-  constructor (arg) {
-    this.length = arg.length
+  constructor (arg = {}) {
+    Object.defineProperty(this, '__class', { value: 'Strategy', enumerable: false })
 
-    this.values = (Array.isArray(arg.values))
-      ? [...arg.values]
-      : [{
-          type: 'linear',
-          onset: '0',
-          // use default value if not defined:
-          value: ((isNaN(arg.values) || arg.values === null) ? def(arg.length) : arg.values)
-        }]
+    // if it's already a Strategy object, just clone it
+    if (arg.__class === 'Strategy') {
+      Object.assign(this, _cloneDeep(arg))
 
-    this.autos = []
+    // otherwise copy over individual fields
+    } else {
+      // length
+      if (!arg.length) throw new Error('length required')
+      this.length = arg.length
+
+      // values
+      if (_isNumber(arg.values)) {
+        this.values = [{ onset: 0, value: arg.values, type: 'linear' }]
+      } else if (_isArray(arg.values)) {
+        this.values = _cloneDeep(arg.values)
+      } else if (arg.values) {
+        throw new Error(`bad values input: ${JSON.stringify(arg.values)}`)
+      } else {
+        this.values = [{ onset: 0, value: def(this.length), type: 'linear' }]
+      }
+
+      // autos
+      this.autos = arg?.autos || []
+    }
   }
 
   at (loc) {
@@ -53,7 +77,7 @@ class Strategy {
 
   addAuto (val) {
     const i = this.autos.findIndex(v => v.onset >= val.onset)
-    const val2 = { ...val } // shallow copy
+    const val2 = new StrategyAutoPoint({ ...val }) // shallow copy
     val2.value = 0
     if (i >= 0) {
       this.autos.splice(i, 0, val2)

@@ -1,11 +1,14 @@
-const { isNumeric, interp, req, rgte } = require('../util/math')
+const _min = require('lodash/min')
+const _max = require('lodash/max')
+const _sumBy = require('lodash/sumBy')
+const { isNumeric, req, rgte } = require('../util/math')
 const areSame = require('../util/areSame')
-const { sleep } = require('../util')
 const { interpolatePoint } = require('./points')
 const Waypoint = require('./Waypoint')
 const Event = require('./Event')
 const Segment = require('./Segment')
 const { createSegments, createSplits } = require('../geo')
+const Factors = require('../factors/Factors')
 
 class CoursePoint {
   constructor (course, point, loop) {
@@ -31,8 +34,14 @@ class CoursePoint {
   }
 }
 
+// course constructor will pass through all fields; use
+// this array to omit certain keys from passing through
+const disallowed = ['cache']
+
 class Course {
   constructor (db) {
+    Object.defineProperty(this, 'stats', { enumerable: true, writable: true, value: {} })
+
     this.db = db
 
     // waypoints array gets populated by set sites()
@@ -40,7 +49,7 @@ class Course {
 
     // other fields just pass along:
     Object.keys(db).forEach(k => {
-      if (this[k] === undefined) this[k] = db[k]
+      if (this[k] === undefined && !disallowed.includes(k)) this[k] = db[k]
     })
 
     this.sites = db.sites
@@ -61,11 +70,23 @@ class Course {
     // use cached splits if input:
     if (db.cache) {
       try {
+        // make sure cache has expected data:
+        if (
+          !db.cache.version ||
+          !db.cache.stats ||
+          !Array.isArray(db.cache.segments)
+        ) throw new Error('Invalid cache')
+
+        Object.assign(this.stats, db.cache.stats)
+
         // add splits, and make sure each is casted as a Segment
         this.splits = {}
         const types = ['segments', 'miles', 'kilometers']
         types.forEach(type => {
-          if (db.cache[type]) this.splits[type] = db.cache[type].map(s => new Segment(s))
+          if (db.cache[type]) {
+            this.splits[type] = db.cache[type].map(s => new Segment(s))
+            this.splits[type].forEach(s => { s.factors = new Factors(s.factors) })
+          }
         })
 
         // sync waypoint objects
@@ -156,8 +177,8 @@ class Course {
     this.refreshWaypointLLAs()
   }
 
-  // ROUTINE TO EITHER RETURN EXISTING POINT AT LOCATION OR INSERT IT, THEN RETURN
-  insertPoint (loc) {
+  // ROUTINE TO EITHER RETURN EXISTING POINT AT LOCATION OR CREATE IT AND RETURN
+  getOrCreatePoint (loc) {
     const i3 = this.points.findIndex(p => rgte(p.loc, loc, 4))
     const p3 = this.points[i3]
 
@@ -170,61 +191,21 @@ class Course {
     const i1 = i3 - 1
     const p1 = this.points[i1]
     const p2 = new CoursePoint(this, interpolatePoint(p1, p3, loc), Math.floor(loc / this.dist))
-
-    // add in interpolated time values if they exist
-    if (!isNaN(p1.time) && !isNaN(p3.time)) {
-      const delay = (p3.elapsed - p3.time) - (p1.elapsed - p1.time)
-      p2.time = interp(p1.loc, p3.loc, p1.time + delay, p3.time, p3.loc)
-      p2.elapsed = p3.elapsed - (p3.time - p2.time)
-      if (!isNaN(p1.tod) && !isNaN(p3.tod)) {
-        p2.tod = (p3.tod - (p3.time - p2.time) + 86400) % 86400
-      }
-    }
-
-    this.points.splice(i3, 0, p2)
     return p2
   }
 
-  // map array of actual times to this
-  async addActuals (actual) {
-    // where actual is an array of Points or CoursePoints
-    if (!this.points?.length) { throw new Error('Course has no points array') }
+  // ROUTINE TO EITHER RETURN EXISTING POINT AT LOCATION OR CREATE AND INSERT IT, THEN RETURN
+  getOrInsertPoint (loc) {
+    // get or create point
+    const point = this.getOrCreatePoint(loc)
 
-    // init variables
-    let delta = 0
-    let lastGoodPoint = {}
-    let a = actual[0]
-
-    for (let index = 0; index < this.points.length; index++) {
-      // breakup processing to not hang browser
-      if (index % 20 === 0) await sleep(10)
-
-      // set current point
-      const p = this.points[index]
-
-      // limit for search gets bigger as error grows
-      const limit = Math.max(0.1, Number(p.latlon.distanceTo(a.latlon)) * 1.1)
-
-      // resolve closest point on actual track to current course point
-      ;({ point: a, delta } = actual.getNearestPoint(p.latlon, a, limit))
-
-      // keep track of last good match
-      if (delta < 0.1) lastGoodPoint = p
-
-      // if you ever get more than 2km offtrack, return match fail:
-      if (delta > 2) {
-        return {
-          match: false,
-          point: lastGoodPoint
-        }
-      }
-
-      // set the actual for point
-      p.actual = a
+    // see if its already in array and if not insert it
+    const i = this.points.findIndex(p => p.loc >= point.loc)
+    if (this.points[i].loc > point.loc) {
+      this.points.splice(i, 0, point)
     }
-    return {
-      match: true
-    }
+
+    return point
   }
 
   refreshWaypointLLAs () {
@@ -257,27 +238,49 @@ class Course {
   // calculate and return splits for course
   async calcSplits () {
     const splits = {}
-    splits.segments = await createSegments(
-      this.points,
-      {
-        waypoints: this.waypoints,
-        course: this
-      }
-    )
+    splits.segments = await createSegments({ course: this })
     const units = ['kilometers', 'miles']
     await Promise.all(
       units.map(async (unit) => {
-        splits[unit] = await createSplits(
-          this.points,
-          unit,
-          {
-            course: this
-          }
-        )
+        splits[unit] = await createSplits({ unit, course: this })
       })
     )
     this.splits = splits
     return this.splits
+  }
+
+  // calculate max and min values along course
+  calcStats () {
+    const alts = this.points.map(p => p.alt)
+    const grades = this.points.map(p => p.grade)
+    const terrains = this.terrainFactors.map(tf => (tf.tF / 100 + 1))
+    const stats = {
+      altitude: {
+        max: _max(alts),
+        min: _min(alts)
+      },
+      grade: {
+        max: _max(grades),
+        min: _min(grades)
+      },
+      terrain: {
+        avg: (_sumBy(this.terrainFactors, (tF) => (tF.end - tF.start) * tF.tF) / this.dist + 100) / 100,
+        max: _max(terrains),
+        min: _min(terrains)
+      }
+    }
+
+    // get distances for max/min terrain
+    const terrainFactorDist = (val) => this.terrainFactors.reduce(
+      (a, b) => (b.tF / 100 + 1 === val) ? a + b.end - b.start : a, 0
+    )
+    Object.assign(stats.terrain, {
+      maxDist: terrainFactorDist(stats.terrain.max),
+      minDist: terrainFactorDist(stats.terrain.min)
+    })
+
+    Object.assign(this.stats, stats)
+    return stats
   }
 }
 
