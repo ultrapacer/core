@@ -3,7 +3,7 @@ const { rlt, rgt, rgte, req, interpArray } = require('./util/math')
 const { sleep } = require('./util')
 const Segment = require('./models/Segment')
 const { interpolatePoint } = require('./models/points')
-const _last = require('lodash/last')
+const _ = require('lodash')
 const fKeys = factors.list
 
 // creates an object with keys from fKeys above with initial values of init
@@ -201,7 +201,7 @@ async function calcPacing (data) {
       newTest.findIndex((x, j) => Math.abs(x - lastTest[j]) >= options.iterationThreshold) < 0
 
     // tests.target makes sure the final point is within a half second of target time (or cutoff max)
-    const elapsed = _last(data.plan.points).elapsed
+    const elapsed = _.last(data.plan.points).elapsed
     tests.target =
       data.plan.pacingMethod === 'time'
         ? Math.abs(data.plan.pacing.elapsed - elapsed) < 0.5
@@ -246,14 +246,14 @@ async function calcPacing (data) {
     // create array of sun events during the course:
     data.pacing.sunEvents = []
     const eventTypes = ['nadir', 'dawn', 'sunrise', 'dusk', 'sunset', 'noon']
-    const days = Math.ceil((data.plan.event.startTime + _last(data.plan.points).elapsed) / 86400)
+    const days = Math.ceil((data.plan.event.startTime + _.last(data.plan.points).elapsed) / 86400)
     for (let d = 0; d < days; d++) {
       eventTypes.forEach(event => {
         // get elapsed time of the event:
         const elapsed = data.plan.event.sun[event] - data.plan.event.startTime + (86400 * d)
 
         // if it happens in the data, add it to the array
-        if (elapsed >= 0 && elapsed <= _last(data.plan.points).elapsed) {
+        if (elapsed >= 0 && elapsed <= _.last(data.plan.points).elapsed) {
           data.pacing.sunEvents.push({ event, elapsed })
         }
       })
@@ -296,7 +296,7 @@ function adjustForCutoffs (data, i) {
       .find(s => rgt(s.onset, c.loc, 4)) ||
         {
           onset: data.plan.course.dist,
-          point: _last(data.plan.points)
+          point: _.last(data.plan.points)
         }
 
     // make sure we have points mapped

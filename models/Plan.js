@@ -1,4 +1,4 @@
-const _isNumber = require('lodash/isnumber')
+const _ = require('lodash')
 const { sleep } = require('../util')
 const { req, interp } = require('../util/math')
 const Event = require('./Event')
@@ -33,7 +33,7 @@ class PlanPoint {
   }
 
   has (field) {
-    return _isNumber(this[field])
+    return _.isNumber(this[field])
   }
 }
 
@@ -218,7 +218,7 @@ class Plan {
       const delay = (p2.elapsed - p2.time) - (p1.elapsed - p1.time)
       point.time = interp(p1.loc, p2.loc, p1.time + delay, p2.time, p2.loc)
       point.elapsed = p2.elapsed - (p2.time - point.time)
-      if (_isNumber(this.event.startTime)) {
+      if (_.isNumber(this.event.startTime)) {
         point.tod = (this.event.startTime + point.elapsed) % 86400
       }
     }

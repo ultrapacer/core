@@ -1,4 +1,4 @@
-const _last = require('lodash/last')
+const _ = require('lodash')
 const { req } = require('../util/math')
 const { Factors, Strategy } = require('../factors')
 
@@ -46,7 +46,7 @@ class Pacing {
     }
 
     // if the last cutoff is the end; reduce elapsed
-    const lastCutoff = _last(this._plan.cutoffs)
+    const lastCutoff = _.last(this._plan.cutoffs)
     if (lastCutoff && req(lastCutoff.loc, this._plan.course.dist, 4)) {
       val = Math.min(lastCutoff.time, val)
     }

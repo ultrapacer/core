@@ -1,8 +1,6 @@
 const adjust = require('./adjust')
 const def = require('./default')
-const _cloneDeep = require('lodash/clonedeep')
-const _isNumber = require('lodash/isnumber')
-const _isArray = require('lodash/isarray')
+const _ = require('lodash')
 
 function getFact (loc, strategy, length) {
   let a = -adjust(strategy, length)
@@ -36,7 +34,7 @@ class Strategy {
 
     // if it's already a Strategy object, just clone it
     if (arg.__class === 'Strategy') {
-      Object.assign(this, _cloneDeep(arg))
+      Object.assign(this, _.cloneDeep(arg))
 
     // otherwise copy over individual fields
     } else {
@@ -45,10 +43,10 @@ class Strategy {
       this.length = arg.length
 
       // values
-      if (_isNumber(arg.values)) {
+      if (_.isNumber(arg.values)) {
         this.values = [{ onset: 0, value: arg.values, type: 'linear' }]
-      } else if (_isArray(arg.values)) {
-        this.values = _cloneDeep(arg.values)
+      } else if (_.isArray(arg.values)) {
+        this.values = _.cloneDeep(arg.values)
       } else if (arg.values) {
         throw new Error(`bad values input: ${JSON.stringify(arg.values)}`)
       } else {

@@ -1,6 +1,4 @@
-const _min = require('lodash/min')
-const _max = require('lodash/max')
-const _sumBy = require('lodash/sumby')
+const _ = require('lodash')
 const { isNumeric, req, rgte } = require('../util/math')
 const areSame = require('../util/areSame')
 const { interpolatePoint } = require('./points')
@@ -256,17 +254,17 @@ class Course {
     const terrains = this.terrainFactors.map(tf => (tf.tF / 100 + 1))
     const stats = {
       altitude: {
-        max: _max(alts),
-        min: _min(alts)
+        max: _.max(alts),
+        min: _.min(alts)
       },
       grade: {
-        max: _max(grades),
-        min: _min(grades)
+        max: _.max(grades),
+        min: _.min(grades)
       },
       terrain: {
-        avg: (_sumBy(this.terrainFactors, (tF) => (tF.end - tF.start) * tF.tF) / this.dist + 100) / 100,
-        max: _max(terrains),
-        min: _min(terrains)
+        avg: (_.sumBy(this.terrainFactors, (tF) => (tF.end - tF.start) * tF.tF) / this.dist + 100) / 100,
+        max: _.max(terrains),
+        min: _.min(terrains)
       }
     }
 
