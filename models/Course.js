@@ -1,6 +1,6 @@
 const _min = require('lodash/min')
 const _max = require('lodash/max')
-const _sumBy = require('lodash/sumBy')
+const _sumBy = require('lodash/sumby')
 const { isNumeric, req, rgte } = require('../util/math')
 const areSame = require('../util/areSame')
 const { interpolatePoint } = require('./points')

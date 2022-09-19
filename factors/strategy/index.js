@@ -1,8 +1,8 @@
 const adjust = require('./adjust')
 const def = require('./default')
-const _cloneDeep = require('lodash/cloneDeep')
-const _isNumber = require('lodash/isNumber')
-const _isArray = require('lodash/isArray')
+const _cloneDeep = require('lodash/clonedeep')
+const _isNumber = require('lodash/isnumber')
+const _isArray = require('lodash/isarray')
 
 function getFact (loc, strategy, length) {
   let a = -adjust(strategy, length)

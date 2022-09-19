@@ -1,4 +1,4 @@
-const _isNumber = require('lodash/isNumber')
+const _isNumber = require('lodash/isnumber')
 const { sleep } = require('../util')
 const { req, interp } = require('../util/math')
 const Event = require('./Event')
