@@ -254,7 +254,6 @@ class Plan {
     }
     Object.assign(options, arg)
 
-    // TODO, consider changing this in the future. I dont like that we add points to course.points here
     if (options.addBreaks) {
       this.course.terrainFactors?.forEach(tf => this.getOrInsertPoint(tf.start))
       this.course.delays?.forEach(d => this.getOrInsertPoint(d.loc))
