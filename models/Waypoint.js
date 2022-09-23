@@ -26,13 +26,10 @@ class Waypoint {
     if (!isNumeric(v)) throw new Error('Wrong format for Waypoint.loc')
     if (this.type === 'start') {
       this.site.percent = 0
-      this.site.location = 0 // this is temporary for prior db structure that used location instead of percent
     } else if (this.type === 'finish') {
       this.site.percent = 1
-      this.site.location = this.course.trackDist // this is temporary for prior db structure that used location instead of percent
     } else {
       this.site.percent = (v / this.course.trackDist) % 1
-      this.site.location = v % this.course.trackDist // this is temporary for prior db structure that used location instead of percent
     }
   }
 
