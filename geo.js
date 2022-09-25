@@ -1,6 +1,6 @@
 const factors = require('./factors')
 const { rlt, rgt, rgte, req, interpArray } = require('./util/math')
-const { sleep } = require('./util')
+const Meter = require('./util/Meter')
 const Segment = require('./models/Segment')
 const { interpolatePoint } = require('./models/points')
 const _ = require('lodash')
@@ -13,7 +13,7 @@ function fObj (init) {
   return obj
 }
 
-function calcSegments (data) {
+async function calcSegments (data) {
   /*
   data {
      breaks: array of [loc,loc,...] to break on (start at 0)
@@ -21,6 +21,7 @@ function calcSegments (data) {
      [plan]: Plan Object
    }
   */
+  const meter = new Meter()
   const p = data.plan ? data.plan.points : data.course.points
   const breaks = data.breaks
 
@@ -44,6 +45,7 @@ function calcSegments (data) {
       point1: data.plan ? data.plan.getOrInsertPoint(breaks[i - 1]) : data.course.getOrInsertPoint(breaks[i - 1]),
       point2: data.plan ? data.plan.getOrInsertPoint(breaks[i]) : data.course.getOrInsertPoint(breaks[i])
     }))
+    await meter.go()
   }
 
   const delays = data.plan ? [...data.plan.delays] : []
@@ -94,6 +96,7 @@ function calcSegments (data) {
       })
       i++
     }
+    await meter.go()
   }
 
   // normalize each factor by length and sum elapsed time
@@ -158,7 +161,7 @@ async function calcPacing (data) {
     itl += 1
   }
 
-  data.plan.initializePoints()
+  await data.plan.initializePoints()
 
   data.plan.course.terrainFactors?.forEach(tf => data.plan.getOrInsertPoint(tf.start))
   if (data.plan.adjustForCutoffs) {
@@ -170,7 +173,7 @@ async function calcPacing (data) {
   data.pacing = data.plan.pacing
   if (!data.pacing.status) data.pacing.status = {}
 
-  const { factor, factors } = data.plan.applyPacing()
+  const { factor, factors } = await data.plan.applyPacing()
   Object.assign(data.plan.pacing, { factor, factors })
 
   // points for sensitivity test:
@@ -181,10 +184,7 @@ async function calcPacing (data) {
   let i
   const tests = {}
   for (i = 0; i < maxIterations; i++) {
-    // help front end run smoothly
-    await sleep(100)
-
-    const { factor, factors } = data.plan.applyPacing({ addBreaks: false })
+    const { factor, factors } = await data.plan.applyPacing({ addBreaks: false })
     Object.assign(data.plan.pacing, { factor, factors })
 
     tests.minIterations = i >= minIterations
@@ -392,7 +392,7 @@ function calcSunTime (data) {
   return s
 }
 
-function createSegments (data) {
+async function createSegments (data) {
   // data: {[plan], [course]}
   if (data.plan && !data.course) data.course = data.plan.course
 
@@ -403,7 +403,7 @@ function createSegments (data) {
   data.breaks = wps.map(x => { return x.loc })
 
   // determine all the stuff
-  const segments = calcSegments(data)
+  const segments = await calcSegments(data)
 
   // map in waypoints
   segments.forEach((x, i) => {
@@ -413,7 +413,7 @@ function createSegments (data) {
   return segments
 }
 
-function createSplits (data) {
+async function createSplits (data) {
   // data: {unit, [plan], [course]}
   if (data.plan && !data.course) data.course = data.plan.course
 
@@ -440,7 +440,7 @@ function createSplits (data) {
   Object.assign(data, { breaks })
 
   // get the stuff
-  const splits = calcSegments(data)
+  const splits = await calcSegments(data)
 
   return splits
 }

@@ -7,6 +7,7 @@ const areSame = require('../util/areSame')
 const Segment = require('./Segment')
 const Pacing = require('./Pacing')
 const { list: fKeys, generate: generateFactors, Strategy, Factors } = require('../factors')
+const Meter = require('../util/Meter')
 
 function getDelayAtWaypoint (delays, waypoint, typ) {
   // return delay object if it exists
@@ -230,11 +231,18 @@ class Plan {
     return point
   }
 
-  initializePoints () {
-    this.points = this.course.points.map(p => new PlanPoint(this, p))
+  async initializePoints () {
+    const meter = new Meter()
+    const array = []
+    // due to large arrays, meter mapping of points
+    for (let i = 0; i < this.course.points.length; i++) {
+      array.push(new PlanPoint(this, this.course.points[i]))
+      await meter.go()
+    }
+    this.points = array
   }
 
-  applyPacing (arg = {}) {
+  async applyPacing (arg = {}) {
     /*
      applyPacing adds time data
      mutates this.course.points
@@ -244,10 +252,10 @@ class Plan {
        factor: overall pacing factor
      }
     */
-
+    const meter = new Meter()
     if (!this.course?.points?.length) return
 
-    if (!this.points.length) this.initializePoints()
+    if (!this.points.length) await this.initializePoints()
 
     const options = {
       addBreaks: true
@@ -306,6 +314,7 @@ class Plan {
       elapsed += dtime + delay
       p[j].elapsed = elapsed
       if (this.event.start) p[j].tod = (elapsed + this.event.startTime) % 86400
+      await meter.go()
     }
 
     // normalize factors total:
@@ -317,8 +326,8 @@ class Plan {
 
   // map array of actual times to this
   async addActuals (actual) {
-    this.applyPacing()
-    this.calcSplits()
+    await this.applyPacing()
+    await this.calcSplits()
 
     // init variables
     let delta = 0
