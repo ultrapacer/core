@@ -59,7 +59,7 @@ class Plan {
       set (v) { this._data.strategy = new Strategy({ values: v, length: this.course.dist }) },
       enumerable: true
     })
-    this.strategy = db.strategy
+    if (db.strategy) this.strategy = db.strategy
 
     // create event property:
     if (db.eventStart) {
@@ -152,7 +152,7 @@ class Plan {
     }
 
     // if no pacing from cache, create a new pacing object:
-    if (!this.pacing) this.pacing = new Pacing({ _plan: this, strategy: this.strategy })
+    if (!this.pacing) this.pacing = new Pacing({ _plan: this })
   }
 
   get totalDelay () {

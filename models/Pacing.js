@@ -24,6 +24,11 @@ class Pacing {
     Object.keys(data).forEach(k => {
       if (this[k] === undefined) this[k] = data[k]
     })
+
+    // copy strategy from plan or default
+    if (!this.strategy) {
+      this.strategy = new Strategy(this._plan.strategy || { length: this._plan.course.dist })
+    }
   }
 
   get elapsed () {

@@ -229,9 +229,6 @@ async function calcPacing (data) {
   })
   data.pacing.fstats = fstats
 
-  // strip out the points from autos:
-  // data.pacing.strategy?.autos?.forEach(a => { delete a.point })
-
   data.pacing.status.tests = tests
   data.pacing.status.success = i < maxIterations
   data.pacing.status.iterations = i
