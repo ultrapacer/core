@@ -38,8 +38,8 @@ const generate = (point, { plan, course }) => {
 
   // compile scales of pacing factors:
   const scales = {}
-  if (course.scales) Object.assign(scales, course.scales)
-  if (plan.scales) Object.assign(scales, plan.scales)
+  if (course?.scales) Object.assign(scales, course.scales)
+  if (plan?.scales) Object.assign(scales, plan.scales)
 
   // if any factor scales exist, apply them:
   Object.keys(scales)
