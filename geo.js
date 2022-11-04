@@ -13,7 +13,7 @@ function fObj (init) {
   return obj
 }
 
-async function calcSegments (data) {
+async function calcSegments ({ plan, course, breaks }) {
   /*
   data {
      breaks: array of [loc,loc,...] to break on (start at 0)
@@ -22,11 +22,10 @@ async function calcSegments (data) {
    }
   */
   const meter = new Meter()
-  const p = data.plan ? data.plan.points : data.course.points
-  const breaks = data.breaks
+  const p = plan ? plan.points : course.points
 
   const s = [] // segments array
-  const alts = data.course.track.getLLA(breaks).map(lla => { return lla.alt })
+  const alts = course.track.getLLA(breaks).map(lla => { return lla.alt })
   let len = 0
   let i
   let il
@@ -42,13 +41,13 @@ async function calcSegments (data) {
       grade: len > 0 ? (alts[i] - alts[i - 1]) / len / 10 : null,
       delay: 0,
       factorsSum: fObj(0),
-      point1: data.plan ? data.plan.getOrInsertPoint(breaks[i - 1]) : data.course.getOrInsertPoint(breaks[i - 1]),
-      point2: data.plan ? data.plan.getOrInsertPoint(breaks[i]) : data.course.getOrInsertPoint(breaks[i])
+      point1: plan ? plan.getOrInsertPoint(breaks[i - 1]) : course.getOrInsertPoint(breaks[i - 1]),
+      point2: plan ? plan.getOrInsertPoint(breaks[i]) : course.getOrInsertPoint(breaks[i])
     }))
     await meter.go()
   }
 
-  const delays = data.plan ? [...data.plan.delays] : []
+  const delays = plan ? [...plan.delays] : []
   function getDelay (a, b) {
     if (!delays.length) { return 0 }
     while (delays.length && delays[0].loc < a) {
@@ -82,7 +81,7 @@ async function calcSegments (data) {
       arr.forEach(a => {
         const delta = a.p[1].alt - a.p[0].alt
         a.s[delta > 0 ? 'gain' : 'loss'] += delta
-        factors.generate(a.p[0], { plan: data.plan, course: data.course })
+        factors.generate(a.p[0], { plan, course })
         const len = a.p[1].loc - a.p[0].loc
         let f = 1
         fKeys.forEach(key => {
@@ -90,9 +89,7 @@ async function calcSegments (data) {
           f = f * a.p[0].factors[key]
         })
 
-        if (data.plan) {
-          a.s.delay += getDelay(a.p[0].loc, a.s.end)
-        }
+        if (plan) a.s.delay += getDelay(a.p[0].loc, a.s.end)
       })
       i++
     }
