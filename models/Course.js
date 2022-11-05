@@ -34,7 +34,10 @@ class CoursePoint {
 
 // course constructor will pass through all fields; use
 // this array to omit certain keys from passing through
-const disallowed = ['cache']
+const disallowed = [
+  'cache',
+  'distance'
+]
 
 class Course {
   constructor (db) {
@@ -46,9 +49,9 @@ class Course {
     this.waypoints = []
 
     // other fields just pass along:
-    Object.keys(db).forEach(k => {
-      if (this[k] === undefined && !disallowed.includes(k)) this[k] = db[k]
-    })
+    Object.keys(db)
+      .filter(k => this[k] === undefined && !disallowed.includes(k))
+      .forEach(k => { this[k] = db[k] })
 
     this.sites = db.sites
 

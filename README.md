@@ -10,25 +10,47 @@ contributing to this project only. There is no license for any other use or
 distribution.
 
 ## Course Model fields
-**created**
 - **cutoff**
 - **cutoffs**
 - **db**
-- **distance**
+- **dist**, *Number*\
+  Total distance of course (km)
+- **distScale**, *Number*, *optional*\
+  Distance scaling factor
+- **gain**, *Number*\
+  Total amount of vertical gain in course (m)
+- **gainScale**, *Number*, *optional*\
+  Vertical gain scaling factor
 - **event**
 - **eventStart**
 - **eventTimezone**
 - **eventTimezoneFixed**
+- **loss**, *Number*\
+  Total amount of vertical loss in course (m)
+- **lossScale**, *Number*, *optional*\
+  Vertical loss scaling factor
 - **meta**
 - **name**
 - **override**
 - **points**
-- **scales**: Object, optional \
+- **scaledDist**, *Number*\
+  Total amount of vertical gain in course, scaled (see *distScale*) (m)
+- **scaledGain**, *Number*\
+  Total amount of vertical gain in course, scaled (see *gainScale*) (m)
+- **scaledLoss**, *Number*\
+  Total amount of vertical loss in course, scaled (see *lossScale*) (m)
+- **scales**: Object, *optional* \
   { *factor1*: Number, *factor2*: Number, ... } \
   Scale factors to be applied on top of base pacing models. A value of 1 does nothing.
 - **splits**
 - **stats**
 - **track**
+- **trackDist**, *Number*\
+  Distance of the track (eg one loop of the course) (km)
+- **trackGain**, *Number*\
+  Vertical gain of the track (eg one loop of the course) (m)
+- **trackLoss**, *Number*\
+  Vertical loss of the track (eg one loop of the course) (m)
 - **waypoints**
 
 ## Plan Model fields
