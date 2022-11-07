@@ -1,5 +1,4 @@
 const _ = require('lodash')
-const { sleep } = require('../util')
 const { req, interp } = require('../util/math')
 const Event = require('./Event')
 const { calcPacing, createSegments, createSplits } = require('../geo')
@@ -23,7 +22,7 @@ function getDelayAtWaypoint (delays, waypoint, typ) {
 // this array to omit certain keys from passing through
 const disallowed = ['cache']
 
-const planPointFields = ['lat', 'lon', 'alt', 'latlon', 'grade', 'loc']
+const planPointFields = ['lat', 'lon', 'alt', 'latlon', 'grade', 'loc', 'actual']
 class PlanPoint {
   constructor (plan, point) {
     Object.defineProperty(this, '_plan', { value: plan })
@@ -206,7 +205,7 @@ class Plan {
     if (point) return point
 
     // create a new point
-    point = new PlanPoint(this, this.course.getOrCreatePoint(loc))
+    point = new PlanPoint(this, this.course.getOrInsertPoint(loc))
 
     // interpolate time fields:
     const i = this.points.findIndex(p => p.loc > point.loc)
@@ -322,48 +321,6 @@ class Plan {
     const factor = factorSum / this.course.dist
 
     return { factor, factors }
-  }
-
-  // map array of actual times to this
-  async addActuals (actual) {
-    await this.applyPacing()
-    await this.calcSplits()
-
-    // init variables
-    let delta = 0
-    let lastGoodPoint = {}
-    let a = actual[0]
-
-    for (let index = 0; index < this.points.length; index++) {
-      // breakup processing to not hang browser
-      if (index % 20 === 0) await sleep(10)
-
-      // set current point
-      const p = this.points[index]
-
-      // limit for search gets bigger as error grows
-      const limit = Math.max(0.1, Number(p.latlon.distanceTo(a.latlon)) * 1.1)
-
-      // resolve closest point on actual track to current course point
-      ;({ point: a, delta } = actual.getNearestPoint(p.latlon, a, limit))
-
-      // keep track of last good match
-      if (delta < 0.1) lastGoodPoint = p
-
-      // if you ever get more than 2km offtrack, return match fail:
-      if (delta > 2) {
-        return {
-          match: false,
-          point: lastGoodPoint
-        }
-      }
-
-      // set the actual for point
-      p.actual = a
-    }
-    return {
-      match: true
-    }
   }
 
   updateDelay (waypoint, delay) {

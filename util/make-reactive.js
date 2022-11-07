@@ -11,8 +11,4 @@ function makeReactive (obj) {
   })
 }
 
-async function sleep (ms) {
-  await new Promise(resolve => setTimeout(resolve, ms))
-}
-exports.makeReactive = makeReactive
-exports.sleep = sleep
+module.exports = makeReactive
