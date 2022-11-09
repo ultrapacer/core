@@ -7,6 +7,7 @@ const Event = require('./Event')
 const Segment = require('./Segment')
 const { createSegments, createSplits } = require('../geo')
 const Factors = require('../factors/Factors')
+const Meter = require('../util/Meter')
 
 class CoursePoint {
   constructor (course, point, loop) {
@@ -282,6 +283,46 @@ class Course {
 
     Object.assign(this.stats, stats)
     return stats
+  }
+
+  // map array of actual times to this
+  async addActuals (actual) {
+    // init variables
+    let delta = 0
+    let lastGoodPoint = {}
+    let a = actual[0]
+
+    const meter = new Meter()
+
+    for (let index = 0; index < this.points.length; index++) {
+      // set current point
+      const p = this.points[index]
+
+      // limit for search gets bigger as error grows
+      const limit = Math.max(0.1, Number(p.latlon.distanceTo(a.latlon)) * 1.1)
+
+      // resolve closest point on actual track to current course point
+      ;({ point: a, delta } = actual.getNearestPoint(p.latlon, a, limit))
+
+      // keep track of last good match
+      if (delta < 0.1) lastGoodPoint = p
+
+      // if you ever get more than 2km offtrack, return match fail:
+      if (delta > 2) {
+        return {
+          match: false,
+          point: lastGoodPoint
+        }
+      }
+
+      // set the actual for point
+      p.actual = a
+
+      await meter.go()
+    }
+    return {
+      match: true
+    }
   }
 }
 
