@@ -35,6 +35,10 @@ class PlanPoint {
   has (field) {
     return _.isNumber(this[field])
   }
+  
+  get pace () {
+    return (this.factors?.combined || 0) * this._plan.pacing.np
+  }
 }
 
 class Plan {
