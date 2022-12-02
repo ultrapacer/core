@@ -35,9 +35,14 @@ class PlanPoint {
   has (field) {
     return _.isNumber(this[field])
   }
-  
+
   get pace () {
-    return (this.factors?.combined || 0) * this._plan.pacing.np
+    const factors = this.factors?.combined
+
+    if (factors) return factors * this._plan.pacing.np
+
+    // if no factors, undefined (this will be the case for last point)
+    return undefined
   }
 }
 
