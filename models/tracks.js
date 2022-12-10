@@ -1,32 +1,21 @@
+const _ = require('lodash')
 const { round, interp, wlslr } = require('../util/math')
 const { latlon: LatLon } = require('sgeo')
-const { makeReactive } = require('../util')
 const { Point, interpolatePoint } = require('./points')
 
-class Track extends Array {
+class Track {
   constructor (arg) {
-    super(arg)
-
-    makeReactive(this)
-  }
-
-  // this makes built-in Array methods return Array object instead of Track object:
-  static get [Symbol.species] () {
-    return Array
-  }
-
-  get last () {
-    return this[this.length - 1]
+    Object.assign(this, arg)
   }
 
   addLocations () {
     let d = 0
     let l = 0
-    this[0].loc = 0
-    for (let i = 1, il = this.length; i < il; i++) {
-      d = Number(this[i - 1].latlon.distanceTo(this[i].latlon))
+    this.points[0].loc = 0
+    for (let i = 1, il = this.points.length; i < il; i++) {
+      d = Number(this.points[i - 1].latlon.distanceTo(this.points[i].latlon))
       l += d
-      this[i].loc = l
+      this.points[i].loc = l
     }
   }
 
@@ -40,11 +29,11 @@ class Track extends Array {
     // create array of step indices
     const steps = []
     let dloc = 0
-    for (let i = 1, il = this.length; i < il; i++) {
-      dloc = this[i].loc - this[i - 1].loc
+    for (let i = 1, il = this.points.length; i < il; i++) {
+      dloc = this.points[i].loc - this.points[i - 1].loc
       if (
-        Math.abs((this[i].alt - this[i - 1].alt)) > at ||
-        Math.abs((this[i].alt - this[i - 1].alt) / dloc / 10) > gt
+        Math.abs((this.points[i].alt - this.points[i - 1].alt)) > at ||
+        Math.abs((this.points[i].alt - this.points[i - 1].alt) / dloc / 10) > gt
       ) {
         steps.push(i)
       }
@@ -52,19 +41,19 @@ class Track extends Array {
     // for each step, find extents of adjacent flat sections and interp new alt
     steps.forEach(s => {
       let a = s - 1
-      while (a >= 0 && this[s - 1].alt === this[a].alt) { a -= 1 }
+      while (a >= 0 && this.points[s - 1].alt === this.points[a].alt) { a -= 1 }
       a += 1
       let z = s
-      while (z <= this.length - 1 && this[s].alt === this[z].alt) { z += 1 }
+      while (z <= this.points.length - 1 && this.points[s].alt === this.points[z].alt) { z += 1 }
       z -= 1
       if (z - a > 1) {
         for (i = a + 1; i < z; i++) {
-          this[i].alt = interp(
-            this[a].loc,
-            this[z].loc,
-            this[a].alt,
-            this[z].alt,
-            this[i].loc
+          this.points[i].alt = interp(
+            this.points[a].loc,
+            this.points[z].loc,
+            this.points[a].alt,
+            this.points[z].alt,
+            this.points[i].loc
           )
         }
       }
@@ -76,23 +65,23 @@ class Track extends Array {
     // add grade field to points array
     const locs = []
     let i = 0
-    for (i = 0; i < this.length; i++) {
-      locs.push(this[i].loc)
+    for (i = 0; i < this.points.length; i++) {
+      locs.push(this.points[i].loc)
     }
     const lsq = this.getSmoothedProfile(locs, 0.05)
-    this.forEach((p, i) => {
+    this.points.forEach((p, i) => {
       p.grade = round(lsq[i].grade, 4)
     })
   }
 
   calcStats () {
     // return course { gain, loss, dist }
-    const d = this.last.loc
+    const d = _.last(this.points).loc
     let gain = 0
     let loss = 0
     let delta = 0
-    let last = this[0].alt
-    this.forEach(p => {
+    let last = this.points[0].alt
+    this.points.forEach(p => {
       delta = p.alt - last
       if (delta < 0) {
         loss += delta
@@ -102,8 +91,8 @@ class Track extends Array {
       last = p.alt
     })
     const stats = {
-      gain: gain,
-      loss: loss,
+      gain,
+      loss,
       dist: d
     }
     ;({ dist: this.dist, gain: this.gain, loss: this.loss } = stats)
@@ -125,31 +114,31 @@ class Track extends Array {
 
     // initialize variables:
     // start at 0 or at input start point (for single location)
-    let i = locs.length === 1 && opts.start && opts.start < this.length - 1 ? opts.start : 0
+    let i = locs.length === 1 && opts.start && opts.start < this.points.length - 1 ? opts.start : 0
 
     // determine which way to look
-    const back = Boolean(i && this[i].loc > locs[0])
+    const back = Boolean(i && this.points[i].loc > locs[0])
 
     const llas = []
-    const il = this.length - 1
+    const il = this.points.length - 1
     location = locs.shift()
     function prev (i) { return back ? i + 1 : i - 1 }
 
     while (i <= il && i >= 0) {
       if (
-        (!back && (i === il || this[i].loc >= location)) ||
-        (back && (i === 0 || this[i].loc <= location))
+        (!back && (i === il || this.points[i].loc >= location)) ||
+        (back && (i === 0 || this.points[i].loc <= location))
       ) {
-        if (this[i].loc === location || (!back && i === il) || (back && i === 0)) {
+        if (this.points[i].loc === location || (!back && i === il) || (back && i === 0)) {
           llas.push({
-            lat: this[i].lat,
-            lon: this[i].lon,
-            alt: this[i].alt,
-            grade: this[i].grade,
+            lat: this.points[i].lat,
+            lon: this.points[i].lon,
+            alt: this.points[i].alt,
+            grade: this.points[i].grade,
             ind: i
           })
         } else {
-          const p3 = interpolatePoint(this[prev(i)], this[i], location)
+          const p3 = interpolatePoint(this.points[prev(i)], this.points[i], location)
           llas.push({
             lat: p3.lat,
             lon: p3.lon,
@@ -175,8 +164,8 @@ class Track extends Array {
     // start: starting point in current track
     // limit: max distance it can move
     const steps = 5
-    let p = this[start._index]
-    let jj = start._index
+    let jj = this.points.findIndex(p => p === start)
+    let p = this.points[jj]
     let min = 0
 
     while (limit > 0.025) {
@@ -186,11 +175,11 @@ class Track extends Array {
       // loop thru incremental steps:
       for (let i = 1; i <= steps; i++) {
         const l = p.loc + (size * i)
-        if (l <= this.last.loc) {
-          while (this[jj + 1].loc < l && jj < this.length - 1) {
+        if (l <= this.dist) {
+          while (this.points[jj + 1].loc < l && jj < this.points.length - 1) {
             jj++
           }
-          if (jj > ps[ps.length - 1]._index) ps.push(this[jj])
+          ps.push(this.points[jj])
         }
       }
 
@@ -232,8 +221,8 @@ class Track extends Array {
 
         for (let i = -steps; i <= steps; i++) {
           const l = loc + (size * i)
-          if (l > 0 && l <= this.last.loc) {
-            locs.push(Math.max(0, Math.min(l, this.last.loc)))
+          if (l > 0 && l <= this.dist) {
+            locs.push(Math.max(0, Math.min(l, this.dist)))
           }
         }
         locs = locs.filter((v, i, s) => s.indexOf(v) === i)
@@ -252,15 +241,15 @@ class Track extends Array {
 
     // try first getting something close
     if (start !== null) {
-      start = Math.min(start, this.last.loc)
-      const limit = Math.max(0.5, 0.05 * this.last.loc)
+      start = Math.min(start, this.dist)
+      const limit = Math.max(0.5, 0.05 * this.dist)
       iterateLoc(start, limit)
       if (min < 0.1) return loc
     }
 
     // now try getting anything
-    start = this.last.loc / 2
-    limit = Math.max(this.last.loc - start, start)
+    start = this.dist / 2
+    limit = Math.max(this.dist - start, start)
     iterateLoc(start, limit)
     return loc
   }
@@ -270,8 +259,8 @@ class Track extends Array {
     // gt: grade smoothing threshold
 
     const mbs = wlslr(
-      this.map(p => { return p.loc }),
-      this.map(p => { return p.alt }),
+      this.points.map(p => { return p.loc }),
+      this.points.map(p => { return p.alt }),
       locs,
       gt
     )
@@ -281,8 +270,8 @@ class Track extends Array {
       if (grade > 50) { grade = 50 } else if (grade < -50) { grade = -50 }
       const alt = (x * mbs[i][0]) + mbs[i][1]
       ga.push({
-        grade: grade,
-        alt: alt
+        grade,
+        alt
       })
     })
     return ga
@@ -294,8 +283,8 @@ class Track extends Array {
     const spacing = 0.025 // meters between points
 
     // only reformat if it cuts the size down in half
-    if (this.last.loc / spacing < this.length / 2) {
-      const len = this.last.loc
+    if (this.dist / spacing < this.points.length / 2) {
+      const len = this.dist
       const numpoints = Math.floor(len / spacing) + 1
       const xs = Array(numpoints).fill(0).map((e, i) => round(i++ * spacing, 3))
       if (xs[xs.length - 1] < len) {
@@ -334,13 +323,7 @@ async function create (arr, opts = {}) {
   }
 
   // add all points to this
-  const track = new Track(points.length)
-
-  // populate track points
-  for (let i = 0; i < points.length; i++) {
-    track[i] = points[i]
-    track[i]._index = i
-  }
+  const track = new Track({ points })
 
   track.addLocations()
   if (clean) track.cleanUp()
