@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const { isNumeric } = require('../util/math')
 
 class Waypoint {
@@ -152,14 +153,14 @@ class Waypoint {
   }
 
   actualDelay (track) {
-    if (track[0].actual === undefined) { return undefined }
+    if (track.points[0].actual === undefined) { return undefined }
     if (!this.loc || this.type === 'finish') return 0
     const threshold = 0.1 // km, distance away for time reference
     const l = this.loc
-    const start = Math.max(0, track.findIndex(p => p.loc > l - threshold) - 1)
-    const end = Math.min(track.findIndex((p, i) => i > start && p.loc > l + threshold), track.length - 1)
-    const plannedNoDelay = track[end].time - track[start].time
-    const actualWithDelay = track[end].actual.elapsed - track[start].actual.elapsed
+    const start = Math.max(0, track.points.findIndex(p => p.loc > l - threshold) - 1)
+    const end = Math.min(track.points.findIndex((p, i) => i > start && p.loc > l + threshold), track.points.length - 1)
+    const plannedNoDelay = track.points[end].time - track.points[start].time
+    const actualWithDelay = track.points[end].actual.elapsed - track.points[start].actual.elapsed
     return plannedNoDelay && actualWithDelay ? actualWithDelay - plannedNoDelay : undefined
   }
 
@@ -209,11 +210,11 @@ class Waypoint {
 
     // if start use start lla
     if (this.type === 'start') {
-      ;({ lat, lon, alt } = track[0])
+      ;({ lat, lon, alt } = track.points[0])
 
     // if finish use finish lla
     } else if (this.type === 'finish') {
-      ;({ lat, lon, alt } = track.last)
+      ;({ lat, lon, alt } = _.last(track.points))
 
     // otherwise interpolate the lla from track array
     } else {

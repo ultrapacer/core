@@ -163,10 +163,10 @@ class Course {
   // add track to course and create points array:
   addTrack (track) {
     this.track = track
-    this.points = new Array(track.length * this.loops)
+    this.points = new Array(track.points.length * this.loops)
     for (let l = 0; l < this.loops; l++) {
-      for (let i = 0; i < track.length; i++) {
-        this.points[i + l * track.length] = new CoursePoint(this, track[i], l)
+      for (let i = 0; i < track.points.length; i++) {
+        this.points[i + l * track.points.length] = new CoursePoint(this, track.points[i], l)
       }
     }
 
