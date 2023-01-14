@@ -180,6 +180,7 @@ async function calcPacing (data) {
 
   let i
   const tests = {}
+  let pass = false
   for (i = 0; i < maxIterations; i++) {
     const { factor, factors } = await data.plan.applyPacing({ addBreaks: false })
     Object.assign(data.plan.pacing, { factor, factors })
@@ -204,15 +205,28 @@ async function calcPacing (data) {
         ? Math.abs(data.plan.pacing.elapsed - elapsed) < 0.5
         : true
 
-    if (
+    pass = (
       tests.minIterations &&
       tests.cutoffs &&
       tests.locations &&
       tests.target
-    ) {
-      break
-    }
+    )
+
+    if (pass) break
+
     lastTest = [...newTest]
+  }
+
+  // if we did not converge, throw a new error
+  if (!pass) {
+    const message = 'Iteration did not converge: Iterations: ' + i + ', ' + Object.keys(tests).map(k => `${k}:${tests[k]}`).join(', ')
+    const error = new Error(message)
+    error.name = 'PacingError'
+    error.results = {
+      tests,
+      iterations: i
+    }
+    throw error
   }
 
   // add in statistics
@@ -227,7 +241,7 @@ async function calcPacing (data) {
   data.pacing.fstats = fstats
 
   data.pacing.status.tests = tests
-  data.pacing.status.success = i < maxIterations
+  data.pacing.status.success = true
   data.pacing.status.iterations = i
 
   if (data.plan.event?.sun) {
