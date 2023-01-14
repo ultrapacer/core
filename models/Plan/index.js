@@ -1,12 +1,13 @@
 const _ = require('lodash')
-const { req, interp } = require('../util/math')
-const Event = require('./Event')
-const { calcPacing, createSegments, createSplits } = require('../geo')
-const areSame = require('../util/areSame')
-const Segment = require('./Segment')
-const Pacing = require('./Pacing')
-const { list: fKeys, generate: generateFactors, Strategy, Factors } = require('../factors')
-const Meter = require('../util/Meter')
+const { req, interp } = require('../../util/math')
+const Event = require('../Event')
+const { calcPacing, createSegments, createSplits } = require('../../geo')
+const areSame = require('../../util/areSame')
+const Segment = require('../Segment')
+const Pacing = require('../Pacing')
+const { list: fKeys, generate: generateFactors, Strategy, Factors } = require('../../factors')
+const Meter = require('../../util/Meter')
+const validateCache = require('./validateCache')
 
 function getDelayAtWaypoint (delays, waypoint, typ) {
   // return delay object if it exists
@@ -44,26 +45,6 @@ class PlanPoint {
 
     // if no factors, undefined (this will be the case for last point)
     return undefined
-  }
-}
-
-// utility function to test cache data
-const testCache = (cache) => {
-  if (!cache.pacing) return 'Missing pacing data'
-  if (!Array.isArray(cache.segments)) return 'Invalid segments array'
-  if (!Array.isArray(cache.miles)) return 'Invalid miles array'
-  if (!Array.isArray(cache.kilometers)) return 'Invalid kilometers array'
-  if (cache.segments.find(s => s.point2.time < s.point1.time)) return 'Invalid segment times'
-  return false
-}
-
-// utility function to validate cache data
-const validateCache = (cache) => {
-  const message = testCache(cache)
-  if (message) {
-    const error = new Error(message)
-    error.name = 'PlanCacheError'
-    throw error
   }
 }
 

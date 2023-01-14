@@ -1,15 +1,15 @@
-const points = require('./points.js')
-const tracks = require('./tracks.js')
+const points = require('./points')
+const tracks = require('./tracks')
 
 module.exports = {
-  Course: require('./Course.js'),
-  Event: require('./Event.js'),
-  Plan: require('./Plan.js'),
+  Course: require('./Course'),
+  Event: require('./Event'),
+  Plan: require('./Plan'),
   Point: points.Point,
-  Segment: require('./Segment.js'),
-  SuperSegment: require('./SuperSegment.js'),
+  Segment: require('./Segment'),
+  SuperSegment: require('./SuperSegment'),
   Track: tracks.Track,
-  Waypoint: require('./Waypoint.js')
+  Waypoint: require('./Waypoint')
 }
 
 // TODO: rewrite these two modules so this is cleaner:
