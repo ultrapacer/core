@@ -47,6 +47,26 @@ class PlanPoint {
   }
 }
 
+// utility function to test cache data
+const testCache = (cache) => {
+  if (!cache.pacing) return 'Missing pacing data'
+  if (!Array.isArray(cache.segments)) return 'Invalid segments array'
+  if (!Array.isArray(cache.miles)) return 'Invalid miles array'
+  if (!Array.isArray(cache.kilometers)) return 'Invalid kilometers array'
+  if (cache.segments.find(s => s.point2.time < s.point1.time)) return 'Invalid segment times'
+  return false
+}
+
+// utility function to validate cache data
+const validateCache = (cache) => {
+  const message = testCache(cache)
+  if (message) {
+    const error = new Error(message)
+    error.name = 'PlanCacheError'
+    throw error
+  }
+}
+
 class Plan {
   constructor (db) {
     Object.defineProperty(this, '__class', { value: 'Plan' })
@@ -124,40 +144,29 @@ class Plan {
     this.splits = null
     this.pacing = null
     if (db.cache) {
-      try {
-        // make sure cache has expected data:
-        if (
-          !db.cache.version ||
-          !db.cache.pacing ||
-          !Array.isArray(db.cache.segments) ||
-          !Array.isArray(db.cache.miles) ||
-          !Array.isArray(db.cache.kilometers)
-        ) throw new Error('Invalid cache')
+      // make sure cache has expected data:
+      validateCache(db.cache)
 
-        this.pacing = new Pacing({ _plan: this, ...db.cache.pacing })
+      this.pacing = new Pacing({ _plan: this, ...db.cache.pacing })
 
-        // add splits, and make sure each is casted as a Segment
-        this.splits = {}
-        const types = ['segments', 'miles', 'kilometers']
-        types.forEach(type => {
-          this.splits[type] = db.cache[type].map(s => { return new Segment(s) })
-          this.splits[type].forEach(s => { s.factors = new Factors(s.factors) })
+      // add splits, and make sure each is casted as a Segment
+      this.splits = {}
+      const types = ['segments', 'miles', 'kilometers']
+      types.forEach(type => {
+        this.splits[type] = db.cache[type].map(s => { return new Segment(s) })
+        this.splits[type].forEach(s => { s.factors = new Factors(s.factors) })
+      })
+
+      // sync waypoint objects
+      if (this.course?.waypoints?.length && this.splits.segments?.length) {
+        this.splits.segments.forEach(s => {
+          const wp = this.course.waypoints.find(
+            wp => areSame(wp.site, s.waypoint.site) && wp.loop === s.waypoint.loop
+          )
+          if (wp) s.waypoint = wp
         })
-
-        // sync waypoint objects
-        if (this.course?.waypoints?.length && this.splits.segments?.length) {
-          this.splits.segments.forEach(s => {
-            const wp = this.course.waypoints.find(
-              wp => areSame(wp.site, s.waypoint.site) && wp.loop === s.waypoint.loop
-            )
-            if (wp) s.waypoint = wp
-          })
-        }
-        this.pacing.isValid = true
-      } catch (e) {
-        console.log(e)
-        this.splits = null
       }
+      this.pacing.isValid = true
     }
 
     // if no pacing from cache, create a new pacing object:
