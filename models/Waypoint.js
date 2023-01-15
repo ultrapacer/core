@@ -166,7 +166,6 @@ class Waypoint {
 
   get cutoff () {
     // getting cutoff retrieves from array of {time, loop} items
-    if (this.type === 'finish') return this.course.cutoff || null
     if (this.tier === 1) {
       const v = this.site.cutoffs?.find(c => c.loop === this.loop)
       if (v) { return v.time }
