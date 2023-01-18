@@ -198,7 +198,7 @@ class Plan {
   async calcSplits (type = 'segments') {
     let splits
     if (type === 'segments') splits = await createSegments({ plan: this })
-    else if (['kilometers', 'miles'].includes(type)) splits = await createSplits({ type, plan: this })
+    else if (['kilometers', 'miles'].includes(type)) splits = await createSplits({ unit: type, plan: this })
     else throw new Error('Invalid split type.')
 
     if (!this.splits) this.splits = {}
