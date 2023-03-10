@@ -19,6 +19,15 @@ function getDelayAtWaypoint (delays, waypoint, typ) {
   return newDelay
 }
 
+class Deferred {
+  constructor () {
+    this.promise = new Promise((resolve, reject) => {
+      this.reject = reject
+      this.resolve = resolve
+    })
+  }
+}
+
 // plan constructor will pass through all fields; use
 // this array to omit certain keys from passing through
 const disallowed = ['cache']
@@ -54,7 +63,10 @@ class Plan {
 
     Object.defineProperty(this, '_data', { value: {} })
 
-    Object.defineProperty(this, 'points', { value: [], writable: true })
+    Object.defineProperty(this, '_promises', { value: { points: new Deferred() } })
+    Object.defineProperty(this, '_ready', { value: { points: this._promises.points.promise } })
+
+    Object.defineProperty(this, 'points', { writable: true })
 
     this.db = db
     this.course = db.course
@@ -132,11 +144,8 @@ class Plan {
 
       // add splits, and make sure each is casted as a Segment
       this.splits = {}
-      const types = ['segments', 'miles', 'kilometers']
-      types.forEach(type => {
-        this.splits[type] = db.cache[type].map(s => { return new Segment(s) })
-        this.splits[type].forEach(s => { s.factors = new Factors(s.factors) })
-      })
+      this.splits.segments = db.cache.segments.map(s => { return new Segment(s) })
+      this.splits.segments.forEach(s => { s.factors = new Factors(s.factors) })
 
       // sync waypoint objects
       if (this.course?.waypoints?.length && this.splits.segments?.length) {
@@ -186,17 +195,14 @@ class Plan {
   }
 
   // calculate and return splits for plan
-  async calcSplits () {
-    const splits = {}
-    splits.segments = await createSegments({ plan: this })
-    const units = ['kilometers', 'miles']
-    await Promise.all(
-      units.map(async (unit) => {
-        splits[unit] = await createSplits({ unit, plan: this })
-      })
-    )
-    this.splits = splits
-    return this.splits
+  async calcSplits (type = 'segments') {
+    let splits
+    if (type === 'segments') splits = await createSegments({ plan: this })
+    else if (['kilometers', 'miles'].includes(type)) splits = await createSplits({ unit: type, plan: this })
+    else throw new Error('Invalid split type.')
+
+    if (!this.splits) this.splits = {}
+    this.splits[type] = splits
   }
 
   getOrInsertPoint (loc) {
@@ -254,7 +260,7 @@ class Plan {
     const meter = new Meter()
     if (!this.course?.points?.length) return
 
-    if (!this.points.length) await this.initializePoints()
+    if (!this.points?.length) await this.initializePoints()
 
     const options = {
       addBreaks: true
@@ -315,6 +321,8 @@ class Plan {
       if (this.event.start) p[j].tod = (elapsed + this.event.startTime) % 86400
       await meter.go()
     }
+
+    this._promises.points.resolve(true)
 
     // normalize factors total:
     const factors = new Factors(Object.fromEntries(fKeys.map(k => [k, factorsSum[k] / this.course.dist])))

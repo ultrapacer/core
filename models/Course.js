@@ -82,13 +82,8 @@ class Course {
 
         // add splits, and make sure each is casted as a Segment
         this.splits = {}
-        const types = ['segments', 'miles', 'kilometers']
-        types.forEach(type => {
-          if (db.cache[type]) {
-            this.splits[type] = db.cache[type].map(s => new Segment(s))
-            this.splits[type].forEach(s => { s.factors = new Factors(s.factors) })
-          }
-        })
+        this.splits.segments = db.cache.segments.map(s => new Segment(s))
+        this.splits.segments.forEach(s => { s.factors = new Factors(s.factors) })
 
         // sync waypoint objects
         if (this.waypoints?.length && this.splits.segments?.length) {
@@ -237,17 +232,14 @@ class Course {
   }
 
   // calculate and return splits for course
-  async calcSplits () {
-    const splits = {}
-    splits.segments = await createSegments({ course: this })
-    const units = ['kilometers', 'miles']
-    await Promise.all(
-      units.map(async (unit) => {
-        splits[unit] = await createSplits({ unit, course: this })
-      })
-    )
-    this.splits = splits
-    return this.splits
+  async calcSplits (type = 'segments') {
+    let splits
+    if (type === 'segments') splits = await createSegments({ course: this })
+    else if (['kilometers', 'miles'].includes(type)) splits = await createSplits({ type, course: this })
+    else throw new Error('Invalid split type.')
+
+    if (!this.splits) this.splits = {}
+    this.splits[type] = splits
   }
 
   // calculate max and min values along course

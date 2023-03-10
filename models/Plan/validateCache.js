@@ -1,10 +1,8 @@
 // utility function to test cache data
 const testCache = (cache) => {
   if (!cache.pacing) return 'Missing pacing data'
-  if (!Array.isArray(cache.segments)) return 'Invalid segments array'
-  if (!Array.isArray(cache.miles)) return 'Invalid miles array'
-  if (!Array.isArray(cache.kilometers)) return 'Invalid kilometers array'
-  if (cache.segments.find(s => s.point2.time < s.point1.time)) return 'Invalid segment times'
+  if (cache.segments && !Array.isArray(cache.segments)) return 'Invalid segments array'
+  if (cache.segments?.find(s => s.point2.time < s.point1.time)) return 'Invalid segment times'
   return false
 }
 
