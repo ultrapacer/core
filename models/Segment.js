@@ -1,12 +1,18 @@
 class Segment {
   constructor (obj) {
+    Object.defineProperty(this, '_data', { value: {} })
+
     Object.keys(obj).forEach(k => {
       this[k] = obj[k]
     })
   }
 
+  set name (v) {
+    this._data.name = v
+  }
+
   get name () {
-    return this.waypoint ? this.waypoint.name : undefined
+    return this._data.name || this.waypoint?.name || undefined
   }
 
   get pace () {
@@ -19,7 +25,6 @@ class Segment {
   get tod () { return this.point2 ? this.point2.tod : undefined }
 
   // dummy setters, just in case:
-  set name (v) {}
   set pace (v) {}
   set elapsed (v) {}
   set time (v) {}
