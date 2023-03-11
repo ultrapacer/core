@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const { isNumeric, req, rgte } = require('../util/math')
+const { interp, isNumeric, req, rgte } = require('../util/math')
 const areSame = require('../util/areSame')
 const { interpolatePoint } = require('./points')
 const Waypoint = require('./Waypoint')
@@ -187,6 +187,13 @@ class Course {
     const i1 = i3 - 1
     const p1 = this.points[i1]
     const p2 = new CoursePoint(this, interpolatePoint(p1, p3, loc), Math.floor(loc / this.dist))
+
+    // if points have actuals tied to them, also interpolate the actuals:
+    if (p1.actual && p3.actual) {
+      p2.actual = interpolatePoint(p1.actual, p3.actual, loc)
+      p2.actual.elapsed = interp(p1.loc, p3.loc, p1.actual.elapsed, p3.actual.elapsed, p2.loc)
+    }
+
     return p2
   }
 

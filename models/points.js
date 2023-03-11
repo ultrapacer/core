@@ -45,7 +45,6 @@ function interpolatePoint (p1, p2, loc) {
 
   // linear interpolation of other fields
   const fields2 = ['alt']
-  if (p1.has('tod') && p2.has('tod')) { fields2.push('tod') }
   fields2.forEach(field => {
     p3[field] = interp(
       p1.loc,
@@ -55,6 +54,7 @@ function interpolatePoint (p1, p2, loc) {
       p3.loc
     )
   })
+
   return p3
 }
 
