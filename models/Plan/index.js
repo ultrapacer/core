@@ -205,7 +205,7 @@ class Plan {
     this.splits[type] = splits
   }
 
-  getOrInsertPoint (loc) {
+  getOrCreatePoint (loc) {
     // get and return it if already exists
     let point = this.points.find(p => req(p.loc, loc, 4))
     if (point) return point
@@ -229,10 +229,20 @@ class Plan {
       }
     }
 
-    // splice it into points
-    this.points.splice(i, 0, point)
+    return point
+  }
 
-    // return it
+  // ROUTINE TO EITHER RETURN EXISTING POINT AT LOCATION OR CREATE AND INSERT IT, THEN RETURN
+  getOrInsertPoint (loc) {
+    // get or create point
+    const point = this.getOrCreatePoint(loc)
+
+    // see if its already in array and if not insert it
+    const i = this.points.findIndex(p => p.loc >= point.loc)
+    if (this.points[i].loc > point.loc) {
+      this.points.splice(i, 0, point)
+    }
+
     return point
   }
 

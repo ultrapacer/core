@@ -41,8 +41,8 @@ async function calcSegments ({ plan, course, breaks }) {
       grade: len > 0 ? (alts[i] - alts[i - 1]) / len / 10 : null,
       delay: 0,
       factorsSum: fObj(0),
-      point1: plan ? plan.getOrInsertPoint(breaks[i - 1]) : course.getOrInsertPoint(breaks[i - 1]),
-      point2: plan ? plan.getOrInsertPoint(breaks[i]) : course.getOrInsertPoint(breaks[i])
+      point1: plan ? plan.getOrCreatePoint(breaks[i - 1]) : course.getOrCreatePoint(breaks[i - 1]),
+      point2: plan ? plan.getOrCreatePoint(breaks[i]) : course.getOrCreatePoint(breaks[i])
     }))
     await meter.go()
   }
