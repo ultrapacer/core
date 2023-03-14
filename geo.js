@@ -41,8 +41,8 @@ async function calcSegments ({ plan, course, breaks }) {
       grade: len > 0 ? (alts[i] - alts[i - 1]) / len / 10 : null,
       delay: 0,
       factorsSum: fObj(0),
-      point1: plan ? plan.getOrCreatePoint(breaks[i - 1]) : course.getOrCreatePoint(breaks[i - 1]),
-      point2: plan ? plan.getOrCreatePoint(breaks[i]) : course.getOrCreatePoint(breaks[i])
+      point1: plan ? plan.getPoint({ loc: breaks[i - 1] }) : course.getPoint({ loc: breaks[i - 1] }),
+      point2: plan ? plan.getPoint({ loc: breaks[i] }) : course.getPoint({ loc: breaks[i] })
     }))
     await meter.go()
   }
@@ -160,10 +160,10 @@ async function calcPacing (data) {
 
   await data.plan.initializePoints()
 
-  data.plan.course.terrainFactors?.forEach(tf => data.plan.getOrInsertPoint(tf.start))
+  data.plan.course.terrainFactors?.forEach(tf => data.plan.getPoint({ loc: tf.start, insert: true }))
   if (data.plan.adjustForCutoffs) {
     data.plan.cutoffs.forEach(c => {
-      c.point = data.plan.getOrInsertPoint(c.loc)
+      c.point = data.plan.getPoint({ loc: c.loc, insert: true })
     })
   }
 
@@ -174,7 +174,7 @@ async function calcPacing (data) {
   Object.assign(data.plan.pacing, { factor, factors })
 
   // points for sensitivity test:
-  const testPoints = options.testLocations.map(tl => data.plan.getOrInsertPoint(tl))
+  const testPoints = options.testLocations.map(tl => data.plan.getPoint({ loc: tl, insert: true }))
 
   let lastTest = []
 
@@ -308,8 +308,8 @@ function adjustForCutoffs (data, i) {
         }
 
     // make sure we have points mapped
-    if (!prev.point) prev.point = data.plan.getOrInsertPoint(prev.onset)
-    if (!next.point) next.point = data.plan.getOrInsertPoint(next.onset)
+    if (!prev.point) prev.point = data.plan.getPoint({ loc: prev.onset, insert: true })
+    if (!next.point) next.point = data.plan.getPoint({ loc: next.onset, insert: true })
 
     const delay =
       data.plan.delays
