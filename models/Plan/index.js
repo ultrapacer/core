@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const { req, interp } = require('../../util/math')
+const { req, rgte, interp } = require('../../util/math')
 const Event = require('../Event')
 const { calcPacing, createSegments, createSplits } = require('../../geo')
 const areSame = require('../../util/areSame')
@@ -187,6 +187,7 @@ class Plan {
   // iterate pacing routine and set this.pacing key
   async calcPacing (options) {
     this.pacing.isValid = false
+    this.splits = null
     this.pacing = await calcPacing({
       plan: this,
       options
@@ -205,21 +206,22 @@ class Plan {
     this.splits[type] = splits
   }
 
-  getOrInsertPoint (loc) {
+  getPoint ({ loc, insert = false }) {
     // get and return it if already exists
-    let point = this.points.find(p => req(p.loc, loc, 4))
-    if (point) return point
+    const i2 = this.points.findIndex(p => rgte(p.loc, loc, 4))
+    const p2 = this.points[i2]
+
+    // if point exists, return it
+    if (req(p2.loc, loc, 4)) return p2
+
+    // define first point for interpolation
+    const i1 = i2 - 1
+    const p1 = this.points[i1]
 
     // create a new point
-    point = new PlanPoint(this, this.course.getOrInsertPoint(loc))
-
-    // interpolate time fields:
-    const i = this.points.findIndex(p => p.loc > point.loc)
+    const point = new PlanPoint(this, this.course.getPoint({ loc, insert }))
 
     // add in interpolated time values if they exist
-    const p1 = this.points[i - 1]
-    const p2 = this.points[i]
-    if (!p1 || !p2) console.log(loc, point.loc, p1, p2, i)
     if (!isNaN(p1.time) && !isNaN(p2.time)) {
       const delay = (p2.elapsed - p2.time) - (p1.elapsed - p1.time)
       point.time = interp(p1.loc, p2.loc, p1.time + delay, p2.time, p2.loc)
@@ -229,10 +231,8 @@ class Plan {
       }
     }
 
-    // splice it into points
-    this.points.splice(i, 0, point)
+    if (insert) this.points.splice(i2, 0, point)
 
-    // return it
     return point
   }
 
@@ -268,8 +268,8 @@ class Plan {
     Object.assign(options, arg)
 
     if (options.addBreaks) {
-      this.course.terrainFactors?.forEach(tf => this.getOrInsertPoint(tf.start))
-      this.course.delays?.forEach(d => this.getOrInsertPoint(d.loc))
+      this.course.terrainFactors?.forEach(tf => this.getPoint({ loc: tf.start, insert: true }))
+      this.course.delays?.forEach(d => this.getPoint({ loc: d.loc, insert: true }))
     }
 
     // calculate course normalizing factor:

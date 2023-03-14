@@ -174,39 +174,27 @@ class Course {
   }
 
   // ROUTINE TO EITHER RETURN EXISTING POINT AT LOCATION OR CREATE IT AND RETURN
-  getOrCreatePoint (loc) {
-    const i3 = this.points.findIndex(p => rgte(p.loc, loc, 4))
-    const p3 = this.points[i3]
+  getPoint ({ loc, insert = false }) {
+    const i2 = this.points.findIndex(p => rgte(p.loc, loc, 4))
+    const p2 = this.points[i2]
 
     // if point exists, return it
-    if (req(p3.loc, loc, 4)) {
-      return p3
-    }
+    if (req(p2.loc, loc, 4)) return p2
 
-    // add point and return it
-    const i1 = i3 - 1
+    // define first point for interpolation
+    const i1 = i2 - 1
     const p1 = this.points[i1]
-    const p2 = new CoursePoint(this, interpolatePoint(p1, p3, loc), Math.floor(loc / this.dist))
+
+    // create a new point
+    const point = new CoursePoint(this, interpolatePoint(p1, p2, loc), Math.floor(loc / this.dist))
 
     // if points have actuals tied to them, also interpolate the actuals:
-    if (p1.actual && p3.actual) {
-      p2.actual = interpolatePoint(p1.actual, p3.actual, loc)
-      p2.actual.elapsed = interp(p1.loc, p3.loc, p1.actual.elapsed, p3.actual.elapsed, p2.loc)
+    if (p1.actual && p2.actual) {
+      point.actual = interpolatePoint(p1.actual, p2.actual, loc)
+      point.actual.elapsed = interp(p1.loc, p2.loc, p1.actual.elapsed, p2.actual.elapsed, point.loc)
     }
 
-    return p2
-  }
-
-  // ROUTINE TO EITHER RETURN EXISTING POINT AT LOCATION OR CREATE AND INSERT IT, THEN RETURN
-  getOrInsertPoint (loc) {
-    // get or create point
-    const point = this.getOrCreatePoint(loc)
-
-    // see if its already in array and if not insert it
-    const i = this.points.findIndex(p => p.loc >= point.loc)
-    if (this.points[i].loc > point.loc) {
-      this.points.splice(i, 0, point)
-    }
+    if (insert) this.points.splice(i2, 0, point)
 
     return point
   }
