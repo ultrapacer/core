@@ -32,7 +32,8 @@ async function calcSegments ({ plan, course, breaks }) {
   const hasActuals = (p[0].actual !== undefined && p[p.length - 1].actual !== undefined)
   for (i = 1, il = breaks.length; i < il; i++) {
     len = breaks[i] - breaks[i - 1]
-    s.push(new Segment({
+
+    const seg = new Segment({
       end: breaks[i],
       len,
       gain: 0,
@@ -43,7 +44,16 @@ async function calcSegments ({ plan, course, breaks }) {
       factorsSum: fObj(0),
       point1: plan ? plan.getPoint({ loc: breaks[i - 1] }) : course.getPoint({ loc: breaks[i - 1] }),
       point2: plan ? plan.getPoint({ loc: breaks[i] }) : course.getPoint({ loc: breaks[i] })
-    }))
+    })
+
+    // add actual times:
+    if (hasActuals) {
+      seg.actualTime = seg.point2.actual.elapsed - seg.point1.actual.elapsed
+      seg.actualElapsed = seg.point2.actual.elapsed
+    }
+
+    s.push(seg)
+
     await meter.go()
   }
 
@@ -102,20 +112,6 @@ async function calcSegments ({ plan, course, breaks }) {
       Object.fromEntries(fKeys.map(key => [key, x.factorsSum[key] / x.len]))
     )
   })
-
-  if (hasActuals) {
-    s.forEach((seg, i) => {
-      const p1 = p.find(point => point.loc >= seg.end - seg.len)
-      let p2 = {}
-      if (i === s.length - 1) {
-        p2 = p[p.length - 1]
-      } else {
-        p2 = p.find(point => point.loc >= seg.end)
-      }
-      seg.actualTime = p2.actual.elapsed - p1.actual.elapsed
-      seg.actualElapsed = p2.actual.elapsed
-    })
-  }
 
   return s
 }
