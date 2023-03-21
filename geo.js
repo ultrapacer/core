@@ -1,8 +1,7 @@
 const factors = require('./factors')
-const { rlt, rgt, rgte, req, interpArray } = require('./util/math')
+const { rlt, rgt, rlte, rgte, req, interpArray } = require('./util/math')
 const Meter = require('./util/Meter')
 const Segment = require('./models/Segment')
-const { interpolatePoint } = require('./models/points')
 const _ = require('lodash')
 const fKeys = factors.list
 
@@ -17,33 +16,56 @@ async function calcSegments ({ plan, course, breaks }) {
   /*
   data {
      breaks: array of [loc,loc,...] to break on (start at 0)
+              or:
+             array of [{ start, end }, {start, end}] locations
+         must be consecutive and not overlap
      course: Course object
      [plan]: Plan Object
    }
   */
+
+  // if breaks is array of loctions, convert to array of {start, end}:
+  if (_.isNumber(breaks[0])) {
+    // remove 0 and course end points if they exist
+    breaks = breaks.filter(b => b > 0 && rlt(b, course.dist, 4))
+
+    // map to {start, end} format
+    breaks = breaks.map((b, i) => ({ start: b, end: breaks[i + 1] || course.dist }))
+
+    // add initial segment back in
+    breaks.unshift({ start: 0, end: breaks[0].start })
+  }
+
   const meter = new Meter()
   const p = plan ? plan.points : course.points
 
   const s = [] // segments array
-  const alts = course.track.getLLA(breaks).map(lla => { return lla.alt })
-  let len = 0
   let i
   let il
+  let point1
+  let point2
   const hasActuals = (p[0].actual !== undefined && p[p.length - 1].actual !== undefined)
-  for (i = 1, il = breaks.length; i < il; i++) {
-    len = breaks[i] - breaks[i - 1]
+  for (i = 0, il = breaks.length; i < il; i++) {
+    const b = breaks[i]
 
+    if (req(breaks[i - 1]?.end, b.start, 4)) point1 = point2
+    else point1 = plan ? plan.getPoint({ loc: b.start }) : course.getPoint({ loc: b.start })
+
+    point2 = plan ? plan.getPoint({ loc: b.end }) : course.getPoint({ loc: b.end })
+
+    const len = b.end - b.start
     const seg = new Segment({
-      end: breaks[i],
+      start: point1.loc,
+      end: point2.loc,
       len,
       gain: 0,
       loss: 0,
-      alt: alts[i], // ending altitude
-      grade: len > 0 ? (alts[i] - alts[i - 1]) / len / 10 : null,
+      alt: point2.alt, // ending altitude
+      grade: len > 0 ? (point2.alt - point1.alt) / len / 10 : null,
       delay: 0,
       factorsSum: fObj(0),
-      point1: plan ? plan.getPoint({ loc: breaks[i - 1] }) : course.getPoint({ loc: breaks[i - 1] }),
-      point2: plan ? plan.getPoint({ loc: breaks[i] }) : course.getPoint({ loc: breaks[i] })
+      point1,
+      point2
     })
 
     // add actual times:
@@ -57,56 +79,50 @@ async function calcSegments ({ plan, course, breaks }) {
     await meter.go()
   }
 
-  const delays = plan ? [...plan.delays] : []
-  function getDelay (a, b) {
-    if (!delays.length) { return 0 }
-    while (delays.length && delays[0].loc < a) {
-      delays.shift()
-    }
-    if (delays.length && delays[0].loc < b) {
-      const d = delays.shift()
-      return d.delay
-    }
-    return 0
+  const calcStuff = ({ seg, p1, p2 }) => {
+    const delta = p2.alt - p1.alt
+    seg[delta > 0 ? 'gain' : 'loss'] += delta
+    factors.generate(p1, { plan, course })
+    const len = p2.loc - p1.loc
+    fKeys.forEach(key => {
+      seg.factorsSum[key] += p1.factors[key] * len
+    })
   }
 
   i = 1
+  let seg, p1, p2
   for (let k = 0; k < s.length; k++) {
-    const s1 = s[k] // current segment
-    while (i < p.length && p[i - 1].loc <= s1.end) {
-      const p1 = p[i - 1]
-      const p2 = p[i]
-      let arr = []
+    seg = s[k] // current segment
 
-      // if segment ends between p1 & p2, calc two chunks:
-      if (p2.loc > s1.end && k < s.length - 1) {
-        const p3 = interpolatePoint(p1, p2, s1.end)
-        arr = [
-          { s: s1, p: [p1, p3] },
-          { s: s[k + 1], p: [p3, p2] }
-        ]
-      } else {
-        arr = [{ s: s1, p: [p1, p2] }]
-      }
-      arr.forEach(a => {
-        const delta = a.p[1].alt - a.p[0].alt
-        a.s[delta > 0 ? 'gain' : 'loss'] += delta
-        factors.generate(a.p[0], { plan, course })
-        const len = a.p[1].loc - a.p[0].loc
-        let f = 1
-        fKeys.forEach(key => {
-          a.s.factorsSum[key] += a.p[0].factors[key] * len
-          f = f * a.p[0].factors[key]
-        })
+    // skip along until we're past point1
+    while (rlte(p[i].loc, seg.point1.loc, 4)) i++
 
-        if (plan) a.s.delay += getDelay(a.p[0].loc, a.s.end)
-      })
+    p1 = seg.point1
+
+    while (i < p.length && rlte(p[i].loc, seg.point2.loc, 4)) {
+      p2 = p[i]
+
+      // from p1 to p2
+      calcStuff({ p1, p2, seg })
+
+      p1 = p2
       i++
     }
+
+    // last bit to seg.point2
+    calcStuff({ p1, p2: seg.point2, seg })
+
+    // add in delays:
+    if (plan) {
+      seg.delay = plan.delays
+        .filter(d => rgte(seg.point1.loc, d.loc, 4) && rlt(seg.point2.loc, d.loc, 4))
+        .reduce((p, a) => p + a, 0)
+    }
+
     await meter.go()
   }
 
-  // normalize each factor by length and sum elapsed time
+  // normalize each factor by length
   s.forEach((x, i) => {
     x.factors = new factors.Factors(
       Object.fromEntries(fKeys.map(key => [key, x.factorsSum[key] / x.len]))
