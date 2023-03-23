@@ -1,9 +1,11 @@
+const _ = require('lodash')
 const Segment = require('./Segment')
 const { list: factors } = require('../factors')
 
 class SuperSegment extends Segment {
   constructor (segments = []) {
     super({})
+
     this.segments = segments
   }
 
@@ -31,6 +33,17 @@ class SuperSegment extends Segment {
 
   get loss () {
     return this.sum('loss')
+  }
+
+  set grade (v) {
+    this._data.grade = v
+  }
+
+  get grade () {
+    if (!_.isNumber(this._data.grade)) {
+      this._data.grade = this.segments.reduce((v, s) => { return v + (s.grade * s.len) }, 0) / this.len
+    }
+    return this._data.grade
   }
 
   get time () {
