@@ -26,14 +26,12 @@ async function calcSegments ({ plan, course, breaks }) {
 
   // if breaks is array of loctions, convert to array of {start, end}:
   if (_.isNumber(breaks[0])) {
-    // remove 0 and course end points if they exist
+    // make sure we start at 0 and dont include end point
     breaks = breaks.filter(b => b > 0 && rlt(b, course.dist, 4))
+    breaks.unshift(0)
 
     // map to {start, end} format
     breaks = breaks.map((b, i) => ({ start: b, end: breaks[i + 1] || course.dist }))
-
-    // add initial segment back in
-    breaks.unshift({ start: 0, end: breaks[0].start })
   }
 
   const meter = new Meter()
