@@ -269,7 +269,7 @@ class Plan {
 
     if (options.addBreaks) {
       this.course.terrainFactors?.forEach(tf => this.getPoint({ loc: tf.start, insert: true }))
-      this.course.delays?.forEach(d => this.getPoint({ loc: d.loc, insert: true }))
+      this.delays?.forEach(d => this.getPoint({ loc: d.loc, insert: true }))
     }
 
     // calculate course normalizing factor:
