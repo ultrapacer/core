@@ -285,14 +285,16 @@ class Plan {
     let delay = 0
     const delays = [...this.delays]
     function getDelay (a, b) {
-      if (!delays.length) { return 0 }
+      let d = 0
+      if (!delays.length) { return d }
       while (delays.length && delays[0].loc < a) {
         delays.shift()
       }
-      if (delays.length && delays[0].loc < b) {
-        return delays[0].delay
+      while (delays.length && delays[0].loc < b) {
+        d += delays[0].delay
+        delays.shift()
       }
-      return 0
+      return d
     }
     let dloc = 0
     let dtime = 0
