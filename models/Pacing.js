@@ -4,26 +4,31 @@ const { Factors, Strategy } = require('../factors')
 
 class Pacing {
   constructor (data = {}) {
+    Object.defineProperty(this, '_cache', { value: {} })
     Object.defineProperty(this, '_data', { value: {} })
     this.isValid = false
 
     // force strategy field to be Strategy class:
     Object.defineProperty(this, 'strategy', {
       get () { return this._data?.strategy },
-      set (v) { this._data.strategy = new Strategy(v) },
+      set (v) {
+        this.clearCache()
+        this._data.strategy = new Strategy(v)
+      },
       enumerable: true
     })
 
     // force factors field to be Factors class:
     Object.defineProperty(this, 'factors', {
       get () { return this._data?.factors },
-      set (v) { this._data.factors = new Factors(v) },
+      set (v) {
+        this.clearCache()
+        this._data.factors = new Factors(v)
+      },
       enumerable: true
     })
 
-    Object.keys(data).forEach(k => {
-      if (this[k] === undefined) this[k] = data[k]
-    })
+    Object.assign(this, data)
 
     // copy strategy from plan or default
     if (!this.strategy) {
@@ -31,7 +36,13 @@ class Pacing {
     }
   }
 
+  clearCache () {
+    Object.keys(this._cache).forEach(k => { delete this._cache[k] })
+  }
+
   get elapsed () {
+    if (this._cache.elapsed) return this._cache.elapsed
+
     let val, pace, np
     switch (this._plan.pacingMethod) {
       case 'time':
@@ -55,8 +66,13 @@ class Pacing {
     if (lastCutoff && req(lastCutoff.loc, this._plan.course.dist, 4)) {
       val = Math.min(lastCutoff.time, val)
     }
+
+    this._cache.elapsed = val
+
     return val
   }
+
+  set elapsed (v) { console.error('dummy: set elapsed') }
 
   get pace () {
     return (this.elapsed - this._plan.delay) / this._plan.course.dist
@@ -74,4 +90,5 @@ class Pacing {
     return this._plan.delay
   }
 }
+
 module.exports = Pacing

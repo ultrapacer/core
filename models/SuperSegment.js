@@ -75,5 +75,9 @@ class SuperSegment extends Segment {
     })
     return obj
   }
+
+  get status () {
+    return this.last.status
+  }
 }
 module.exports = SuperSegment

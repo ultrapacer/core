@@ -1,17 +1,12 @@
-const points = require('./points')
-const tracks = require('./tracks')
-
 module.exports = {
   Course: require('./Course'),
+  CoursePoint: require('./CoursePoint'),
   Event: require('./Event'),
   Plan: require('./Plan'),
-  Point: points.Point,
+  PlanPoint: require('./PlanPoint'),
+  Point: require('./Point'),
   Segment: require('./Segment'),
   SuperSegment: require('./SuperSegment'),
-  Track: tracks.Track,
+  Track: require('./Track'),
   Waypoint: require('./Waypoint')
 }
-
-// TODO: rewrite these two modules so this is cleaner:
-module.exports.points = points
-module.exports.tracks = tracks

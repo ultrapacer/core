@@ -1,7 +1,7 @@
 const factors = require('./factors')
 const { rlt, rgt, rlte, rgte, req, interpArray } = require('./util/math')
-const Meter = require('./util/Meter')
 const Segment = require('./models/Segment')
+const Pacing = require('./models/Pacing')
 const _ = require('lodash')
 const fKeys = factors.list
 
@@ -12,7 +12,7 @@ function fObj (init) {
   return obj
 }
 
-async function calcSegments ({ plan, course, breaks }) {
+function calcSegments ({ plan, course, breaks }) {
   /*
   data {
      breaks: array of [loc,loc,...] to break on (start at 0)
@@ -34,7 +34,6 @@ async function calcSegments ({ plan, course, breaks }) {
     breaks = breaks.map((b, i) => ({ start: b, end: breaks[i + 1] || course.dist }))
   }
 
-  const meter = new Meter()
   const p = plan ? plan.points : course.points
 
   const s = [] // segments array
@@ -50,7 +49,6 @@ async function calcSegments ({ plan, course, breaks }) {
     else point1 = plan ? plan.getPoint({ loc: b.start }) : course.getPoint({ loc: b.start })
 
     point2 = plan ? plan.getPoint({ loc: b.end }) : course.getPoint({ loc: b.end })
-
     const len = b.end - b.start
     const seg = new Segment({
       start: point1.loc,
@@ -59,7 +57,7 @@ async function calcSegments ({ plan, course, breaks }) {
       gain: 0,
       loss: 0,
       alt: point2.alt, // ending altitude
-      grade: len > 0 ? (point2.alt - point1.alt) / len / 10 : null,
+      grade: len > 0 ? (point2.alt - point1.alt) / len / 10 * (point2.alt - point1.alt > 0 ? course.gainScale : course.lossScale) : null,
       delay: 0,
       factorsSum: fObj(0),
       point1,
@@ -73,13 +71,11 @@ async function calcSegments ({ plan, course, breaks }) {
     }
 
     s.push(seg)
-
-    await meter.go()
   }
 
   const calcStuff = ({ seg, p1, p2 }) => {
     const delta = p2.alt - p1.alt
-    seg[delta > 0 ? 'gain' : 'loss'] += delta
+    seg[delta > 0 ? 'gain' : 'loss'] += delta * (delta > 0 ? course.gainScale : course.lossScale)
     factors.generate(p1, { plan, course })
     const len = p2.loc - p1.loc
     fKeys.forEach(key => {
@@ -116,8 +112,6 @@ async function calcSegments ({ plan, course, breaks }) {
         .filter(d => rgte(seg.point1.loc, d.loc, 4) && rlt(seg.point2.loc, d.loc, 4))
         .reduce((p, a) => p + a, 0)
     }
-
-    await meter.go()
   }
 
   // normalize each factor by length
@@ -131,7 +125,7 @@ async function calcSegments ({ plan, course, breaks }) {
 }
 
 // TODO: loosen up calcs; dont display seconds for elapsed in tables
-async function calcPacing (data) {
+function calcPacing (data) {
   /*
     data:
       plan,
@@ -168,7 +162,7 @@ async function calcPacing (data) {
     itl += 1
   }
 
-  await data.plan.initializePoints()
+  data.plan.initializePoints()
 
   data.plan.course.terrainFactors?.forEach(tf => data.plan.getPoint({ loc: tf.start, insert: true }))
   if (data.plan.adjustForCutoffs) {
@@ -177,10 +171,12 @@ async function calcPacing (data) {
     })
   }
 
-  data.pacing = data.plan.pacing
-  if (!data.pacing.status) data.pacing.status = {}
+  // replace plan.pacing object with new clean object
+  data.plan.pacing = new Pacing({ _plan: data.plan })
 
-  const { factor, factors } = await data.plan.applyPacing()
+  if (!data.plan.pacing.status) data.plan.pacing.status = {}
+
+  const { factor, factors } = data.plan.applyPacing()
   Object.assign(data.plan.pacing, { factor, factors })
 
   // points for sensitivity test:
@@ -192,7 +188,7 @@ async function calcPacing (data) {
   const tests = {}
   let pass = false
   for (i = 0; i < maxIterations; i++) {
-    const { factor, factors } = await data.plan.applyPacing({ addBreaks: false })
+    const { factor, factors } = data.plan.applyPacing({ addBreaks: false })
     Object.assign(data.plan.pacing, { factor, factors })
 
     tests.minIterations = i >= minIterations
@@ -248,21 +244,21 @@ async function calcPacing (data) {
       fstats.min[k] = Math.min(fstats.min[k], data.plan.points[j].factors[k])
     })
   })
-  data.pacing.fstats = fstats
+  data.plan.pacing.fstats = fstats
 
-  data.pacing.status.tests = tests
-  data.pacing.status.success = true
-  data.pacing.status.iterations = i
+  data.plan.pacing.status.tests = tests
+  data.plan.pacing.status.success = true
+  data.plan.pacing.status.iterations = i
 
   if (data.plan.event?.sun) {
     const s = calcSunTime({
       points: data.plan.points,
       event: data.plan.event
     })
-    Object.assign(data.pacing, s)
+    Object.assign(data.plan.pacing, s)
 
     // create array of sun events during the course:
-    data.pacing.sunEvents = []
+    data.plan.pacing.sunEvents = []
     const eventTypes = ['nadir', 'dawn', 'sunrise', 'dusk', 'sunset', 'noon']
     const days = Math.ceil((data.plan.event.startTime + _.last(data.plan.points).elapsed) / 86400)
     for (let d = 0; d < days; d++) {
@@ -272,26 +268,26 @@ async function calcPacing (data) {
 
         // if it happens in the data, add it to the array
         if (elapsed >= 0 && elapsed <= _.last(data.plan.points).elapsed) {
-          data.pacing.sunEvents.push({ event, elapsed })
+          data.plan.pacing.sunEvents.push({ event, elapsed })
         }
       })
     }
 
     // sort by elapsed time
-    data.pacing.sunEvents.sort((a, b) => a.elapsed - b.elapsed)
+    data.plan.pacing.sunEvents.sort((a, b) => a.elapsed - b.elapsed)
 
     // interpolate distances from elapsed times:
-    if (data.pacing.sunEvents.length) {
+    if (data.plan.pacing.sunEvents.length) {
       const locs = interpArray(
         data.plan.points.map(x => { return x.elapsed }),
         data.plan.points.map(x => { return x.loc }),
-        data.pacing.sunEvents.map(x => { return x.elapsed })
+        data.plan.pacing.sunEvents.map(x => { return x.elapsed })
       )
-      locs.forEach((l, i) => { data.pacing.sunEvents[i].loc = l })
+      locs.forEach((l, i) => { data.plan.pacing.sunEvents[i].loc = l })
     }
   }
 
-  return data.pacing
+  return data.plan.pacing
 }
 
 function adjustForCutoffs (data, i) {
@@ -302,7 +298,7 @@ function adjustForCutoffs (data, i) {
   const cutoffs = data.plan.cutoffs.filter(c => rlt(c.loc, data.plan.course.dist, 4))
 
   const strats = cutoffs.map((c, i) => {
-    const prev = data.pacing.strategy.autos
+    const prev = data.plan.pacing.strategy.autos
       .filter(s => rlt(s.onset, c.loc, 4))
       .pop() ||
         {
@@ -310,7 +306,7 @@ function adjustForCutoffs (data, i) {
           point: data.plan.points[0]
         }
 
-    const next = data.pacing.strategy.autos
+    const next = data.plan.pacing.strategy.autos
       .find(s => rgt(s.onset, c.loc, 4)) ||
         {
           onset: data.plan.course.dist,
@@ -346,7 +342,7 @@ function adjustForCutoffs (data, i) {
   const steps = strats
     .filter(ss =>
       ss.value > 0 &&
-      !data.pacing.strategy.autos.find(s3 => req(s3.onset, ss.onset, 4))
+      !data.plan.pacing.strategy.autos.find(s3 => req(s3.onset, ss.onset, 4))
     ).map(s => s.value)
   const max = Math.max(...steps)
   const strat = strats.find(ss => ss.value === max)
@@ -354,16 +350,16 @@ function adjustForCutoffs (data, i) {
   let added = false
 
   // every fourth iteration, if there is a strategy to add, do so
-  if (i === 4 * (data.pacing.strategy.autos.length + 1) && strat) {
+  if (i === 4 * (data.plan.pacing.strategy.autos.length + 1) && strat) {
     added = true
-    data.pacing.strategy.addAuto(strat)
+    data.plan.pacing.strategy.addAuto(strat)
   }
 
   // refine existing strategies on iterations where a new one isnt added
   if (!added) {
-    data.pacing.strategy?.autos?.forEach((s, j) => {
+    data.plan.pacing.strategy?.autos?.forEach((s, j) => {
       const strat = strats.find(ss => req(ss.onset, s.onset, 4))
-      data.pacing.strategy.adjustAutoValue(s, strat.value)
+      data.plan.pacing.strategy.adjustAutoValue(s, strat.value)
     })
   }
 
@@ -410,7 +406,7 @@ function calcSunTime (data) {
   return s
 }
 
-async function createSegments (data) {
+function createSegments (data) {
   // data: {[plan], [course]}
   if (data.plan && !data.course) data.course = data.plan.course
 
@@ -421,7 +417,7 @@ async function createSegments (data) {
   data.breaks = wps.map(x => { return x.loc })
 
   // determine all the stuff
-  const segments = await calcSegments(data)
+  const segments = calcSegments(data)
 
   // map in waypoints
   segments.forEach((x, i) => {
@@ -431,21 +427,21 @@ async function createSegments (data) {
   return segments
 }
 
-async function createSplits (data) {
+function createSplits (data) {
   // data: {unit, [plan], [course]}
   if (data.plan && !data.course) data.course = data.plan.course
 
-  const distScale = (data.unit === 'kilometers') ? 1 : 0.621371
-  const tot = data.course.scaledDist * distScale
+  const distUnitScale = (data.unit === 'kilometers') ? 1 : 0.621371
+  const tot = data.course.dist * distUnitScale
 
   const breaks = [0]
   let i = 1
   while (i < tot) {
-    breaks.push(i / data.course.distScale / distScale)
+    breaks.push(i / distUnitScale)
     i++
   }
-  if (tot / distScale > breaks[breaks.length - 1]) {
-    breaks.push(tot / data.course.distScale / distScale)
+  if (tot / distUnitScale > breaks[breaks.length - 1]) {
+    breaks.push(tot / distUnitScale)
   }
 
   // remove last break if it's negligible
@@ -458,7 +454,7 @@ async function createSplits (data) {
   Object.assign(data, { breaks })
 
   // get the stuff
-  const splits = await calcSegments(data)
+  const splits = calcSegments(data)
 
   return splits
 }
