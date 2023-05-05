@@ -1,32 +1,9 @@
 const { latlon: LatLon } = require('sgeo')
-const { interp, isNumeric } = require('../util/math')
-
-class Point {
-  constructor (arg) {
-    // if arg is length 3, it's lat, lon, alt
-    if (arg.length === 3) {
-      [this.lat, this.lon, this.alt] = arg
-
-    // if arg is length 5, it's loc, lat, lon, at, grade
-    // ** NOTE **, this loc and grade are never used
-    } else if (arg.length === 5) {
-      [this.loc, this.lat, this.lon, this.alt, this.grade] = arg
-
-    // otherwise it's wrong
-    } else {
-      throw new Error('Point data invalid')
-    }
-  }
-
-  get latlon () { return new LatLon(this.lat, this.lon) }
-
-  has (field) {
-    return isNumeric(this[field])
-  }
-}
+const Point = require('../Point')
+const { interp } = require('../../util/math')
 
 // interpolate between two points
-function interpolatePoint (p1, p2, loc) {
+function interpolate (p1, p2, loc) {
   const p3 = new Point([p1.lat, p1.lon, p1.alt])
   p3.loc = loc
 
@@ -58,6 +35,4 @@ function interpolatePoint (p1, p2, loc) {
   return p3
 }
 
-// exports.LLA = LLA
-exports.Point = Point
-exports.interpolatePoint = interpolatePoint
+module.exports = interpolate

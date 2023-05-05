@@ -3,10 +3,14 @@ const { isNumeric } = require('../util/math')
 
 class Waypoint {
   constructor (site, course, loop = 1) {
+    Object.defineProperty(this, 'course', { writable: true })
+
     this.site = site
     this.course = course
     this.loop = loop
   }
+
+  get __class () { return 'Waypoint' }
 
   get name () {
     if (this.loop >= 2 && this.type !== 'finish') {
@@ -19,8 +23,7 @@ class Waypoint {
   get description () { return this.site.description }
 
   get loc () {
-    const v = this.site.percent * this.course.trackDist
-    return v + (this.course.trackDist * (this.loop - 1))
+    return (this.site.percent + this.loop - 1) * this.course.loopDist
   }
 
   set loc (v) {
@@ -30,24 +33,34 @@ class Waypoint {
     } else if (this.type === 'finish') {
       this.site.percent = 1
     } else {
-      this.site.percent = (v / this.course.trackDist) % 1
+      this.site.percent = (v / this.course.loopDist) % 1
     }
   }
 
-  // scaled location
-  get sloc () {
-    return this.loc * this.course.distScale
+  get lat () {
+    if (this.site.lat === undefined && this.course?.track?.points) this.refreshLLA()
+    return this.site.lat
   }
 
-  get lat () { return this.site.lat }
-  get lon () { return this.site.lon }
-  get alt () { return this.site.elevation }
+  get lon () {
+    if (this.site.lon === undefined && this.course?.track?.points) this.refreshLLA()
+    return this.site.lon
+  }
+
+  get alt () {
+    if (this.site.elevation === undefined && this.course?.track?.points) this.refreshLLA()
+    return this.site.elevation
+  }
+
   set lat (v) { this.site.lat = v }
   set lon (v) { this.site.lon = v }
   set alt (v) { this.site.elevation = v }
-  get tier () { return this.site.tier }
+  get tier () { return this.site.tier || 1 }
   get type () { return this.site.type }
 
+  // get terrainFactor() {
+  //  return this.course.terrainFactors.find(tf=>tf.startWaypoint===this).tF
+  // }
   terrainFactor (waypoints, useId = true) {
     if ((this.site.terrainFactor !== null && this.site.terrainFactor !== undefined) || !waypoints) {
       return this.site.terrainFactor
@@ -152,18 +165,6 @@ class Waypoint {
     }
   }
 
-  actualDelay (track) {
-    if (track.points[0].actual === undefined) { return undefined }
-    if (!this.loc || this.type === 'finish') return 0
-    const threshold = 0.1 // km, distance away for time reference
-    const l = this.loc
-    const start = Math.max(0, track.points.findIndex(p => p.loc > l - threshold) - 1)
-    const end = Math.min(track.points.findIndex((p, i) => i > start && p.loc > l + threshold), track.points.length - 1)
-    const plannedNoDelay = track.points[end].time - track.points[start].time
-    const actualWithDelay = track.points[end].actual.elapsed - track.points[start].actual.elapsed
-    return plannedNoDelay && actualWithDelay ? actualWithDelay - plannedNoDelay : undefined
-  }
-
   get cutoff () {
     // getting cutoff retrieves from array of {time, loop} items
     if (this.tier === 1) {
@@ -201,29 +202,31 @@ class Waypoint {
   }
 
   // function updates the lat/lon/alt of a waypoint
-  refreshLLA (track) {
-    if (!track) track = this.course?.track
-    if (!track) throw new Error('No track defined')
+  refreshLLA () {
+    if (!this.course?.track?.points?.length) throw new Error('No track points defined')
 
     let lat, lon, alt, ind
 
     // if start use start lla
     if (this.type === 'start') {
-      ;({ lat, lon, alt } = track.points[0])
+      ;({ lat, lon, alt } = this.course.track.points[0])
 
     // if finish use finish lla
     } else if (this.type === 'finish') {
-      ;({ lat, lon, alt } = _.last(track.points))
+      ;({ lat, lon, alt } = _.last(this.course.track.points))
 
     // otherwise interpolate the lla from track array
     } else {
-      ;({ lat, lon, alt, ind } = track.getLLA(this.loc, { start: this.site.pointsIndex || 0 }))
+      ;({ lat, lon, alt, ind } = this.course.track.getLLA(this.loc / this.course.distScale, { start: this.site.pointsIndex || 0 }))
     }
     // update site values
     this.lat = lat
     this.lon = lon
     this.alt = alt
     if (ind) this.site.pointsIndex = ind
+
+    console.warn('TODO. clearing splits; not sure if this is the best place to put this')
+    this.course.clearCache(1)
   }
 }
 

@@ -1,36 +1,14 @@
 const _ = require('lodash')
-const { interp, isNumeric, req, rgte } = require('../util/math')
+const { interp, req, rgte } = require('../util/math')
 const areSame = require('../util/areSame')
-const { interpolatePoint } = require('./points')
+const interpolatePoint = require('./Points/interpolate')
 const Waypoint = require('./Waypoint')
 const Event = require('./Event')
 const Segment = require('./Segment')
 const { createSegments, createSplits } = require('../geo')
 const Factors = require('../factors/Factors')
-
-class CoursePoint {
-  constructor (course, point, loop) {
-    this.point = point
-    this.course = course
-    this.loop = loop
-  }
-
-  get lat () { return this.point.lat }
-  get lon () { return this.point.lon }
-  get alt () { return this.point.alt }
-  get latlon () { return this.point.latlon } // sgeo latlon object
-  get grade () { return this.point.grade }
-
-  get loc () {
-    let l = this.point.loc
-    if (this.loop) l += this.course.track.dist * this.loop
-    return l
-  }
-
-  has (field) {
-    return isNumeric(this[field])
-  }
-}
+const CoursePoint = require('./CoursePoint')
+const Track = require('./Track')
 
 // course constructor will pass through all fields; use
 // this array to omit certain keys from passing through
@@ -41,32 +19,40 @@ const disallowed = [
 
 class Course {
   constructor (db) {
-    Object.defineProperty(this, 'stats', { enumerable: true, writable: true, value: {} })
+    Object.defineProperty(this, '_data', {
+      value: db._data || {
+        sites: [
+          { _id: _.random(10000, 20000), name: 'Start', type: 'start', percent: 0 },
+          { _id: _.random(30000, 40000), name: 'Finish', type: 'finish', percent: 1 }
+        ]
+      },
+      enumerable: true
+    })
+
+    // used to store results of processed information in _data to speed up calcs
+    Object.defineProperty(this, '_cache', { value: {} })
 
     this.db = db
 
-    // waypoints array gets populated by set sites()
-    this.waypoints = []
+    if (db.track) {
+      this.track = db.track
+
+      // create event property:
+      if (db.track.start) {
+        this.event = new Event(db.track.start)
+        if (db.eventStart) {
+          this.event.timezone = db.eventTimezone
+          this.event.start = db.eventStart
+        }
+      }
+    }
 
     // other fields just pass along:
     Object.keys(db)
-      .filter(k => this[k] === undefined && !disallowed.includes(k))
+      .filter(k => !disallowed.includes(k))
       .forEach(k => { this[k] = db[k] })
 
-    this.sites = db.sites
-
-    // create event property:
-    if (this.waypoints?.length) {
-      const s = this.waypoints.find(wp => wp.type === 'start' && wp.loop === 1)
-      this.event = new Event({
-        lat: s.lat,
-        lon: s.lon
-      })
-      if (db.eventStart) {
-        this.event.timezone = db.eventTimezone
-        this.event.start = db.eventStart
-      }
-    }
+    if (db.sites) this.sites = db.sites
 
     // use cached splits if input:
     if (db.cache) {
@@ -78,7 +64,7 @@ class Course {
           !Array.isArray(db.cache.segments)
         ) throw new Error('Invalid cache')
 
-        Object.assign(this.stats, db.cache.stats)
+        this.stats = db.cache.stats
 
         // add splits, and make sure each is casted as a Segment
         this.splits = {}
@@ -99,79 +85,96 @@ class Course {
         throw new Error('Malformed course cache.')
       }
     }
+    console.debug(this)
   }
 
-  get loops () { return this.db?.loops || 1 }
-  set loops (v) { this.db.loops = v }
+  get __class () { return 'Course' }
 
-  get dist () { return this.trackDist * this.loops }
-  get gain () { return this.trackGain * this.loops }
-  get loss () { return this.trackLoss * this.loops }
+  get loops () { return this._data.loops || 1 }
+  set loops (v) { if (v !== this._data.loops) { this._data.loops = v; this.clearCache(2) } }
 
-  get trackDist () { return this.track?.dist || this.db.distance }
-  get trackGain () { return this.track?.gain || this.db.gain }
-  get trackLoss () { return this.track?.loss || this.db.loss }
+  get dist () { return this._cache.dist || (this._cache.dist = (this._data.dist || (this.track?.dist ? (this.track.dist * this.loops) : undefined))) }
+  get gain () { return this._cache.gain || (this._cache.gain = (this._data.gain || (this.track?.gain ? (this.track.gain * this.loops) : undefined))) }
+  get loss () { return this._cache.loss || (this._cache.loss = (this._data.loss || (this.track?.loss ? (this.track.loss * this.loops) : undefined))) }
 
-  get distScale () { return this.db.override?.dist ? this.db.override.dist / this.trackDist : 1 }
-  get gainScale () { return this.db.override?.gain ? this.db.override.gain / this.trackGain : 1 }
-  get lossScale () { return this.db.override?.loss ? this.db.override.loss / this.trackLoss : 1 }
+  set dist (v) { if (!req(v, this._data.dist, 6)) { console.warn(`overriding dist to ${v}`); this._data.dist = v; this.clearCache(2) } }
+  set gain (v) { if (!req(v, this._data.gain, 6)) { console.warn(`overriding gain to ${v}`); this._data.gain = v; this.clearCache(2) } }
+  set loss (v) { if (!req(v, this._data.loss, 6)) { console.warn(`overriding loss to ${v}`); this._data.loss = v; this.clearCache(2) } }
 
-  get scaledDist () { return this.dist * this.distScale }
-  get scaledGain () { return this.gain * this.gainScale }
-  get scaledLoss () { return this.loss * this.lossScale }
+  get distScale () { return this._data.dist ? this._data.dist / (this.track.dist * this.loops) : 1 }
+  get gainScale () { return this._data.gain ? this._data.gain / (this.track.gain * this.loops) : 1 }
+  get lossScale () { return this._data.loss ? this._data.loss / (this.track.loss * this.loops) : 1 }
+
+  get loopDist () { return this.dist / this.loops }
+  get loopGain () { return this.gain / this.loops }
+  get loopLoss () { return this.loss / this.loops }
 
   // create waypoints from sites:
+  get sites () { return this._data.sites }
+
   set sites (data) {
-    if (!data?.length) {
-      this.waypoints = []
-      return
-    }
+    this._data.sites = data
+    this.clearCache(1)
+  }
+
+  clearCache (level = 1) {
+    // level 1 means route itself does not change (eg, changes to waypoints and trivial changes to course)
+    // level 2 means route itself changes (eg, track, loops, dist, gain, loss)
+
+    console.debug(`clearCache-${level}`)
+    this.splits = null
+
+    const keys = level === 1
+      ? ['waypoints', 'terrainFactors', 'cutoffs', 'stats']
+      : Object.keys(this._cache)
+
+    keys.forEach(key => { delete this._cache[key] })
+  }
+
+  get waypoints () {
+    if (this._cache.waypoints) return this._cache.waypoints
+
+    if (!this.track?.dist) return []
 
     let wps = []
     for (let i = 1; i <= this.loops; i++) {
-      wps.push(
-        ...data.map(
-          site => {
-            return new Waypoint(site, this, i)
-          }
-        )
-      )
+      wps.push(...this._data.sites.map(site => new Waypoint(site, this, i)))
     }
     wps = wps
       .sort((a, b) => a.loc - b.loc)
       .filter(wp => wp.loop === this.loops || wp.type !== 'finish')
-    this.waypoints = wps
 
-    if (this.track?.constructor?.name === 'Track') {
-      this.refreshWaypointLLAs()
-    }
-
-    this.refreshTerrainFactors()
-    this.refreshCutoffs()
+    this._cache.waypoints = wps
+    return this._cache.waypoints
   }
 
-  get sites () {
-    return this.waypoints?.filter(wp => wp.loop === 1 || wp.type === 'finish').map(wp => wp.site) || []
+  get track () {
+    return this._data.track
   }
 
-  // add track to course and create points array:
-  addTrack (track) {
-    this.track = track
-    this.points = new Array(track.points.length * this.loops)
+  set track (v) {
+    console.log('set-track')
+    if (v.__class === 'Track') this._data.track = v
+    else this._data.track = new Track(v)
+    this.clearCache(2)
+  }
+
+  get points () {
+    if (this._cache.points) return this._cache.points
+
+    console.debug('generating points array')
+
+    this._cache.points = new Array(this.track.points.length * this.loops)
     for (let l = 0; l < this.loops; l++) {
-      for (let i = 0; i < track.points.length; i++) {
-        this.points[i + l * track.points.length] = new CoursePoint(this, track.points[i], l)
+      for (let i = 0; i < this.track.points.length; i++) {
+        this.points[i + l * this.track.points.length] = new CoursePoint(this, this.track.points[i], l)
       }
     }
 
-    // update course db stats from track:
-    this.db.distance = this.track.dist
-    this.db.gain = this.track.gain
-    this.db.loss = this.track.loss
-
-    // refresh waypoint LLAs after adding track
-    this.refreshWaypointLLAs()
+    return this._cache.points
   }
+
+  set points (v) { throw new Error('cannot set points directly') }
 
   // ROUTINE TO EITHER RETURN EXISTING POINT AT LOCATION OR CREATE IT AND RETURN
   getPoint ({ loc, insert = false }) {
@@ -186,7 +189,7 @@ class Course {
     const p1 = this.points[i1]
 
     // create a new point
-    const point = new CoursePoint(this, interpolatePoint(p1, p2, loc), Math.floor(loc / this.dist))
+    const point = new CoursePoint(this, interpolatePoint(p1.point, p2.point, loc / this.distScale), Math.floor(loc / this.dist))
 
     // if points have actuals tied to them, also interpolate the actuals:
     if (p1.actual && p2.actual) {
@@ -205,10 +208,12 @@ class Course {
       .forEach(wp => { wp.refreshLLA() })
   }
 
-  refreshTerrainFactors () {
+  get terrainFactors () {
+    if (this._cache.terrainFactors) return this._cache.terrainFactors
+    console.log('regenerating tfs')
     let tF = this.waypoints[0].terrainFactor()
     let tT = this.waypoints[0].terrainType()
-    this.terrainFactors = this.waypoints.filter((x, i) => i < this.waypoints.length - 1).map((x, i) => {
+    this._cache.terrainFactors = this.waypoints.filter((x, i) => i < this.waypoints.length - 1).map((x, i) => {
       if (x.terrainFactor() !== null) tF = x.terrainFactor()
       if (x.terrainType() !== null) tT = x.terrainType()
       return new TerrainFactor({
@@ -218,27 +223,39 @@ class Course {
         type: tT
       })
     })
+
+    return this._cache.terrainFactors
   }
 
-  refreshCutoffs () {
-    this.cutoffs = this.waypoints
+  get cutoffs () {
+    if (this._cache.cutoffs) return this._cache.cutoffs
+
+    this._cache.cutoffs = this.waypoints
       .filter(wp => wp.cutoff)
       .map(wp => new CourseCutoff({ waypoint: wp }))
+
+    return this._cache.cutoffs
   }
 
   // calculate and return splits for course
-  async calcSplits (type = 'segments') {
+  calcSplits (type = 'segments') {
     let splits
-    if (type === 'segments') splits = await createSegments({ course: this })
-    else if (['kilometers', 'miles'].includes(type)) splits = await createSplits({ type, course: this })
+    if (type === 'segments') splits = createSegments({ course: this })
+    else if (['kilometers', 'miles'].includes(type)) splits = createSplits({ type, course: this })
     else throw new Error('Invalid split type.')
 
     if (!this.splits) this.splits = {}
     this.splits[type] = splits
+
+    return splits
   }
 
   // calculate max and min values along course
-  calcStats () {
+  get stats () {
+    if (this._cache.stats) return this._cache.stats
+
+    console.debug('stats:calculate')
+
     const alts = this.points.map(p => p.alt)
     const grades = this.points.map(p => p.grade)
     const terrains = this.terrainFactors.map(tf => (tf.tF / 100 + 1))
@@ -267,8 +284,20 @@ class Course {
       minDist: terrainFactorDist(stats.terrain.min)
     })
 
-    Object.assign(this.stats, stats)
+    this._cache.stats = stats
     return stats
+  }
+
+  set stats (v) {
+    this._cache.stats = v
+  }
+
+  get eventStart () {
+    return this._data.eventStart?.getTime?.() ? this._data.eventStart : undefined
+  }
+
+  set eventStart (v) {
+    this._data.eventStart = new Date(v)
   }
 }
 

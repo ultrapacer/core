@@ -18,7 +18,7 @@ const generate = (point, { plan, course }) => {
   if (!point.factors) point.factors = new Factors()
 
   Object.assign(point.factors, {
-    grade: grade(point.grade * (point.grade >= 0 ? course.gainScale : course.lossScale)),
+    grade: grade(point.grade),
     altitude: altitude(point.alt),
     terrain: terrain(point.loc, course.terrainFactors)
   })
