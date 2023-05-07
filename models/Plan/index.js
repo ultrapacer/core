@@ -38,15 +38,6 @@ class Plan {
       if (!disallowed.includes(k)) this[k] = db[k]
     })
 
-    // create event property:
-    if (db.eventStart) {
-      this.event = new Event(this.course.track.start)
-      this.event.timezone = db.eventTimezone
-      this.event.start = db.eventStart
-    } else {
-      this.event = this.course.event
-    }
-
     // create cutoffs array:
     this.cutoffs = []
     if (this.adjustForCutoffs) {
@@ -89,6 +80,40 @@ class Plan {
     Object.keys(this._cache).forEach(key => { delete this._cache[key] })
   }
 
+  set eventStart (v) {
+    if (v) this._data.eventStart = new Date(v)
+    else delete this._data.eventStart
+    delete this._cache.event
+  }
+
+  get eventStart () { return this._data.eventStart }
+
+  set eventTimezone (v) {
+    if (v) this._data.eventTimezone = v
+    else delete this._data.eventTimezone
+
+    delete this._cache.event
+  }
+
+  get eventTimezone () { return this._data.eventTimezone }
+
+  get event () {
+    if (this._cache.event) return this._cache.event
+
+    const start = this.eventStart || this.course.eventStart
+    const timezone = this.eventTimezone || this.course.eventTimezone
+    this._cache.event =
+      start && timezone
+        ? new Event({
+          ...this.course.track.start,
+          start,
+          timezone
+        })
+        : undefined
+
+    return this._cache.event
+  }
+
   get strategy () {
     if (this._cache.strategy) return this._cache.strategy
     this._cache.strategy = new Strategy({ values: this._data.strategy, length: this.course.dist })
@@ -96,7 +121,7 @@ class Plan {
   }
 
   set strategy (v) {
-    console.warn('this is temporary to sync calcs up between new and old')
+    console.warn('TODO: this is temporary to sync calcs up between new and old')
     if (Array.isArray(v)) v.forEach(x => { x.onset *= this.course.distScale })
 
     this._data.strategy = v
