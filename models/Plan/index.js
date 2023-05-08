@@ -121,11 +121,29 @@ class Plan {
   }
 
   set strategy (v) {
-    console.warn('TODO: this is temporary to sync calcs up between new and old')
-    if (Array.isArray(v)) v.forEach(x => { x.onset *= this.course.distScale })
+    /*
+     strategy must be array
+      [{
+        onset: Number,
+        value: Number,
+        type: String
+      }]
+    */
+
+    delete this._cache.strategy
+
+    // validate input:
+    if (
+      !Array.isArray(v) ||
+      !v.length ||
+      v.length !== v.filter(value => _.isNumber(value.onset) && _.isNumber(value.value) && _.isString(value.type)).length
+    ) {
+      delete this._data.strategy
+      console.error(new Error('Plan "strategy" invalid.'))
+      return
+    }
 
     this._data.strategy = v
-    delete this._cache.strategy
   }
 
   get heatModel () {

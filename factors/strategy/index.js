@@ -39,10 +39,12 @@ class Strategy {
     // otherwise copy over individual fields
     } else {
       // length
+      // TODO: length should be assumed from strategy.plan.course.dist
       if (!arg.length) throw new Error('length required')
       this.length = arg.length
 
       // values
+      // TODO: this is too flexible and prone to errors:
       if (_.isNumber(arg.values)) {
         this.values = [{ onset: 0, value: arg.values, type: 'linear' }]
       } else if (_.isArray(arg.values)) {
