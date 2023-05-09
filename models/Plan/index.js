@@ -67,7 +67,7 @@ class Plan {
           if (wp) s.waypoint = wp
         })
       }
-      this.pacing.isValid = true
+      this.pacing.status = { success: true }
     }
 
     // if no pacing from cache, create a new pacing object:
@@ -122,28 +122,32 @@ class Plan {
 
   set strategy (v) {
     /*
-     strategy must be array
-      [{
-        onset: Number,
-        value: Number,
-        type: String
-      }]
+     strategy must be either
+        null / undefined
+      OR
+        [{
+          onset: Number,
+          value: Number,
+          type: String
+        }]
     */
 
     delete this._cache.strategy
 
     // validate input:
-    if (
-      !Array.isArray(v) ||
-      !v.length ||
-      v.length !== v.filter(value => _.isNumber(value.onset) && _.isNumber(value.value) && _.isString(value.type)).length
+    if (_.isNil(v)) {
+      this._data.strategy = undefined
+    } else if (
+      Array.isArray(v) &&
+      v.length &&
+      v.length === v.filter(value => _.isNumber(value.onset) && _.isNumber(value.value) && _.isString(value.type)).length
     ) {
-      delete this._data.strategy
+      this._data.strategy = v
+    } else {
+      this._data.strategy = undefined
       console.error(new Error('Plan "strategy" invalid.'))
-      return
+      console.error(v)
     }
-
-    this._data.strategy = v
   }
 
   get heatModel () {
@@ -227,9 +231,15 @@ class Plan {
   calcPacing () {
     this.splits = null
 
+    if (this.pacing?.status?.success === false) {
+      console.warn('Pacing calculation already failed; returning')
+      return
+    }
+
     let time = new Date().getTime()
 
     // calcPacing mutates this.pacing
+    // TODO: pacing should really be stored in cache
     calcPacing({
       plan: this,
       options: {
@@ -238,8 +248,8 @@ class Plan {
     })
 
     time = new Date().getTime() - time
-    console.debug(`Plan.calcPacing: complete after ${this.pacing.status.iterations} iterations (${time} ms).`)
-    this.pacing.isValid = true
+    if (this.pacing.status.success) console.debug(`Plan.calcPacing: complete after ${this.pacing.status.iterations} iterations (${time} ms).`)
+    else console.error(`Plan.calcPacing: failed after ${this.pacing.status.iterations} iterations (${time} ms).`)
   }
 
   // calculate and return splits for plan
@@ -448,12 +458,13 @@ class Plan {
 
   invalidatePacing () {
     console.log('invalidatePacing')
-    this.pacing.isValid = false
+    if (this.pacing?.status && !_.isUndefined(this.pacing.status.success)) delete this.pacing.status.success
     this.splits = null
   }
 
   checkPacing () {
-    if (!this.pacing?.isValid) this.calcPacing()
+    console.debug('checkPacing')
+    if (!this.pacing?.status?.success) this.calcPacing()
     if (!this.points?.length) this.applyPacing()
     return true
   }

@@ -48,7 +48,6 @@ distribution.
 - **cutoffs**
 - **db**
 - **delays**
-- **drift**
 - **event**
 - **heatModel**
 - **notes**

@@ -223,17 +223,9 @@ function calcPacing (data) {
     lastTest = [...newTest]
   }
 
-  // if we did not converge, throw a new error
-  if (!pass) {
-    const message = 'Iteration did not converge: Iterations: ' + i + ', ' + Object.keys(tests).map(k => `${k}:${tests[k]}`).join(', ')
-    const error = new Error(message)
-    error.name = 'PacingError'
-    error.results = {
-      tests,
-      iterations: i
-    }
-    throw error
-  }
+  data.plan.pacing.status.tests = tests
+  data.plan.pacing.status.success = pass
+  data.plan.pacing.status.iterations = i
 
   // add in statistics
   // these are max and min values for each factor
@@ -245,10 +237,6 @@ function calcPacing (data) {
     })
   })
   data.plan.pacing.fstats = fstats
-
-  data.plan.pacing.status.tests = tests
-  data.plan.pacing.status.success = true
-  data.plan.pacing.status.iterations = i
 
   if (data.plan.event?.sun) {
     const s = calcSunTime({
