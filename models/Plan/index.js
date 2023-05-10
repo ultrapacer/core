@@ -3,6 +3,7 @@ const { req, rgte, interp } = require('../../util/math')
 const Event = require('../Event')
 const { calcPacing, createSegments, createSplits } = require('../../geo')
 const areSame = require('../../util/areSame')
+const MissingDataError = require('../../util/MissingDataError')
 const Segment = require('../Segment')
 const Pacing = require('../Pacing')
 const PlanPoint = require('../PlanPoint')
@@ -10,6 +11,45 @@ const { list: fKeys, generate: generateFactors, Strategy, Factors } = require('.
 const validateCache = require('./validateCache')
 
 const areSameWaypoint = (a, b) => (areSame(a.site, b.site) && a.loop === b.loop)
+
+class PlanSplits {
+  constructor (data) {
+    Object.defineProperty(this, '_cache', { value: {} })
+    Object.assign(this, data)
+  }
+
+  get __class () { return 'PlanSplits' }
+
+  get segments () {
+    if (!this._cache.segments) {
+      this.plan.checkPacing()
+      this._cache.segments = createSegments({ plan: this.plan })
+    }
+    return this._cache.segments
+  }
+
+  set segments (v) { this._cache.segments = v }
+
+  get miles () {
+    if (!this._cache.miles) {
+      this.plan.checkPacing()
+      this._cache.miles = createSplits({ unit: 'miles', plan: this.plan })
+    }
+    return this._cache.segments
+  }
+
+  set miles (v) { this._cache.segments = v }
+
+  get kilometers () {
+    if (!this._cache.segments) {
+      this.plan.checkPacing()
+      this._cache.kilometers = createSplits({ unit: 'kilometers', plan: this.plan })
+    }
+    return this._cache.kilometers
+  }
+
+  set kilometers (v) { this._cache.kilometers = v }
+}
 
 class Plan {
   constructor (db) {
@@ -45,9 +85,8 @@ class Plan {
     }
 
     // use cached splits if input:
-    this.splits = null
     this.pacing = null
-    if (db.cache) {
+    if (false && db.cache) {
       // make sure cache has expected data:
       validateCache(db.cache)
 
@@ -59,6 +98,7 @@ class Plan {
       this.splits.segments.forEach(s => { s.factors = new Factors(s.factors) })
 
       // sync waypoint objects
+      // TODO: this should happen in application outside of core model:
       if (this.course?.waypoints?.length && this.splits.segments?.length) {
         this.splits.segments.forEach(s => {
           const wp = this.course.waypoints.find(
@@ -214,6 +254,14 @@ class Plan {
     delete this._cache.notes
   }
 
+  get splits () {
+    if (!this._cache.splits) {
+      this._cache.splits = new PlanSplits({ plan: this })
+    }
+
+    return this._cache.splits
+  }
+
   getDelayAtWaypoint (waypoint) {
     return this.delays.find(d => areSameWaypoint(d.waypoint, waypoint))?.delay || 0
   }
@@ -229,7 +277,7 @@ class Plan {
 
   // iterate pacing routine and set this.pacing key
   calcPacing () {
-    this.splits = null
+    delete this._cache.splits
 
     if (this.pacing?.status?.success === false) {
       console.warn('Pacing calculation already failed; returning')
@@ -250,20 +298,6 @@ class Plan {
     time = new Date().getTime() - time
     if (this.pacing.status.success) console.debug(`Plan.calcPacing: complete after ${this.pacing.status.iterations} iterations (${time} ms).`)
     else console.error(`Plan.calcPacing: failed after ${this.pacing.status.iterations} iterations (${time} ms).`)
-  }
-
-  // calculate and return splits for plan
-  calcSplits (type = 'segments') {
-    this.checkPacing()
-    let splits
-    if (type === 'segments') splits = createSegments({ plan: this })
-    else if (['kilometers', 'miles'].includes(type)) splits = createSplits({ unit: type, plan: this })
-    else throw new Error('Invalid split type.')
-
-    if (!this.splits) this.splits = {}
-    this.splits[type] = splits
-
-    return splits
   }
 
   getPoint ({ loc, insert = false }) {
@@ -297,12 +331,9 @@ class Plan {
   }
 
   initializePoints () {
-    const array = []
-    // due to large arrays, meter mapping of points
-    for (let i = 0; i < this.course.points.length; i++) {
-      array.push(new PlanPoint(this, this.course.points[i]))
-    }
-    this.points = array
+    if (!this.course?.points?.length) throw new MissingDataError('Course points are not defined.')
+
+    this.points = this.course.points.map(point => new PlanPoint(this, point))
   }
 
   applyPacing (arg = {}) {
@@ -459,7 +490,7 @@ class Plan {
   invalidatePacing () {
     console.log('invalidatePacing')
     if (this.pacing?.status && !_.isUndefined(this.pacing.status.success)) delete this.pacing.status.success
-    this.splits = null
+    delete this._cache.splits
   }
 
   checkPacing () {

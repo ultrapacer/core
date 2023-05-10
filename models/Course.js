@@ -9,6 +9,43 @@ const { createSegments, createSplits } = require('../geo')
 const Factors = require('../factors/Factors')
 const CoursePoint = require('./CoursePoint')
 const Track = require('./Track')
+const MissingDataError = require('../util/MissingDataError')
+
+class CourseSplits {
+  constructor (data) {
+    Object.defineProperty(this, '_cache', { value: {} })
+    Object.assign(this, data)
+  }
+
+  get __class () { return 'CourseSplits' }
+
+  get segments () {
+    if (!this._cache.segments) {
+      this._cache.segments = createSegments({ course: this.course })
+    }
+    return this._cache.segments
+  }
+
+  set segments (v) { this._cache.segments = v }
+
+  get miles () {
+    if (!this._cache.miles) {
+      this._cache.miles = createSplits({ unit: 'miles', course: this.course })
+    }
+    return this._cache.segments
+  }
+
+  set miles (v) { this._cache.segments = v }
+
+  get kilometers () {
+    if (!this._cache.segments) {
+      this._cache.kilometers = createSplits({ unit: 'kilometers', course: this.course })
+    }
+    return this._cache.kilometers
+  }
+
+  set kilometers (v) { this._cache.kilometers = v }
+}
 
 // course constructor will pass through all fields; use
 // this array to omit certain keys from passing through
@@ -48,14 +85,12 @@ class Course {
     }
 
     // other fields just pass along:
-    Object.keys(db)
-      .filter(k => !disallowed.includes(k))
-      .forEach(k => { this[k] = db[k] })
-
-    if (db.sites) this.sites = db.sites
+    const keys = Object.keys(db).filter(k => !disallowed.includes(k))
+    Object.assign(this, _.pick(db, keys))
 
     // use cached splits if input:
-    if (db.cache) {
+    // TODO, assign this from outside
+    if (false && db.cache) {
       try {
         // make sure cache has expected data:
         if (
@@ -122,10 +157,9 @@ class Course {
     // level 2 means route itself changes (eg, track, loops, dist, gain, loss)
 
     console.debug(`clearCache-${level}`)
-    this.splits = null
 
     const keys = level === 1
-      ? ['waypoints', 'terrainFactors', 'cutoffs', 'stats']
+      ? ['waypoints', 'terrainFactors', 'cutoffs', 'stats', 'splits']
       : Object.keys(this._cache)
 
     keys.forEach(key => { delete this._cache[key] })
@@ -163,6 +197,8 @@ class Course {
     if (this._cache.points) return this._cache.points
 
     console.debug('generating points array')
+
+    if (!this.track?.points?.length) throw new MissingDataError('Track points are not defined.')
 
     this._cache.points = new Array(this.track.points.length * this.loops)
     for (let l = 0; l < this.loops; l++) {
@@ -237,17 +273,12 @@ class Course {
     return this._cache.cutoffs
   }
 
-  // calculate and return splits for course
-  calcSplits (type = 'segments') {
-    let splits
-    if (type === 'segments') splits = createSegments({ course: this })
-    else if (['kilometers', 'miles'].includes(type)) splits = createSplits({ type, course: this })
-    else throw new Error('Invalid split type.')
+  get splits () {
+    if (!this._cache.splits) {
+      this._cache.splits = new CourseSplits({ course: this })
+    }
 
-    if (!this.splits) this.splits = {}
-    this.splits[type] = splits
-
-    return splits
+    return this._cache.splits
   }
 
   // calculate max and min values along course

@@ -1,8 +1,9 @@
+const _ = require('lodash')
 const factors = require('./factors')
 const { rlt, rgt, rlte, rgte, req, interpArray } = require('./util/math')
 const Segment = require('./models/Segment')
 const Pacing = require('./models/Pacing')
-const _ = require('lodash')
+const MissingDataError = require('./util/MissingDataError')
 const fKeys = factors.list
 
 // creates an object with keys from fKeys above with initial values of init
@@ -35,6 +36,8 @@ function calcSegments ({ plan, course, breaks }) {
   }
 
   const p = plan ? plan.points : course.points
+
+  if (!p?.length) throw new MissingDataError((plan ? 'Plan' : 'Course') + ' points are not defined.')
 
   const s = [] // segments array
   let i
