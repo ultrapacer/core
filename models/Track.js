@@ -6,6 +6,7 @@ const Point = require('./Point')
 const addLocations = require('./Points/addLocations')
 const addGrades = require('./Points/addGrades')
 const getSmoothedProfile = require('./Points/getSmoothedProfile')
+const debug = require('../debug')('models:Track')
 
 class Track {
   constructor (arg) {
@@ -46,13 +47,15 @@ class Track {
   set start (v) { this._data.start = v }
   get start () { return this.points?.[0] ? _.pick(this.points[0], ['lat', 'lon']) : this._data.start }
 
+  set finish (v) { this._data.finish = v }
+  get finish () { return this.points?.length ? _.pick(_.last(this.points), ['lat', 'lon']) : this._data.finish }
+
   set stats (v) { Object.assign(this._data, v) }
 
   get stats () {
     if (this._cache.stats) return this._cache.stats
     if (this.points) {
-      console.debug('Track.stats: calculating')
-      // return track { gain, loss, dist }
+      debug('Calculating')
       const dist = _.last(this.points).loc
       let gain = 0
       let loss = 0
@@ -247,11 +250,12 @@ class Track {
   // if criteria is met, returns new Track object w/ reduced points
   // otherwise, returns this
   reduceDensity ({ spacing, length } = {}) {
+    const d = require('debug')('ultraPacer:models:Track').extend('reduceDensity')
     // reduce density of points for processing
     if (!spacing) spacing = 0.025 // meters between points
     if (!length) length = this.points.length / 2
     if (this.dist / spacing > length / 2) {
-      console.debug('reduceDensity does not meet criteria')
+      d('Does not meet criteria')
       return this
     }
 
@@ -272,7 +276,7 @@ class Track {
     const source = this.source
     const track = new Track({ source, points })
 
-    console.debug(`reduceDensity from ${this.points.length} to ${track.points.length} points.`)
+    d(`Reduced from ${this.points.length} to ${track.points.length} points.`)
     return track
   }
 }

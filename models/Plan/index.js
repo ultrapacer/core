@@ -9,6 +9,7 @@ const Pacing = require('../Pacing')
 const PlanPoint = require('../PlanPoint')
 const { list: fKeys, generate: generateFactors, Strategy, Factors } = require('../../factors')
 const validateCache = require('./validateCache')
+const debug = require('../../debug')('models:Plan')
 
 const areSameWaypoint = (a, b) => (areSame(a.site, b.site) && a.loop === b.loop)
 
@@ -185,8 +186,7 @@ class Plan {
       this._data.strategy = v
     } else {
       this._data.strategy = undefined
-      console.error(new Error('Plan "strategy" invalid.'))
-      console.error(v)
+      debug('Plan "strategy" invalid.')
     }
   }
 
@@ -280,7 +280,7 @@ class Plan {
     delete this._cache.splits
 
     if (this.pacing?.status?.success === false) {
-      console.warn('Pacing calculation already failed; returning')
+      debug('Pacing calculation already failed; returning')
       return
     }
 
@@ -296,8 +296,8 @@ class Plan {
     })
 
     time = new Date().getTime() - time
-    if (this.pacing.status.success) console.debug(`Plan.calcPacing: complete after ${this.pacing.status.iterations} iterations (${time} ms).`)
-    else console.error(`Plan.calcPacing: failed after ${this.pacing.status.iterations} iterations (${time} ms).`)
+    if (this.pacing.status.success) debug(`Plan.calcPacing: complete after ${this.pacing.status.iterations} iterations (${time} ms).`)
+    else debug(`Plan.calcPacing: failed after ${this.pacing.status.iterations} iterations (${time} ms).`)
   }
 
   getPoint ({ loc, insert = false }) {
@@ -488,13 +488,13 @@ class Plan {
   }
 
   invalidatePacing () {
-    console.log('invalidatePacing')
+    debug('invalidatePacing')
     if (this.pacing?.status && !_.isUndefined(this.pacing.status.success)) delete this.pacing.status.success
     delete this._cache.splits
   }
 
   checkPacing () {
-    console.debug('checkPacing')
+    debug('checkPacing')
     if (!this.pacing?.status?.success) this.calcPacing()
     if (!this.points?.length) this.applyPacing()
     return true

@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const { req } = require('../util/math')
 const { Factors, Strategy } = require('../factors')
+const debug = require('../debug')('models:Pacing')
 
 class Pacing {
   constructor (data = {}) {
@@ -72,7 +73,7 @@ class Pacing {
     return val
   }
 
-  set elapsed (v) { console.error('dummy: set elapsed') }
+  set elapsed (v) { debug('dummy: set elapsed') }
 
   get pace () {
     return (this.elapsed - this._plan.delay) / this._plan.course.dist

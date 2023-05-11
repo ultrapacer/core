@@ -1,15 +1,13 @@
 const _ = require('lodash')
 const { interp, req, rgte } = require('../util/math')
-const areSame = require('../util/areSame')
 const interpolatePoint = require('./Points/interpolate')
 const Waypoint = require('./Waypoint')
 const Event = require('./Event')
-const Segment = require('./Segment')
 const { createSegments, createSplits } = require('../geo')
-const Factors = require('../factors/Factors')
 const CoursePoint = require('./CoursePoint')
 const Track = require('./Track')
 const MissingDataError = require('../util/MissingDataError')
+const debug = require('../debug')('models:Course')
 
 class CourseSplits {
   constructor (data) {
@@ -55,9 +53,9 @@ const disallowed = [
 ]
 
 class Course {
-  constructor (db) {
+  constructor (data) {
     Object.defineProperty(this, '_data', {
-      value: db._data || {
+      value: data._data || {
         sites: [
           { _id: _.random(10000, 20000), name: 'Start', type: 'start', percent: 0 },
           { _id: _.random(30000, 40000), name: 'Finish', type: 'finish', percent: 1 }
@@ -69,58 +67,9 @@ class Course {
     // used to store results of processed information in _data to speed up calcs
     Object.defineProperty(this, '_cache', { value: {} })
 
-    this.db = db
-
-    if (db.track) {
-      this.track = db.track
-
-      // create event property:
-      if (db.track.start) {
-        this.event = new Event(db.track.start)
-        if (db.eventStart) {
-          this.event.timezone = db.eventTimezone
-          this.event.start = db.eventStart
-        }
-      }
-    }
-
     // other fields just pass along:
-    const keys = Object.keys(db).filter(k => !disallowed.includes(k))
-    Object.assign(this, _.pick(db, keys))
-
-    // use cached splits if input:
-    // TODO, assign this from outside
-    if (false && db.cache) {
-      try {
-        // make sure cache has expected data:
-        if (
-          !db.cache.version ||
-          !db.cache.stats ||
-          !Array.isArray(db.cache.segments)
-        ) throw new Error('Invalid cache')
-
-        this.stats = db.cache.stats
-
-        // add splits, and make sure each is casted as a Segment
-        this.splits = {}
-        this.splits.segments = db.cache.segments.map(s => new Segment(s))
-        this.splits.segments.forEach(s => { s.factors = new Factors(s.factors) })
-
-        // sync waypoint objects
-        if (this.waypoints?.length && this.splits.segments?.length) {
-          this.splits.segments.forEach(s => {
-            const wp = this.waypoints.find(
-              wp => areSame(wp.site, s.waypoint.site) && wp.loop === s.waypoint.loop
-            )
-            if (wp) s.waypoint = wp
-          })
-        }
-      } catch (e) {
-        console.log(e)
-        throw new Error('Malformed course cache.')
-      }
-    }
-    console.debug(this)
+    const keys = Object.keys(data).filter(k => !disallowed.includes(k))
+    Object.assign(this, _.pick(data, keys))
   }
 
   get __class () { return 'Course' }
@@ -132,9 +81,9 @@ class Course {
   get gain () { return this._cache.gain || (this._cache.gain = (this._data.gain || (this.track?.gain ? (this.track.gain * this.loops) : undefined))) }
   get loss () { return this._cache.loss || (this._cache.loss = (this._data.loss || (this.track?.loss ? (this.track.loss * this.loops) : undefined))) }
 
-  set dist (v) { if (!req(v, this._data.dist, 6)) { console.warn(`overriding dist to ${v}`); this._data.dist = v; this.clearCache(2) } }
-  set gain (v) { if (!req(v, this._data.gain, 6)) { console.warn(`overriding gain to ${v}`); this._data.gain = v; this.clearCache(2) } }
-  set loss (v) { if (!req(v, this._data.loss, 6)) { console.warn(`overriding loss to ${v}`); this._data.loss = v; this.clearCache(2) } }
+  set dist (v) { if (!req(v, this._data.dist, 6)) { debug(`overriding dist to ${v}`); this._data.dist = v; this.clearCache(2) } }
+  set gain (v) { if (!req(v, this._data.gain, 6)) { debug(`overriding gain to ${v}`); this._data.gain = v; this.clearCache(2) } }
+  set loss (v) { if (!req(v, this._data.loss, 6)) { debug(`overriding loss to ${v}`); this._data.loss = v; this.clearCache(2) } }
 
   get distScale () { return this._data.dist ? this._data.dist / (this.track.dist * this.loops) : 1 }
   get gainScale () { return this._data.gain ? this._data.gain / (this.track.gain * this.loops) : 1 }
@@ -155,8 +104,7 @@ class Course {
   clearCache (level = 1) {
     // level 1 means route itself does not change (eg, changes to waypoints and trivial changes to course)
     // level 2 means route itself changes (eg, track, loops, dist, gain, loss)
-
-    console.debug(`clearCache-${level}`)
+    debug(`clearCache-${level}`)
 
     const keys = level === 1
       ? ['waypoints', 'terrainFactors', 'cutoffs', 'stats', 'splits']
@@ -187,7 +135,7 @@ class Course {
   }
 
   set track (v) {
-    console.log('set-track')
+    debug('set-track')
     if (v.__class === 'Track') this._data.track = v
     else this._data.track = new Track(v)
     this.clearCache(2)
@@ -196,7 +144,7 @@ class Course {
   get points () {
     if (this._cache.points) return this._cache.points
 
-    console.debug('generating points array')
+    debug('generating points array')
 
     if (!this.track?.points?.length) throw new MissingDataError('Track points are not defined.')
 
@@ -246,7 +194,7 @@ class Course {
 
   get terrainFactors () {
     if (this._cache.terrainFactors) return this._cache.terrainFactors
-    console.log('regenerating tfs')
+    debug('regenerating tfs')
     let tF = this.waypoints[0].terrainFactor()
     let tT = this.waypoints[0].terrainType()
     this._cache.terrainFactors = this.waypoints.filter((x, i) => i < this.waypoints.length - 1).map((x, i) => {
@@ -285,7 +233,7 @@ class Course {
   get stats () {
     if (this._cache.stats) return this._cache.stats
 
-    console.debug('stats:calculate')
+    debug('stats:calculate')
 
     const alts = this.points.map(p => p.alt)
     const grades = this.points.map(p => p.grade)
@@ -323,12 +271,38 @@ class Course {
     this._cache.stats = v
   }
 
-  get eventStart () {
-    return this._data.eventStart?.getTime?.() ? this._data.eventStart : undefined
+  set eventStart (v) {
+    if (v) this._data.eventStart = new Date(v)
+    else delete this._data.eventStart
+    delete this._cache.event
   }
 
-  set eventStart (v) {
-    this._data.eventStart = new Date(v)
+  get eventStart () { return this._data.eventStart }
+
+  set eventTimezone (v) {
+    if (v) this._data.eventTimezone = v
+    else delete this._data.eventTimezone
+
+    delete this._cache.event
+  }
+
+  get eventTimezone () { return this._data.eventTimezone }
+
+  get event () {
+    if (this._cache.event) return this._cache.event
+
+    const start = this.eventStart || undefined
+    const timezone = this.eventTimezone || undefined
+    this._cache.event =
+      start && timezone && this.track?.start
+        ? new Event({
+          ...this.track.start,
+          start,
+          timezone
+        })
+        : undefined
+
+    return this._cache.event
   }
 }
 
