@@ -25,7 +25,8 @@ function calcSegments ({ plan, course, breaks }) {
      [plan]: Plan Object
    }
   */
-  d('calcSegments')
+  const d2 = d.extend('calcSegments')
+  d2('exec')
 
   // if breaks is array of loctions, convert to array of {start, end}:
   if (_.isNumber(breaks[0])) {
@@ -39,7 +40,10 @@ function calcSegments ({ plan, course, breaks }) {
 
   const p = plan ? plan.points : course.points
 
-  if (!p?.length) throw new MissingDataError((plan ? 'Plan' : 'Course') + ' points are not defined.')
+  if (!p?.length) {
+    d2(`${(plan ? 'Plan' : 'Course')} points are not defined.`)
+    throw new MissingDataError((plan ? 'Plan' : 'Course') + ' points are not defined.')
+  }
 
   const s = [] // segments array
   let i
@@ -129,7 +133,6 @@ function calcSegments ({ plan, course, breaks }) {
   return s
 }
 
-// TODO: loosen up calcs; dont display seconds for elapsed in tables
 function calcPacing (data) {
   /*
     data:
@@ -139,7 +142,8 @@ function calcPacing (data) {
         testLocations [(km)]
       }
   */
-  d('calcPacing')
+  const d2 = d.extend('calcPacing')
+  d2('exec')
 
   const minIterations = 3
   let maxIterations = 20
@@ -152,9 +156,14 @@ function calcPacing (data) {
   }
   if (data.options) Object.assign(options, data.options)
 
+  if (!data.plan.points?.length) {
+    d2('calcPacing: error; no points')
+    throw new MissingDataError('Plan points are not defined.')
+  }
+
   // replace plan.pacing object with new clean object
-  d('creating pacing object')
-  data.plan.pacing = new Pacing({ plan: data.plan, status: { calculating: true } })
+  d2('creating pacing object')
+  data.plan.pacing = new Pacing({ plan: data.plan })
 
   // make sure test locations are at least every 1/10th of the course:
   let itl = 0
@@ -172,22 +181,22 @@ function calcPacing (data) {
     itl += 1
   }
 
-  d('adding points at each terrain factor break')
+  d2('adding points at each terrain factor break')
   data.plan.course.terrainFactors?.forEach(tf => data.plan.getPoint({ loc: tf.start, insert: true }))
 
-  d('adding points at each cutoff')
+  d2('adding points at each cutoff')
   if (data.plan.adjustForCutoffs) {
     data.plan.cutoffs.forEach(c => {
       c.point = data.plan.getPoint({ loc: c.loc, insert: true })
     })
   }
 
-  d('seeding initial time values')
+  d2('seeding initial time values')
   const { factor, factors } = data.plan.applyPacing()
   Object.assign(data.plan.pacing, { factor, factors })
 
   // points for sensitivity test:
-  d('creating test points')
+  d2('creating test points')
   const testPoints = options.testLocations.map(tl => data.plan.getPoint({ loc: tl, insert: true }))
 
   let lastTest = []
@@ -195,9 +204,9 @@ function calcPacing (data) {
   let i
   const tests = {}
   let pass = false
-  d('starting iteration')
+  d2('starting iteration')
   for (i = 0; i < maxIterations; i++) {
-    d(`iteration ${i + 1}, creating factors`)
+    d2(`iteration ${i + 1}, creating factors`)
     const { factor, factors } = data.plan.applyPacing({ addBreaks: false })
     Object.assign(data.plan.pacing, { factor, factors })
 
@@ -208,14 +217,14 @@ function calcPacing (data) {
       !data.plan.adjustForCutoffs ||
       adjustForCutoffs(data, i)
     )
-    d(`iteration ${i + 1}, cutoffs pass=${tests.cutoffs}`)
+    d2(`iteration ${i + 1}, cutoffs pass=${tests.cutoffs}`)
 
     // testPassing test makes sure interim tests are within the specified iterationThreshold
     const newTest = testPoints.map(x => x.elapsed)
     tests.locations =
       lastTest.length &&
       newTest.findIndex((x, j) => Math.abs(x - lastTest[j]) >= options.iterationThreshold) < 0
-    d(`iteration ${i + 1}, locations pass=${tests.locations}`)
+    d2(`iteration ${i + 1}, locations pass=${tests.locations}`)
 
     // tests.target makes sure the final point is within a half second of target time (or cutoff max)
     const elapsed = _.last(data.plan.points).elapsed
@@ -223,7 +232,7 @@ function calcPacing (data) {
       data.plan.pacingMethod === 'time'
         ? Math.abs(data.plan.pacing.elapsed - elapsed) < 0.5
         : true
-    d(`iteration ${i + 1}, target pass=${tests.target}`)
+    d2(`iteration ${i + 1}, target pass=${tests.target}`)
 
     pass = (
       tests.minIterations &&
@@ -236,7 +245,7 @@ function calcPacing (data) {
 
     lastTest = [...newTest]
   }
-  d('iteration complete')
+  d2('iteration complete')
 
   data.plan.pacing.status = {
     tests,

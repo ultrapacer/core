@@ -311,7 +311,10 @@ class Plan {
     if (!this._cache.points) {
       d('creating points array')
 
-      if (!this.course?.points?.length) throw new MissingDataError('Course points are not defined.')
+      if (!this.course?.points?.length) {
+        d('cannot create points array; course points are not defined.')
+        throw new MissingDataError('Course points are not defined.')
+      }
 
       this._cache.points = this.course.points.map(point => new PlanPoint(this, point))
 
@@ -477,7 +480,7 @@ class Plan {
   }
 
   checkPacing () {
-    if (!this.pacing.status.success && !this.pacing.status.calculating) {
+    if (!this.pacing.status.success) {
       d('checkPacing -- calcPacing')
       this.calcPacing()
     }
