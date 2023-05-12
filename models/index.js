@@ -2,6 +2,7 @@ module.exports = {
   Course: require('./Course'),
   CoursePoint: require('./CoursePoint'),
   Event: require('./Event'),
+  Pacing: require('./Pacing'),
   Plan: require('./Plan'),
   PlanPoint: require('./PlanPoint'),
   Point: require('./Point'),

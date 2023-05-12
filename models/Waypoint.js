@@ -225,7 +225,7 @@ class Waypoint {
     this.alt = alt
     if (ind) this.site.pointsIndex = ind
 
-    console.warn('TODO. clearing splits; not sure if this is the best place to put this')
+    // TODO. clearing splits; not sure if this is the best place to put this
     this.course.clearCache(1)
   }
 }

@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const addLocations = require('./addLocations')
 const { interp } = require('../../util/math')
+const debug = require('../../debug')('models:Points')
 
 // clean up array of Point objects
 // mutates input array
@@ -9,7 +10,6 @@ const clean = (points) => {
 
   addLocations(points)
 
-  console.log(points)
   // filter out any zero-length segments:
   _.remove(points, (p, i) => i > 0 && !_.round(p.loc - points[i - 1].loc, 8))
 
@@ -50,7 +50,7 @@ const clean = (points) => {
     }
   }
   )
-  console.info(`clean from ${length0} to ${points.length} points.`)
+  debug(`clean from ${length0} to ${points.length} points.`)
 }
 
 module.exports = clean
