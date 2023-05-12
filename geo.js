@@ -5,6 +5,7 @@ const Segment = require('./models/Segment')
 const Pacing = require('./models/Pacing')
 const MissingDataError = require('./util/MissingDataError')
 const fKeys = factors.list
+const d = require('./debug')('geo')
 
 // creates an object with keys from fKeys above with initial values of init
 function fObj (init) {
@@ -24,6 +25,7 @@ function calcSegments ({ plan, course, breaks }) {
      [plan]: Plan Object
    }
   */
+  d('calcSegments')
 
   // if breaks is array of loctions, convert to array of {start, end}:
   if (_.isNumber(breaks[0])) {
@@ -137,6 +139,7 @@ function calcPacing (data) {
         testLocations [(km)]
       }
   */
+  d('calcPacing')
 
   const minIterations = 3
   let maxIterations = 20
@@ -148,6 +151,10 @@ function calcPacing (data) {
     testLocations: Array.apply(null, Array(10)).map((x, i) => (i + 1) / 10 * data.plan.course.dist)
   }
   if (data.options) Object.assign(options, data.options)
+
+  // replace plan.pacing object with new clean object
+  d('creating pacing object')
+  data.plan.pacing = new Pacing({ plan: data.plan, status: { calculating: true } })
 
   // make sure test locations are at least every 1/10th of the course:
   let itl = 0
@@ -165,24 +172,22 @@ function calcPacing (data) {
     itl += 1
   }
 
-  data.plan.initializePoints()
-
+  d('adding points at each terrain factor break')
   data.plan.course.terrainFactors?.forEach(tf => data.plan.getPoint({ loc: tf.start, insert: true }))
+
+  d('adding points at each cutoff')
   if (data.plan.adjustForCutoffs) {
     data.plan.cutoffs.forEach(c => {
       c.point = data.plan.getPoint({ loc: c.loc, insert: true })
     })
   }
 
-  // replace plan.pacing object with new clean object
-  data.plan.pacing = new Pacing({ _plan: data.plan })
-
-  if (!data.plan.pacing.status) data.plan.pacing.status = {}
-
+  d('seeding initial time values')
   const { factor, factors } = data.plan.applyPacing()
   Object.assign(data.plan.pacing, { factor, factors })
 
   // points for sensitivity test:
+  d('creating test points')
   const testPoints = options.testLocations.map(tl => data.plan.getPoint({ loc: tl, insert: true }))
 
   let lastTest = []
@@ -190,22 +195,27 @@ function calcPacing (data) {
   let i
   const tests = {}
   let pass = false
+  d('starting iteration')
   for (i = 0; i < maxIterations; i++) {
+    d(`iteration ${i + 1}, creating factors`)
     const { factor, factors } = data.plan.applyPacing({ addBreaks: false })
     Object.assign(data.plan.pacing, { factor, factors })
 
     tests.minIterations = i >= minIterations
 
     // cutoffsPassing test makes sure intermediate cutoffs are met (not final cutoff)
-    tests.cutoffs =
+    tests.cutoffs = Boolean(
       !data.plan.adjustForCutoffs ||
       adjustForCutoffs(data, i)
+    )
+    d(`iteration ${i + 1}, cutoffs pass=${tests.cutoffs}`)
 
     // testPassing test makes sure interim tests are within the specified iterationThreshold
-    const newTest = testPoints.map(x => { return x.elapsed })
+    const newTest = testPoints.map(x => x.elapsed)
     tests.locations =
       lastTest.length &&
       newTest.findIndex((x, j) => Math.abs(x - lastTest[j]) >= options.iterationThreshold) < 0
+    d(`iteration ${i + 1}, locations pass=${tests.locations}`)
 
     // tests.target makes sure the final point is within a half second of target time (or cutoff max)
     const elapsed = _.last(data.plan.points).elapsed
@@ -213,6 +223,7 @@ function calcPacing (data) {
       data.plan.pacingMethod === 'time'
         ? Math.abs(data.plan.pacing.elapsed - elapsed) < 0.5
         : true
+    d(`iteration ${i + 1}, target pass=${tests.target}`)
 
     pass = (
       tests.minIterations &&
@@ -225,10 +236,13 @@ function calcPacing (data) {
 
     lastTest = [...newTest]
   }
+  d('iteration complete')
 
-  data.plan.pacing.status.tests = tests
-  data.plan.pacing.status.success = pass
-  data.plan.pacing.status.iterations = i
+  data.plan.pacing.status = {
+    tests,
+    success: pass,
+    iterations: i + 1
+  }
 
   // add in statistics
   // these are max and min values for each factor
@@ -285,7 +299,8 @@ function adjustForCutoffs (data, i) {
   // data is same as data objct in calcPacing
   // i is the iteration number
 
-  // filter out any existing stragegy elements with negative values
+  d('adjustForCutoffs')
+
   const cutoffs = data.plan.cutoffs.filter(c => rlt(c.loc, data.plan.course.dist, 4))
 
   const strats = cutoffs.map((c, i) => {
@@ -399,6 +414,9 @@ function calcSunTime (data) {
 
 function createSegments (data) {
   // data: {[plan], [course]}
+
+  d('createSegments')
+
   if (data.plan && !data.course) data.course = data.plan.course
 
   // break on non-hidden waypoints:
@@ -420,6 +438,9 @@ function createSegments (data) {
 
 function createSplits (data) {
   // data: {unit, [plan], [course]}
+
+  d('createSplits')
+
   if (data.plan && !data.course) data.course = data.plan.course
 
   const distUnitScale = (data.unit === 'kilometers') ? 1 : 0.621371

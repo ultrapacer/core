@@ -6,10 +6,11 @@ const Point = require('./Point')
 const addLocations = require('./Points/addLocations')
 const addGrades = require('./Points/addGrades')
 const getSmoothedProfile = require('./Points/getSmoothedProfile')
-const debug = require('../debug')('models:Track')
+const d = require('../debug')('models:Track')
 
 class Track {
   constructor (arg) {
+    d('Creating new Track object')
     Object.defineProperty(this, '_data', { value: { stats: {} } })
     Object.defineProperty(this, '_cache', { value: {} })
     Object.defineProperty(this, 'type', { value: 'course', enumerable: true, writable: true })
@@ -17,6 +18,7 @@ class Track {
     // assign type first (other setters use it)
     if (arg.type) this.type = arg.type
 
+    d(`Initializing fields: ${Object.keys(arg).join(', ')}`)
     Object.assign(this, arg)
   }
 
@@ -27,6 +29,7 @@ class Track {
   }
 
   set points (v) {
+    d('set-points')
     this.clearCache()
 
     // v can be either array of [{lat, lon, alt}] or object {lat:[], lon:[], alt:[]}
@@ -38,6 +41,7 @@ class Track {
     addGrades(v)
 
     this._data.points = v
+    d(`set-points - ${v.length} points`)
   }
 
   get points () {
@@ -55,7 +59,7 @@ class Track {
   get stats () {
     if (this._cache.stats) return this._cache.stats
     if (this.points) {
-      debug('Calculating')
+      d('Calculating')
       const dist = _.last(this.points).loc
       let gain = 0
       let loss = 0
