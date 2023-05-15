@@ -153,6 +153,7 @@ class Waypoint {
   }
 
   delay (typicalDelay, waypointDelays) {
+    console.warn('"Waypoint.delay" field is deprecated.')
     const wpd = waypointDelays.find(
       wpd => wpd.site === this.site._id && this.loop === wpd.loop
     )
