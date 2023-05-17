@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const { req, rgte, interp } = require('../../util/math')
+const { req, rgte, interp, interpArray } = require('../../util/math')
 const Event = require('../Event')
 const { calcPacing, createSegments, createSplits } = require('../../geo')
 const areSame = require('../../util/areSame')
@@ -297,9 +297,7 @@ class Plan {
       const delay = (p2.elapsed - p2.time) - (p1.elapsed - p1.time)
       point.time = interp(p1.loc, p2.loc, p1.time + delay, p2.time, p2.loc)
       point.elapsed = p2.elapsed - (p2.time - point.time)
-      if (_.isNumber(this.event.startTime)) {
-        point.tod = (this.event.startTime + point.elapsed) % 86400
-      }
+      if (this.event.start) point.tod = this.event.elapsedToTimeOfDay(point.elapsed)
     }
 
     if (insert) this.points.splice(i2, 0, point)
@@ -351,9 +349,7 @@ class Plan {
     let elapsed = 0
     p[0].elapsed = 0
     p[0].time = 0
-    if (this.event.start) {
-      p[0].tod = this.event.startTime
-    }
+    if (this.event.start) p[0].tod = this.event.elapsedToTimeOfDay(0)
 
     // variables & function for adding in delays:
     let delay = 0
@@ -394,7 +390,7 @@ class Plan {
       delay = getDelay(p[j - 1].loc, p[j].loc)
       elapsed += dtime + delay
       p[j].elapsed = elapsed
-      if (this.event.start) p[j].tod = (elapsed + this.event.startTime) % 86400
+      if (this.event.start) p[j].tod = this.event.elapsedToTimeOfDay(elapsed)
     }
     // add factors to that last point
     generateFactors(_.last(p), { plan: this })
@@ -404,6 +400,98 @@ class Plan {
     const factor = factorSum / this.course.dist
 
     return { factor, factors }
+  }
+
+  get events () {
+    if (this._cache.events) return this._cache.events
+
+    // create array of sun events during the course:
+    d('calculating events.sun')
+    const sun = []
+    const eventTypes = ['dawn', 'sunrise', 'sunset', 'dusk']
+    const startTimeOfDay = this.event.elapsedToTimeOfDay(0)
+    const days = Math.ceil((startTimeOfDay + _.last(this.points).elapsed) / 86400)
+    for (let d = 0; d < days; d++) {
+      eventTypes.forEach(event => {
+        // get elapsed time of the event:
+        const elapsed = this.event.sun[event] - startTimeOfDay + (86400 * d)
+
+        // if it happens in the data, add it to the array
+        if (elapsed >= 0 && elapsed <= _.last(this.points).elapsed) {
+          sun.push({ event, elapsed })
+        }
+      })
+    }
+    // sort by elapsed time:
+    sun.sort((a, b) => a.elapsed - b.elapsed)
+    // interpolate distances from elapsed times:
+    if (sun.length) {
+      const locs = interpArray(
+        this.points.map(x => { return x.elapsed }),
+        this.points.map(x => { return x.loc }),
+        sun.map(x => { return x.elapsed })
+      )
+      locs.forEach((l, i) => { sun[i].loc = l })
+    }
+
+    this._cache.events = { sun }
+
+    return this._cache.events
+  }
+
+  get stats () {
+    if (this._cache.stats) return this._cache.stats
+
+    // add in statistics
+    // these are max and min values for each factor
+    d('calculating stats.factors')
+    const factors = Object.fromEntries(
+      fKeys.map(k => {
+        const values = this.points.map(p => p.factors[k])
+        console.log(values)
+        return [
+          k,
+          {
+            min: _.min(values),
+            max: _.max(values)
+          }
+        ]
+      })
+    )
+
+    // time in sun zones:
+    d('calculating stats.sun')
+    const sun = { day: { time: 0, dist: 0 }, twilight: { time: 0, dist: 0 }, dark: { time: 0, dist: 0 } }
+    let dloc = 0
+    let dtime = 0
+    this.points.forEach((x, i) => {
+      dloc = x.loc - (this.points[i - 1]?.loc || 0)
+      dtime = x.elapsed - (this.points[i - 1]?.elapsed || 0)
+      if (
+        !isNaN(this.event.sun.dawn) &&
+      !isNaN(this.event.sun.dusk) &&
+      (
+        x.tod <= this.event.sun.dawn ||
+        x.tod >= this.event.sun.dusk
+      )
+      ) {
+        sun.dark.time += dtime
+        sun.dark.dist += dloc
+      } else if (
+        x.tod < this.event.sun.sunrise ||
+      x.tod > this.event.sun.sunset
+      ) {
+        sun.twilight.time += dtime
+        sun.twilight.dist += dloc
+      } else {
+        sun.day.time += dtime
+        sun.day.dist += dloc
+      }
+    })
+
+    this._cache.stats = { factors, sun }
+
+    return this._cache.stats
   }
 
   update (field, val) {

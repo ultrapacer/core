@@ -58,6 +58,5 @@ distribution.
   { *factor1*: Number, *factor2*: Number, ... } \
   Scale factors to be applied on top of base pacing models. A value of 1 does nothing.
 - **splits**
-- **startTime**
 - **strategy**
 - **waypointDelay**

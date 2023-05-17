@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const factors = require('./factors')
-const { rlt, rgt, rlte, rgte, req, interpArray } = require('./util/math')
+const { rlt, rgt, rlte, rgte, req } = require('./util/math')
 const Segment = require('./models/Segment')
 const Pacing = require('./models/Pacing')
 const MissingDataError = require('./util/MissingDataError')
@@ -253,54 +253,6 @@ function calcPacing (data) {
     iterations: i + 1
   }
 
-  // add in statistics
-  // these are max and min values for each factor
-  const fstats = { max: fObj(0), min: fObj(100) }
-  data.plan.points.filter((p, j) => j < data.plan.points.length - 1).forEach((p, j) => {
-    fKeys.forEach(k => {
-      fstats.max[k] = Math.max(fstats.max[k], data.plan.points[j].factors[k])
-      fstats.min[k] = Math.min(fstats.min[k], data.plan.points[j].factors[k])
-    })
-  })
-  data.plan.pacing.fstats = fstats
-
-  if (data.plan.event?.sun) {
-    const s = calcSunTime({
-      points: data.plan.points,
-      event: data.plan.event
-    })
-    Object.assign(data.plan.pacing, s)
-
-    // create array of sun events during the course:
-    data.plan.pacing.sunEvents = []
-    const eventTypes = ['nadir', 'dawn', 'sunrise', 'dusk', 'sunset', 'noon']
-    const days = Math.ceil((data.plan.event.startTime + _.last(data.plan.points).elapsed) / 86400)
-    for (let d = 0; d < days; d++) {
-      eventTypes.forEach(event => {
-        // get elapsed time of the event:
-        const elapsed = data.plan.event.sun[event] - data.plan.event.startTime + (86400 * d)
-
-        // if it happens in the data, add it to the array
-        if (elapsed >= 0 && elapsed <= _.last(data.plan.points).elapsed) {
-          data.plan.pacing.sunEvents.push({ event, elapsed })
-        }
-      })
-    }
-
-    // sort by elapsed time
-    data.plan.pacing.sunEvents.sort((a, b) => a.elapsed - b.elapsed)
-
-    // interpolate distances from elapsed times:
-    if (data.plan.pacing.sunEvents.length) {
-      const locs = interpArray(
-        data.plan.points.map(x => { return x.elapsed }),
-        data.plan.points.map(x => { return x.loc }),
-        data.plan.pacing.sunEvents.map(x => { return x.elapsed })
-      )
-      locs.forEach((l, i) => { data.plan.pacing.sunEvents[i].loc = l })
-    }
-  }
-
   return data.plan.pacing
 }
 
@@ -382,43 +334,6 @@ function adjustForCutoffs (data, i) {
     !added &&
     cutoffs.filter(c => c.point.elapsed - c.time >= 0.5).length === 0
   )
-}
-
-function calcSunTime (data) {
-  // data = {points, event}
-
-  // time in sun zones:
-  const s = {
-    sunTime: { day: 0, twilight: 0, dark: 0 },
-    sunDist: { day: 0, twilight: 0, dark: 0 }
-  }
-  let dloc = 0
-  let dtime = 0
-  data.points.forEach((x, i) => {
-    dloc = x.loc - (data.points[i - 1]?.loc || 0)
-    dtime = x.elapsed - (data.points[i - 1]?.elapsed || 0)
-    if (
-      !isNaN(data.event.sun.dawn) &&
-      !isNaN(data.event.sun.dusk) &&
-      (
-        x.tod <= data.event.sun.dawn ||
-        x.tod >= data.event.sun.dusk
-      )
-    ) {
-      s.sunTime.dark += dtime
-      s.sunDist.dark += dloc
-    } else if (
-      x.tod < data.event.sun.sunrise ||
-      x.tod > data.event.sun.sunset
-    ) {
-      s.sunTime.twilight += dtime
-      s.sunDist.twilight += dloc
-    } else {
-      s.sunTime.day += dtime
-      s.sunDist.day += dloc
-    }
-  })
-  return s
 }
 
 function createSegments (data) {
