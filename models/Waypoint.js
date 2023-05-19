@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const { isNumeric } = require('../util/math')
+const MissingDataError = require('../util/MissingDataError')
 
 class Waypoint {
   constructor (site, course, loop = 1) {
@@ -27,7 +27,7 @@ class Waypoint {
   }
 
   set loc (v) {
-    if (!isNumeric(v)) throw new Error('Wrong format for Waypoint.loc')
+    if (!_.isNumber(v)) throw new Error('Wrong format for Waypoint.loc')
     if (this.type === 'start') {
       this.site.percent = 0
     } else if (this.type === 'finish') {
@@ -38,12 +38,12 @@ class Waypoint {
   }
 
   get lat () {
-    if (this.site.lat === undefined && this.course?.track?.points) this.refreshLLA()
+    if (!_.isNumber(this.site.lat)) this.refreshLLA()
     return this.site.lat
   }
 
   get lon () {
-    if (this.site.lon === undefined && this.course?.track?.points) this.refreshLLA()
+    if (!_.isNumber(this.site.lon)) this.refreshLLA()
     return this.site.lon
   }
 
@@ -204,7 +204,7 @@ class Waypoint {
 
   // function updates the lat/lon/alt of a waypoint
   refreshLLA () {
-    if (!this.course?.track?.points?.length) throw new Error('No track points defined')
+    if (!this.course?.track?.points?.length) throw new MissingDataError('No track points defined', 'points')
 
     let lat, lon, alt, ind
 

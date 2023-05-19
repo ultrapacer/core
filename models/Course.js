@@ -146,7 +146,7 @@ class Course {
 
     d('generating points array')
 
-    if (!this.track?.points?.length) throw new MissingDataError('Track points are not defined.')
+    if (!this.track?.points?.length) throw new MissingDataError('Track points are not defined.', 'points')
 
     this._cache.points = new Array(this.track.points.length * this.loops)
     for (let l = 0; l < this.loops; l++) {

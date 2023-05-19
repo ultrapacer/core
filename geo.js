@@ -42,7 +42,7 @@ function calcSegments ({ plan, course, breaks }) {
 
   if (!p?.length) {
     d2(`${(plan ? 'Plan' : 'Course')} points are not defined.`)
-    throw new MissingDataError((plan ? 'Plan' : 'Course') + ' points are not defined.')
+    throw new MissingDataError((plan ? 'Plan' : 'Course') + ' points are not defined.', 'points')
   }
 
   const s = [] // segments array
@@ -158,7 +158,7 @@ function calcPacing (data) {
 
   if (!data.plan.points?.length) {
     d2('calcPacing: error; no points')
-    throw new MissingDataError('Plan points are not defined.')
+    throw new MissingDataError('Plan points are not defined.', 'points')
   }
 
   // replace plan.pacing object with new clean object

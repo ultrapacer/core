@@ -311,7 +311,7 @@ class Plan {
 
       if (!this.course?.points?.length) {
         d('cannot create points array; course points are not defined.')
-        throw new MissingDataError('Course points are not defined.')
+        throw new MissingDataError('Course points are not defined.', 'points')
       }
 
       this._cache.points = this.course.points.map(point => new PlanPoint(this, point))
@@ -448,7 +448,6 @@ class Plan {
     const factors = Object.fromEntries(
       fKeys.map(k => {
         const values = this.points.map(p => p.factors[k])
-        console.log(values)
         return [
           k,
           {
