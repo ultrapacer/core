@@ -112,15 +112,10 @@ class Plan {
     if (this._cache.event) return this._cache.event
 
     const start = this.eventStart || this.course.eventStart
+    if (!start) throw new MissingDataError('Event start is required', 'eventStart')
     const timezone = this.eventTimezone || this.course.eventTimezone
-    this._cache.event =
-      start && timezone
-        ? new Event({
-          ...this.course.track.start,
-          start,
-          timezone
-        })
-        : undefined
+    if (!timezone) throw new MissingDataError('Event start is required', 'eventTimezone')
+    this._cache.event = new Event({ ...this.course.track.start, start, timezone })
 
     return this._cache.event
   }
