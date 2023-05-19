@@ -111,10 +111,18 @@ class Plan {
   get event () {
     if (this._cache.event) return this._cache.event
 
-    const start = this.eventStart || this.course.eventStart
-    if (!start) throw new MissingDataError('Event start is required', 'eventStart')
-    const timezone = this.eventTimezone || this.course.eventTimezone
-    if (!timezone) throw new MissingDataError('Event start is required', 'eventTimezone')
+    let start = this.eventStart || this.course.eventStart
+    if (!start) {
+      console.warn('eventStart not defined in either plan or course, defaulting to zero.')
+      start = new Date(0)
+    }
+
+    let timezone = this.eventTimezone || this.course.eventTimezone
+    if (!timezone) {
+      console.warn('eventTimezone not defined in either plan or course, defaulting to UTC.')
+      timezone = 'UTC'
+    }
+
     this._cache.event = new Event({ ...this.course.track.start, start, timezone })
 
     return this._cache.event
