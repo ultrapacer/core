@@ -30,13 +30,13 @@ class CourseSplits {
     if (!this._cache.miles) {
       this._cache.miles = createSplits({ unit: 'miles', course: this.course })
     }
-    return this._cache.segments
+    return this._cache.miles
   }
 
-  set miles (v) { this._cache.segments = v }
+  set miles (v) { this._cache.miles = v }
 
   get kilometers () {
-    if (!this._cache.segments) {
+    if (!this._cache.kilometers) {
       this._cache.kilometers = createSplits({ unit: 'kilometers', course: this.course })
     }
     return this._cache.kilometers

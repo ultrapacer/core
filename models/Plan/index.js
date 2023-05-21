@@ -39,7 +39,7 @@ class PlanSplits {
     return this._cache.miles
   }
 
-  set miles (v) { this._cache.segments = v }
+  set miles (v) { this._cache.miles = v }
 
   get kilometers () {
     if (!this._cache.segments) {

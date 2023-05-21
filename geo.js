@@ -363,30 +363,15 @@ function createSegments (data) {
 function createSplits (data) {
   // data: {unit, [plan], [course]}
 
-  d('createSplits')
+  d(`createSplits:${data.unit}`)
 
   if (data.plan && !data.course) data.course = data.plan.course
 
   const distUnitScale = (data.unit === 'kilometers') ? 1 : 0.621371
-  const tot = data.course.dist * distUnitScale
 
-  const breaks = [0]
-  let i = 1
-  while (i < tot) {
-    breaks.push(i / distUnitScale)
-    i++
-  }
-  if (tot / distUnitScale > breaks[breaks.length - 1]) {
-    breaks.push(tot / distUnitScale)
-  }
+  const breaks = _.range(data.course.dist * distUnitScale).map(x => x / distUnitScale)
+  if (data.course.dist - _.last(breaks) > 0.0001) breaks.push(data.course.dist)
 
-  // remove last break if it's negligible
-  if (
-    breaks.length > 1 &&
-    breaks[breaks.length - 1] - breaks[breaks.length - 2] < 0.0001
-  ) {
-    breaks.pop()
-  }
   Object.assign(data, { breaks })
 
   // get the stuff
