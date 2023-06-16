@@ -1,16 +1,26 @@
 const _ = require('lodash')
-const MissingDataError = require('../util/MissingDataError')
+const { areSame, MissingDataError } = require('../util')
+
+const areSameWaypoint = (a, b) => Boolean(a && b && areSame(a.site, b.site) && a.loop === b.loop)
 
 class Waypoint {
-  constructor (site, course, loop = 1) {
-    Object.defineProperty(this, 'course', { writable: true })
+  constructor (data) {
+    Object.defineProperty(this, '_data', { value: {} })
 
-    this.site = site
-    this.course = course
-    this.loop = loop
+    data = _.defaults(data, { loop: 1 })
+
+    Object.assign(this, data)
   }
 
   get __class () { return 'Waypoint' }
+
+  get site () { return this._data.site }
+  set site (v) {
+    if (v.__class !== 'Site') throw new TypeError('Waypoint "site" field must be of "Site" class.')
+    this._data.site = v
+  }
+
+  get course () { return this.site.course }
 
   get name () {
     if (this.loop >= 2 && this.type !== 'finish') {
@@ -58,9 +68,6 @@ class Waypoint {
   get tier () { return this.site.tier || 1 }
   get type () { return this.site.type }
 
-  // get terrainFactor() {
-  //  return this.course.terrainFactors.find(tf=>tf.startWaypoint===this).tF
-  // }
   terrainFactor (waypoints, useId = true) {
     if ((this.site.terrainFactor !== null && this.site.terrainFactor !== undefined) || !waypoints) {
       return this.site.terrainFactor
@@ -228,6 +235,27 @@ class Waypoint {
 
     // TODO. clearing splits; not sure if this is the best place to put this
     this.course.clearCache(1)
+  }
+
+  serialize () {
+    const data = _.pick(this, [
+      'loop',
+      'name',
+      'type',
+      'cutoff',
+      'loc',
+      'lat',
+      'lon',
+      'alt',
+      'tier'
+    ])
+
+    const terrainFactor = this.course.terrainFactors.find(tf => areSameWaypoint(tf.startWaypoint, this))
+    data.terrainFactor = terrainFactor ? terrainFactor.tF : null
+    data.terrainType = terrainFactor ? terrainFactor.type : ''
+
+    data.site = this.site._id
+    return data
   }
 }
 

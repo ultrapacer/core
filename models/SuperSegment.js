@@ -19,6 +19,10 @@ class SuperSegment extends Segment {
     return this.segments.reduce((v, s) => { return v + s[f] }, 0)
   }
 
+  get start () {
+    return this.segments[0].start
+  }
+
   get end () {
     return this.last.end
   }
@@ -44,6 +48,10 @@ class SuperSegment extends Segment {
       this._data.grade = this.segments.reduce((v, s) => { return v + (s.grade * s.len) }, 0) / this.len
     }
     return this._data.grade
+  }
+
+  get name () {
+    return this.last.name
   }
 
   get time () {

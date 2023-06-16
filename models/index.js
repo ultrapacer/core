@@ -7,6 +7,7 @@ module.exports = {
   PlanPoint: require('./PlanPoint'),
   Point: require('./Point'),
   Segment: require('./Segment'),
+  Site: require('./Site'),
   SuperSegment: require('./SuperSegment'),
   Track: require('./Track'),
   Waypoint: require('./Waypoint')

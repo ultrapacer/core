@@ -4,9 +4,7 @@ class Segment {
   constructor (obj) {
     Object.defineProperty(this, '_data', { value: {} })
 
-    Object.keys(obj).forEach(k => {
-      this[k] = obj[k]
-    })
+    Object.assign(this, obj)
   }
 
   set name (v) {
@@ -17,6 +15,10 @@ class Segment {
     return this._data.name || this.waypoint?.name || undefined
   }
 
+  get start () {
+    return this.end - this.len
+  }
+
   get pace () {
     if (!_.isNumber(this.time)) return undefined
     if (!this.time) return 0
@@ -24,10 +26,27 @@ class Segment {
   }
 
   // time based fields require associated point1 & point2
-  get delay () { return this.point2.elapsed - this.point1.elapsed - (this.point2.time - this.point1.time) }
-  get elapsed () { return this.point2 ? this.point2.elapsed : undefined }
-  get time () { return this.point1 && this.point2 ? this.point2.time - this.point1.time : undefined }
-  get tod () { return this.point2 ? this.point2.tod : undefined }
+  get delay () {
+    if (
+      !_.isNumber(this.point1?.elapsed) ||
+      !_.isNumber(this.point2?.elapsed) ||
+      !_.isNumber(this.point1?.time) ||
+      !_.isNumber(this.point2?.time)
+    ) return undefined
+    return this.point2.elapsed - this.point1.elapsed - (this.point2.time - this.point1.time)
+  }
+
+  get elapsed () { return this.point2?.elapsed }
+
+  get time () {
+    if (
+      !_.isNumber(this.point1?.time) ||
+      !_.isNumber(this.point2?.time)
+    ) return undefined
+    return this.point2.time - this.point1.time
+  }
+
+  get tod () { return this.point2?.tod }
 
   // dummy setters, just in case:
   set delay (v) {}

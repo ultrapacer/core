@@ -6,6 +6,8 @@ const Point = require('./Point')
 const addLocations = require('./Points/addLocations')
 const addGrades = require('./Points/addGrades')
 const getSmoothedProfile = require('./Points/getSmoothedProfile')
+const MissingDataError = require('../util/MissingDataError')
+
 const d = require('../debug')('models:Track')
 
 class Track {
@@ -49,10 +51,18 @@ class Track {
   }
 
   set start (v) { this._data.start = v }
-  get start () { return this.points?.[0] ? _.pick(this.points[0], ['lat', 'lon']) : this._data.start }
+  get start () {
+    const val = this.points?.[0] ? _.pick(this.points[0], ['lat', 'lon']) : this._data.start
+    if (!val) throw new MissingDataError('Neither start not track points are defined.', 'points')
+    return val
+  }
 
   set finish (v) { this._data.finish = v }
-  get finish () { return this.points?.length ? _.pick(_.last(this.points), ['lat', 'lon']) : this._data.finish }
+  get finish () {
+    const val = this.points?.length ? _.pick(_.last(this.points), ['lat', 'lon']) : this._data.finish
+    if (!val) throw new MissingDataError('Neither finish nor points points are defined.', 'points')
+    return val
+  }
 
   set stats (v) { Object.assign(this._data, v) }
 

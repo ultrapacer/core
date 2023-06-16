@@ -1,10 +1,10 @@
 const _ = require('lodash')
 const { interp, req, rgte } = require('../util/math')
 const interpolatePoint = require('./Points/interpolate')
-const Waypoint = require('./Waypoint')
 const Event = require('./Event')
 const { createSegments, createSplits } = require('../geo')
 const CoursePoint = require('./CoursePoint')
+const Site = require('./Site')
 const Track = require('./Track')
 const MissingDataError = require('../util/MissingDataError')
 const d = require('../debug')('models:Course')
@@ -18,7 +18,7 @@ class CourseSplits {
   get __class () { return 'CourseSplits' }
 
   get segments () {
-    if (!this._cache.segments) {
+    if (!this._cache.segments?.length) {
       this._cache.segments = createSegments({ course: this.course })
     }
     return this._cache.segments
@@ -27,7 +27,7 @@ class CourseSplits {
   set segments (v) { this._cache.segments = v }
 
   get miles () {
-    if (!this._cache.miles) {
+    if (!this._cache.miles?.length) {
       this._cache.miles = createSplits({ unit: 'miles', course: this.course })
     }
     return this._cache.miles
@@ -36,7 +36,7 @@ class CourseSplits {
   set miles (v) { this._cache.miles = v }
 
   get kilometers () {
-    if (!this._cache.kilometers) {
+    if (!this._cache.kilometers?.length) {
       this._cache.kilometers = createSplits({ unit: 'kilometers', course: this.course })
     }
     return this._cache.kilometers
@@ -57,8 +57,8 @@ class Course {
     Object.defineProperty(this, '_data', {
       value: data._data || {
         sites: [
-          { _id: _.random(10000, 20000), name: 'Start', type: 'start', percent: 0 },
-          { _id: _.random(30000, 40000), name: 'Finish', type: 'finish', percent: 1 }
+          new Site({ course: this, _id: _.random(10000, 20000), name: 'Start', type: 'start', percent: 0 }),
+          new Site({ course: this, _id: _.random(30000, 40000), name: 'Finish', type: 'finish', percent: 1 })
         ]
       },
       enumerable: true
@@ -97,7 +97,7 @@ class Course {
   get sites () { return this._data.sites }
 
   set sites (data) {
-    this._data.sites = data
+    this._data.sites = data.map(site => site.__class === 'Site' ? site : new Site(_.assign(site, { course: this })))
     this.clearCache(1)
   }
 
@@ -111,6 +111,8 @@ class Course {
       : Object.keys(this._cache)
 
     keys.forEach(key => { delete this._cache[key] })
+
+    if (level === 2) this.sites.forEach(site => { site.clearCache() })
   }
 
   get waypoints () {
@@ -118,15 +120,11 @@ class Course {
 
     if (!this.track?.dist) return []
 
-    let wps = []
-    for (let i = 1; i <= this.loops; i++) {
-      wps.push(...this._data.sites.map(site => new Waypoint(site, this, i)))
-    }
-    wps = wps
-      .sort((a, b) => a.loc - b.loc)
-      .filter(wp => wp.loop === this.loops || wp.type !== 'finish')
+    let waypoints = []
+    this.sites.forEach(site => { waypoints.push(...site.waypoints) })
+    waypoints = waypoints.sort((a, b) => a.loc - b.loc)
 
-    this._cache.waypoints = wps
+    this._cache.waypoints = waypoints
     return this._cache.waypoints
   }
 
@@ -173,7 +171,12 @@ class Course {
     const p1 = this.points[i1]
 
     // create a new point
-    const point = new CoursePoint(this, interpolatePoint(p1.point, p2.point, loc / this.distScale), Math.floor(loc / this.dist))
+    const trackPoint = interpolatePoint(p1.point, p2.point, (loc % this.loopDist) / this.distScale)
+    const point = new CoursePoint(
+      this,
+      trackPoint,
+      Math.floor(loc / this.loopDist)
+    )
 
     // if points have actuals tied to them, also interpolate the actuals:
     if (p1.actual && p2.actual) {
@@ -235,15 +238,18 @@ class Course {
 
     d('stats:calculate')
 
-    const alts = this.points.map(p => p.alt)
-    const grades = this.points.map(p => p.grade)
+    const alts = this.track.points.map(p => p.alt)
+    const grades = this.track.points.map(p => p.grade)
     const terrains = this.terrainFactors.map(tf => (tf.tF / 100 + 1))
+
     const stats = {
       altitude: {
+        avg: _.sum(this.track.points.map((p, i) => (p.alt * (p.loc - (this.track.points[i - 1]?.loc || 0))))) / this.track.dist,
         max: _.max(alts),
         min: _.min(alts)
       },
       grade: {
+        avg: (_.last(this.track.points).alt - this.track.points[0].alt) / this.track.dist / 10,
         max: _.max(grades),
         min: _.min(grades)
       },
@@ -317,6 +323,7 @@ class CourseCutoff {
 
 class TerrainFactor {
   constructor (data) {
+    data = _.defaults(data, { tF: 0 })
     Object.assign(this, data)
   }
 

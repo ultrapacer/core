@@ -60,13 +60,12 @@ function calcSegments ({ plan, course, breaks }) {
     point2 = plan ? plan.getPoint({ loc: b.end }) : course.getPoint({ loc: b.end })
     const len = b.end - b.start
     const seg = new Segment({
-      start: point1.loc,
       end: point2.loc,
       len,
       gain: 0,
       loss: 0,
       alt: point2.alt, // ending altitude
-      grade: len > 0 ? (point2.alt - point1.alt) / len / 10 * (point2.alt - point1.alt > 0 ? course.gainScale : course.lossScale) : null,
+      grade: len > 0 ? (point2.alt - point1.alt) / len / 10 * (point2.alt - point1.alt > 0 ? course.gainScale : course.lossScale) : 0,
       delay: 0,
       factorsSum: fObj(0),
       point1,
@@ -352,6 +351,8 @@ function createSegments (data) {
   // determine all the stuff
   const segments = calcSegments(data)
 
+  if (!segments.length) throw new Error('createSegments result is empty')
+
   // map in waypoints
   segments.forEach((x, i) => {
     x.waypoint = wps[i + 1]
@@ -376,6 +377,8 @@ function createSplits (data) {
 
   // get the stuff
   const splits = calcSegments(data)
+
+  if (!splits.length) throw new Error('createSplits result is empty')
 
   return splits
 }

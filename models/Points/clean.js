@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const addLocations = require('./addLocations')
 const { interp } = require('../../util/math')
-const debug = require('../../debug')('models:Points')
+const d = require('../../debug')('models:Points:clean')
 
 // clean up array of Point objects
 // mutates input array
@@ -14,43 +14,51 @@ const clean = (points) => {
   _.remove(points, (p, i) => i > 0 && !_.round(p.loc - points[i - 1].loc, 8))
 
   // REMOVE ALITITUDE STEPS FROM THE GPX. HAPPENS SOMETIMES WITH STRAVA DEM
-  const at = 20 // meters step size
-  const gt = 200 // % grade
-  let i = 0
-  // create array of step indices
+  const gt = 40 // % grade
+  // create array of indices where we have steep transitions
   const steps = []
-  let dloc = 0
   for (let i = 1, il = points.length; i < il; i++) {
-    dloc = points[i].loc - points[i - 1].loc
-    if (
-      Math.abs((points[i].alt - points[i - 1].alt)) > at ||
-        Math.abs((points[i].alt - points[i - 1].alt) / dloc / 10) > gt
-    ) {
+    if (Math.abs((points[i].alt - points[i - 1].alt) / (points[i].loc - points[i - 1].loc) / 10) > gt) {
       steps.push(i)
     }
   }
-  // for each step, find extents of adjacent flat sections and interp new alt
-  steps.forEach(s => {
-    let a = s - 1
-    while (a >= 0 && points[s - 1].alt === points[a].alt) { a -= 1 }
-    a += 1
-    let z = s
-    while (z <= points.length - 1 && points[s].alt === points[z].alt) { z += 1 }
-    z -= 1
-    if (z - a > 1) {
-      for (i = a + 1; i < z; i++) {
-        points[i].alt = interp(
-          points[a].loc,
-          points[z].loc,
-          points[a].alt,
-          points[z].alt,
-          points[i].loc
-        )
+
+  if (steps.length) {
+    d(`Fixing ${steps.length} altitude steps`)
+
+    // for each step, move outward to get under the grade threshold
+    steps.forEach(i => {
+      let a = i - 1
+      let b = i
+      let grade = (points[b].alt - points[a].alt) / (points[b].loc - points[a].loc) / 10
+      if (Math.abs(grade) > gt) {
+        while (Math.abs(grade) > gt) {
+        // figure out which way to expand:
+          if (!points[b + 1]) a -= 1
+          else if (!points[a - 1]) b += 1
+          else {
+            if (points[i].loc - points[a - 1].loc < points[b + 1].loc - points[i.loc]) a -= 1
+            else b += 1
+          }
+          grade = (points[b].alt - points[a].alt) / (points[b].loc - points[a].loc) / 10
+        }
+
+        d(`Fixing step at index ${i} by adjustments to points ${a + 1} through ${b - 1}.`)
+        for (let j = a + 1; j < b; j++) {
+          points[j].alt = _.round(interp(
+            points[a].loc,
+            points[b].loc,
+            points[a].alt,
+            points[b].alt,
+            points[j].loc
+          ), 2)
+        }
+      } else {
+        d(`Adjustment at index ${i} no longer needed (grade=${grade}%).`)
       }
-    }
+    })
   }
-  )
-  debug(`clean from ${length0} to ${points.length} points.`)
+  d(`clean from ${length0} to ${points.length} points.`)
 }
 
 module.exports = clean

@@ -20,7 +20,7 @@ class PlanSplits {
   get __class () { return 'PlanSplits' }
 
   get segments () {
-    if (!this._cache.segments) {
+    if (!this._cache.segments?.length) {
       d('calculating segments')
       this.plan.checkPacing()
       this._cache.segments = createSegments({ plan: this.plan })
@@ -31,7 +31,7 @@ class PlanSplits {
   set segments (v) { this._cache.segments = v }
 
   get miles () {
-    if (!this._cache.miles) {
+    if (!this._cache.miles?.length) {
       d('calculating miles')
       this.plan.checkPacing()
       this._cache.miles = createSplits({ unit: 'miles', plan: this.plan })
@@ -42,7 +42,7 @@ class PlanSplits {
   set miles (v) { this._cache.miles = v }
 
   get kilometers () {
-    if (!this._cache.segments) {
+    if (!this._cache.kilometers?.length) {
       d('calculating kilometers')
       this.plan.checkPacing()
       this._cache.kilometers = createSplits({ unit: 'kilometers', plan: this.plan })
