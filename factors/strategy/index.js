@@ -60,10 +60,21 @@ class Strategy {
     }
   }
 
-  at (loc) {
+  /**
+  * Returns strategy factor at location.
+  *
+  * @param {Number} loc - The location (in km) to determine value.
+  * @param {Boolean} options.autos - A flag to include/exclude automatic strategy (eg meeting cutoffs).
+  * @return {Number} The strategy factor at input location.
+  */
+  at (loc, { autos = true } = {}) {
     const a = getFact(loc, this.values, this.length)
-    const b = getFact(loc, this.autos, this.length)
-    return (1 + a / 100) * (1 + b / 100)
+    if (autos) {
+      const b = getFact(loc, this.autos, this.length)
+      return (1 + a / 100) * (1 + b / 100)
+    } else {
+      return (1 + a / 100)
+    }
   }
 
   addValue (val) {

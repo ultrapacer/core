@@ -158,13 +158,21 @@ class Course {
 
   set points (v) { throw new Error('cannot set points directly') }
 
-  // ROUTINE TO EITHER RETURN EXISTING POINT AT LOCATION OR CREATE IT AND RETURN
+  /**
+  * Finds and optionally inserts a point at an input location.
+  *
+  * @param {Number} args.loc - The location (in km) to determine value.
+  * @param {Boolean} args.insert - Whether to also insert a created point into the points array. Defaults to false.
+  * @return {CoursePoint} The CoursePoint at input location.
+  */
   getPoint ({ loc, insert = false }) {
     const i2 = this.points.findIndex(p => rgte(p.loc, loc, 4))
     const p2 = this.points[i2]
 
     // if point exists, return it
     if (req(p2.loc, loc, 4)) return p2
+
+    d(`getPoint: ${insert ? 'inserting' : 'creating'} new CoursePoint at ${loc}`)
 
     // define first point for interpolation
     const i1 = i2 - 1

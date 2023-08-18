@@ -4,5 +4,6 @@ module.exports = {
   dateToTODSeconds: require('./dateToTODSeconds'),
   math: require('./math'),
   MissingDataError: require('./MissingDataError'),
-  shallowEqual: require('./shallow-equal')
+  shallowEqual: require('./shallow-equal'),
+  timeString: require('./timeString')
 }

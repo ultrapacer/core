@@ -280,6 +280,13 @@ class Plan {
     else d(`pacing failed after ${this.pacing.status.iterations} iterations.`)
   }
 
+  /**
+  * Finds and optionally inserts a point at an input location.
+  *
+  * @param {Number} args.loc - The location (in km) to determine value.
+  * @param {Boolean} args.insert - Whether to also insert a created point into the points array. Defaults to false.
+  * @return {PlanPoint} The PlanPoint at input location.
+  */
   getPoint ({ loc, insert = false }) {
     // get and return it if already exists
     const i2 = this.points.findIndex(p => rgte(p.loc, loc, 4))
@@ -287,6 +294,8 @@ class Plan {
 
     // if point exists, return it
     if (req(p2.loc, loc, 4)) return p2
+
+    d(`getPoint: ${insert ? 'inserting' : 'creating'} new PlanPoint at ${loc}`)
 
     // define first point for interpolation
     const i1 = i2 - 1
@@ -344,8 +353,14 @@ class Plan {
 
     if (options.addBreaks) {
       this.course.terrainFactors?.forEach(tf => this.getPoint({ loc: tf.start, insert: true }))
-      this.delays?.forEach(d => this.getPoint({ loc: d.loc, insert: true }))
     }
+
+    // assign delays to points
+    this.points.filter(p => p.delay).forEach(p => { delete p.delay })
+    this.delays?.forEach(d => {
+      const p = this.getPoint({ loc: d.loc, insert: true })
+      p.delay = d.delay
+    })
 
     // calculate course normalizing factor:
     const p = this.points
@@ -356,19 +371,7 @@ class Plan {
 
     // variables & function for adding in delays:
     let delay = 0
-    const delays = [...this.delays]
-    function getDelay (a, b) {
-      let d = 0
-      if (!delays.length) { return d }
-      while (delays.length && delays[0].loc < a) {
-        delays.shift()
-      }
-      while (delays.length && delays[0].loc < b) {
-        d += delays[0].delay
-        delays.shift()
-      }
-      return d
-    }
+
     let dloc = 0
     let dtime = 0
     let factorSum = 0
@@ -390,7 +393,7 @@ class Plan {
       dtime = np * combined * dloc
 
       p[j].time = p[j - 1].time + dtime
-      delay = getDelay(p[j - 1].loc, p[j].loc)
+      delay = p[j - 1].delay || 0
       elapsed += dtime + delay
       p[j].elapsed = elapsed
       if (this.event.start) p[j].tod = this.event.elapsedToTimeOfDay(elapsed)

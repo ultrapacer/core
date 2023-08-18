@@ -55,11 +55,11 @@ class Pacing {
         val = this.plan.pacingTarget
         break
       case 'pace':
-        pace = this.plan.pacingTarget * this.plan.course.distScale
+        pace = this.plan.pacingTarget
         val = (pace * this.plan.course.dist) + this.plan.delay
         break
       case 'np':
-        np = this.plan.pacingTarget * this.plan.course.distScale
+        np = this.plan.pacingTarget
         pace = np * (this.factor || 1)
         val = (pace * this.plan.course.dist) + this.plan.delay
         break

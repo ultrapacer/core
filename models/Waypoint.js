@@ -68,6 +68,12 @@ class Waypoint {
   get tier () { return this.site.tier || 1 }
   get type () { return this.site.type }
 
+  get dropbags () { return this.site.dropbags || false }
+  set dropbags (v) { this.site.dropbags = Boolean(v) }
+
+  get crew () { return this.site.crew || false }
+  set crew (v) { this.site.crew = Boolean(v) }
+
   terrainFactor (waypoints, useId = true) {
     if ((this.site.terrainFactor !== null && this.site.terrainFactor !== undefined) || !waypoints) {
       return this.site.terrainFactor
@@ -247,7 +253,9 @@ class Waypoint {
       'lat',
       'lon',
       'alt',
-      'tier'
+      'tier',
+      'crew',
+      'dropbags'
     ])
 
     const terrainFactor = this.course.terrainFactors.find(tf => areSameWaypoint(tf.startWaypoint, this))
