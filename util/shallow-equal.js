@@ -1,12 +1,12 @@
 // function compares two objects of any type for shallow equality
 
-function shallowEqual (a, b) {
+function shallowEqual(a, b) {
   // first try a direct compare:
   if (a === b) return true
 
   // now compare the types:
-  const typeA = typeof (a)
-  const typeB = typeof (b)
+  const typeA = typeof a
+  const typeB = typeof b
   if (typeA !== typeB) return false
 
   // if objects, shallow compare:
@@ -21,8 +21,8 @@ function shallowEqual (a, b) {
       }
     } else {
       // get keys with defined values:
-      const aKeys = Object.keys(a).filter(k => a[k] !== undefined)
-      const bKeys = Object.keys(b).filter(k => b[k] !== undefined)
+      const aKeys = Object.keys(a).filter((k) => a[k] !== undefined)
+      const bKeys = Object.keys(b).filter((k) => b[k] !== undefined)
 
       if (aKeys.length !== bKeys.length) return false
 

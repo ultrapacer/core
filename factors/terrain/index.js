@@ -13,11 +13,11 @@ const { rlte } = require('../../util/math')
  * @return {Number} The terrain factor at the provided point
  */
 const getTerrainFactor = ({ point, course }) => {
-  const tF = _.findLast(course.terrainFactors, x => rlte(x.start, point.loc, 4))
+  const tF = _.findLast(course.terrainFactors, (x) => rlte(x.start, point.loc, 4))
 
   if (!tF) return 1
 
-  return (tF.value / 100) + 1
+  return tF.value / 100 + 1
 }
 
 module.exports = getTerrainFactor

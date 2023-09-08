@@ -1,5 +1,5 @@
 class MissingDataError extends Error {
-  constructor (message, field) {
+  constructor(message, field) {
     super(message)
     this.name = 'MissingDataError'
     this.field = field

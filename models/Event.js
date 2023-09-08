@@ -3,7 +3,7 @@ const suncalc = require('suncalc')
 const dateToTODSeconds = require('../util/dateToTODSeconds')
 
 class Event {
-  constructor (obj) {
+  constructor(obj) {
     Object.defineProperty(this, '_cache', { value: {} })
     Object.defineProperty(this, '_data', { value: {} })
 
@@ -11,28 +11,30 @@ class Event {
   }
 
   // lat and lon fields must be set before setting start
-  set start (val) {
+  set start(val) {
     this._data.start = val
 
     // clear cached data
-    Object.keys(this._cache).forEach(key => { delete this._cache[key] })
+    Object.keys(this._cache).forEach((key) => {
+      delete this._cache[key]
+    })
   }
 
-  get start () {
+  get start() {
     return this._data.start
   }
 
-  get startTime () {
+  get startTime() {
     if (_.isNumber(this._cache.startTime)) return this._cache.startTime
     this._cache.startTime = dateToTODSeconds(this.start, this.timezone)
     return this._cache.startTime
   }
 
-  get hasTOD () {
+  get hasTOD() {
     return Boolean(this.start instanceof Date && !isNaN(this.start))
   }
 
-  get sun () {
+  get sun() {
     if (this._cache.sun) return this._cache.sun
 
     const times = suncalc.getTimes(this.start, this.lat, this.lon)
@@ -54,7 +56,7 @@ class Event {
       }
     })
 
-    sun.nadirAltitude = nadirPosition.altitude * 180 / Math.PI
+    sun.nadirAltitude = (nadirPosition.altitude * 180) / Math.PI
 
     this._cache.sun = sun
 
@@ -62,19 +64,19 @@ class Event {
   }
 
   // return a date object at [seconds] from start
-  dateAtElapsed (seconds) {
+  dateAtElapsed(seconds) {
     const d = new Date(this.start)
-    d.setTime(d.getTime() + (seconds * 1000))
+    d.setTime(d.getTime() + seconds * 1000)
     return d
   }
 
   // return seconds since midnight for an input elapsed amount of time since start
-  elapsedToTimeOfDay (elapsed) {
+  elapsedToTimeOfDay(elapsed) {
     return (this.startTime + elapsed) % 86400
   }
 
   // return static object
-  serialize () {
+  serialize() {
     return _.pick(this, ['start', 'sun', 'lat', 'lon', 'timezone'])
   }
 }

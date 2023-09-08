@@ -11,7 +11,7 @@ const MissingDataError = require('../util/MissingDataError')
 const d = require('../debug')('models:Track')
 
 class Track {
-  constructor (arg) {
+  constructor(arg) {
     d('Creating new Track object')
     Object.defineProperty(this, '_data', { value: { stats: {} } })
     Object.defineProperty(this, '_cache', { value: {} })
@@ -24,20 +24,27 @@ class Track {
     Object.assign(this, arg)
   }
 
-  get __class () { return 'Track' }
-
-  clearCache () {
-    Object.keys(this._cache).forEach(key => { delete this._cache[key] })
+  get __class() {
+    return 'Track'
   }
 
-  set points (v) {
+  clearCache() {
+    Object.keys(this._cache).forEach((key) => {
+      delete this._cache[key]
+    })
+  }
+
+  set points(v) {
     d('set-points')
     this.clearCache()
 
     // v can be either array of [{lat, lon, alt}] or object {lat:[], lon:[], alt:[]}
     if (!Array.isArray(v)) v = v.lat.map((x, i) => [v.lat[i], v.lon[i], v.alt[i]])
 
-    if (v[0].__class !== 'Point') v = v.map(p => { return new Point(p) })
+    if (v[0].__class !== 'Point')
+      v = v.map((p) => {
+        return new Point(p)
+      })
 
     addLocations(v)
     addGrades(v)
@@ -46,27 +53,35 @@ class Track {
     d(`set-points - ${v.length} points`)
   }
 
-  get points () {
+  get points() {
     return this._data.points
   }
 
-  set start (v) { this._data.start = v }
-  get start () {
+  set start(v) {
+    this._data.start = v
+  }
+  get start() {
     const val = this.points?.[0] ? _.pick(this.points[0], ['lat', 'lon']) : this._data.start
     if (!val) throw new MissingDataError('Neither start not track points are defined.', 'points')
     return val
   }
 
-  set finish (v) { this._data.finish = v }
-  get finish () {
-    const val = this.points?.length ? _.pick(_.last(this.points), ['lat', 'lon']) : this._data.finish
+  set finish(v) {
+    this._data.finish = v
+  }
+  get finish() {
+    const val = this.points?.length
+      ? _.pick(_.last(this.points), ['lat', 'lon'])
+      : this._data.finish
     if (!val) throw new MissingDataError('Neither finish nor points points are defined.', 'points')
     return val
   }
 
-  set stats (v) { Object.assign(this._data, v) }
+  set stats(v) {
+    Object.assign(this._data, v)
+  }
 
-  get stats () {
+  get stats() {
     if (this._cache.stats) return this._cache.stats
     if (this.points) {
       d('Calculating')
@@ -75,7 +90,7 @@ class Track {
       let loss = 0
       let delta = 0
       let last = this.points[0].alt
-      this.points.forEach(p => {
+      this.points.forEach((p) => {
         delta = p.alt - last
         if (delta < 0) {
           loss += delta
@@ -92,17 +107,29 @@ class Track {
     return this._data.stats
   }
 
-  get dist () { return this.stats.dist }
-  set dist (v) { this._data.stats.dist = v }
+  get dist() {
+    return this.stats.dist
+  }
+  set dist(v) {
+    this._data.stats.dist = v
+  }
 
-  get gain () { return this.stats.gain }
-  set gain (v) { this._data.stats.gain = v }
+  get gain() {
+    return this.stats.gain
+  }
+  set gain(v) {
+    this._data.stats.gain = v
+  }
 
-  get loss () { return this.stats.loss }
-  set loss (v) { this._data.stats.loss = v }
+  get loss() {
+    return this.stats.loss
+  }
+  set loss(v) {
+    this._data.stats.loss = v
+  }
 
   // get lat, lon, alt, index for distance location(s) along track
-  getLLA (location, opts = {}) {
+  getLLA(location, opts = {}) {
     // location : distance or array of distances in km
     // opts :
     //   start : optional start index to speed up search; only for single location
@@ -112,7 +139,9 @@ class Track {
     const locs = isArray ? [...location] : [location]
 
     // if track has loops, just look at location within first loop (eg track)
-    locs.forEach((l, i) => { if (l > this.dist) locs[i] = l % this.dist })
+    locs.forEach((l, i) => {
+      if (l > this.dist) locs[i] = l % this.dist
+    })
 
     // initialize variables:
     // start at 0 or at input start point (for single location)
@@ -124,7 +153,9 @@ class Track {
     const llas = []
     const il = this.points.length - 1
     location = locs.shift()
-    function prev (i) { return back ? i + 1 : i - 1 }
+    function prev(i) {
+      return back ? i + 1 : i - 1
+    }
 
     while (i <= il && i >= 0) {
       let p, ind
@@ -134,7 +165,7 @@ class Track {
         p = this.points[0]
         ind = 0
 
-      // or the finish:
+        // or the finish:
       } else if (req(location, this.dist, 4)) {
         p = _.last(this.points)
         ind = this.points.length - 1
@@ -147,7 +178,7 @@ class Track {
           p = this.points[i]
           ind = i
 
-        // otherwise interpolate:
+          // otherwise interpolate:
         } else {
           p = interpolatePoint(this.points[prev(i)], this.points[i], location)
           ind = i
@@ -165,13 +196,13 @@ class Track {
     return isArray ? llas : llas[0]
   }
 
-  getNearestPoint (latlon, start, limit) {
+  getNearestPoint(latlon, start, limit) {
     // iterate to new location based on waypoint lat/lon
     // latlon: sgeo LatLon object
     // start: starting point in current track
     // limit: max distance it can move
     const steps = 5
-    let jj = this.points.findIndex(p => p === start)
+    let jj = this.points.findIndex((p) => p === start)
     let p = this.points[jj]
     let min = 0
 
@@ -181,7 +212,7 @@ class Track {
 
       // loop thru incremental steps:
       for (let i = 1; i <= steps; i++) {
-        const l = p.loc + (size * i)
+        const l = p.loc + size * i
         if (l <= this.dist) {
           while (this.points[jj + 1].loc < l && jj < this.points.length - 1) {
             jj++
@@ -191,13 +222,13 @@ class Track {
       }
 
       // get an array of distances from reference latlon:
-      const dists = ps.map(x => {
+      const dists = ps.map((x) => {
         return Number(latlon.distanceTo(x.latlon))
       })
 
       // find the minimum distance:
       min = Math.min(...dists)
-      const imin = dists.findIndex(d => d === min)
+      const imin = dists.findIndex((d) => d === min)
 
       // set the new point to the one w/ min distance:
       p = ps[imin]
@@ -211,7 +242,7 @@ class Track {
     }
   }
 
-  getNearestLoc (ll, start = null, limit) {
+  getNearestLoc(ll, start = null, limit) {
     // iterate to new location based on waypoint lat/lon
     // ll: [lat, lon] array
     // start: starting location in meters
@@ -227,7 +258,7 @@ class Track {
         let locs = []
 
         for (let i = -steps; i <= steps; i++) {
-          const l = loc + (size * i)
+          const l = loc + size * i
           if (l > 0 && l <= this.dist) {
             locs.push(Math.max(0, Math.min(l, this.dist)))
           }
@@ -235,12 +266,12 @@ class Track {
         locs = locs.filter((v, i, s) => s.indexOf(v) === i)
 
         const llas = this.getLLA(locs)
-        llas.forEach(lla => {
+        llas.forEach((lla) => {
           const LLA2 = new LatLon(lla.lat, lla.lon)
           lla.dist = Number(LLA1.distanceTo(LLA2))
         })
         min = llas.reduce((min, b) => Math.min(min, b.dist), llas[0].dist)
-        const j = llas.findIndex(x => x.dist === min)
+        const j = llas.findIndex((x) => x.dist === min)
         loc = locs[j]
         limit = limit / steps // downsize iteration
       }
@@ -263,7 +294,7 @@ class Track {
 
   // if criteria is met, returns new Track object w/ reduced points
   // otherwise, returns this
-  reduceDensity ({ spacing, length } = {}) {
+  reduceDensity({ spacing, length } = {}) {
     const d = require('debug')('ultraPacer:models:Track').extend('reduceDensity')
     // reduce density of points for processing
     if (!spacing) spacing = 0.025 // meters between points
@@ -276,17 +307,18 @@ class Track {
     // only reformat if it cuts the size down in half
     const len = this.dist
     const numpoints = Math.floor(len / spacing) + 1
-    const xs = Array(numpoints).fill(0).map((e, i) => round(i++ * spacing, 3))
+    const xs = Array(numpoints)
+      .fill(0)
+      .map((e, i) => round(i++ * spacing, 3))
     if (xs[xs.length - 1] < len) {
       xs.push(len)
     }
     const adj = getSmoothedProfile({ points: this.points, locs: xs, gt: 2 * spacing })
-    const points = this.getLLA(xs, 0)
-      .map((lla, i) => [
-        round(lla.lat, 6),
-        round(lla.lon, 6),
-        round(adj[i].alt, 2)
-      ])
+    const points = this.getLLA(xs, 0).map((lla, i) => [
+      round(lla.lat, 6),
+      round(lla.lon, 6),
+      round(adj[i].alt, 2)
+    ])
     const source = this.source
     const track = new Track({ source, points })
 

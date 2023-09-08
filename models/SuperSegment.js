@@ -3,126 +3,133 @@ const Segment = require('./Segment')
 const { list: factors } = require('../factors')
 
 class SuperSegment extends Segment {
-  constructor (segments = []) {
+  constructor(segments = []) {
     super({})
 
     this.segments = segments
   }
 
   /**
-  * Returns first segment in segments array.
-  *
-  * @return {Segment} The first segment in the segments array.
-  */
-  get first () {
+   * Returns first segment in segments array.
+   *
+   * @return {Segment} The first segment in the segments array.
+   */
+  get first() {
     return this.segments[0]
   }
 
   /**
-  * Returns last segment in segments array.
-  *
-  * @return {Segment} The last segment in the segments array.
-  */
-  get last () {
+   * Returns last segment in segments array.
+   *
+   * @return {Segment} The last segment in the segments array.
+   */
+  get last() {
     // return last segment object
     return _.last(this.segments)
   }
 
-  sum (f) {
+  sum(f) {
     // return sum field "f" of segments
-    return this.segments.reduce((v, s) => { return v + s[f] }, 0)
+    return this.segments.reduce((v, s) => {
+      return v + s[f]
+    }, 0)
   }
 
-  get start () {
+  get start() {
     return this.segments[0].start
   }
 
-  get end () {
+  get end() {
     return this.last.end
   }
 
-  get len () {
+  get len() {
     return this.sum('len')
   }
 
-  get gain () {
+  get gain() {
     return this.sum('gain')
   }
 
-  get loss () {
+  get loss() {
     return this.sum('loss')
   }
 
-  set grade (v) {
+  set grade(v) {
     this._data.grade = v
   }
 
-  get grade () {
+  get grade() {
     if (!_.isNumber(this._data.grade)) {
-      this._data.grade = this.segments.reduce((v, s) => { return v + (s.grade * s.len) }, 0) / this.len
+      this._data.grade =
+        this.segments.reduce((v, s) => {
+          return v + s.grade * s.len
+        }, 0) / this.len
     }
     return this._data.grade
   }
 
-  get name () {
+  get name() {
     return this.last.name
   }
 
-  get time () {
+  get time() {
     return this.sum('time')
   }
 
-  get elapsed () {
+  get elapsed() {
     return this.last.elapsed
   }
 
-  get actualElapsed () {
+  get actualElapsed() {
     const v = this.last.actualElapsed
     return isNaN(v) ? null : v
   }
 
-  get tod () {
+  get tod() {
     return this.last.tod
   }
 
-  get waypoint () {
+  get waypoint() {
     return this.last.waypoint
   }
 
   /**
-  * Returns factors for this SuperSegment.
-  *
-  * @return {Object} The pacing factors for this segment, including overall "combined" factor.
-  */
-  get factors () {
+   * Returns factors for this SuperSegment.
+   *
+   * @return {Object} The pacing factors for this segment, including overall "combined" factor.
+   */
+  get factors() {
     const obj = { combined: 1 }
-    factors.forEach(f => {
-      const v = this.segments.reduce((v, s) => { return v + s.len * s.factors[f] }, 0)
+    factors.forEach((f) => {
+      const v = this.segments.reduce((v, s) => {
+        return v + s.len * s.factors[f]
+      }, 0)
       if (!isNaN(v)) obj[f] = v / this.len
       obj.combined *= obj[f]
     })
     return obj
   }
 
-  get status () {
+  get status() {
     return this.last.status
   }
 
   /**
-  * Returns first point in the SuperSegment.
-  *
-  * @return {CoursePoint|PlanPoint} The first point in the SuperSegment.
-  */
-  get point1 () {
+   * Returns first point in the SuperSegment.
+   *
+   * @return {CoursePoint|PlanPoint} The first point in the SuperSegment.
+   */
+  get point1() {
     return this.first.point1
   }
 
   /**
-  * Returns last point in the SuperSegment.
-  *
-  * @return {CoursePoint|PlanPoint} The last point in the SuperSegment.
-  */
-  get point2 () {
+   * Returns last point in the SuperSegment.
+   *
+   * @return {CoursePoint|PlanPoint} The last point in the SuperSegment.
+   */
+  get point2() {
     return this.last.point2
   }
 }

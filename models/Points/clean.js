@@ -18,7 +18,9 @@ const clean = (points) => {
   // create array of indices where we have steep transitions
   const steps = []
   for (let i = 1, il = points.length; i < il; i++) {
-    if (Math.abs((points[i].alt - points[i - 1].alt) / (points[i].loc - points[i - 1].loc) / 10) > gt) {
+    if (
+      Math.abs((points[i].alt - points[i - 1].alt) / (points[i].loc - points[i - 1].loc) / 10) > gt
+    ) {
       steps.push(i)
     }
   }
@@ -27,13 +29,13 @@ const clean = (points) => {
     d(`Fixing ${steps.length} altitude steps`)
 
     // for each step, move outward to get under the grade threshold
-    steps.forEach(i => {
+    steps.forEach((i) => {
       let a = i - 1
       let b = i
       let grade = (points[b].alt - points[a].alt) / (points[b].loc - points[a].loc) / 10
       if (Math.abs(grade) > gt) {
         while (Math.abs(grade) > gt) {
-        // figure out which way to expand:
+          // figure out which way to expand:
           if (!points[b + 1]) a -= 1
           else if (!points[a - 1]) b += 1
           else {
@@ -45,13 +47,10 @@ const clean = (points) => {
 
         d(`Fixing step at index ${i} by adjustments to points ${a + 1} through ${b - 1}.`)
         for (let j = a + 1; j < b; j++) {
-          points[j].alt = _.round(interp(
-            points[a].loc,
-            points[b].loc,
-            points[a].alt,
-            points[b].alt,
-            points[j].loc
-          ), 2)
+          points[j].alt = _.round(
+            interp(points[a].loc, points[b].loc, points[a].alt, points[b].alt, points[j].loc),
+            2
+          )
         }
       } else {
         d(`Adjustment at index ${i} no longer needed (grade=${grade}%).`)

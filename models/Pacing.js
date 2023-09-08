@@ -4,7 +4,7 @@ const { Factors, Strategy } = require('../factors')
 const d = require('../debug')('models:Pacing')
 
 class Pacing {
-  constructor (data = {}) {
+  constructor(data = {}) {
     Object.defineProperty(this, '_cache', { value: {} })
     Object.defineProperty(this, '_data', { value: {} })
     Object.defineProperty(this, 'status', { value: {}, writable: true, enumerable: true })
@@ -12,8 +12,10 @@ class Pacing {
 
     // force strategy field to be Strategy class:
     Object.defineProperty(this, 'strategy', {
-      get () { return this._data?.strategy },
-      set (v) {
+      get() {
+        return this._data?.strategy
+      },
+      set(v) {
         this.clearCache()
         this._data.strategy = new Strategy(v)
       },
@@ -22,10 +24,10 @@ class Pacing {
 
     // force factors field to be Factors class:
     Object.defineProperty(this, 'factors', {
-      get () {
+      get() {
         return this._data?.factors
       },
-      set (v) {
+      set(v) {
         this.clearCache()
         this._data.factors = new Factors(v)
       },
@@ -40,13 +42,17 @@ class Pacing {
     }
   }
 
-  get __class () { return 'Pacing' }
-
-  clearCache () {
-    Object.keys(this._cache).forEach(k => { delete this._cache[k] })
+  get __class() {
+    return 'Pacing'
   }
 
-  get elapsed () {
+  clearCache() {
+    Object.keys(this._cache).forEach((k) => {
+      delete this._cache[k]
+    })
+  }
+
+  get elapsed() {
     if (this._cache.elapsed) return this._cache.elapsed
 
     let val, pace, np
@@ -56,12 +62,12 @@ class Pacing {
         break
       case 'pace':
         pace = this.plan.pacingTarget
-        val = (pace * this.plan.course.dist) + this.plan.delay
+        val = pace * this.plan.course.dist + this.plan.delay
         break
       case 'np':
         np = this.plan.pacingTarget
         pace = np * (this.factor || 1)
-        val = (pace * this.plan.course.dist) + this.plan.delay
+        val = pace * this.plan.course.dist + this.plan.delay
         break
       default:
         throw new Error(`Incorrect pacing method ${this.plan.pacingMethod}`)
@@ -78,21 +84,23 @@ class Pacing {
     return val
   }
 
-  set elapsed (v) { d('dummy: set elapsed') }
+  set elapsed(v) {
+    d('dummy: set elapsed')
+  }
 
-  get pace () {
+  get pace() {
     return (this.elapsed - this.plan.delay) / this.plan.course.dist
   }
 
-  get np () {
+  get np() {
     return this.pace / this.factor
   }
 
-  get moving () {
+  get moving() {
     return this.elapsed - this.delay
   }
 
-  get delay () {
+  get delay() {
     return this.plan.delay
   }
 }

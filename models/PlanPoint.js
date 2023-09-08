@@ -1,21 +1,27 @@
 const _ = require('lodash')
 const planPointFields = ['lat', 'lon', 'alt', 'latlon', 'grade', 'loc', 'actual']
 class PlanPoint {
-  constructor (plan, point) {
+  constructor(plan, point) {
     Object.defineProperty(this, '_plan', { value: plan })
     Object.defineProperty(this, '_point', { value: point }) // should be CoursePoint object
-    planPointFields.forEach(f => {
-      Object.defineProperty(this, f, { get () { return this._point[f] } })
+    planPointFields.forEach((f) => {
+      Object.defineProperty(this, f, {
+        get() {
+          return this._point[f]
+        }
+      })
     })
   }
 
-  get __class () { return 'PlanPoint' }
+  get __class() {
+    return 'PlanPoint'
+  }
 
-  has (field) {
+  has(field) {
     return _.isNumber(this[field])
   }
 
-  get pace () {
+  get pace() {
     const factors = this.factors?.combined
     const np = this._plan.pacing?.np
 

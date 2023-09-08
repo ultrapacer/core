@@ -7,7 +7,7 @@ module.exports = function (alt, model) {
   //    rate: % increase per span
   //    span: meters for % increase
   //      th: alt threshold where model starts [m]
-  if (model === null || typeof (model) === 'undefined') {
+  if (model === null || typeof model === 'undefined') {
     model = defaults
   }
   let a = 0
