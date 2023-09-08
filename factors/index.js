@@ -20,7 +20,7 @@ const generate = (point, { plan, course }) => {
   Object.assign(point.factors, {
     grade: grade(point.grade),
     altitude: altitude(point.alt),
-    terrain: terrain(point.loc, course.terrainFactors)
+    terrain: terrain({ point, course })
   })
 
   if (plan) {
@@ -30,7 +30,7 @@ const generate = (point, { plan, course }) => {
 
     if (typeof (point.tod) !== 'undefined') {
       Object.assign(point.factors, {
-        heat: plan.heatModel ? heat(point.tod, plan.heatModel) : 1,
+        heat: plan.heatModel ? heat({ point, model: plan.heatModel }) : 1,
         dark: plan.event.sun ? dark(point.tod, point.factors.terrain, plan.event.sun) : 1
       })
     }

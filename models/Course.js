@@ -203,23 +203,40 @@ class Course {
       .forEach(wp => { wp.refreshLLA() })
   }
 
+  // terrainFactors: array of TerrainFactor objects only where actual terrain factor values exist
   get terrainFactors () {
     if (this._cache.terrainFactors) return this._cache.terrainFactors
-    d('regenerating tfs')
-    let tF = this.waypoints[0].terrainFactor()
-    let tT = this.waypoints[0].terrainType()
-    this._cache.terrainFactors = this.waypoints.filter((x, i) => i < this.waypoints.length - 1).map((x, i) => {
-      if (x.terrainFactor() !== null) tF = x.terrainFactor()
-      if (x.terrainType() !== null) tT = x.terrainType()
+    d('regenerating terrainFactors')
+    const arr = this.waypoints.filter(
+      (x, i) =>
+        i === 0 ||
+        (!_.isNil(x.terrainFactor) && x.terrainFactor !== this.waypoints[i - 1].terrainFactor)
+    )
+    this._cache.terrainFactors = arr.map((x, i) => {
       return new TerrainFactor({
         startWaypoint: x,
-        endWaypoint: this.waypoints[i + 1],
-        tF,
-        type: tT
+        endWaypoint: arr[i + 1] || _.last(this.waypoints),
+        value: x.terrainFactor
       })
     })
 
     return this._cache.terrainFactors
+  }
+
+  // terrainTypes: array of TerrainType objects only where actual terrain type changes exist
+  get terrainTypes () {
+    if (this._cache.terrainTypes) return this._cache.terrainTypes
+    d('regenerating terrainTypes')
+    const arr = this.waypoints.filter((x, i) => !_.isNil(x.terrainType) && x.terrainType !== this.waypoints[i - 1].terrainType)
+    this._cache.terrainTypes = arr.map((x, i) => {
+      return new TerrainType({
+        startWaypoint: x,
+        endWaypoint: arr[i + 1] || _.last(this.waypoints),
+        value: x.terrainType
+      })
+    })
+
+    return this._cache.terrainTypes
   }
 
   get cutoffs () {
@@ -248,7 +265,7 @@ class Course {
 
     const alts = this.track.points.map(p => p.alt)
     const grades = this.track.points.map(p => p.grade)
-    const terrains = this.terrainFactors.map(tf => (tf.tF / 100 + 1))
+    const terrains = this.terrainFactors.map(tf => (tf.value / 100 + 1))
 
     const stats = {
       altitude: {
@@ -262,7 +279,7 @@ class Course {
         min: _.min(grades)
       },
       terrain: {
-        avg: (_.sumBy(this.terrainFactors, (tF) => (tF.end - tF.start) * tF.tF) / this.dist + 100) / 100,
+        avg: (_.sumBy(this.terrainFactors, (tF) => (tF.end - tF.start) * tF.value) / this.dist + 100) / 100,
         max: _.max(terrains),
         min: _.min(terrains)
       }
@@ -270,7 +287,7 @@ class Course {
 
     // get distances for max/min terrain
     const terrainFactorDist = (val) => this.terrainFactors.reduce(
-      (a, b) => (b.tF / 100 + 1 === val) ? a + b.end - b.start : a, 0
+      (a, b) => (b.value / 100 + 1 === val) ? a + b.end - b.start : a, 0
     )
     Object.assign(stats.terrain, {
       maxDist: terrainFactorDist(stats.terrain.max),
@@ -331,7 +348,16 @@ class CourseCutoff {
 
 class TerrainFactor {
   constructor (data) {
-    data = _.defaults(data, { tF: 0 })
+    data = _.defaults(data, { value: 0 })
+    Object.assign(this, data)
+  }
+
+  get start () { return this.startWaypoint.loc }
+  get end () { return this.endWaypoint.loc }
+}
+
+class TerrainType {
+  constructor (data) {
     Object.assign(this, data)
   }
 

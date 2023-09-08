@@ -1,7 +1,5 @@
 const _ = require('lodash')
-const { areSame, MissingDataError } = require('../util')
-
-const areSameWaypoint = (a, b) => Boolean(a && b && areSame(a.site, b.site) && a.loop === b.loop)
+const { MissingDataError } = require('../util')
 
 class Waypoint {
   constructor (data) {
@@ -74,45 +72,8 @@ class Waypoint {
   get crew () { return this.site.crew || false }
   set crew (v) { this.site.crew = Boolean(v) }
 
-  terrainFactor (waypoints, useId = true) {
-    if ((this.site.terrainFactor !== null && this.site.terrainFactor !== undefined) || !waypoints) {
-      return this.site.terrainFactor
-    } else {
-      const wps = waypoints.filter(wp => wp.loop === 1).sort((a, b) => a.loc - b.loc)
-      const i = this.site._id && useId
-        ? wps.findIndex(wp => wp.site._id === this.site._id)
-        : wps.findIndex(wp => wp.loc > this.loc)
-      const wp = wps.filter((wp, j) =>
-        (i < 0 || j < i) &&
-        wp.terrainFactor() !== null
-      ).pop()
-      if (wp) {
-        return wp.terrainFactor()
-      } else {
-        return null
-      }
-    }
-  }
-
-  terrainType (waypoints, useId = true) {
-    if (this.site.terrainType || !waypoints) {
-      return this.site.terrainType
-    } else {
-      const wps = waypoints.filter(wp => wp.loop === 1).sort((a, b) => a.loc - b.loc)
-      const i = this.site._id && useId
-        ? wps.findIndex(wp => wp.site._id === this.site._id)
-        : wps.findIndex(wp => wp.loc > this.loc)
-      const wp = wps.filter((wp, j) =>
-        (i < 0 || j < i) &&
-        wp.terrainType()
-      ).pop()
-      if (wp) {
-        return wp.terrainType()
-      } else {
-        return null
-      }
-    }
-  }
+  get terrainFactor () { return this.site.terrainFactor }
+  get terrainType () { return this.site.terrainType }
 
   len (segments) {
     if (this.loc === 0) return 0
@@ -255,12 +216,10 @@ class Waypoint {
       'alt',
       'tier',
       'crew',
-      'dropbags'
+      'dropbags',
+      'terrainType',
+      'terrainFactor'
     ])
-
-    const terrainFactor = this.course.terrainFactors.find(tf => areSameWaypoint(tf.startWaypoint, this))
-    data.terrainFactor = terrainFactor ? terrainFactor.tF : null
-    data.terrainType = terrainFactor ? terrainFactor.type : ''
 
     data.site = this.site._id
     return data
