@@ -1,7 +1,7 @@
 const defaults = require('./defaults')
 
 module.exports = function (grade, model) {
-  if (model === null || typeof (model) === 'undefined') {
+  if (model === null || typeof model === 'undefined') {
     model = defaults
   }
   if (grade < model.lower.lim) {
@@ -9,6 +9,6 @@ module.exports = function (grade, model) {
   } else if (grade > model.upper.lim) {
     return model.upper.m * grade + model.upper.b
   } else {
-    return model.a * (grade ** 2) + model.b * (grade) + 1
+    return model.a * grade ** 2 + model.b * grade + 1
   }
 }

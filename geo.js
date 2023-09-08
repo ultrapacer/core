@@ -8,13 +8,17 @@ const fKeys = factors.list
 const d = require('./debug')('geo')
 
 // creates an object with keys from fKeys above with initial values of init
-function fObj (init) {
+function fObj(init) {
   const obj = {}
-  fKeys.forEach(k => { const a = {}; a[k] = init; Object.assign(obj, a) })
+  fKeys.forEach((k) => {
+    const a = {}
+    a[k] = init
+    Object.assign(obj, a)
+  })
   return obj
 }
 
-function calcSegments ({ plan, course, breaks }) {
+function calcSegments({ plan, course, breaks }) {
   /*
   data {
      breaks: array of [loc,loc,...] to break on (start at 0)
@@ -31,7 +35,7 @@ function calcSegments ({ plan, course, breaks }) {
   // if breaks is array of loctions, convert to array of {start, end}:
   if (_.isNumber(breaks[0])) {
     // make sure we start at 0 and dont include end point
-    breaks = breaks.filter(b => b > 0 && rlt(b, course.dist, 4))
+    breaks = breaks.filter((b) => b > 0 && rlt(b, course.dist, 4))
     breaks.unshift(0)
 
     // map to {start, end} format
@@ -41,7 +45,7 @@ function calcSegments ({ plan, course, breaks }) {
   const p = plan ? plan.points : course.points
 
   if (!p?.length) {
-    d2(`${(plan ? 'Plan' : 'Course')} points are not defined.`)
+    d2(`${plan ? 'Plan' : 'Course'} points are not defined.`)
     throw new MissingDataError((plan ? 'Plan' : 'Course') + ' points are not defined.', 'points')
   }
 
@@ -50,7 +54,7 @@ function calcSegments ({ plan, course, breaks }) {
   let il
   let point1
   let point2
-  const hasActuals = (p[0].actual !== undefined && p[p.length - 1].actual !== undefined)
+  const hasActuals = p[0].actual !== undefined && p[p.length - 1].actual !== undefined
   for (i = 0, il = breaks.length; i < il; i++) {
     const b = breaks[i]
 
@@ -65,7 +69,11 @@ function calcSegments ({ plan, course, breaks }) {
       gain: 0,
       loss: 0,
       alt: point2.alt, // ending altitude
-      grade: len > 0 ? (point2.alt - point1.alt) / len / 10 * (point2.alt - point1.alt > 0 ? course.gainScale : course.lossScale) : 0,
+      grade:
+        len > 0
+          ? ((point2.alt - point1.alt) / len / 10) *
+            (point2.alt - point1.alt > 0 ? course.gainScale : course.lossScale)
+          : 0,
       delay: 0,
       factorsSum: fObj(0),
       point1,
@@ -86,7 +94,7 @@ function calcSegments ({ plan, course, breaks }) {
     seg[delta > 0 ? 'gain' : 'loss'] += delta * (delta > 0 ? course.gainScale : course.lossScale)
     factors.generate(p1, { plan, course })
     const len = p2.loc - p1.loc
-    fKeys.forEach(key => {
+    fKeys.forEach((key) => {
       seg.factorsSum[key] += p1.factors[key] * len
     })
   }
@@ -117,7 +125,7 @@ function calcSegments ({ plan, course, breaks }) {
     // add in delays:
     if (plan) {
       seg.delay = plan.delays
-        .filter(d => rgte(seg.point1.loc, d.loc, 4) && rlt(seg.point2.loc, d.loc, 4))
+        .filter((d) => rgte(seg.point1.loc, d.loc, 4) && rlt(seg.point2.loc, d.loc, 4))
         .reduce((p, a) => p + a, 0)
     }
   }
@@ -125,14 +133,14 @@ function calcSegments ({ plan, course, breaks }) {
   // normalize each factor by length
   s.forEach((x, i) => {
     x.factors = new factors.Factors(
-      Object.fromEntries(fKeys.map(key => [key, x.factorsSum[key] / x.len]))
+      Object.fromEntries(fKeys.map((key) => [key, x.factorsSum[key] / x.len]))
     )
   })
 
   return s
 }
 
-function calcPacing (data) {
+function calcPacing(data) {
   /*
     data:
       plan,
@@ -151,7 +159,9 @@ function calcPacing (data) {
   // assign options from input:
   const options = {
     iterationThreshold: 15,
-    testLocations: Array.apply(null, Array(10)).map((x, i) => (i + 1) / 10 * data.plan.course.dist)
+    testLocations: Array.apply(null, Array(10)).map(
+      (x, i) => ((i + 1) / 10) * data.plan.course.dist
+    )
   }
   if (data.options) Object.assign(options, data.options)
 
@@ -181,11 +191,13 @@ function calcPacing (data) {
   }
 
   d2('adding points at each terrain factor break')
-  data.plan.course.terrainFactors?.forEach(tf => data.plan.getPoint({ loc: tf.start, insert: true }))
+  data.plan.course.terrainFactors?.forEach((tf) =>
+    data.plan.getPoint({ loc: tf.start, insert: true })
+  )
 
   d2('adding points at each cutoff')
   if (data.plan.adjustForCutoffs) {
-    data.plan.cutoffs.forEach(c => {
+    data.plan.cutoffs.forEach((c) => {
       c.point = data.plan.getPoint({ loc: c.loc, insert: true })
     })
   }
@@ -196,7 +208,9 @@ function calcPacing (data) {
 
   // points for sensitivity test:
   d2('creating test points')
-  const testPoints = options.testLocations.map(tl => data.plan.getPoint({ loc: tl, insert: true }))
+  const testPoints = options.testLocations.map((tl) =>
+    data.plan.getPoint({ loc: tl, insert: true })
+  )
 
   let lastTest = []
 
@@ -212,14 +226,11 @@ function calcPacing (data) {
     tests.minIterations = i >= minIterations
 
     // cutoffsPassing test makes sure intermediate cutoffs are met (not final cutoff)
-    tests.cutoffs = Boolean(
-      !data.plan.adjustForCutoffs ||
-      adjustForCutoffs(data, i)
-    )
+    tests.cutoffs = Boolean(!data.plan.adjustForCutoffs || adjustForCutoffs(data, i))
     d2(`iteration ${i + 1}, cutoffs pass=${tests.cutoffs}`)
 
     // testPassing test makes sure interim tests are within the specified iterationThreshold
-    const newTest = testPoints.map(x => x.elapsed)
+    const newTest = testPoints.map((x) => x.elapsed)
     tests.locations =
       lastTest.length &&
       newTest.findIndex((x, j) => Math.abs(x - lastTest[j]) >= options.iterationThreshold) < 0
@@ -228,17 +239,10 @@ function calcPacing (data) {
     // tests.target makes sure the final point is within a half second of target time (or cutoff max)
     const elapsed = _.last(data.plan.points).elapsed
     tests.target =
-      data.plan.pacingMethod === 'time'
-        ? Math.abs(data.plan.pacing.elapsed - elapsed) < 0.5
-        : true
+      data.plan.pacingMethod === 'time' ? Math.abs(data.plan.pacing.elapsed - elapsed) < 0.5 : true
     d2(`iteration ${i + 1}, target pass=${tests.target}`)
 
-    pass = (
-      tests.minIterations &&
-      tests.cutoffs &&
-      tests.locations &&
-      tests.target
-    )
+    pass = tests.minIterations && tests.cutoffs && tests.locations && tests.target
 
     if (pass) break
 
@@ -255,40 +259,34 @@ function calcPacing (data) {
   return data.plan.pacing
 }
 
-function adjustForCutoffs (data, i) {
+function adjustForCutoffs(data, i) {
   // data is same as data objct in calcPacing
   // i is the iteration number
 
   d('adjustForCutoffs')
 
-  const cutoffs = data.plan.cutoffs.filter(c => rlt(c.loc, data.plan.course.dist, 4))
+  const cutoffs = data.plan.cutoffs.filter((c) => rlt(c.loc, data.plan.course.dist, 4))
 
   const strats = cutoffs.map((c, i) => {
-    const prev = data.plan.pacing.strategy.autos
-      .filter(s => rlt(s.onset, c.loc, 4))
-      .pop() ||
-        {
-          onset: 0,
-          point: data.plan.points[0]
-        }
+    const prev = data.plan.pacing.strategy.autos.filter((s) => rlt(s.onset, c.loc, 4)).pop() || {
+      onset: 0,
+      point: data.plan.points[0]
+    }
 
-    const next = data.plan.pacing.strategy.autos
-      .find(s => rgt(s.onset, c.loc, 4)) ||
-        {
-          onset: data.plan.course.dist,
-          point: _.last(data.plan.points)
-        }
+    const next = data.plan.pacing.strategy.autos.find((s) => rgt(s.onset, c.loc, 4)) || {
+      onset: data.plan.course.dist,
+      point: _.last(data.plan.points)
+    }
 
     // make sure we have points mapped
     if (!prev.point) prev.point = data.plan.getPoint({ loc: prev.onset, insert: true })
     if (!next.point) next.point = data.plan.getPoint({ loc: next.onset, insert: true })
 
-    const delay =
-      data.plan.delays
-        .filter(d =>
-          rgte(d.loc, prev.point.loc, 4) &&
-          rlt(d.loc, c.loc, 4)
-        ).reduce((v, x) => { return v + x.delay }, 0)
+    const delay = data.plan.delays
+      .filter((d) => rgte(d.loc, prev.point.loc, 4) && rlt(d.loc, c.loc, 4))
+      .reduce((v, x) => {
+        return v + x.delay
+      }, 0)
 
     const time = c.point.time - prev.point.time // moving time (no delays)
     const cutoffTime = c.time - prev.point.elapsed - delay // ideal time, no delay
@@ -300,18 +298,19 @@ function adjustForCutoffs (data, i) {
     const b = next.point.loc - c.loc
 
     const scale = overTime / cutoffTime
-    const step = (a * scale / b) + scale
+    const step = (a * scale) / b + scale
 
     return { onset: c.loc, type: 'step', value: step * 100, point: c.point }
   })
 
   const steps = strats
-    .filter(ss =>
-      ss.value > 0 &&
-      !data.plan.pacing.strategy.autos.find(s3 => req(s3.onset, ss.onset, 4))
-    ).map(s => s.value)
+    .filter(
+      (ss) =>
+        ss.value > 0 && !data.plan.pacing.strategy.autos.find((s3) => req(s3.onset, ss.onset, 4))
+    )
+    .map((s) => s.value)
   const max = Math.max(...steps)
-  const strat = strats.find(ss => ss.value === max)
+  const strat = strats.find((ss) => ss.value === max)
 
   let added = false
 
@@ -324,18 +323,15 @@ function adjustForCutoffs (data, i) {
   // refine existing strategies on iterations where a new one isnt added
   if (!added) {
     data.plan.pacing.strategy?.autos?.forEach((s, j) => {
-      const strat = strats.find(ss => req(ss.onset, s.onset, 4))
+      const strat = strats.find((ss) => req(ss.onset, s.onset, 4))
       data.plan.pacing.strategy.adjustAutoValue(s, strat.value)
     })
   }
 
-  return Boolean(
-    !added &&
-    cutoffs.filter(c => c.point.elapsed - c.time >= 0.5).length === 0
-  )
+  return Boolean(!added && cutoffs.filter((c) => c.point.elapsed - c.time >= 0.5).length === 0)
 }
 
-function createSegments (data) {
+function createSegments(data) {
   // data: {[plan], [course]}
 
   d('createSegments')
@@ -343,10 +339,12 @@ function createSegments (data) {
   if (data.plan && !data.course) data.course = data.plan.course
 
   // break on non-hidden waypoints:
-  const wps = data.course.waypoints.filter(x => x.tier < 3).sort((a, b) => a.loc - b.loc)
+  const wps = data.course.waypoints.filter((x) => x.tier < 3).sort((a, b) => a.loc - b.loc)
 
   // get array of location breaks:
-  data.breaks = wps.map(x => { return x.loc })
+  data.breaks = wps.map((x) => {
+    return x.loc
+  })
 
   // determine all the stuff
   const segments = calcSegments(data)
@@ -361,16 +359,16 @@ function createSegments (data) {
   return segments
 }
 
-function createSplits (data) {
+function createSplits(data) {
   // data: {unit, [plan], [course]}
 
   d(`createSplits:${data.unit}`)
 
   if (data.plan && !data.course) data.course = data.plan.course
 
-  const distUnitScale = (data.unit === 'kilometers') ? 1 : 0.621371
+  const distUnitScale = data.unit === 'kilometers' ? 1 : 0.621371
 
-  const breaks = _.range(data.course.dist * distUnitScale).map(x => x / distUnitScale)
+  const breaks = _.range(data.course.dist * distUnitScale).map((x) => x / distUnitScale)
   if (data.course.dist - _.last(breaks) > 0.0001) breaks.push(data.course.dist)
 
   Object.assign(data, { breaks })

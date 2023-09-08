@@ -4,9 +4,9 @@ module.exports = function (strategy, length) {
   let area = 0
   strategy.forEach((d, i) => {
     const end = i === strategy.length - 1 ? length : strategy[i + 1].onset
-    const v = (d.type === 'linear') ? d.value / 2 : d.value
+    const v = d.type === 'linear' ? d.value / 2 : d.value
     area += (a + v) * (end - d.onset)
     a += d.value
   })
-  return (area / length)
+  return area / length
 }

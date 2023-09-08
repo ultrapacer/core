@@ -1,7 +1,7 @@
 const { isNumeric } = require('../util/math')
 
 class CoursePoint {
-  constructor (course, point, loop) {
+  constructor(course, point, loop) {
     Object.defineProperty(this, 'course', { writable: true })
 
     this.point = point
@@ -9,19 +9,29 @@ class CoursePoint {
     this.loop = loop
   }
 
-  get lat () { return this.point.lat }
-  get lon () { return this.point.lon }
-  get alt () { return this.point.alt }
-  get latlon () { return this.point.latlon } // sgeo latlon object
-  get grade () { return this.point.grade * (this.point.grade > 0 ? this.course.gainScale : this.course.lossScale) }
+  get lat() {
+    return this.point.lat
+  }
+  get lon() {
+    return this.point.lon
+  }
+  get alt() {
+    return this.point.alt
+  }
+  get latlon() {
+    return this.point.latlon
+  } // sgeo latlon object
+  get grade() {
+    return this.point.grade * (this.point.grade > 0 ? this.course.gainScale : this.course.lossScale)
+  }
 
-  get loc () {
+  get loc() {
     let l = this.point.loc * this.course.distScale
     if (this.loop) l += this.course.loopDist * this.loop
     return l
   }
 
-  has (field) {
+  has(field) {
     return isNumeric(this[field])
   }
 }

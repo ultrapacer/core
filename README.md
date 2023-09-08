@@ -1,39 +1,42 @@
 ![My image](https://ultrapacer.com/public/img/logo-72x72.png)
 
 # using ultraPacer
+
 Go to [https://ultrapacer.com](https://ultrapacer.com)
 
 ## No License / Copyright
+
 The source code herin is copyright to Danny Murphy.
 This code may be forked, downloaded, and/or modified for the purposes of
 contributing to this project only. There is no license for any other use or
 distribution.
 
 ## Course Model fields
+
 - **cutoff**
 - **cutoffs**
 - **db**
-- **dist**, *Number*\
+- **dist**, _Number_\
   Total distance of course (km)
-- **distScale**, *Number*, *optional*\
+- **distScale**, _Number_, _optional_\
   Distance scaling factor
-- **gain**, *Number*\
+- **gain**, _Number_\
   Total amount of vertical gain in course (m)
-- **gainScale**, *Number*, *optional*\
+- **gainScale**, _Number_, _optional_\
   Vertical gain scaling factor
 - **event**
 - **eventStart**
 - **eventTimezone**
 - **eventTimezoneFixed**
-- **loss**, *Number*\
+- **loss**, _Number_\
   Total amount of vertical loss in course (m)
-- **lossScale**, *Number*, *optional*\
+- **lossScale**, _Number_, _optional_\
   Vertical loss scaling factor
 - **meta**
 - **name**
 - **points**
-- **scales**: Object, *optional* \
-  { *factor1*: Number, *factor2*: Number, ... } \
+- **scales**: Object, _optional_ \
+  { _factor1_: Number, _factor2_: Number, ... } \
   Scale factors to be applied on top of base pacing models. A value of 1 does nothing.
 - **splits**
 - **stats**
@@ -41,6 +44,7 @@ distribution.
 - **waypoints**
 
 ## Plan Model fields
+
 - **adjustForCutoffs**
 - **course**
 - **created**
@@ -55,7 +59,7 @@ distribution.
 - **pacingMethod**
 - **pacingTarget**
 - **scales**: Object, optional \
-  { *factor1*: Number, *factor2*: Number, ... } \
+  { _factor1_: Number, _factor2_: Number, ... } \
   Scale factors to be applied on top of base pacing models. A value of 1 does nothing.
 - **splits**
 - **strategy**

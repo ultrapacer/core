@@ -4,7 +4,7 @@ const Waypoint = require('./Waypoint')
 const d = require('../debug')('models:Waypoint')
 
 class Site {
-  constructor (data) {
+  constructor(data) {
     d(`constructor: ${data.name || 'unnamed'}`)
 
     Object.defineProperty(this, '_cache', { value: {} })
@@ -17,20 +17,27 @@ class Site {
     Object.assign(this, data)
   }
 
-  clearCache () {
+  clearCache() {
     d(`clearCache: ${this.name}`)
-    Object.keys(this._cache).forEach(key => { delete this._cache[key] })
+    Object.keys(this._cache).forEach((key) => {
+      delete this._cache[key]
+    })
   }
 
-  get __class () { return 'Site' }
+  get __class() {
+    return 'Site'
+  }
 
-  get course () { return this._data.course }
-  set course (v) {
-    if (v.__class !== 'Course') throw new TypeError('Site "course" field must be of "Course" class.')
+  get course() {
+    return this._data.course
+  }
+  set course(v) {
+    if (v.__class !== 'Course')
+      throw new TypeError('Site "course" field must be of "Course" class.')
     this._data.course = v
   }
 
-  get percent () {
+  get percent() {
     switch (this.type) {
       case 'start':
         return 0
@@ -41,24 +48,24 @@ class Site {
     }
   }
 
-  set percent (v) { this._data.percent = v }
+  set percent(v) {
+    this._data.percent = v
+  }
 
-  get waypoints () {
+  get waypoints() {
     if (this._cache.waypoints) return this._cache.waypoints
     d(`generating waypoints array: ${this.name}`)
     if (this.type === 'finish') {
-      this._cache.waypoints = [
-        new Waypoint({ site: this, loop: this.course.loops })
-      ]
+      this._cache.waypoints = [new Waypoint({ site: this, loop: this.course.loops })]
     } else {
-      this._cache.waypoints = _
-        .range(this.course.loops)
-        .map(x => new Waypoint({ site: this, loop: x + 1 }))
+      this._cache.waypoints = _.range(this.course.loops).map(
+        (x) => new Waypoint({ site: this, loop: x + 1 })
+      )
     }
     return this._cache.waypoints
   }
 
-  serialize () {
+  serialize() {
     d(`serialize: ${this.name}`)
     const fields = Object.keys(this)
     fields.push('percent')

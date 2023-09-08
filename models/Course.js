@@ -10,55 +10,72 @@ const MissingDataError = require('../util/MissingDataError')
 const d = require('../debug')('models:Course')
 
 class CourseSplits {
-  constructor (data) {
+  constructor(data) {
     Object.defineProperty(this, '_cache', { value: {} })
     Object.assign(this, data)
   }
 
-  get __class () { return 'CourseSplits' }
+  get __class() {
+    return 'CourseSplits'
+  }
 
-  get segments () {
+  get segments() {
     if (!this._cache.segments?.length) {
       this._cache.segments = createSegments({ course: this.course })
     }
     return this._cache.segments
   }
 
-  set segments (v) { this._cache.segments = v }
+  set segments(v) {
+    this._cache.segments = v
+  }
 
-  get miles () {
+  get miles() {
     if (!this._cache.miles?.length) {
       this._cache.miles = createSplits({ unit: 'miles', course: this.course })
     }
     return this._cache.miles
   }
 
-  set miles (v) { this._cache.miles = v }
+  set miles(v) {
+    this._cache.miles = v
+  }
 
-  get kilometers () {
+  get kilometers() {
     if (!this._cache.kilometers?.length) {
       this._cache.kilometers = createSplits({ unit: 'kilometers', course: this.course })
     }
     return this._cache.kilometers
   }
 
-  set kilometers (v) { this._cache.kilometers = v }
+  set kilometers(v) {
+    this._cache.kilometers = v
+  }
 }
 
 // course constructor will pass through all fields; use
 // this array to omit certain keys from passing through
-const disallowed = [
-  'cache',
-  'distance'
-]
+const disallowed = ['cache', 'distance']
 
 class Course {
-  constructor (data) {
+  constructor(data) {
     Object.defineProperty(this, '_data', {
       value: data._data || {
         sites: [
-          new Site({ course: this, _id: _.random(10000, 20000), name: 'Start', type: 'start', percent: 0 }),
-          new Site({ course: this, _id: _.random(30000, 40000), name: 'Finish', type: 'finish', percent: 1 })
+          new Site({
+            course: this,
+            _id: _.random(10000, 20000),
+            name: 'Start',
+            type: 'start',
+            percent: 0
+          }),
+          new Site({
+            course: this,
+            _id: _.random(30000, 40000),
+            name: 'Finish',
+            type: 'finish',
+            percent: 1
+          })
         ]
       },
       enumerable: true
@@ -68,105 +85,181 @@ class Course {
     Object.defineProperty(this, '_cache', { value: {} })
 
     // other fields just pass along:
-    const keys = Object.keys(data).filter(k => !disallowed.includes(k))
+    const keys = Object.keys(data).filter((k) => !disallowed.includes(k))
     Object.assign(this, _.pick(data, keys))
   }
 
-  get __class () { return 'Course' }
+  get __class() {
+    return 'Course'
+  }
 
-  get loops () { return this._data.loops || 1 }
-  set loops (v) { if (v !== this._data.loops) { this._data.loops = v; this.clearCache(2) } }
+  get loops() {
+    return this._data.loops || 1
+  }
+  set loops(v) {
+    if (v !== this._data.loops) {
+      this._data.loops = v
+      this.clearCache(2)
+    }
+  }
 
-  get dist () { return this._cache.dist || (this._cache.dist = (this._data.dist || (this.track?.dist ? (this.track.dist * this.loops) : undefined))) }
-  get gain () { return this._cache.gain || (this._cache.gain = (this._data.gain || (this.track?.gain ? (this.track.gain * this.loops) : undefined))) }
-  get loss () { return this._cache.loss || (this._cache.loss = (this._data.loss || (this.track?.loss ? (this.track.loss * this.loops) : undefined))) }
+  get dist() {
+    return (
+      this._cache.dist ||
+      (this._cache.dist =
+        this._data.dist || (this.track?.dist ? this.track.dist * this.loops : undefined))
+    )
+  }
+  get gain() {
+    return (
+      this._cache.gain ||
+      (this._cache.gain =
+        this._data.gain || (this.track?.gain ? this.track.gain * this.loops : undefined))
+    )
+  }
+  get loss() {
+    return (
+      this._cache.loss ||
+      (this._cache.loss =
+        this._data.loss || (this.track?.loss ? this.track.loss * this.loops : undefined))
+    )
+  }
 
-  set dist (v) { if (!req(v, this._data.dist, 6)) { d(`overriding dist to ${v}`); this._data.dist = v; this.clearCache(2) } }
-  set gain (v) { if (!req(v, this._data.gain, 6)) { d(`overriding gain to ${v}`); this._data.gain = v; this.clearCache(2) } }
-  set loss (v) { if (!req(v, this._data.loss, 6)) { d(`overriding loss to ${v}`); this._data.loss = v; this.clearCache(2) } }
+  set dist(v) {
+    if (!req(v, this._data.dist, 6)) {
+      d(`overriding dist to ${v}`)
+      this._data.dist = v
+      this.clearCache(2)
+    }
+  }
+  set gain(v) {
+    if (!req(v, this._data.gain, 6)) {
+      d(`overriding gain to ${v}`)
+      this._data.gain = v
+      this.clearCache(2)
+    }
+  }
+  set loss(v) {
+    if (!req(v, this._data.loss, 6)) {
+      d(`overriding loss to ${v}`)
+      this._data.loss = v
+      this.clearCache(2)
+    }
+  }
 
-  get distScale () { return this._data.dist ? this._data.dist / (this.track.dist * this.loops) : 1 }
-  get gainScale () { return this._data.gain ? this._data.gain / (this.track.gain * this.loops) : 1 }
-  get lossScale () { return this._data.loss ? this._data.loss / (this.track.loss * this.loops) : 1 }
+  get distScale() {
+    return this._data.dist ? this._data.dist / (this.track.dist * this.loops) : 1
+  }
+  get gainScale() {
+    return this._data.gain ? this._data.gain / (this.track.gain * this.loops) : 1
+  }
+  get lossScale() {
+    return this._data.loss ? this._data.loss / (this.track.loss * this.loops) : 1
+  }
 
-  get loopDist () { return this.dist / this.loops }
-  get loopGain () { return this.gain / this.loops }
-  get loopLoss () { return this.loss / this.loops }
+  get loopDist() {
+    return this.dist / this.loops
+  }
+  get loopGain() {
+    return this.gain / this.loops
+  }
+  get loopLoss() {
+    return this.loss / this.loops
+  }
 
   // create waypoints from sites:
-  get sites () { return this._data.sites }
+  get sites() {
+    return this._data.sites
+  }
 
-  set sites (data) {
-    this._data.sites = data.map(site => site.__class === 'Site' ? site : new Site(_.assign(site, { course: this })))
+  set sites(data) {
+    this._data.sites = data.map((site) =>
+      site.__class === 'Site' ? site : new Site(_.assign(site, { course: this }))
+    )
     this.clearCache(1)
   }
 
-  clearCache (level = 1) {
+  clearCache(level = 1) {
     // level 1 means route itself does not change (eg, changes to waypoints and trivial changes to course)
     // level 2 means route itself changes (eg, track, loops, dist, gain, loss)
     d(`clearCache-${level}`)
 
-    const keys = level === 1
-      ? ['waypoints', 'terrainFactors', 'cutoffs', 'stats', 'splits']
-      : Object.keys(this._cache)
+    const keys =
+      level === 1
+        ? ['waypoints', 'terrainFactors', 'cutoffs', 'stats', 'splits']
+        : Object.keys(this._cache)
 
-    keys.forEach(key => { delete this._cache[key] })
+    keys.forEach((key) => {
+      delete this._cache[key]
+    })
 
-    if (level === 2) this.sites.forEach(site => { site.clearCache() })
+    if (level === 2)
+      this.sites.forEach((site) => {
+        site.clearCache()
+      })
   }
 
-  get waypoints () {
+  get waypoints() {
     if (this._cache.waypoints) return this._cache.waypoints
 
     if (!this.track?.dist) return []
 
     let waypoints = []
-    this.sites.forEach(site => { waypoints.push(...site.waypoints) })
+    this.sites.forEach((site) => {
+      waypoints.push(...site.waypoints)
+    })
     waypoints = waypoints.sort((a, b) => a.loc - b.loc)
 
     this._cache.waypoints = waypoints
     return this._cache.waypoints
   }
 
-  get track () {
+  get track() {
     return this._data.track
   }
 
-  set track (v) {
+  set track(v) {
     d('set-track')
     if (v.__class === 'Track') this._data.track = v
     else this._data.track = new Track(v)
     this.clearCache(2)
   }
 
-  get points () {
+  get points() {
     if (this._cache.points) return this._cache.points
 
     d('generating points array')
 
-    if (!this.track?.points?.length) throw new MissingDataError('Track points are not defined.', 'points')
+    if (!this.track?.points?.length)
+      throw new MissingDataError('Track points are not defined.', 'points')
 
     this._cache.points = new Array(this.track.points.length * this.loops)
     for (let l = 0; l < this.loops; l++) {
       for (let i = 0; i < this.track.points.length; i++) {
-        this.points[i + l * this.track.points.length] = new CoursePoint(this, this.track.points[i], l)
+        this.points[i + l * this.track.points.length] = new CoursePoint(
+          this,
+          this.track.points[i],
+          l
+        )
       }
     }
 
     return this._cache.points
   }
 
-  set points (v) { throw new Error('cannot set points directly') }
+  set points(v) {
+    throw new Error('cannot set points directly')
+  }
 
   /**
-  * Finds and optionally inserts a point at an input location.
-  *
-  * @param {Number} args.loc - The location (in km) to determine value.
-  * @param {Boolean} args.insert - Whether to also insert a created point into the points array. Defaults to false.
-  * @return {CoursePoint} The CoursePoint at input location.
-  */
-  getPoint ({ loc, insert = false }) {
-    const i2 = this.points.findIndex(p => rgte(p.loc, loc, 4))
+   * Finds and optionally inserts a point at an input location.
+   *
+   * @param {Number} args.loc - The location (in km) to determine value.
+   * @param {Boolean} args.insert - Whether to also insert a created point into the points array. Defaults to false.
+   * @return {CoursePoint} The CoursePoint at input location.
+   */
+  getPoint({ loc, insert = false }) {
+    const i2 = this.points.findIndex((p) => rgte(p.loc, loc, 4))
     const p2 = this.points[i2]
 
     // if point exists, return it
@@ -180,11 +273,7 @@ class Course {
 
     // create a new point
     const trackPoint = interpolatePoint(p1.point, p2.point, (loc % this.loopDist) / this.distScale)
-    const point = new CoursePoint(
-      this,
-      trackPoint,
-      Math.floor(loc / this.loopDist)
-    )
+    const point = new CoursePoint(this, trackPoint, Math.floor(loc / this.loopDist))
 
     // if points have actuals tied to them, also interpolate the actuals:
     if (p1.actual && p2.actual) {
@@ -197,14 +286,16 @@ class Course {
     return point
   }
 
-  refreshWaypointLLAs () {
+  refreshWaypointLLAs() {
     this.waypoints
-      .filter(wp => wp.loop === 1 || wp.type === 'finish')
-      .forEach(wp => { wp.refreshLLA() })
+      .filter((wp) => wp.loop === 1 || wp.type === 'finish')
+      .forEach((wp) => {
+        wp.refreshLLA()
+      })
   }
 
   // terrainFactors: array of TerrainFactor objects only where actual terrain factor values exist
-  get terrainFactors () {
+  get terrainFactors() {
     if (this._cache.terrainFactors) return this._cache.terrainFactors
     d('regenerating terrainFactors')
     const arr = this.waypoints.filter(
@@ -224,10 +315,12 @@ class Course {
   }
 
   // terrainTypes: array of TerrainType objects only where actual terrain type changes exist
-  get terrainTypes () {
+  get terrainTypes() {
     if (this._cache.terrainTypes) return this._cache.terrainTypes
     d('regenerating terrainTypes')
-    const arr = this.waypoints.filter((x, i) => !_.isNil(x.terrainType) && x.terrainType !== this.waypoints[i - 1].terrainType)
+    const arr = this.waypoints.filter(
+      (x, i) => !_.isNil(x.terrainType) && x.terrainType !== this.waypoints[i - 1].terrainType
+    )
     this._cache.terrainTypes = arr.map((x, i) => {
       return new TerrainType({
         startWaypoint: x,
@@ -239,17 +332,17 @@ class Course {
     return this._cache.terrainTypes
   }
 
-  get cutoffs () {
+  get cutoffs() {
     if (this._cache.cutoffs) return this._cache.cutoffs
 
     this._cache.cutoffs = this.waypoints
-      .filter(wp => wp.cutoff)
-      .map(wp => new CourseCutoff({ waypoint: wp }))
+      .filter((wp) => wp.cutoff)
+      .map((wp) => new CourseCutoff({ waypoint: wp }))
 
     return this._cache.cutoffs
   }
 
-  get splits () {
+  get splits() {
     if (!this._cache.splits) {
       this._cache.splits = new CourseSplits({ course: this })
     }
@@ -258,18 +351,21 @@ class Course {
   }
 
   // calculate max and min values along course
-  get stats () {
+  get stats() {
     if (this._cache.stats) return this._cache.stats
 
     d('stats:calculate')
 
-    const alts = this.track.points.map(p => p.alt)
-    const grades = this.track.points.map(p => p.grade)
-    const terrains = this.terrainFactors.map(tf => (tf.value / 100 + 1))
+    const alts = this.track.points.map((p) => p.alt)
+    const grades = this.track.points.map((p) => p.grade)
+    const terrains = this.terrainFactors.map((tf) => tf.value / 100 + 1)
 
     const stats = {
       altitude: {
-        avg: _.sum(this.track.points.map((p, i) => (p.alt * (p.loc - (this.track.points[i - 1]?.loc || 0))))) / this.track.dist,
+        avg:
+          _.sum(
+            this.track.points.map((p, i) => p.alt * (p.loc - (this.track.points[i - 1]?.loc || 0)))
+          ) / this.track.dist,
         max: _.max(alts),
         min: _.min(alts)
       },
@@ -279,16 +375,17 @@ class Course {
         min: _.min(grades)
       },
       terrain: {
-        avg: (_.sumBy(this.terrainFactors, (tF) => (tF.end - tF.start) * tF.value) / this.dist + 100) / 100,
+        avg:
+          (_.sumBy(this.terrainFactors, (tF) => (tF.end - tF.start) * tF.value) / this.dist + 100) /
+          100,
         max: _.max(terrains),
         min: _.min(terrains)
       }
     }
 
     // get distances for max/min terrain
-    const terrainFactorDist = (val) => this.terrainFactors.reduce(
-      (a, b) => (b.value / 100 + 1 === val) ? a + b.end - b.start : a, 0
-    )
+    const terrainFactorDist = (val) =>
+      this.terrainFactors.reduce((a, b) => (b.value / 100 + 1 === val ? a + b.end - b.start : a), 0)
     Object.assign(stats.terrain, {
       maxDist: terrainFactorDist(stats.terrain.max),
       minDist: terrainFactorDist(stats.terrain.min)
@@ -298,28 +395,32 @@ class Course {
     return stats
   }
 
-  set stats (v) {
+  set stats(v) {
     this._cache.stats = v
   }
 
-  set eventStart (v) {
+  set eventStart(v) {
     if (v) this._data.eventStart = new Date(v)
     else delete this._data.eventStart
     delete this._cache.event
   }
 
-  get eventStart () { return this._data.eventStart }
+  get eventStart() {
+    return this._data.eventStart
+  }
 
-  set eventTimezone (v) {
+  set eventTimezone(v) {
     if (v) this._data.eventTimezone = v
     else delete this._data.eventTimezone
 
     delete this._cache.event
   }
 
-  get eventTimezone () { return this._data.eventTimezone }
+  get eventTimezone() {
+    return this._data.eventTimezone
+  }
 
-  get event () {
+  get event() {
     if (this._cache.event) return this._cache.event
 
     const start = this.eventStart || undefined
@@ -327,10 +428,10 @@ class Course {
     this._cache.event =
       start && timezone && this.track?.start
         ? new Event({
-          ...this.track.start,
-          start,
-          timezone
-        })
+            ...this.track.start,
+            start,
+            timezone
+          })
         : undefined
 
     return this._cache.event
@@ -338,31 +439,43 @@ class Course {
 }
 
 class CourseCutoff {
-  constructor (data) {
+  constructor(data) {
     Object.assign(this, data)
   }
 
-  get loc () { return this.waypoint.loc }
-  get time () { return this.waypoint.cutoff }
+  get loc() {
+    return this.waypoint.loc
+  }
+  get time() {
+    return this.waypoint.cutoff
+  }
 }
 
 class TerrainFactor {
-  constructor (data) {
+  constructor(data) {
     data = _.defaults(data, { value: 0 })
     Object.assign(this, data)
   }
 
-  get start () { return this.startWaypoint.loc }
-  get end () { return this.endWaypoint.loc }
+  get start() {
+    return this.startWaypoint.loc
+  }
+  get end() {
+    return this.endWaypoint.loc
+  }
 }
 
 class TerrainType {
-  constructor (data) {
+  constructor(data) {
     Object.assign(this, data)
   }
 
-  get start () { return this.startWaypoint.loc }
-  get end () { return this.endWaypoint.loc }
+  get start() {
+    return this.startWaypoint.loc
+  }
+  get end() {
+    return this.endWaypoint.loc
+  }
 }
 
 module.exports = Course

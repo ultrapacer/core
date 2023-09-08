@@ -3,7 +3,7 @@ const Point = require('../Point')
 const { interp } = require('../../util/math')
 
 // interpolate between two points
-function interpolate (p1, p2, loc) {
+function interpolate(p1, p2, loc) {
   const p3 = new Point([p1.lat, p1.lon, p1.alt])
   p3.loc = loc
 
@@ -18,18 +18,14 @@ function interpolate (p1, p2, loc) {
 
   // use first point for these fields:
   const fields1 = ['grade']
-  fields1.forEach(field => { p3[field] = p1[field] })
+  fields1.forEach((field) => {
+    p3[field] = p1[field]
+  })
 
   // linear interpolation of other fields
   const fields2 = ['alt']
-  fields2.forEach(field => {
-    p3[field] = interp(
-      p1.loc,
-      p2.loc,
-      p1[field],
-      p2[field],
-      p3.loc
-    )
+  fields2.forEach((field) => {
+    p3[field] = interp(p1.loc, p2.loc, p1[field], p2[field], p3.loc)
   })
 
   return p3

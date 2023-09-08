@@ -2,7 +2,7 @@ const adjust = require('./adjust')
 const def = require('./default')
 const _ = require('lodash')
 
-function getFact (loc, strategy, length) {
+function getFact(loc, strategy, length) {
   let a = -adjust(strategy, length)
   strategy.forEach((d, i) => {
     if (loc >= d.onset) {
@@ -13,7 +13,7 @@ function getFact (loc, strategy, length) {
         if (loc > end) {
           a += d.value
         } else {
-          a += d.value * (loc - d.onset) / (end - d.onset)
+          a += (d.value * (loc - d.onset)) / (end - d.onset)
         }
       }
     }
@@ -22,21 +22,21 @@ function getFact (loc, strategy, length) {
 }
 
 class StrategyAutoPoint {
-  constructor (arg = {}) {
+  constructor(arg = {}) {
     Object.defineProperty(this, 'point', { enumerable: false, writable: true })
     Object.assign(this, arg)
   }
 }
 
 class Strategy {
-  constructor (arg = {}) {
+  constructor(arg = {}) {
     Object.defineProperty(this, '__class', { value: 'Strategy', enumerable: false })
 
     // if it's already a Strategy object, just clone it
     if (arg.__class === 'Strategy') {
       Object.assign(this, _.cloneDeep(arg))
 
-    // otherwise copy over individual fields
+      // otherwise copy over individual fields
     } else {
       // length
       // TODO: length should be assumed from strategy.plan.course.dist
@@ -61,24 +61,24 @@ class Strategy {
   }
 
   /**
-  * Returns strategy factor at location.
-  *
-  * @param {Number} loc - The location (in km) to determine value.
-  * @param {Boolean} options.autos - A flag to include/exclude automatic strategy (eg meeting cutoffs).
-  * @return {Number} The strategy factor at input location.
-  */
-  at (loc, { autos = true } = {}) {
+   * Returns strategy factor at location.
+   *
+   * @param {Number} loc - The location (in km) to determine value.
+   * @param {Boolean} options.autos - A flag to include/exclude automatic strategy (eg meeting cutoffs).
+   * @return {Number} The strategy factor at input location.
+   */
+  at(loc, { autos = true } = {}) {
     const a = getFact(loc, this.values, this.length)
     if (autos) {
       const b = getFact(loc, this.autos, this.length)
       return (1 + a / 100) * (1 + b / 100)
     } else {
-      return (1 + a / 100)
+      return 1 + a / 100
     }
   }
 
-  addValue (val) {
-    const i = this.values.findIndex(v => v.onset >= val.onset)
+  addValue(val) {
+    const i = this.values.findIndex((v) => v.onset >= val.onset)
     if (i >= 0) {
       this.values.splice(i, 0, val)
     } else {
@@ -86,8 +86,8 @@ class Strategy {
     }
   }
 
-  addAuto (val) {
-    const i = this.autos.findIndex(v => v.onset >= val.onset)
+  addAuto(val) {
+    const i = this.autos.findIndex((v) => v.onset >= val.onset)
     const val2 = new StrategyAutoPoint({ ...val }) // shallow copy
     val2.value = 0
     if (i >= 0) {
@@ -98,7 +98,7 @@ class Strategy {
     this.adjustAutoValue(val2, val.value)
   }
 
-  adjustAutoValue (item, y2) {
+  adjustAutoValue(item, y2) {
     // where item is an object in the autos array
     // y2 is the adjustment being made to the step value at this location
 
@@ -116,8 +116,8 @@ class Strategy {
 
     // y1 is the corresponding reduction of the previous step
     // y3 is the corresponding reduction in the next step
-    const y1 = b * y2 / (a + b)
-    const y3 = a * y2 / (a + b)
+    const y1 = (b * y2) / (a + b)
+    const y3 = (a * y2) / (a + b)
 
     if (this.autos[i - 1]) this.autos[i - 1].value -= y1
     if (this.autos[i + 1]) this.autos[i + 1].value -= y3

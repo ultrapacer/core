@@ -19,7 +19,7 @@ const getHeatFactor = ({ point, model } = {}) => {
   const t = point.tod
   let f = 1
   if (t > model.start && t < model.stop) {
-    const theta = (t - model.start) / (model.stop - model.start) * Math.PI
+    const theta = ((t - model.start) / (model.stop - model.start)) * Math.PI
     f += ((model.max - model.baseline) * Math.sin(theta)) / 100
   }
   f += model.baseline / 100

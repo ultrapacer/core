@@ -8,7 +8,7 @@ const Factors = require('./Factors')
 
 // utility function to offset by 1 and scale
 const applyScale = (fact, scale) => {
-  return ((fact - 1) * scale) + 1
+  return (fact - 1) * scale + 1
 }
 
 // function to generate pacing factors for a point
@@ -28,7 +28,7 @@ const generate = (point, { plan, course }) => {
       strategy: plan.pacing.strategy.at(point.loc)
     })
 
-    if (typeof (point.tod) !== 'undefined') {
+    if (typeof point.tod !== 'undefined') {
       Object.assign(point.factors, {
         heat: plan.heatModel ? heat({ point, model: plan.heatModel }) : 1,
         dark: plan.event.sun ? dark(point.tod, point.factors.terrain, plan.event.sun) : 1
@@ -43,8 +43,10 @@ const generate = (point, { plan, course }) => {
 
   // if any factor scales exist, apply them:
   Object.keys(scales)
-    .filter(key => key !== 1 && point.factors[key])
-    .forEach(key => { point.factors[key] = applyScale(point.factors[key], scales[key]) })
+    .filter((key) => key !== 1 && point.factors[key])
+    .forEach((key) => {
+      point.factors[key] = applyScale(point.factors[key], scales[key])
+    })
 }
 
 module.exports = {
