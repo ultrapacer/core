@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const { MissingDataError } = require('../util')
 
+const d = require('../debug')('models:Waypoint')
+
 class Waypoint {
   constructor(data) {
     Object.defineProperty(this, '_data', { value: {} })
@@ -208,6 +210,8 @@ class Waypoint {
 
   // function updates the lat/lon/alt of a waypoint
   refreshLLA() {
+    d('refreshLLA')
+
     if (!this.course?.track?.points?.length)
       throw new MissingDataError('No track points defined', 'points')
 
