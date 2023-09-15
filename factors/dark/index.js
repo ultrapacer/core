@@ -1,23 +1,21 @@
 const defaults = require('./defaults')
 const scale = require('./scale')
 
-module.exports = function (tod, tF, sun, model) {
-  // returns a time-of-day based dark factor
-  // tod: time of day in seconds
-  // tF: terrainFactor
-  // sun: object w/ dawn, sunrise, sunset, dusk in time-of-day seconds
-  // model format:
-  //    scale: scaling factor for terrain factor
-  if (tF === 1) {
-    return 1
-  }
-  let t = 0
-  if (Array.isArray(tod)) {
-    t = (tod[0] + tod[1]) / 2
-  } else {
-    t = tod
-  }
-  if (t >= sun.sunrise && t <= sun.sunset) {
+/**
+ * Return time-of-day based dark factor
+ *
+ * @param {Object}  args                  An object
+ * @param {Number}  args.timeOfDaySeconds Time of day (in seconds)
+ * @param {Number}  args.terrainFactor    Terrain %
+ * @param {Object}  args.sun              Sun model, object w/ dawn, sunrise, sunset, dusk in time-of-day seconds
+ * @param {Object}  [args.model]          Darkness model (see ./defaults)
+ *
+ * @return {Number} The heat factor at the provided point
+ */
+const getDarkFactor = ({ timeOfDaySeconds, terrainFactor, sun, model = defaults }) => {
+  if (terrainFactor === 1) return 1
+
+  if (timeOfDaySeconds >= sun.sunrise && timeOfDaySeconds <= sun.sunset) {
     return 1
   }
   if (model === null || typeof model === 'undefined') {
@@ -27,10 +25,12 @@ module.exports = function (tod, tF, sun, model) {
   const maxDarkScaleFactor = sun.nadirAltitude < -6 ? 1 : -(sun.nadirAltitude / 6)
 
   // dark factor is a scaling of terrain
-  const fdark = model.scale * ((tF - 1) * maxDarkScaleFactor)
+  const fdark = (model.terrainScale * (terrainFactor - 1) + model.baseline) * maxDarkScaleFactor
 
   // val will be between 0 and 1, where 0 is no additional and 1 is max
-  const val = scale(sun, t)
+  const val = scale(sun, timeOfDaySeconds)
 
   return 1 + fdark * val
 }
+
+module.exports = getDarkFactor

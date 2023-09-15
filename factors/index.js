@@ -31,7 +31,13 @@ const generate = (point, { plan, course }) => {
     if (typeof point.tod !== 'undefined') {
       Object.assign(point.factors, {
         heat: plan.heatModel ? heat({ point, model: plan.heatModel }) : 1,
-        dark: plan.event.sun ? dark(point.tod, point.factors.terrain, plan.event.sun) : 1
+        dark: plan.event.sun
+          ? dark({
+              timeOfDaySeconds: point.tod,
+              terrainFactor: point.factors.terrain,
+              sun: plan.event.sun
+            })
+          : 1
       })
     }
   }
