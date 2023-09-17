@@ -242,11 +242,15 @@ class Track {
     }
   }
 
+  /**
+   * Returns nearest location to input lat/lon pair.
+   *
+   * @param {Number[]}  ll        [lat, lon] array.
+   * @param {Number}    [start]   starting location in meters.
+   * @param {Number}    [limit]   max distance it can move.
+   * @return {Number}             The nearest location to input lat/lon pair.
+   */
   getNearestLoc(ll, start = null, limit) {
-    // iterate to new location based on waypoint lat/lon
-    // ll: [lat, lon] array
-    // start: starting location in meters
-    // limit: max distance it can move
     const steps = 5
     const LLA1 = new LatLon(ll[0], ll[1])
 
