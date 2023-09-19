@@ -86,9 +86,10 @@ class SuperSegment extends Segment {
   }
 
   get actualTime() {
-    return this.sum('actualTime')
+    if (this.segments.find((s) => !_.isNumber(s.actualTime))) return undefined
+    return _.sumBy(this.segments, 'actualTime')
   }
- 
+
   get tod() {
     return this.last.tod
   }
