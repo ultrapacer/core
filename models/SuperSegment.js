@@ -28,11 +28,17 @@ class SuperSegment extends Segment {
     return _.last(this.segments)
   }
 
-  sum(f) {
-    // return sum field "f" of segments
-    return this.segments.reduce((v, s) => {
-      return v + s[f]
-    }, 0)
+  /**
+   * Return sum of a field
+   * @param {String}  field   Field to sum
+   * @return {Number}         The sum
+   */
+  sum(field) {
+    // first check that field is numeric for all segments:
+    if (this.segments.find((s) => !_.isNumber(s[field]))) return undefined
+
+    // return sum of field
+    return _.sumBy(this.segments, field)
   }
 
   get start() {
@@ -86,8 +92,7 @@ class SuperSegment extends Segment {
   }
 
   get actualTime() {
-    if (this.segments.find((s) => !_.isNumber(s.actualTime))) return undefined
-    return _.sumBy(this.segments, 'actualTime')
+    return this.sum('actualTime')
   }
 
   get tod() {
