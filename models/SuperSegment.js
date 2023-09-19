@@ -82,10 +82,13 @@ class SuperSegment extends Segment {
   }
 
   get actualElapsed() {
-    const v = this.last.actualElapsed
-    return isNaN(v) ? null : v
+    return this.last.actualElapsed
   }
 
+  get actualTime() {
+    return this.sum('actualTime')
+  }
+ 
   get tod() {
     return this.last.tod
   }
