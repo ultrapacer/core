@@ -301,7 +301,7 @@ class Course {
     const arr = this.waypoints.filter(
       (x, i) =>
         i === 0 ||
-        (!_.isNil(x.terrainFactor) && x.terrainFactor !== this.waypoints[i - 1].terrainFactor)
+        (!_.isNil(x.terrainFactor) && x.terrainFactor !== this.waypoints[i - 1]?.terrainFactor)
     )
     this._cache.terrainFactors = arr.map((x, i) => {
       return new TerrainFactor({
@@ -319,7 +319,7 @@ class Course {
     if (this._cache.terrainTypes) return this._cache.terrainTypes
     d('regenerating terrainTypes')
     const arr = this.waypoints.filter(
-      (x, i) => !_.isNil(x.terrainType) && x.terrainType !== this.waypoints[i - 1].terrainType
+      (x, i) => !_.isNil(x.terrainType) && x.terrainType !== this.waypoints[i - 1]?.terrainType
     )
     this._cache.terrainTypes = arr.map((x, i) => {
       return new TerrainType({
