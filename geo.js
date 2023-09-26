@@ -131,7 +131,7 @@ function calcSegments({ plan, course, breaks }) {
   }
 
   // normalize each factor by length
-  s.forEach((x, i) => {
+  s.forEach((x) => {
     x.factors = new factors.Factors(
       Object.fromEntries(fKeys.map((key) => [key, x.factorsSum[key] / x.len]))
     )
@@ -267,7 +267,7 @@ function adjustForCutoffs(data, i) {
 
   const cutoffs = data.plan.cutoffs.filter((c) => rlt(c.loc, data.plan.course.dist, 4))
 
-  const strats = cutoffs.map((c, i) => {
+  const strats = cutoffs.map((c) => {
     const prev = data.plan.pacing.strategy.autos.filter((s) => rlt(s.onset, c.loc, 4)).pop() || {
       onset: 0,
       point: data.plan.points[0]
@@ -322,7 +322,7 @@ function adjustForCutoffs(data, i) {
 
   // refine existing strategies on iterations where a new one isnt added
   if (!added) {
-    data.plan.pacing.strategy?.autos?.forEach((s, j) => {
+    data.plan.pacing.strategy?.autos?.forEach((s) => {
       const strat = strats.find((ss) => req(ss.onset, s.onset, 4))
       data.plan.pacing.strategy.adjustAutoValue(s, strat.value)
     })
