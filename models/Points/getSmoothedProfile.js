@@ -1,6 +1,6 @@
-const { wlslr } = require('../../util/math')
+import { wlslr } from '../../util/math'
 
-const getSmoothedProfile = ({ points, locs, gt }) => {
+export const getSmoothedProfile = ({ points, locs, gt }) => {
   // locs: array of locations (km)
   // gt: grade smoothing threshold
 
@@ -30,5 +30,3 @@ const getSmoothedProfile = ({ points, locs, gt }) => {
   })
   return ga
 }
-
-module.exports = getSmoothedProfile

@@ -1,16 +1,16 @@
-const { latlon: LatLon } = require('sgeo')
-const { isNumeric } = require('../util/math')
+import { isNumber } from 'lodash'
+import { latlon as LatLon } from 'sgeo'
 
-class Point {
+export class Point {
   constructor(arg) {
     // if arg is length 3, it's lat, lon, alt
     if (arg.length === 3) {
-      [this.lat, this.lon, this.alt] = arg
+      ;[this.lat, this.lon, this.alt] = arg
 
       // if arg is length 5, it's loc, lat, lon, at, grade
       // ** NOTE **, this loc and grade are never used
     } else if (arg.length === 5) {
-      [this.loc, this.lat, this.lon, this.alt, this.grade] = arg
+      ;[this.loc, this.lat, this.lon, this.alt, this.grade] = arg
 
       // otherwise it's wrong
     } else {
@@ -27,8 +27,6 @@ class Point {
   }
 
   has(field) {
-    return isNumeric(this[field])
+    return isNumber(this[field])
   }
 }
-
-module.exports = Point

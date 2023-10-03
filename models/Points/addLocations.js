@@ -1,6 +1,6 @@
 // add locations to array of Point objects
 // mutates input array
-const addLocations = (points) => {
+export const addLocations = (points) => {
   let d = 0
   let l = 0
   points[0].loc = 0
@@ -10,5 +10,3 @@ const addLocations = (points) => {
     points[i].loc = l
   }
 }
-
-module.exports = addLocations

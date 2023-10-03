@@ -1,14 +1,12 @@
-module.exports = {
-  Course: require('./Course'),
-  CoursePoint: require('./CoursePoint'),
-  Event: require('./Event'),
-  Pacing: require('./Pacing'),
-  Plan: require('./Plan'),
-  PlanPoint: require('./PlanPoint'),
-  Point: require('./Point'),
-  Segment: require('./Segment'),
-  Site: require('./Site'),
-  SuperSegment: require('./SuperSegment'),
-  Track: require('./Track'),
-  Waypoint: require('./Waypoint')
-}
+export { Course } from './Course'
+export { CoursePoint } from './CoursePoint'
+export { Event } from './Event'
+export { Pacing } from './Pacing'
+export { Plan } from './Plan'
+export { PlanPoint } from './PlanPoint'
+export { Point } from './Point'
+export { Segment } from './Segment'
+export { Site } from './Site'
+export { SuperSegment } from './SuperSegment'
+export { Track } from './Track'
+export { Waypoint } from './Waypoint'

@@ -1,8 +1,8 @@
-const _ = require('lodash')
-const suncalc = require('suncalc')
-const dateToTODSeconds = require('../util/dateToTODSeconds')
+import _ from 'lodash'
+import { getTimes, getPosition } from 'suncalc'
+import { dateToTODSeconds } from '../util/dateToTODSeconds'
 
-class Event {
+export class Event {
   constructor(obj) {
     Object.defineProperty(this, '_cache', { value: {} })
     Object.defineProperty(this, '_data', { value: {} })
@@ -37,8 +37,8 @@ class Event {
   get sun() {
     if (this._cache.sun) return this._cache.sun
 
-    const times = suncalc.getTimes(this.start, this.lat, this.lon)
-    const nadirPosition = suncalc.getPosition(times.nadir, this.lat, this.lon)
+    const times = getTimes(this.start, this.lat, this.lon)
+    const nadirPosition = getPosition(times.nadir, this.lat, this.lon)
 
     // add data to sun object, each in seconds since midnight:
     const sun = {}
@@ -80,5 +80,3 @@ class Event {
     return _.pick(this, ['start', 'sun', 'lat', 'lon', 'timezone'])
   }
 }
-
-module.exports = Event

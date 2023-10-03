@@ -1,5 +1,5 @@
-const defaults = require('./defaults')
-const scale = require('./scale')
+import { defaults } from './defaults'
+import { scale } from './scale'
 
 /**
  * Return time-of-day based dark factor
@@ -12,7 +12,7 @@ const scale = require('./scale')
  *
  * @return {Number} The heat factor at the provided point
  */
-const getDarkFactor = ({ timeOfDaySeconds, terrainFactor, sun, model = defaults }) => {
+export function getDarkFactor({ timeOfDaySeconds, terrainFactor, sun, model = defaults }) {
   if (terrainFactor === 1) return 1
 
   if (timeOfDaySeconds >= sun.sunrise && timeOfDaySeconds <= sun.sunset) {
@@ -32,5 +32,3 @@ const getDarkFactor = ({ timeOfDaySeconds, terrainFactor, sun, model = defaults 
 
   return 1 + fdark * val
 }
-
-module.exports = getDarkFactor

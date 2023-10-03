@@ -1,16 +1,10 @@
-function isNumeric(num) {
-  return (typeof num === 'number' || (typeof num === 'string' && num.trim() !== '')) && !isNaN(num)
-}
+import { round } from 'lodash'
 
-function round(num, digits) {
-  return Math.round(num * 10 ** digits) / 10 ** digits
-}
-
-function interp(x0, x1, y0, y1, x) {
+export function interp(x0, x1, y0, y1, x) {
   return y0 + ((x - x0) / (x1 - x0)) * (y1 - y0)
 }
 
-function interpArray(xs, ys, x2s) {
+export function interpArray(xs, ys, x2s) {
   // interpolate an array to another
   // xs: array of x's, ordered small to large
   // ys: array of corresponding y's
@@ -36,7 +30,7 @@ function interpArray(xs, ys, x2s) {
   return y2s
 }
 
-function linearRegression(xyr) {
+export function linearRegression(xyr) {
   let i
   let x
   let y
@@ -75,7 +69,7 @@ function linearRegression(xyr) {
   return [a, b]
 }
 
-function wlslr(x1s, y1s, x2s, th) {
+export function wlslr(x1s, y1s, x2s, th) {
   // weighted least squares linear regression routine
   // x1s: source x array
   // y1s: source y array
@@ -111,30 +105,18 @@ function wlslr(x1s, y1s, x2s, th) {
 }
 
 // shorthand comparisons to the r decimal place
-function rlt(a, b, r) {
+export function rlt(a, b, r) {
   return round(a, r) < round(b, r)
 }
-function rgt(a, b, r) {
+export function rgt(a, b, r) {
   return round(a, r) > round(b, r)
 }
-function rlte(a, b, r) {
+export function rlte(a, b, r) {
   return round(a, r) <= round(b, r)
 }
-function rgte(a, b, r) {
+export function rgte(a, b, r) {
   return round(a, r) >= round(b, r)
 }
-function req(a, b, r) {
+export function req(a, b, r) {
   return round(a, r) === round(b, r)
 }
-
-exports.isNumeric = isNumeric
-exports.linearRegression = linearRegression
-exports.round = round
-exports.interp = interp
-exports.interpArray = interpArray
-exports.wlslr = wlslr
-exports.rlt = rlt
-exports.rgt = rgt
-exports.rlte = rlte
-exports.rgte = rgte
-exports.req = req

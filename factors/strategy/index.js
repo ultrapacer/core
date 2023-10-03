@@ -1,6 +1,6 @@
-const adjust = require('./adjust')
-const def = require('./default')
-const _ = require('lodash')
+import _ from 'lodash'
+import { adjust } from './adjust'
+import { defaults as def } from './default'
 
 function getFact(loc, strategy, length) {
   let a = -adjust(strategy, length)
@@ -28,7 +28,7 @@ class StrategyAutoPoint {
   }
 }
 
-class Strategy {
+export class Strategy {
   constructor(arg = {}) {
     Object.defineProperty(this, '__class', { value: 'Strategy', enumerable: false })
 
@@ -47,10 +47,8 @@ class Strategy {
       // TODO: this is too flexible and prone to errors:
       if (_.isNumber(arg.values)) {
         this.values = [{ onset: 0, value: arg.values, type: 'linear' }]
-      } else if (_.isArray(arg.values)) {
+      } else if (_.isArray(arg.values) && arg.values.length) {
         this.values = _.cloneDeep(arg.values)
-      } else if (arg.values) {
-        throw new Error(`bad values input: ${JSON.stringify(arg.values)}`)
       } else {
         this.values = [{ onset: 0, value: def(this.length), type: 'linear' }]
       }
@@ -123,5 +121,3 @@ class Strategy {
     if (this.autos[i + 1]) this.autos[i + 1].value -= y3
   }
 }
-
-module.exports = Strategy

@@ -1,13 +1,15 @@
-const _ = require('lodash')
-const { interp, req, rgte } = require('../util/math')
-const interpolatePoint = require('./Points/interpolate')
-const Event = require('./Event')
-const { createSegments, createSplits } = require('../geo')
-const CoursePoint = require('./CoursePoint')
-const Site = require('./Site')
-const Track = require('./Track')
-const MissingDataError = require('../util/MissingDataError')
-const d = require('../debug')('models:Course')
+import _ from 'lodash'
+import { interp, req, rgte } from '../util/math'
+import { interpolatePoint } from './Points/interpolate'
+import { Event } from './Event'
+import { createSegments, createSplits } from '../geo'
+import { CoursePoint } from './CoursePoint'
+import { Site } from './Site'
+import { Track } from './Track'
+import { MissingDataError } from '../util/MissingDataError'
+import { createDebug } from '../util'
+
+const d = createDebug('models:Course')
 
 class CourseSplits {
   constructor(data) {
@@ -57,7 +59,7 @@ class CourseSplits {
 // this array to omit certain keys from passing through
 const disallowed = ['cache', 'distance']
 
-class Course {
+export class Course {
   constructor(data) {
     Object.defineProperty(this, '_data', {
       value: data._data || {
@@ -477,5 +479,3 @@ class TerrainType {
     return this.endWaypoint.loc
   }
 }
-
-module.exports = Course

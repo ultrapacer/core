@@ -1,26 +1,25 @@
-const list = require('./list')
-const altitude = require('./altitude')
-const dark = require('./dark')
-const grade = require('./grade')
-const heat = require('./heat')
-const terrain = require('./terrain')
-const Factors = require('./Factors')
+import { getAltitudeFactor } from './altitude'
+import { getDarkFactor } from './dark'
+import { getGradeFactor } from './grade'
+import { getHeatFactor } from './heat'
+import { getTerrainFactor } from './terrain'
+import { Factors } from './Factors'
 
 // utility function to offset by 1 and scale
-const applyScale = (fact, scale) => {
+export function applyScale(fact, scale) {
   return (fact - 1) * scale + 1
 }
 
 // function to generate pacing factors for a point
-const generate = (point, { plan, course }) => {
+export function generate(point, { plan, course }) {
   if (!course) course = plan.course
 
   if (!point.factors) point.factors = new Factors()
 
   Object.assign(point.factors, {
-    grade: grade(point.grade),
-    altitude: altitude(point.alt),
-    terrain: terrain({ point, course })
+    grade: getGradeFactor(point.grade),
+    altitude: getAltitudeFactor(point.alt),
+    terrain: getTerrainFactor({ point, course })
   })
 
   if (plan) {
@@ -30,9 +29,9 @@ const generate = (point, { plan, course }) => {
 
     if (typeof point.tod !== 'undefined') {
       Object.assign(point.factors, {
-        heat: plan.heatModel ? heat({ point, model: plan.heatModel }) : 1,
+        heat: plan.heatModel ? getHeatFactor({ point, model: plan.heatModel }) : 1,
         dark: plan.event.sun
-          ? dark({
+          ? getDarkFactor({
               timeOfDaySeconds: point.tod,
               terrainFactor: point.factors.terrain,
               sun: plan.event.sun
@@ -55,14 +54,6 @@ const generate = (point, { plan, course }) => {
     })
 }
 
-module.exports = {
-  list,
-  Factors,
-  altitude,
-  dark,
-  grade,
-  heat,
-  terrain,
-  Strategy: require('./strategy'),
-  generate
-}
+export { list } from './list'
+export { Strategy } from './strategy'
+export { Factors }

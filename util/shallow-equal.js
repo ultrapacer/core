@@ -1,6 +1,6 @@
 // function compares two objects of any type for shallow equality
 
-function shallowEqual(a, b) {
+export function shallowEqual(a, b) {
   // first try a direct compare:
   if (a === b) return true
 
@@ -38,5 +38,3 @@ function shallowEqual(a, b) {
 
   return false
 }
-
-module.exports = shallowEqual

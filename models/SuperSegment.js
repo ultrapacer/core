@@ -1,8 +1,7 @@
-const _ = require('lodash')
-const Segment = require('./Segment')
-const { list: factors } = require('../factors')
+import _ from 'lodash'
+import { Segment } from './Segment'
 
-class SuperSegment extends Segment {
+export class SuperSegment extends Segment {
   constructor(segments = []) {
     super({})
 
@@ -142,4 +141,3 @@ class SuperSegment extends Segment {
     return this.last.point2
   }
 }
-module.exports = SuperSegment

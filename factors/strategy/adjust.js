@@ -1,4 +1,4 @@
-module.exports = function (strategy, length) {
+export function adjust(strategy, length) {
   // calculate initial strategy factor offset such that strategy averages to 0
   let a = 0
   let area = 0

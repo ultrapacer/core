@@ -1,11 +1,13 @@
-const _ = require('lodash')
-const addLocations = require('./addLocations')
-const { interp } = require('../../util/math')
-const d = require('../../debug')('models:Points:clean')
+import _ from 'lodash'
+import { addLocations } from './addLocations'
+import { interp } from '../../util/math'
+import { createDebug } from '../../debug'
+
+const d = createDebug('models:Points:clean')
 
 // clean up array of Point objects
 // mutates input array
-const clean = (points) => {
+export const clean = (points) => {
   const length0 = points.length
 
   addLocations(points)
@@ -59,5 +61,3 @@ const clean = (points) => {
   }
   d(`clean from ${length0} to ${points.length} points.`)
 }
-
-module.exports = clean

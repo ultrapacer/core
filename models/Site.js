@@ -1,9 +1,10 @@
-const _ = require('lodash')
-const Waypoint = require('./Waypoint')
+import _ from 'lodash'
+import { Waypoint } from './Waypoint'
+import { createDebug } from '../util'
 
-const d = require('../debug')('models:Waypoint')
+const d = createDebug('models:Waypoint')
 
-class Site {
+export class Site {
   constructor(data) {
     d(`constructor: ${data.name || 'unnamed'}`)
 
@@ -72,5 +73,3 @@ class Site {
     return _.pick(this, fields)
   }
 }
-
-module.exports = Site

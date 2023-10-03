@@ -1,6 +1,6 @@
-const defaults = require('./defaults')
+import { defaults } from './defaults'
 
-module.exports = function (alt, model) {
+export function getAltitudeFactor(alt, model) {
   // returns an exponential altitude factor
   // alt: altitude [km]
   // model format:

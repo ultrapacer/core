@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "ultraPacer is a web app for creating courses and pacing plans for ultramarathons and trail adventures that factor in grade, terrain, altitude, heat, and fatigue.",
   "author": "Danny Murphy <danny@ultrapacer.com>",
+  "type": "module",
   "scripts": {
     "format": "prettier --write ./",
     "test": "vitest"

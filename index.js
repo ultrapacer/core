@@ -1,9 +1,5 @@
-const factors = require('./factors')
-const models = require('./models')
-module.exports = {
-  factors,
-  models,
-  geo: require('./geo.js'),
-  util: require('./util'),
-  math: require('./util/math.js')
-}
+export * as geo from './geo'
+export * as factors from './factors'
+export * as models from './models'
+export * as util from './util'
+export * as math from './util/math'

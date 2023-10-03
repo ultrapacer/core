@@ -1,4 +1,4 @@
-const _ = require('lodash')
+import _ from 'lodash'
 
 /**
  * Returns a string with zero(s) preceding numbers.
@@ -22,7 +22,7 @@ function leftZero(val, len = 2) {
  * @return {String} A formatted time string in format hh:mm:ss, where the length will be trimmed
  *   to length with a minimum of "m:ss".
  */
-function toString(val) {
+export function timeString(val) {
   if (_.isNil(val)) return ''
 
   const hms = [Math.floor(val / 3600), Math.floor((val % 3600) / 60), Math.round(val % 60)]
@@ -36,5 +36,3 @@ function toString(val) {
 
   return string
 }
-
-module.exports = toString

@@ -1,6 +1,6 @@
-const { interp } = require('../../util/math')
+import { interp } from '../../util/math'
 
-module.exports = function (sun, t) {
+export function scale(sun, t) {
   // routine to address tod rollover at midnight
   function offset(t) {
     return t < sun.noon ? t + 86400 : t
