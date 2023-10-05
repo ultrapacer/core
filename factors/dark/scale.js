@@ -1,4 +1,4 @@
-import { interp } from '../../util/math'
+import { interp } from '../../util/math.js'
 
 export function scale(sun, t) {
   // routine to address tod rollover at midnight

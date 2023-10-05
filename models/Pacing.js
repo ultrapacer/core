@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { req } from '../util/math'
-import { Factors, Strategy } from '../factors'
-import { createDebug } from '../util'
+import { req } from '../util/math.js'
+import { Factors, Strategy } from '../factors/index.js'
+import { createDebug } from '../util/index.js'
 
 const d = createDebug('models:Pacing')
 

@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { adjust } from './adjust'
-import { defaults as def } from './default'
+import { adjust } from './adjust.js'
+import { defaults as def } from './default.js'
 
 function getFact(loc, strategy, length) {
   let a = -adjust(strategy, length)

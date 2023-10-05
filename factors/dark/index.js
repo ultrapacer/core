@@ -1,5 +1,5 @@
-import { defaults } from './defaults'
-import { scale } from './scale'
+import { defaults } from './defaults.js'
+import { scale } from './scale.js'
 
 /**
  * Return time-of-day based dark factor

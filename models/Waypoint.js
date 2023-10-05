@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { createDebug, MissingDataError } from '../util'
+import { createDebug, MissingDataError } from '../util/index.js'
 
 const d = createDebug('models:Waypoint')
 

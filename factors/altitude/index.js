@@ -1,4 +1,4 @@
-import { defaults } from './defaults'
+import { defaults } from './defaults.js'
 
 export function getAltitudeFactor(alt, model) {
   // returns an exponential altitude factor

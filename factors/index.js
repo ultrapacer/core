@@ -1,9 +1,9 @@
-import { getAltitudeFactor } from './altitude'
-import { getDarkFactor } from './dark'
-import { getGradeFactor } from './grade'
-import { getHeatFactor } from './heat'
-import { getTerrainFactor } from './terrain'
-import { Factors } from './Factors'
+import { getAltitudeFactor } from './altitude/index.js'
+import { getDarkFactor } from './dark/index.js'
+import { getGradeFactor } from './grade/index.js'
+import { getHeatFactor } from './heat/index.js'
+import { getTerrainFactor } from './terrain/index.js'
+import { Factors } from './Factors.js'
 
 // utility function to offset by 1 and scale
 export function applyScale(fact, scale) {
@@ -54,6 +54,6 @@ export function generate(point, { plan, course }) {
     })
 }
 
-export { list } from './list'
-export { Strategy } from './strategy'
+export { list } from './list.js'
+export { Strategy } from './strategy/index.js'
 export { Factors }

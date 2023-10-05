@@ -1,4 +1,4 @@
-import { defaults } from './defaults'
+import { defaults } from './defaults.js'
 
 export function getGradeFactor(grade, model) {
   if (model === null || typeof model === 'undefined') {

@@ -1,6 +1,8 @@
 import _ from 'lodash'
-import { getTimes, getPosition } from 'suncalc'
-import { dateToTODSeconds } from '../util/dateToTODSeconds'
+import suncalc from 'suncalc'
+import { dateToTODSeconds } from '../util/dateToTODSeconds.js'
+
+const { getTimes, getPosition } = suncalc
 
 export class Event {
   constructor(obj) {

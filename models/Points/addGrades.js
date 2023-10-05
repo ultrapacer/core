@@ -1,4 +1,4 @@
-import { getSmoothedProfile } from './getSmoothedProfile'
+import { getSmoothedProfile } from './getSmoothedProfile.js'
 
 // add grades to array of Point objects
 // mutates input array

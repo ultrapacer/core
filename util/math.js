@@ -1,4 +1,4 @@
-import { round } from 'lodash'
+import round from 'lodash/round.js'
 
 export function interp(x0, x1, y0, y1, x) {
   return y0 + ((x - x0) / (x1 - x0)) * (y1 - y0)

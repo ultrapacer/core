@@ -1,4 +1,4 @@
-import { isNumber } from 'lodash'
+import isNumber from 'lodash/isNumber.js'
 import { latlon as LatLon } from 'sgeo'
 
 export class Point {

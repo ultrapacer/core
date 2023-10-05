@@ -1,10 +1,9 @@
 import _ from 'lodash'
-import { list, generate, Factors } from './factors'
-import { rlt, rgt, rlte, rgte, req } from './util/math'
-import { Segment } from './models/Segment'
-import { Pacing } from './models/Pacing'
-import { MissingDataError } from './util/MissingDataError'
-import { createDebug } from './util'
+import { list, generate, Factors } from './factors/index.js'
+import { rlt, rgt, rlte, rgte, req } from './util/math.js'
+import { Segment } from './models/Segment.js'
+import { Pacing } from './models/Pacing.js'
+import { createDebug, MissingDataError } from './util/index.js'
 
 const d = createDebug('geo')
 

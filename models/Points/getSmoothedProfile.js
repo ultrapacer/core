@@ -1,4 +1,4 @@
-import { wlslr } from '../../util/math'
+import { wlslr } from '../../util/math.js'
 
 export const getSmoothedProfile = ({ points, locs, gt }) => {
   // locs: array of locations (km)
