@@ -47,8 +47,10 @@ export class Strategy {
       // TODO: this is too flexible and prone to errors:
       if (_.isNumber(arg.values)) {
         this.values = [{ onset: 0, value: arg.values, type: 'linear' }]
-      } else if (_.isArray(arg.values) && arg.values.length) {
+      } else if (_.isArray(arg.values)) {
         this.values = _.cloneDeep(arg.values)
+      } else if (arg.values) {
+        throw new Error(`bad values input: ${JSON.stringify(arg.values)}`)
       } else {
         this.values = [{ onset: 0, value: def(this.length), type: 'linear' }]
       }

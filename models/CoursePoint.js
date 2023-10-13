@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import isNumber from 'lodash/isNumber'
 
 export class CoursePoint {
   constructor(course, point, loop) {
@@ -32,6 +32,6 @@ export class CoursePoint {
   }
 
   has(field) {
-    return _.isNumber(this[field])
+    return isNumber(this[field])
   }
 }

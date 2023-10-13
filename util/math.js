@@ -1,4 +1,6 @@
-import round from 'lodash/round.js'
+export function round(num, digits = 0) {
+  return Math.round(num * 10 ** digits) / 10 ** digits
+}
 
 export function interp(x0, x1, y0, y1, x) {
   return y0 + ((x - x0) / (x1 - x0)) * (y1 - y0)
@@ -105,6 +107,7 @@ export function wlslr(x1s, y1s, x2s, th) {
 }
 
 // shorthand comparisons to the r decimal place
+// this round function defined above seems to perform much better than lodash round
 export function rlt(a, b, r) {
   return round(a, r) < round(b, r)
 }
