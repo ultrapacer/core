@@ -1,6 +1,6 @@
-import _ from 'lodash'
+import remove from 'lodash/remove'
 import { addLocations } from './addLocations'
-import { interp } from '../../util/math'
+import { interp, round } from '../../util/math'
 import { createDebug } from '../../debug'
 
 const d = createDebug('models:Points:clean')
@@ -13,7 +13,7 @@ export const clean = (points) => {
   addLocations(points)
 
   // filter out any zero-length segments:
-  _.remove(points, (p, i) => i > 0 && !_.round(p.loc - points[i - 1].loc, 8))
+  remove(points, (p, i) => i > 0 && !round(p.loc - points[i - 1].loc, 8))
 
   // REMOVE ALITITUDE STEPS FROM THE GPX. HAPPENS SOMETIMES WITH STRAVA DEM
   const gt = 40 // % grade
@@ -49,7 +49,7 @@ export const clean = (points) => {
 
         d(`Fixing step at index ${i} by adjustments to points ${a + 1} through ${b - 1}.`)
         for (let j = a + 1; j < b; j++) {
-          points[j].alt = _.round(
+          points[j].alt = round(
             interp(points[a].loc, points[b].loc, points[a].alt, points[b].alt, points[j].loc),
             2
           )

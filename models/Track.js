@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { req } from '../util/math.js'
+import { req, round } from '../util/math.js'
 import { latlon as LatLon } from 'sgeo'
 import { interpolatePoint } from './Points/interpolate.js'
 import { Point } from './Point.js'
@@ -313,15 +313,15 @@ export class Track {
     const numpoints = Math.floor(len / spacing) + 1
     const xs = Array(numpoints)
       .fill(0)
-      .map((e, i) => _.round(i++ * spacing, 3))
+      .map((e, i) => round(i++ * spacing, 3))
     if (xs[xs.length - 1] < len) {
       xs.push(len)
     }
     const adj = getSmoothedProfile({ points: this.points, locs: xs, gt: 2 * spacing })
     const points = this.getLLA(xs, 0).map((lla, i) => [
-      _.round(lla.lat, 6),
-      _.round(lla.lon, 6),
-      _.round(adj[i].alt, 2)
+      round(lla.lat, 6),
+      round(lla.lon, 6),
+      round(adj[i].alt, 2)
     ])
     const source = this.source
     const track = new Track({ source, points })
