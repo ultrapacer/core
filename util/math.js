@@ -3,16 +3,27 @@ export function round(num, digits = 0) {
   return Math.round(num * 10 ** digits) / 10 ** digits
 }
 
+/**
+ * linear interpolation between points
+ * @param {*} x0 first x value
+ * @param {*} x1 second x value
+ * @param {*} y0 first y value
+ * @param {*} y1 second y value
+ * @param {*} x input x value
+ * @returns {number} estimated y value
+ */
 export function interp(x0, x1, y0, y1, x) {
   return y0 + ((x - x0) / (x1 - x0)) * (y1 - y0)
 }
 
+/**
+ * interpolate one array against another
+ * @param {*} xs reference array of x's
+ * @param {*} ys referece array of y's
+ * @param {*} x2s input array of x values to interpolate
+ * @returns {[number]} array of estimated y values
+ */
 export function interpArray(xs, ys, x2s) {
-  // interpolate an array to another
-  // xs: array of x's, ordered small to large
-  // ys: array of corresponding y's
-  // x2s: array of new x's to interpolate on
-
   let i = 0
   let j = 0
   const y2s = []
