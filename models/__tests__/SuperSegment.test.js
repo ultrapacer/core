@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import SuperSegment from '../SuperSegment'
+import { SuperSegment } from '../SuperSegment'
 let segments = [{}, {}, {}]
 
 test('Check SuperSegment actualTime', () => {

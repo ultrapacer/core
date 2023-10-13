@@ -1,9 +1,9 @@
-const _ = require('lodash')
-const { MissingDataError } = require('../util')
+import _ from 'lodash'
+import { createDebug, MissingDataError } from '../util/index.js'
 
-const d = require('../debug')('models:Waypoint')
+const d = createDebug('models:Waypoint')
 
-class Waypoint {
+export class Waypoint {
   constructor(data) {
     Object.defineProperty(this, '_data', { value: {} })
 
@@ -219,15 +219,15 @@ class Waypoint {
 
     // if start use start lla
     if (this.type === 'start') {
-      ({ lat, lon, alt } = this.course.track.points[0])
+      ;({ lat, lon, alt } = this.course.track.points[0])
 
       // if finish use finish lla
     } else if (this.type === 'finish') {
-      ({ lat, lon, alt } = _.last(this.course.track.points))
+      ;({ lat, lon, alt } = _.last(this.course.track.points))
 
       // otherwise interpolate the lla from track array
     } else {
-      ({ lat, lon, alt, ind } = this.course.track.getLLA(this.loc / this.course.distScale, {
+      ;({ lat, lon, alt, ind } = this.course.track.getLLA(this.loc / this.course.distScale, {
         start: this.site.pointsIndex || 0
       }))
     }
@@ -262,5 +262,3 @@ class Waypoint {
     return data
   }
 }
-
-module.exports = Waypoint

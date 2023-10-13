@@ -1,6 +1,6 @@
-const defaults = require('./defaults')
+import { defaults } from './defaults.js'
 
-module.exports = function (grade, model) {
+export function getGradeFactor(grade, model) {
   if (model === null || typeof model === 'undefined') {
     model = defaults
   }

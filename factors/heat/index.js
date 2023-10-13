@@ -13,7 +13,7 @@
  *
  * @return {Number} The heat factor at the provided point
  */
-const getHeatFactor = ({ point, model } = {}) => {
+export function getHeatFactor({ point, model } = {}) {
   if (!model) return 1
 
   const t = point.tod
@@ -25,5 +25,3 @@ const getHeatFactor = ({ point, model } = {}) => {
   f += model.baseline / 100
   return f
 }
-
-module.exports = getHeatFactor

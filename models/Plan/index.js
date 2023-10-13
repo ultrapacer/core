@@ -1,13 +1,14 @@
-const _ = require('lodash')
-const { req, rgte, interp, interpArray } = require('../../util/math')
-const Event = require('../Event')
-const { calcPacing, createSegments, createSplits } = require('../../geo')
-const areSame = require('../../util/areSame')
-const MissingDataError = require('../../util/MissingDataError')
-const Pacing = require('../Pacing')
-const PlanPoint = require('../PlanPoint')
-const { list: fKeys, generate: generateFactors, Strategy, Factors } = require('../../factors')
-const d = require('../../debug')('models:Plan')
+import _ from 'lodash'
+import { req, rgte, interp, interpArray } from '../../util/math.js'
+import { Event } from '../Event.js'
+import { calcPacing, createSegments, createSplits } from '../../geo.js'
+import { areSame, createDebug, MissingDataError } from '../../util/index.js'
+import { Pacing } from '../Pacing.js'
+import { PlanPoint } from '../PlanPoint.js'
+import { list as fKeys, generate as generateFactors, Factors } from '../../factors/index.js'
+import { Strategy } from '../../factors/strategy/index.js'
+
+const d = createDebug('models:Plan')
 
 const areSameWaypoint = (a, b) => areSame(a.site, b.site) && a.loop === b.loop
 
@@ -61,7 +62,7 @@ class PlanSplits {
   }
 }
 
-class Plan {
+export class Plan {
   constructor(db) {
     if (!db.course) throw new Error('Course required')
 
@@ -652,5 +653,3 @@ class PlanCutoff {
     )
   }
 }
-
-module.exports = Plan

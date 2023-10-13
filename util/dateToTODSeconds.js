@@ -1,5 +1,5 @@
 // get time of day seconds in event timezone:
-module.exports = (date, timezone) => {
+export function dateToTODSeconds(date, timezone) {
   const hms = date
     .toLocaleString([], {
       hour: '2-digit',

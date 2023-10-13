@@ -1,1 +1,1 @@
-module.exports = ['altitude', 'grade', 'terrain', 'heat', 'dark', 'fatigue', 'strategy']
+export const list = ['altitude', 'grade', 'terrain', 'heat', 'dark', 'fatigue', 'strategy']

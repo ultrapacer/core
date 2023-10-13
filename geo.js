@@ -1,12 +1,13 @@
-const _ = require('lodash')
-const factors = require('./factors')
-const { rlt, rgt, rlte, rgte, req } = require('./util/math')
-const Segment = require('./models/Segment')
-const Pacing = require('./models/Pacing')
-const MissingDataError = require('./util/MissingDataError')
-const fKeys = factors.list
-const d = require('./debug')('geo')
+import _ from 'lodash'
+import { list, generate, Factors } from './factors/index.js'
+import { rlt, rgt, rlte, rgte, req } from './util/math.js'
+import { Segment } from './models/Segment.js'
+import { Pacing } from './models/Pacing.js'
+import { createDebug, MissingDataError } from './util/index.js'
 
+const d = createDebug('geo')
+
+const fKeys = list
 // creates an object with keys from fKeys above with initial values of init
 function fObj(init) {
   const obj = {}
@@ -18,7 +19,7 @@ function fObj(init) {
   return obj
 }
 
-function calcSegments({ plan, course, breaks }) {
+export function calcSegments({ plan, course, breaks }) {
   /*
   data {
      breaks: array of [loc,loc,...] to break on (start at 0)
@@ -92,7 +93,7 @@ function calcSegments({ plan, course, breaks }) {
   const calcStuff = ({ seg, p1, p2 }) => {
     const delta = p2.alt - p1.alt
     seg[delta > 0 ? 'gain' : 'loss'] += delta * (delta > 0 ? course.gainScale : course.lossScale)
-    factors.generate(p1, { plan, course })
+    generate(p1, { plan, course })
     const len = p2.loc - p1.loc
     fKeys.forEach((key) => {
       seg.factorsSum[key] += p1.factors[key] * len
@@ -132,7 +133,7 @@ function calcSegments({ plan, course, breaks }) {
 
   // normalize each factor by length
   s.forEach((x) => {
-    x.factors = new factors.Factors(
+    x.factors = new Factors(
       Object.fromEntries(fKeys.map((key) => [key, x.factorsSum[key] / x.len]))
     )
   })
@@ -140,7 +141,7 @@ function calcSegments({ plan, course, breaks }) {
   return s
 }
 
-function calcPacing(data) {
+export function calcPacing(data) {
   /*
     data:
       plan,
@@ -331,7 +332,7 @@ function adjustForCutoffs(data, i) {
   return Boolean(!added && cutoffs.filter((c) => c.point.elapsed - c.time >= 0.5).length === 0)
 }
 
-function createSegments(data) {
+export function createSegments(data) {
   // data: {[plan], [course]}
 
   d('createSegments')
@@ -359,7 +360,7 @@ function createSegments(data) {
   return segments
 }
 
-function createSplits(data) {
+export function createSplits(data) {
   // data: {unit, [plan], [course]}
 
   d(`createSplits:${data.unit}`)
@@ -380,8 +381,3 @@ function createSplits(data) {
 
   return splits
 }
-
-exports.calcSegments = calcSegments
-exports.calcPacing = calcPacing
-exports.createSegments = createSegments
-exports.createSplits = createSplits

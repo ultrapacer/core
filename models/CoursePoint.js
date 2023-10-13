@@ -1,6 +1,6 @@
-const { isNumeric } = require('../util/math')
+import _ from 'lodash'
 
-class CoursePoint {
+export class CoursePoint {
   constructor(course, point, loop) {
     Object.defineProperty(this, 'course', { writable: true })
 
@@ -32,8 +32,6 @@ class CoursePoint {
   }
 
   has(field) {
-    return isNumeric(this[field])
+    return _.isNumber(this[field])
   }
 }
-
-module.exports = CoursePoint

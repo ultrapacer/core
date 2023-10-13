@@ -1,9 +1,11 @@
-const _ = require('lodash')
-const { req } = require('../util/math')
-const { Factors, Strategy } = require('../factors')
-const d = require('../debug')('models:Pacing')
+import _ from 'lodash'
+import { req } from '../util/math.js'
+import { Factors, Strategy } from '../factors/index.js'
+import { createDebug } from '../util/index.js'
 
-class Pacing {
+const d = createDebug('models:Pacing')
+
+export class Pacing {
   constructor(data = {}) {
     Object.defineProperty(this, '_cache', { value: {} })
     Object.defineProperty(this, '_data', { value: {} })
@@ -104,5 +106,3 @@ class Pacing {
     return this.plan.delay
   }
 }
-
-module.exports = Pacing

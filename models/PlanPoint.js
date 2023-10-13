@@ -1,6 +1,8 @@
-const _ = require('lodash')
+import _ from 'lodash'
+
 const planPointFields = ['lat', 'lon', 'alt', 'latlon', 'grade', 'loc', 'actual']
-class PlanPoint {
+
+export class PlanPoint {
   constructor(plan, point) {
     Object.defineProperty(this, '_plan', { value: plan })
     Object.defineProperty(this, '_point', { value: point }) // should be CoursePoint object
@@ -31,5 +33,3 @@ class PlanPoint {
     return undefined
   }
 }
-
-module.exports = PlanPoint

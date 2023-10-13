@@ -1,9 +1,8 @@
-module.exports = {
-  areSame: require('./areSame'),
-  areSameWaypoint: require('./areSameWaypoint'),
-  dateToTODSeconds: require('./dateToTODSeconds'),
-  math: require('./math'),
-  MissingDataError: require('./MissingDataError'),
-  shallowEqual: require('./shallow-equal'),
-  timeString: require('./timeString')
-}
+export { areSame } from './areSame.js'
+export { areSameWaypoint } from './areSameWaypoint.js'
+export { createDebug } from '../debug.js'
+export { dateToTODSeconds } from './dateToTODSeconds.js'
+export * as math from './math.js'
+export { MissingDataError } from './MissingDataError.js'
+export { shallowEqual } from './shallow-equal.js'
+export { timeString } from './timeString.js'

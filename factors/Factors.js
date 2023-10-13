@@ -1,6 +1,6 @@
-const list = require('./list')
+import { list } from './list.js'
 
-class Factors {
+export class Factors {
   constructor(value) {
     Object.defineProperty(this, '_data', { value: {} })
     list.forEach((key) => {
@@ -27,5 +27,3 @@ class Factors {
     }, 1)
   }
 }
-
-module.exports = Factors

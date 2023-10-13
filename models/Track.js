@@ -1,16 +1,16 @@
-const _ = require('lodash')
-const { round, req } = require('../util/math')
-const { latlon: LatLon } = require('sgeo')
-const interpolatePoint = require('./Points/interpolate')
-const Point = require('./Point')
-const addLocations = require('./Points/addLocations')
-const addGrades = require('./Points/addGrades')
-const getSmoothedProfile = require('./Points/getSmoothedProfile')
-const MissingDataError = require('../util/MissingDataError')
+import _ from 'lodash'
+import { req } from '../util/math.js'
+import { latlon as LatLon } from 'sgeo'
+import { interpolatePoint } from './Points/interpolate.js'
+import { Point } from './Point.js'
+import { addLocations } from './Points/addLocations.js'
+import { addGrades } from './Points/addGrades.js'
+import { getSmoothedProfile } from './Points/getSmoothedProfile.js'
+import { createDebug, MissingDataError } from '../util/index.js'
 
-const d = require('../debug')('models:Track')
+const d = createDebug('models:Track')
 
-class Track {
+export class Track {
   constructor(arg) {
     d('Creating new Track object')
     Object.defineProperty(this, '_data', { value: { stats: {} } })
@@ -299,12 +299,12 @@ class Track {
   // if criteria is met, returns new Track object w/ reduced points
   // otherwise, returns this
   reduceDensity({ spacing, length } = {}) {
-    const d = require('debug')('ultraPacer:models:Track').extend('reduceDensity')
+    const d2 = d.extend('reduceDensity')
     // reduce density of points for processing
     if (!spacing) spacing = 0.025 // meters between points
     if (!length) length = this.points.length / 2
     if (this.dist / spacing > length / 2) {
-      d('Does not meet criteria')
+      d2('Does not meet criteria')
       return this
     }
 
@@ -313,22 +313,20 @@ class Track {
     const numpoints = Math.floor(len / spacing) + 1
     const xs = Array(numpoints)
       .fill(0)
-      .map((e, i) => round(i++ * spacing, 3))
+      .map((e, i) => _.round(i++ * spacing, 3))
     if (xs[xs.length - 1] < len) {
       xs.push(len)
     }
     const adj = getSmoothedProfile({ points: this.points, locs: xs, gt: 2 * spacing })
     const points = this.getLLA(xs, 0).map((lla, i) => [
-      round(lla.lat, 6),
-      round(lla.lon, 6),
-      round(adj[i].alt, 2)
+      _.round(lla.lat, 6),
+      _.round(lla.lon, 6),
+      _.round(adj[i].alt, 2)
     ])
     const source = this.source
     const track = new Track({ source, points })
 
-    d(`Reduced from ${this.points.length} to ${track.points.length} points.`)
+    d2(`Reduced from ${this.points.length} to ${track.points.length} points.`)
     return track
   }
 }
-
-module.exports = Track

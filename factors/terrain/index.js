@@ -1,5 +1,5 @@
-const _ = require('lodash')
-const { rlte } = require('../../util/math')
+import _ from 'lodash'
+import { rlte } from '../../util/math.js'
 
 // TODO: instead of having tFs values as added % (eg 5, 10), change to percent eg (1.05, 1.10))
 
@@ -12,12 +12,10 @@ const { rlte } = require('../../util/math')
  *
  * @return {Number} The terrain factor at the provided point
  */
-const getTerrainFactor = ({ point, course }) => {
+export function getTerrainFactor({ point, course }) {
   const tF = _.findLast(course.terrainFactors, (x) => rlte(x.start, point.loc, 4))
 
   if (!tF) return 1
 
   return tF.value / 100 + 1
 }
-
-module.exports = getTerrainFactor

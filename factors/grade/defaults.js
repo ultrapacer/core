@@ -1,4 +1,4 @@
-module.exports = {
+export const defaults = {
   // f = a*x^2 + b*x
   // goes linear at lower and upper bounds
   a: 0.0021,

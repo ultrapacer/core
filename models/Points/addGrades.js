@@ -1,8 +1,8 @@
-const getSmoothedProfile = require('./getSmoothedProfile')
+import { getSmoothedProfile } from './getSmoothedProfile.js'
 
 // add grades to array of Point objects
 // mutates input array
-const addGrades = (points) => {
+export function addGrades(points) {
   // add grade field to points array
   const locs = []
   let i = 0
@@ -14,5 +14,3 @@ const addGrades = (points) => {
     p.grade = lsq[i].grade
   })
 }
-
-module.exports = addGrades

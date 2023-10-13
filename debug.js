@@ -1,9 +1,16 @@
+import debug from 'debug'
 const obj = {}
-module.exports = (file) => {
-  if (!obj[file]) {
-    const debug = require('debug')('ultraPacer:core')
-    debug(`loading debug for namespace "${file}"`)
-    obj[file] = debug.extend(file)
+
+/**
+ * create debug object prefixed with ultrapacer:app
+ * @param {string} name namespace for debug object
+ * @returns {object} debug object
+ */
+export function createDebug(name) {
+  if (!obj[name]) {
+    const d = debug('ultraPacer:core')
+    d(`loading debug for namespace "${name}"`)
+    obj[name] = d.extend(name)
   }
-  return obj[file]
+  return obj[name]
 }

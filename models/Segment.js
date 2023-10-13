@@ -1,6 +1,6 @@
-const _ = require('lodash')
+import _ from 'lodash'
 
-class Segment {
+export class Segment {
   constructor(obj) {
     Object.defineProperty(this, '_data', { value: {} })
 
@@ -57,5 +57,3 @@ class Segment {
   set time(v) {}
   set tod(v) {}
 }
-
-module.exports = Segment

@@ -1,9 +1,9 @@
-const { latlon: LatLon } = require('sgeo')
-const Point = require('../Point')
-const { interp } = require('../../util/math')
+import { latlon as LatLon } from 'sgeo'
+import { Point } from '../Point.js'
+import { interp } from '../../util/math.js'
 
 // interpolate between two points
-function interpolate(p1, p2, loc) {
+export function interpolatePoint(p1, p2, loc) {
   const p3 = new Point([p1.lat, p1.lon, p1.alt])
   p3.loc = loc
 
@@ -30,5 +30,3 @@ function interpolate(p1, p2, loc) {
 
   return p3
 }
-
-module.exports = interpolate
