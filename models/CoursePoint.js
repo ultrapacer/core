@@ -1,4 +1,4 @@
-import isNumber from 'lodash/isNumber'
+import isNumber from 'lodash/isNumber.js'
 
 export class CoursePoint {
   constructor(course, point, loop) {
