@@ -1,4 +1,4 @@
-import remove from 'lodash/remove'
+import remove from 'lodash/remove.js'
 import { addLocations } from './addLocations'
 import { interp, round } from '../../util/math'
 import { createDebug } from '../../debug'
