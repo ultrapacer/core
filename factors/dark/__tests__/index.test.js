@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { expect, test } from 'vitest'
 import { getDarkFactor } from '../'
 

@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { Segment } from './Segment.js'
+import { list as factorsList } from '../factors/list.js'
 
 export class SuperSegment extends Segment {
   constructor(segments = []) {
@@ -109,7 +110,7 @@ export class SuperSegment extends Segment {
    */
   get factors() {
     const obj = { combined: 1 }
-    factors.forEach((f) => {
+    factorsList.forEach((f) => {
       const v = this.segments.reduce((v, s) => {
         return v + s.len * s.factors[f]
       }, 0)
