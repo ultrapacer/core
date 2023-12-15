@@ -68,7 +68,13 @@ export class Plan {
 
     // use to store raw input data
     Object.defineProperty(this, 'db', { writable: true })
-    Object.defineProperty(this, '_data', { value: db._data || {}, enumerable: true })
+
+    const _data = db._data || {}
+
+    // assign defaults
+    _.defaults(_data, { adjustForCutoffs: true })
+
+    Object.defineProperty(this, '_data', { value: _data, enumerable: true })
 
     // used to store results of processed information in _data to speed up calcs
     Object.defineProperty(this, '_cache', { value: {} })
@@ -86,12 +92,6 @@ export class Plan {
     Object.keys(db).forEach((k) => {
       if (!disallowed.includes(k)) this[k] = db[k]
     })
-
-    // create cutoffs array:
-    this.cutoffs = []
-    if (this.adjustForCutoffs) {
-      this.cutoffs = this.course.cutoffs.map((c) => new PlanCutoff({ courseCutoff: c, plan: this }))
-    }
   }
 
   get __class() {
@@ -143,6 +143,24 @@ export class Plan {
     this._cache.event = new Event({ ...this.course.track.start, start, timezone })
 
     return this._cache.event
+  }
+
+  get adjustForCutoffs() {
+    return this._data.adjustForCutoffs
+  }
+  set adjustForCutoffs(v) {
+    d('set:adjustForCutoffs')
+    this._data.adjustForCutoffs = v
+    delete this._cache.cutoffs
+  }
+  get cutoffs() {
+    if (this._cache.cutoffs) return this._cache.cutoffs
+
+    this._cache.cutoffs = this.adjustForCutoffs
+      ? this.course.cutoffs.map((c) => new PlanCutoff({ courseCutoff: c, plan: this }))
+      : []
+
+    return this._cache.cutoffs
   }
 
   get strategy() {
