@@ -232,7 +232,7 @@ export class Plan {
   get delays() {
     if (this._cache.delays) return this._cache.delays
 
-    this._cache.delays = this.course.waypoints
+    const delays = this.course.waypoints
       .map((waypoint) => {
         const wpd = this._data.delays?.find((d) => areSameWaypoint(d.waypoint, waypoint))
         const delay = wpd ? wpd.delay : waypoint.hasTypicalDelay ? this.waypointDelay : 0
@@ -240,6 +240,18 @@ export class Plan {
       })
       .filter((d) => d.delay > 0)
       .sort((a, b) => a.loc - b.loc)
+
+    // if any delays are in duplicate locations, combine them
+    let i = 0
+    while (delays.length - 1 >= i) {
+      if (i > 0 && delays[i].loc === delays[i - 1].loc) {
+        d(`get delays: merging delay at ${delays[i].loc} km`)
+        delays[i - 1].delay += delays[i].delay
+        delays.splice(i, 1)
+      } else i++
+    }
+
+    this._cache.delays = delays
 
     return this._cache.delays
   }
