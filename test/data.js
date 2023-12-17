@@ -1,6 +1,7 @@
 import { Plan, Course } from '../models'
 
 const coursedata = {
+  name: 'RDL100',
   gain: 3352.7998927104036,
   loss: -3352.7998927104036,
   eventStart: '2021-11-06T12:15:00.000Z',
@@ -2432,6 +2433,7 @@ const trackdata = {
 }
 
 const plandata = {
+  name: '22-hour',
   pacingMethod: 'time',
   heatModel: {
     baseline: 0,
