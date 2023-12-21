@@ -1,12 +1,13 @@
 import _ from 'lodash'
-import { req, rgte, interp, interpArray } from '../../util/math.js'
-import { Event } from '../Event.js'
+
+import { Factors, generate as generateFactors, list as fKeys } from '../../factors/index.js'
+import { Strategy } from '../../factors/strategy/index.js'
 import { calcPacing, createSegments, createSplits } from '../../geo.js'
 import { areSame, createDebug, MissingDataError } from '../../util/index.js'
+import { interp, interpArray, req, rgte } from '../../util/math.js'
+import { Event } from '../Event.js'
 import { Pacing } from '../Pacing.js'
 import { PlanPoint } from '../PlanPoint.js'
-import { list as fKeys, generate as generateFactors, Factors } from '../../factors/index.js'
-import { Strategy } from '../../factors/strategy/index.js'
 
 const d = createDebug('models:Plan')
 

@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest'
+
 import { getDarkFactor } from '../'
 
 const sun = { nadir: 0, nadirAltitude: -20, sunrise: 21600, sunset: 72000 }
@@ -11,6 +12,6 @@ const model = {
 }
 
 test('Check dark factor halfway through dawn', () => {
-  let fDark = getDarkFactor({ timeOfDaySeconds: 21600 - 1800, terrainFactor: 1.5, sun, model })
+  const fDark = getDarkFactor({ timeOfDaySeconds: 21600 - 1800, terrainFactor: 1.5, sun, model })
   expect(fDark).toBe(1.2)
 })

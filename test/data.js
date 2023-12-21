@@ -1,4 +1,4 @@
-import { Plan, Course } from '../models'
+import { Course, Plan } from '../models'
 
 const coursedata = {
   name: 'RDL100',

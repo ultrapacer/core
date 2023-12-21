@@ -1,9 +1,10 @@
 import { expect, test } from 'vitest'
+
 import { SuperSegment } from '../SuperSegment'
-let segments = [{}, {}, {}]
+const segments = [{}, {}, {}]
 
 test('Check SuperSegment actualTime', () => {
-  let ss = new SuperSegment(segments)
+  const ss = new SuperSegment(segments)
   expect(ss.actualTime).toBe(undefined)
   segments[0].actualTime = 5
   expect(ss.actualTime).toBe(undefined)

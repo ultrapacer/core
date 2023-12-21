@@ -1,6 +1,7 @@
 import { latlon as LatLon } from 'sgeo'
-import { Point } from '../Point.js'
+
 import { interp } from '../../util/math.js'
+import { Point } from '../Point.js'
 
 // interpolate between two points
 export function interpolatePoint(p1, p2, loc) {

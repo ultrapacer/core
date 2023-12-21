@@ -1,9 +1,9 @@
 import { getAltitudeFactor } from './altitude/index.js'
 import { getDarkFactor } from './dark/index.js'
+import { Factors } from './Factors.js'
 import { getGradeFactor } from './grade/index.js'
 import { getHeatFactor } from './heat/index.js'
 import { getTerrainFactor } from './terrain/index.js'
-import { Factors } from './Factors.js'
 
 // utility function to offset by 1 and scale
 export function applyScale(fact, scale) {

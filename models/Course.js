@@ -1,12 +1,13 @@
 import _ from 'lodash'
-import { interp, req, rgte } from '../util/math.js'
-import { interpolatePoint } from './Points/interpolate.js'
-import { Event } from './Event.js'
+
 import { createSegments, createSplits } from '../geo.js'
+import { createDebug, MissingDataError } from '../util/index.js'
+import { interp, req, rgte } from '../util/math.js'
 import { CoursePoint } from './CoursePoint.js'
+import { Event } from './Event.js'
+import { interpolatePoint } from './Points/interpolate.js'
 import { Site } from './Site.js'
 import { Track } from './Track.js'
-import { createDebug, MissingDataError } from '../util/index.js'
 
 const d = createDebug('models:Course')
 

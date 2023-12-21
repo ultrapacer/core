@@ -1,6 +1,7 @@
 import _ from 'lodash'
-import { Segment } from './Segment.js'
+
 import { list as factorsList } from '../factors/list.js'
+import { Segment } from './Segment.js'
 
 export class SuperSegment extends Segment {
   constructor(segments = []) {

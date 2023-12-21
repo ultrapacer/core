@@ -1,6 +1,7 @@
 import _ from 'lodash'
-import { Waypoint } from './Waypoint.js'
+
 import { createDebug } from '../util/index.js'
+import { Waypoint } from './Waypoint.js'
 
 const d = createDebug('models:Waypoint')
 

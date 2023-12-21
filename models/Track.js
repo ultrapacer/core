@@ -1,12 +1,13 @@
 import _ from 'lodash'
-import { req, round } from '../util/math.js'
 import { latlon as LatLon } from 'sgeo'
-import { interpolatePoint } from './Points/interpolate.js'
-import { Point } from './Point.js'
-import { addLocations } from './Points/addLocations.js'
-import { addGrades } from './Points/addGrades.js'
-import { getSmoothedProfile } from './Points/getSmoothedProfile.js'
+
 import { createDebug, MissingDataError } from '../util/index.js'
+import { req, round } from '../util/math.js'
+import { Point } from './Point.js'
+import { addGrades } from './Points/addGrades.js'
+import { addLocations } from './Points/addLocations.js'
+import { getSmoothedProfile } from './Points/getSmoothedProfile.js'
+import { interpolatePoint } from './Points/interpolate.js'
 
 const d = createDebug('models:Track')
 
