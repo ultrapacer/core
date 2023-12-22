@@ -1,4 +1,4 @@
-![My image](https://ultrapacer.com/public/img/logo-72x72.png)
+<img src="https://public.ultrapacer.com/logo.svg" alt="image" width="100" height="auto">
 
 # using ultraPacer
 
