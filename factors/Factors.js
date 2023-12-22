@@ -1,8 +1,12 @@
+import _ from 'lodash'
+
 import { list } from './list.js'
 
 export class Factors {
   constructor(value) {
     Object.defineProperty(this, '_data', { value: {} })
+    Object.defineProperty(this, '_cache', { value: {} })
+
     list.forEach((key) => {
       Object.defineProperty(this, key, {
         enumerable: true,
@@ -15,6 +19,7 @@ export class Factors {
           } else {
             delete this._data[key]
           }
+          delete this._cache.combined
         }
       })
     })
@@ -22,8 +27,11 @@ export class Factors {
   }
 
   get combined() {
-    return list.reduce((v, key) => {
-      return v * this[key]
-    }, 1)
+    if (!_.has(this._cache, 'combined')) {
+      this._cache.combined = list.reduce((v, key) => {
+        return v * this[key]
+      }, 1)
+    }
+    return this._cache.combined
   }
 }

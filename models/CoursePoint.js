@@ -1,5 +1,3 @@
-import isNumber from 'lodash/isNumber.js'
-
 export class CoursePoint {
   constructor(course, point, loop) {
     Object.defineProperty(this, 'course', { writable: true })
@@ -29,9 +27,5 @@ export class CoursePoint {
     let l = this.point.loc * this.course.distScale
     if (this.loop) l += this.course.loopDist * this.loop
     return l
-  }
-
-  has(field) {
-    return isNumber(this[field])
   }
 }

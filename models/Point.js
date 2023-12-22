@@ -1,4 +1,3 @@
-import isNumber from 'lodash/isNumber.js'
 import { latlon as LatLon } from 'sgeo'
 
 export class Point {
@@ -24,9 +23,5 @@ export class Point {
 
   get latlon() {
     return new LatLon(this.lat, this.lon)
-  }
-
-  has(field) {
-    return isNumber(this[field])
   }
 }

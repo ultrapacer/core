@@ -8,8 +8,10 @@ const tests = [
   {
     plan,
     r: {
-      seg8elapsed: 34449,
-      seg16elapsed: 21 * 3600 + 3 * 60 + 19,
+      segments: {
+        8: { elapsed: 34449 },
+        16: { elapsed: 21 * 3600 + 3 * 60 + 19 }
+      },
       np: 377.7,
       pace: 468.45,
       elapsed: 79200
@@ -28,11 +30,35 @@ const tests = [
       scales: { altitude: 1.2, dark: 0.7 }
     }),
     r: {
-      seg8elapsed: 13 * 3600 + 8 * 60 + 43,
-      seg16elapsed: 28 * 3600 + 40 * 60 + 40,
+      segments: {
+        8: { elapsed: 13 * 3600 + 8 * 60 + 43 },
+        16: { elapsed: 28 * 3600 + 40 * 60 + 40 }
+      },
       //  np: 539.47,
       pace: 650.2,
       elapsed: 107700
+    }
+  },
+
+  // plan for a 25-hour with big rests
+  {
+    plan: new Plan({
+      course,
+      name: '25-hr+5hr-delays',
+      pacingMethod: 'time',
+      pacingTarget: 25 * 3600,
+      cutoffMargin: 300,
+      waypointDelay: 180,
+      scales: { altitude: 1.2, dark: 0.7 },
+      heatModel: { start: 29319, stop: 72036, baseline: 0, max: 5 },
+      delays: [
+        { waypoint: { site: '5d8e9a27e372020007cb2452', loop: 1 }, delay: 5 * 3600 },
+        { waypoint: { site: '5d8e9aaae372020007cb2459', loop: 1 }, delay: 5 * 3600 }
+      ]
+    }),
+    r: {
+      segments: { 8: { elapsed: '11:36:07', 16: { elapsed: '23:07:45' } } },
+      elapsed: 25 * 3600
     }
   },
 
@@ -55,8 +81,10 @@ const tests = [
       ]
     }),
     r: {
-      seg8elapsed: 14 * 3600 + 13 * 60 + 54,
-      seg16elapsed: 28 * 3600 + 47 * 60 - 0.5,
+      segments: {
+        8: { elapsed: 14 * 3600 + 13 * 60 + 54 },
+        16: { elapsed: 28 * 3600 + 47 * 60 - 0.5 }
+      },
       //    np: 542.63,
       pace: 650.2,
       elapsed: 107700,
@@ -84,8 +112,10 @@ const tests = [
       heatModel: { start: 29319, stop: 72036, baseline: 0, max: 5 }
     }),
     r: {
-      seg8elapsed: 8 * 3600 + 16 * 60 + 34,
-      seg16elapsed: 16 * 3600 + 50 * 60 + 55,
+      segments: {
+        8: { elapsed: 8 * 3600 + 16 * 60 + 34 },
+        16: { elapsed: 16 * 3600 + 50 * 60 + 55 }
+      },
       //  np: 542.63,
       pace: 10 * 60 * 0.621371,
       elapsed: 10 * 60 * 100 + 180 * 17
@@ -112,8 +142,10 @@ const tests = [
       heatModel: { start: 29319, stop: 72036, baseline: 0, max: 5 }
     }),
     r: {
-      seg8elapsed: 14 * 3600 + 6 * 60 + 14.5,
-      seg16elapsed: 28 * 3600 + 45 * 60 + 18,
+      segments: {
+        8: { elapsed: 14 * 3600 + 6 * 60 + 14.5 },
+        16: { elapsed: 28 * 3600 + 45 * 60 + 18 }
+      },
       //   np: 542.63,
       pace: (107700 - 180 * 17) / (100 / 0.621371),
       elapsed: 107700, // cutoff,
@@ -140,8 +172,10 @@ const tests = [
       ]
     }),
     r: {
-      seg8elapsed: 14 * 3600 + 42 * 60 + 42,
-      seg16elapsed: 25 * 3600 + 16 * 60 + 59,
+      segments: {
+        8: { elapsed: 14 * 3600 + 42 * 60 + 42 },
+        16: { elapsed: 25 * 3600 + 16 * 60 + 59 }
+      },
       // np: 542.63,
       pace: 15 * 60 * 0.621371,
       elapsed: 15 * 60 * 100 + 17 * 180, // cutoff,
@@ -153,7 +187,7 @@ const tests = [
   {
     plan: new Plan({
       course,
-      name: '10-min-np',
+      name: '10-min',
       pacingMethod: 'np',
       pacingTarget: 10 * 60 * 0.621371,
       cutoffMargin: 300,
@@ -161,26 +195,98 @@ const tests = [
       scales: { altitude: 1.2, dark: 0.7 }
     }),
     r: {
-      np: 10 * 60 * 0.621371
+      np: 10 * 60 * 0.621371,
+      elapsed: '20:52:22',
+      custom: [
+        [
+          'starting pace',
+          (p) => (p.points[0].pace / p.points[0].factor) * p.points[0].factors.strategy,
+          9 * 60 * 0.621371
+        ]
+      ] // should be 10% under np using default strategy
+    }
+  },
+
+  // plan for a 13-minute np reverse that hits early cutoffs but finishes before final cutoff
+  {
+    plan: new Plan({
+      course,
+      name: '13-min-rev',
+      pacingMethod: 'np',
+      pacingTarget: 13 * 60 * 0.621371,
+      cutoffMargin: 300,
+      waypointDelay: 180,
+      scales: { altitude: 1.2, dark: 0.7 },
+      strategy: [{ onset: 0, value: -100, type: 'linear' }]
+    }),
+    r: {
+      np: 13 * 60 * 0.621371
+    }
+  },
+
+  // plan for a 15-minute np reverse that needs to get reduced to final cutoff
+  {
+    plan: new Plan({
+      course,
+      name: '16-min-rev',
+      pacingMethod: 'np',
+      pacingTarget: 16 * 60 * 0.621371,
+      cutoffMargin: 300,
+      waypointDelay: 180,
+      scales: { altitude: 1.2, dark: 0.7 },
+      strategy: [{ onset: 0, value: -100, type: 'linear' }]
+    }),
+    r: {
+      elapsed: 107700
     }
   }
 ]
+function time(v) {
+  if (_.isString(v)) {
+    let x = 0
+    v.split(':')
+      .reverse()
+      .forEach((a, i) => (x += Number(a) * 60 ** i))
+    return x
+  }
+  return v
+}
 
 test(`${course.name}: check track distance`, () => {
   expect(course.track.dist, 5).toBeCloseTo(159.32537)
 })
 
+const pacingTests = ['elapsed', 'factor', 'pace', 'np', 'time']
+
 tests.forEach((t) => {
-  test(`${course.name}-${t.plan.name}: Elapsed times`, () => {
+  const str = `${course.name}-${t.plan.pacingMethod}-${t.plan.name}`
+
+  test(`${str}: Elapsed times`, () => {
     if (_.has(t.r, 'elapsed'))
-      expect(_.last(t.plan.splits.segments).elapsed).toBeCloseTo(t.r.elapsed, 0)
-    if (_.has(t.r, 'seg16elapsed'))
-      expect(t.plan.splits.segments[16].elapsed).toBeCloseTo(t.r.seg16elapsed, 0)
-    if (_.has(t.r, 'seg8elapsed'))
-      expect(t.plan.splits.segments[8].elapsed).toBeCloseTo(t.r.seg8elapsed, 0)
+      expect(_.last(t.plan.splits.segments).elapsed).toBeCloseTo(time(t.r.elapsed), 0)
   })
 
-  test(`${course.name}-${t.plan.name}: delay adds at right place`, () => {
+  // if we have specified an elapsed time, also check that time against all the last segments
+  if (_.has(t.r, 'elapsed')) {
+    if (!t.r.segments) t.r.segments = {}
+    _.assign(
+      t.r.segments,
+      _.fromPairs([[t.plan.splits.segments.length - 1, { elapsed: t.r.elapsed }]])
+    )
+  }
+
+  if (t.r.segments)
+    _.forOwn(t.r.segments, (o, i) => {
+      pacingTests
+        .filter((pt) => _.has(o, pt))
+        .forEach((pt) =>
+          test(`${str}-${i}: Pacing: ${pt}`, () => {
+            expect(t.plan.splits.segments[i][pt], 2).toBeCloseTo(time(o[pt]), 0)
+          })
+        )
+    })
+
+  test(`${str}: delay adds at right place`, () => {
     const p1 = t.plan.splits.segments[16].point2
     const p2 = t.plan.points.find((p) => p.loc > p1.loc)
     expect(p2.elapsed - p1.elapsed - (p2.time - p1.time)).toBeCloseTo(t.plan.waypointDelay)
@@ -188,12 +294,24 @@ tests.forEach((t) => {
     expect(p2.elapsed - p0.elapsed - (p2.time - p0.time)).toBeCloseTo(t.plan.waypointDelay)
   })
 
-  test(`${course.name}-${t.plan.name}: Check overall paces`, () => {
-    if (_.has(t.r, 'pace')) expect(t.plan.pacing.pace, 2).toBeCloseTo(t.r.pace)
-    if (_.has(t.r, 'np')) expect(t.plan.pacing.np, 2).toBeCloseTo(t.r.np)
-  })
+  pacingTests
+    .filter((pt) => _.has(t.r, pt))
+    .forEach((pt) =>
+      test(`${str}: Pacing: ${pt}`, () => {
+        expect(t.plan.pacing[pt]).toBeCloseTo(time(t.r[pt]), 0)
+      })
+    )
 
-  test(`${course.name}-${t.plan.name}: Calculation success`, () => {
+  // custom tests formatted [message,function(plan),result]
+  if (t.r.custom) {
+    t.r.custom.forEach((c) => {
+      test(`${str}: ${c[0]}`, () => {
+        expect(c[1](t.plan)).toBeCloseTo(c[2])
+      })
+    })
+  }
+
+  test(`${str}: Calculation success`, () => {
     expect(t.plan.pacing.status.success).toBe(true)
     //expect(t.plan.pacing.chunks.length).toBe(t.r.numChunks || 1)
   })

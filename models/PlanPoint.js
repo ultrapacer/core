@@ -1,5 +1,3 @@
-import _ from 'lodash'
-
 const planPointFields = ['lat', 'lon', 'alt', 'latlon', 'grade', 'loc', 'actual']
 
 export class PlanPoint {
@@ -19,15 +17,21 @@ export class PlanPoint {
     return 'PlanPoint'
   }
 
-  has(field) {
-    return _.isNumber(this[field])
+  /**
+   * np for a point is the same as its parent chunk
+   */
+  get np() {
+    return this.chunk.np
+  }
+
+  get factor() {
+    return this.factors?.combined
   }
 
   get pace() {
-    const factors = this.factors?.combined
-    const np = this._plan.pacing?.np
+    const { np, factor } = this
 
-    if (factors && np) return factors * np
+    if (factor && np) return factor * np
 
     // if no factors, undefined (this will be the case for last point)
     return undefined

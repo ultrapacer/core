@@ -22,13 +22,6 @@ function getFact(loc, strategy, length) {
   return a
 }
 
-class StrategyAutoPoint {
-  constructor(arg = {}) {
-    Object.defineProperty(this, 'point', { enumerable: false, writable: true })
-    Object.assign(this, arg)
-  }
-}
-
 export class Strategy {
   constructor(arg = {}) {
     Object.defineProperty(this, '__class', { value: 'Strategy', enumerable: false })
@@ -55,9 +48,6 @@ export class Strategy {
       } else {
         this.values = [{ onset: 0, value: def(this.length), type: 'linear' }]
       }
-
-      // autos
-      this.autos = arg?.autos || []
     }
   }
 
@@ -65,17 +55,11 @@ export class Strategy {
    * Returns strategy factor at location.
    *
    * @param {Number} loc - The location (in km) to determine value.
-   * @param {Boolean} options.autos - A flag to include/exclude automatic strategy (eg meeting cutoffs).
    * @return {Number} The strategy factor at input location.
    */
-  at(loc, { autos = true } = {}) {
+  at(loc) {
     const a = getFact(loc, this.values, this.length)
-    if (autos) {
-      const b = getFact(loc, this.autos, this.length)
-      return (1 + a / 100) * (1 + b / 100)
-    } else {
-      return 1 + a / 100
-    }
+    return 1 + a / 100
   }
 
   addValue(val) {
@@ -85,42 +69,5 @@ export class Strategy {
     } else {
       this.values.push(val)
     }
-  }
-
-  addAuto(val) {
-    const i = this.autos.findIndex((v) => v.onset >= val.onset)
-    const val2 = new StrategyAutoPoint({ ...val }) // shallow copy
-    val2.value = 0
-    if (i >= 0) {
-      this.autos.splice(i, 0, val2)
-    } else {
-      this.autos.push(val2)
-    }
-    this.adjustAutoValue(val2, val.value)
-  }
-
-  adjustAutoValue(item, y2) {
-    // where item is an object in the autos array
-    // y2 is the adjustment being made to the step value at this location
-
-    const i = this.autos.indexOf(item)
-    item.value += y2
-
-    // x1 is the location of the prior break point
-    // x2 is the current location
-    // x3 is the location of the next break point
-    const x1 = this.autos[i - 1]?.onset || 0
-    const x2 = item.onset
-    const x3 = this.autos[i + 1]?.onset || this.length
-    const a = x2 - x1
-    const b = x3 - x2
-
-    // y1 is the corresponding reduction of the previous step
-    // y3 is the corresponding reduction in the next step
-    const y1 = (b * y2) / (a + b)
-    const y3 = (a * y2) / (a + b)
-
-    if (this.autos[i - 1]) this.autos[i - 1].value -= y1
-    if (this.autos[i + 1]) this.autos[i + 1].value -= y3
   }
 }

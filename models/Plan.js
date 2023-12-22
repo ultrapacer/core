@@ -1,13 +1,14 @@
+/* eslint-disable no-unreachable */
 import _ from 'lodash'
 
-import { Factors, generate as generateFactors, list as fKeys } from '../../factors/index.js'
-import { Strategy } from '../../factors/strategy/index.js'
-import { calcPacing, createSegments, createSplits } from '../../geo.js'
-import { areSame, createDebug, MissingDataError } from '../../util/index.js'
-import { interp, interpArray, req, rgte } from '../../util/math.js'
-import { Event } from '../Event.js'
-import { Pacing } from '../Pacing.js'
-import { PlanPoint } from '../PlanPoint.js'
+import { list as fKeys } from '../factors/index.js'
+import { Strategy } from '../factors/strategy/index.js'
+import { createSegments, createSplits } from '../geo.js'
+import { areSame, createDebug, MissingDataError } from '../util/index.js'
+import { interp, interpArray, req, rgte } from '../util/math.js'
+import { Event } from './Event.js'
+import { Pacing } from './Pacing.js'
+import { PlanPoint } from './PlanPoint.js'
 
 const d = createDebug('models:Plan')
 
@@ -100,6 +101,7 @@ export class Plan {
   }
 
   clearCache() {
+    d('clearCache')
     Object.keys(this._cache).forEach((key) => {
       delete this._cache[key]
     })
@@ -158,8 +160,25 @@ export class Plan {
     if (this._cache.cutoffs) return this._cache.cutoffs
 
     this._cache.cutoffs = this.adjustForCutoffs
-      ? this.course.cutoffs.map((c) => new PlanCutoff({ courseCutoff: c, plan: this }))
+      ? this.course.cutoffs.map(
+          (c) =>
+            new PlanCutoff({
+              courseCutoff: c,
+              plan: this,
+              point: this.getPoint({ loc: c.loc, insert: true })
+            })
+        )
       : []
+
+    // if any cutoffs are extraneous, delete them
+    let i = 0
+    while (this._cache.cutoffs.length - 1 >= i) {
+      const cutoff = this._cache.cutoffs[i]
+      if (this._cache.cutoffs.find((c, j) => j > i && c.time <= cutoff.time)) {
+        d(`get cutoffs: deleting extraneous cutoff at ${cutoff.loc} km`)
+        this._cache.cutoffs.splice(i, 1)
+      } else i++
+    }
 
     return this._cache.cutoffs
   }
@@ -305,6 +324,7 @@ export class Plan {
 
   get pacing() {
     if (!this._cache.pacing) {
+      d('creating new Pacing')
       delete this._cache.splits
       this._cache.pacing = new Pacing({ plan: this })
     }
@@ -314,26 +334,6 @@ export class Plan {
   set pacing(v) {
     if (!v.__class === 'Pacing') throw new Error('Plan.pacing must be Pacing object')
     this._cache.pacing = v
-  }
-
-  calcPacing() {
-    if (this.pacing?.status?.success === false) {
-      d('Pacing calculation already failed; returning')
-      return
-    }
-
-    d('calculating pacing')
-
-    calcPacing({
-      plan: this,
-      options: {
-        testLocations: this.course.waypoints.map((wp) => wp.loc)
-      }
-    })
-
-    if (this.pacing.status.success)
-      d(`pacing complete after ${this.pacing.status.iterations} iterations.`)
-    else d(`pacing failed after ${this.pacing.status.iterations} iterations.`)
   }
 
   /**
@@ -384,92 +384,11 @@ export class Plan {
 
       this._cache.points = this.course.points.map((point) => new PlanPoint(this, point))
 
-      this.applyPacing()
+      // TEMP TODO FIX - use cached pacing data to speed up if we have it?
+      //d('points:get calculating')
+      //this.pacing.calculate()
     }
     return this._cache.points
-  }
-
-  applyPacing(options = {}) {
-    /*
-     applyPacing adds time data
-     mutates this.course.points
-
-     returns result object: {
-       factors: Object w/ overall factor values
-       factor: overall pacing factor
-     }
-    */
-    if (!this.course?.points?.length) return
-
-    d('applyPacing')
-
-    _.defaults(options, {
-      addBreaks: true
-    })
-
-    if (options.addBreaks) {
-      this.course.terrainFactors?.forEach((tf) => this.getPoint({ loc: tf.start, insert: true }))
-    }
-
-    // assign delays to points
-    this.points
-      .filter((p) => p.delay)
-      .forEach((p) => {
-        delete p.delay
-      })
-    this.delays?.forEach((d) => {
-      const p = this.getPoint({ loc: d.loc, insert: true })
-      p.delay = d.delay
-    })
-
-    // calculate course normalizing factor:
-    const p = this.points
-    let elapsed = 0
-    p[0].elapsed = 0
-    p[0].time = 0
-    if (this.event.start) p[0].tod = this.event.elapsedToTimeOfDay(0)
-
-    // variables & function for adding in delays:
-    let delay = 0
-
-    let dloc = 0
-    let dtime = 0
-    let factorSum = 0
-
-    // initially we dont have a factor so use pace instead of np
-    const np = this.pacing.factor ? this.pacing.np : this.pacing.pace
-
-    const factorsSum = Object.fromEntries(fKeys.map((k) => [k, 0]))
-
-    for (let j = 1, jl = p.length; j < jl; j++) {
-      dloc = p[j].loc - p[j - 1].loc
-      // determine pacing factor for point
-      generateFactors(p[j - 1], { plan: this })
-
-      // add to factors total
-      fKeys.forEach((k) => {
-        factorsSum[k] += p[j - 1].factors[k] * dloc
-      })
-      const combined = p[j - 1].factors.combined
-      factorSum += combined * dloc
-      dtime = np * combined * dloc
-
-      p[j].time = p[j - 1].time + dtime
-      delay = p[j - 1].delay || 0
-      elapsed += dtime + delay
-      p[j].elapsed = elapsed
-      if (this.event.start) p[j].tod = this.event.elapsedToTimeOfDay(elapsed)
-    }
-    // add factors to that last point
-    generateFactors(_.last(p), { plan: this })
-
-    // normalize factors total:
-    const factors = new Factors(
-      Object.fromEntries(fKeys.map((k) => [k, factorsSum[k] / this.course.dist]))
-    )
-    const factor = factorSum / this.course.dist
-
-    return { factor, factors }
   }
 
   get events() {
@@ -638,20 +557,19 @@ export class Plan {
 
   invalidatePacing() {
     d('invalidatePacing')
-    if (this.pacing?.status && !_.isUndefined(this.pacing.status.success))
-      delete this.pacing.status.success
+    delete this.pacing.chunks
     delete this._cache.splits
   }
 
   checkPacing() {
+    d('checkPacing')
     if (!this.pacing.status.success) {
-      d('checkPacing -- calcPacing')
-      this.calcPacing()
+      d('checkPacing: calculate')
+      this.pacing.calculate()
     }
-    if (!this.points?.length) {
-      d('checkPacing -- applyPacing')
-      this.applyPacing()
-    }
+
+    // this is mostly just to trigger the points getter
+    if (!this.points?.length) throw new Error('No plan points')
     return true
   }
 }
