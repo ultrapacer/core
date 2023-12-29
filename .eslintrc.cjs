@@ -13,6 +13,7 @@ module.exports = {
   rules: {
     'import/first': 'error',
     'simple-import-sort/imports': 'error',
-    'prefer-const': ['error', { destructuring: 'all' }]
+    'prefer-const': ['error', { destructuring: 'all' }],
+    quotes: ['error', 'single', { allowTemplateLiterals: false }]
   }
 }

@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { sprintf } from 'sprintf-js'
 
 import { Factors, list as fKeys, Strategy } from '../factors/index.js'
+import { Callbacks } from '../util/Callbacks.js'
 import { createDebug, MissingDataError } from '../util/index.js'
 import { PaceChunk } from './PaceChunk.js'
 
@@ -11,6 +12,8 @@ export class Pacing {
   constructor(data = {}) {
     Object.defineProperty(this, '_cache', { value: {} })
     Object.defineProperty(this, '_data', { value: {} })
+
+    this.callbacks = new Callbacks(this, ['onUpdated', 'onFail'])
 
     // force strategy field to be Strategy class:
     Object.defineProperty(this, 'strategy', {
@@ -178,6 +181,9 @@ export class Pacing {
     }
 
     d(`pacing status=${this.status.success ? 'PASS' : 'FAIL'}.`)
+
+    if (this.status.success) this.callbacks.execute('onUpdated')
+    else this.callbacks.execute('onFail')
   }
 
   /**

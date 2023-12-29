@@ -127,7 +127,7 @@ export class PaceChunk {
         ) < 0.1
 
       d2(
-        vsprintf(`%i|%s`, [
+        vsprintf('%i|%s', [
           i,
           Object.keys(tests)
             .map((k) => vsprintf('%s=%s', [k, tests[k] ? 'P' : 'F']))
