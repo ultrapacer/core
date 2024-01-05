@@ -4,6 +4,7 @@ import _ from 'lodash'
 import { list as fKeys } from '../factors/index.js'
 import { Strategy } from '../factors/strategy/index.js'
 import { createSegments, createSplits } from '../geo.js'
+import { Callbacks } from '../util/Callbacks.js'
 import { areSame, createDebug, MissingDataError } from '../util/index.js'
 import { interp, interpArray, req, rgte } from '../util/math.js'
 import { Event } from './Event.js'
@@ -17,6 +18,7 @@ const areSameWaypoint = (a, b) => areSame(a.site, b.site) && a.loop === b.loop
 class PlanSplits {
   constructor(data) {
     Object.defineProperty(this, '_cache', { value: {} })
+    Object.defineProperty(this, '_data', { value: {} })
     Object.assign(this, data)
   }
 
@@ -71,6 +73,8 @@ export class Plan {
     // use to store raw input data
     Object.defineProperty(this, 'db', { writable: true })
 
+    Object.defineProperty(this, 'pacing', { writable: false, value: new Pacing({ plan: this }) })
+
     const _data = db._data || {}
 
     // assign defaults
@@ -93,6 +97,11 @@ export class Plan {
     if (db._data) disallowed.push('delays')
     Object.keys(db).forEach((k) => {
       if (!disallowed.includes(k)) this[k] = db[k]
+    })
+
+    Object.defineProperty(this, 'callbacks', {
+      writable: false,
+      value: new Callbacks(this, ['onUpdated'])
     })
   }
 
@@ -322,20 +331,6 @@ export class Plan {
     return this.notes.find((d) => areSameWaypoint(d.waypoint, waypoint))?.text || ''
   }
 
-  get pacing() {
-    if (!this._cache.pacing) {
-      d('creating new Pacing')
-      delete this._cache.splits
-      this._cache.pacing = new Pacing({ plan: this })
-    }
-    return this._cache.pacing
-  }
-
-  set pacing(v) {
-    if (!v.__class === 'Pacing') throw new Error('Plan.pacing must be Pacing object')
-    this._cache.pacing = v
-  }
-
   /**
    * Finds and optionally inserts a point at an input location.
    *
@@ -488,82 +483,104 @@ export class Plan {
     return this._cache.stats
   }
 
-  update(field, val) {
-    switch (field) {
-      case 'delays': {
-        this._data.delays = val
-        delete this._cache.delays
+  /**
+   * update Plan with key/value pairs
+   * @param {*} params
+   */
+  update(params) {
+    const d2 = d.extend('update')
+    d2(`fields: ${Object.keys(params).join(', ')}`)
 
-        // pacing now invalid
-        this.invalidatePacing()
+    _.forOwn(params, (val, field) => {
+      switch (field) {
+        case '_id':
+        case 'name':
+        case 'description':
+          this[field] = val
+          break
+        case 'delays': {
+          this._data.delays = val
+          delete this._cache.delays
 
-        break
-      }
-      case 'delay': {
-        let { delay, waypoint } = val
+          // pacing now invalid
+          this.invalidatePacing()
 
-        // get course waypoint
-        waypoint = this.course.waypoints.find((wp) => areSameWaypoint(wp, waypoint))
-        if (!waypoint) throw new Error('unknown waypoint')
-
-        // find existing index
-        const i = this._data.delays.findIndex((d) => areSameWaypoint(d.waypoint, waypoint))
-
-        // if the delay is a non-typical value, update/push it to the _data.delays array:
-        if (delay !== this.getTypicalDelayAtWaypoint(waypoint)) {
-          if (i >= 0) this._data.delays[i] = { waypoint, delay }
-          else this._data.delays.push({ waypoint, delay })
-
-          // otherwise if is typical, remove it from the _data.delays array
-        } else if (i >= 0) {
-          this._data.delays.splice(i, 1)
+          break
         }
+        case 'delay': {
+          let { delay, waypoint } = val
 
-        // clear _cache.delays
-        delete this._cache.delays
+          // get course waypoint
+          waypoint = this.course.waypoints.find((wp) => areSameWaypoint(wp, waypoint))
+          if (!waypoint) throw new Error('unknown waypoint')
 
-        // pacing now invalid
-        this.invalidatePacing()
+          // find existing index
+          const i = this._data.delays.findIndex((d) => areSameWaypoint(d.waypoint, waypoint))
 
-        break
-      }
-      case 'note': {
-        let { text, waypoint } = val
+          // if the delay is a non-typical value, update/push it to the _data.delays array:
+          if (delay !== this.getTypicalDelayAtWaypoint(waypoint)) {
+            if (i >= 0) this._data.delays[i] = { waypoint, delay }
+            else this._data.delays.push({ waypoint, delay })
 
-        // get course waypoint
-        waypoint = this.course.waypoints.find((wp) => areSameWaypoint(wp, waypoint))
-        if (!waypoint) throw new Error('unknown waypoint')
+            // otherwise if is typical, remove it from the _data.delays array
+          } else if (i >= 0) {
+            this._data.delays.splice(i, 1)
+          }
 
-        // find existing index
-        const i = this._data.notes.findIndex((d) => areSameWaypoint(d.waypoint, waypoint))
+          // clear _cache.delays
+          delete this._cache.cutoffs
+          delete this._cache.delays
 
-        // if the text is truthy value, update/push it to the _data.notes array:
-        if (text) {
-          if (i >= 0) this._data.notes[i] = { waypoint, text }
-          else this._data.notes.push({ waypoint, text })
+          // pacing now invalid
+          this.invalidatePacing()
 
-          // otherwise if is typical, remove it from the _data.delays array
-        } else if (i >= 0) {
-          this._data.notes.splice(i, 1)
+          break
         }
+        case 'note': {
+          let { text, waypoint } = val
 
-        // clear _cache.delays
-        delete this._cache.notes
+          // get course waypoint
+          waypoint = this.course.waypoints.find((wp) => areSameWaypoint(wp, waypoint))
+          if (!waypoint) throw new Error('unknown waypoint')
 
-        break
+          // find existing index
+          const i = this._data.notes.findIndex((d) => areSameWaypoint(d.waypoint, waypoint))
+
+          // if the text is truthy value, update/push it to the _data.notes array:
+          if (text) {
+            if (i >= 0) this._data.notes[i] = { waypoint, text }
+            else this._data.notes.push({ waypoint, text })
+
+            // otherwise if is typical, remove it from the _data.delays array
+          } else if (i >= 0) {
+            this._data.notes.splice(i, 1)
+          }
+
+          // clear _cache.delays
+          delete this._cache.notes
+
+          break
+        }
+        default:
+          this[field] = val
+          d2('clearCache, invalidatePacing')
+          this.clearCache()
+          this.invalidatePacing()
       }
-    }
+    })
+
+    this.callbacks.execute('onUpdated')
   }
 
   invalidatePacing() {
     d('invalidatePacing')
-    delete this.pacing.chunks
+    this.pacing.invalidate()
     delete this._cache.splits
   }
 
   checkPacing() {
     d('checkPacing')
-    if (!this.pacing.status.success) {
+    if (!this.pacing.status?.complete) {
       d('checkPacing: calculate')
       this.pacing.calculate()
     }

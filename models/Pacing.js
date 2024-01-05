@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { sprintf } from 'sprintf-js'
 
-import { Factors, list as fKeys, Strategy } from '../factors/index.js'
+import { Factors, list as fKeys } from '../factors/index.js'
 import { Callbacks } from '../util/Callbacks.js'
 import { createDebug, MissingDataError } from '../util/index.js'
 import { PaceChunk } from './PaceChunk.js'
@@ -11,28 +11,10 @@ const d = createDebug('Pacing')
 export class Pacing {
   constructor(data = {}) {
     Object.defineProperty(this, '_cache', { value: {} })
-    Object.defineProperty(this, '_data', { value: {} })
 
-    this.callbacks = new Callbacks(this, ['onUpdated', 'onFail'])
-
-    // force strategy field to be Strategy class:
-    Object.defineProperty(this, 'strategy', {
-      get() {
-        return this._data?.strategy
-      },
-      set(v) {
-        this.clearCache()
-        this._data.strategy = new Strategy(v)
-      },
-      enumerable: true
-    })
+    this.callbacks = new Callbacks(this, ['onUpdated', 'onFail', 'onInvalidated'])
 
     Object.assign(this, data)
-
-    // copy strategy from plan or default
-    if (!this.strategy) {
-      this.strategy = new Strategy(this.plan.strategy || { length: this.plan.course.dist })
-    }
   }
 
   get __class() {
@@ -44,6 +26,15 @@ export class Pacing {
     Object.keys(this._cache).forEach((k) => {
       delete this._cache[k]
     })
+  }
+
+  invalidate() {
+    d('invalidate')
+
+    this.chunks = []
+    this.clearCache()
+
+    this.callbacks.execute('onInvalidated')
   }
 
   get elapsed() {

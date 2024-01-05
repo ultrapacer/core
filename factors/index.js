@@ -24,7 +24,7 @@ export function generate(point, { plan, course }) {
 
   if (plan) {
     Object.assign(point.factors, {
-      strategy: plan.pacing.strategy.at(point.loc)
+      strategy: plan.strategy.at(point.loc)
     })
 
     if (typeof point.tod !== 'undefined') {
