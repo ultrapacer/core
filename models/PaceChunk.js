@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { vsprintf } from 'sprintf-js'
 
-import { createDebug } from '../debug'
+import { createDebug } from '../debug.js'
 import { Factors, generate as generateFactors, list as fKeys } from '../factors/index.js'
 
 const d = createDebug('PaceChunk')
