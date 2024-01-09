@@ -85,18 +85,14 @@ export class Pacing {
   }
 
   get moving() {
-    return this.elapsed - this.delay
-  }
-
-  get delay() {
-    return this.plan.delay
+    return this.elapsed - this.plan.delay
   }
 
   get status() {
     return {
       complete: this.chunks?.length > 0,
       success: this.chunks?.filter((c) => !c.status?.success).length === 0,
-      chunks: this.chunks?.length
+      chunks: this.chunks?.length || 0
     }
   }
 

@@ -312,6 +312,7 @@ export class Plan {
 
   get splits() {
     if (!this._cache.splits) {
+      d('creating splits')
       this._cache.splits = new PlanSplits({ plan: this })
     }
 
