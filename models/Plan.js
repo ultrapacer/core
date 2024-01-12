@@ -1,13 +1,15 @@
+/* eslint-disable no-unreachable */
 import _ from 'lodash'
 
-import { Factors, generate as generateFactors, list as fKeys } from '../../factors/index.js'
-import { Strategy } from '../../factors/strategy/index.js'
-import { calcPacing, createSegments, createSplits } from '../../geo.js'
-import { areSame, createDebug, MissingDataError } from '../../util/index.js'
-import { interp, interpArray, req, rgte } from '../../util/math.js'
-import { Event } from '../Event.js'
-import { Pacing } from '../Pacing.js'
-import { PlanPoint } from '../PlanPoint.js'
+import { list as fKeys } from '../factors/index.js'
+import { Strategy } from '../factors/strategy/index.js'
+import { createSegments, createSplits } from '../geo.js'
+import { Callbacks } from '../util/Callbacks.js'
+import { areSame, createDebug, MissingDataError } from '../util/index.js'
+import { interp, interpArray, req, rgte } from '../util/math.js'
+import { Event } from './Event.js'
+import { Pacing } from './Pacing.js'
+import { PlanPoint } from './PlanPoint.js'
 
 const d = createDebug('models:Plan')
 
@@ -16,6 +18,7 @@ const areSameWaypoint = (a, b) => areSame(a.site, b.site) && a.loop === b.loop
 class PlanSplits {
   constructor(data) {
     Object.defineProperty(this, '_cache', { value: {} })
+    Object.defineProperty(this, '_data', { value: {} })
     Object.assign(this, data)
   }
 
@@ -70,6 +73,8 @@ export class Plan {
     // use to store raw input data
     Object.defineProperty(this, 'db', { writable: true })
 
+    Object.defineProperty(this, 'pacing', { writable: false, value: new Pacing({ plan: this }) })
+
     const _data = db._data || {}
 
     // assign defaults
@@ -93,6 +98,11 @@ export class Plan {
     Object.keys(db).forEach((k) => {
       if (!disallowed.includes(k)) this[k] = db[k]
     })
+
+    Object.defineProperty(this, 'callbacks', {
+      writable: false,
+      value: new Callbacks(this, ['onUpdated'])
+    })
   }
 
   get __class() {
@@ -100,6 +110,7 @@ export class Plan {
   }
 
   clearCache() {
+    d('clearCache')
     Object.keys(this._cache).forEach((key) => {
       delete this._cache[key]
     })
@@ -158,8 +169,25 @@ export class Plan {
     if (this._cache.cutoffs) return this._cache.cutoffs
 
     this._cache.cutoffs = this.adjustForCutoffs
-      ? this.course.cutoffs.map((c) => new PlanCutoff({ courseCutoff: c, plan: this }))
+      ? this.course.cutoffs.map(
+          (c) =>
+            new PlanCutoff({
+              courseCutoff: c,
+              plan: this,
+              point: this.getPoint({ loc: c.loc, insert: true })
+            })
+        )
       : []
+
+    // if any cutoffs are extraneous, delete them
+    let i = 0
+    while (this._cache.cutoffs.length - 1 >= i) {
+      const cutoff = this._cache.cutoffs[i]
+      if (this._cache.cutoffs.find((c, j) => j > i && c.time <= cutoff.time)) {
+        d(`get cutoffs: deleting extraneous cutoff at ${cutoff.loc} km`)
+        this._cache.cutoffs.splice(i, 1)
+      } else i++
+    }
 
     return this._cache.cutoffs
   }
@@ -284,6 +312,7 @@ export class Plan {
 
   get splits() {
     if (!this._cache.splits) {
+      d('creating splits')
       this._cache.splits = new PlanSplits({ plan: this })
     }
 
@@ -301,39 +330,6 @@ export class Plan {
 
   getNoteAtWaypoint(waypoint) {
     return this.notes.find((d) => areSameWaypoint(d.waypoint, waypoint))?.text || ''
-  }
-
-  get pacing() {
-    if (!this._cache.pacing) {
-      delete this._cache.splits
-      this._cache.pacing = new Pacing({ plan: this })
-    }
-    return this._cache.pacing
-  }
-
-  set pacing(v) {
-    if (!v.__class === 'Pacing') throw new Error('Plan.pacing must be Pacing object')
-    this._cache.pacing = v
-  }
-
-  calcPacing() {
-    if (this.pacing?.status?.success === false) {
-      d('Pacing calculation already failed; returning')
-      return
-    }
-
-    d('calculating pacing')
-
-    calcPacing({
-      plan: this,
-      options: {
-        testLocations: this.course.waypoints.map((wp) => wp.loc)
-      }
-    })
-
-    if (this.pacing.status.success)
-      d(`pacing complete after ${this.pacing.status.iterations} iterations.`)
-    else d(`pacing failed after ${this.pacing.status.iterations} iterations.`)
   }
 
   /**
@@ -384,92 +380,11 @@ export class Plan {
 
       this._cache.points = this.course.points.map((point) => new PlanPoint(this, point))
 
-      this.applyPacing()
+      // TEMP TODO FIX - use cached pacing data to speed up if we have it?
+      //d('points:get calculating')
+      //this.pacing.calculate()
     }
     return this._cache.points
-  }
-
-  applyPacing(options = {}) {
-    /*
-     applyPacing adds time data
-     mutates this.course.points
-
-     returns result object: {
-       factors: Object w/ overall factor values
-       factor: overall pacing factor
-     }
-    */
-    if (!this.course?.points?.length) return
-
-    d('applyPacing')
-
-    _.defaults(options, {
-      addBreaks: true
-    })
-
-    if (options.addBreaks) {
-      this.course.terrainFactors?.forEach((tf) => this.getPoint({ loc: tf.start, insert: true }))
-    }
-
-    // assign delays to points
-    this.points
-      .filter((p) => p.delay)
-      .forEach((p) => {
-        delete p.delay
-      })
-    this.delays?.forEach((d) => {
-      const p = this.getPoint({ loc: d.loc, insert: true })
-      p.delay = d.delay
-    })
-
-    // calculate course normalizing factor:
-    const p = this.points
-    let elapsed = 0
-    p[0].elapsed = 0
-    p[0].time = 0
-    if (this.event.start) p[0].tod = this.event.elapsedToTimeOfDay(0)
-
-    // variables & function for adding in delays:
-    let delay = 0
-
-    let dloc = 0
-    let dtime = 0
-    let factorSum = 0
-
-    // initially we dont have a factor so use pace instead of np
-    const np = this.pacing.factor ? this.pacing.np : this.pacing.pace
-
-    const factorsSum = Object.fromEntries(fKeys.map((k) => [k, 0]))
-
-    for (let j = 1, jl = p.length; j < jl; j++) {
-      dloc = p[j].loc - p[j - 1].loc
-      // determine pacing factor for point
-      generateFactors(p[j - 1], { plan: this })
-
-      // add to factors total
-      fKeys.forEach((k) => {
-        factorsSum[k] += p[j - 1].factors[k] * dloc
-      })
-      const combined = p[j - 1].factors.combined
-      factorSum += combined * dloc
-      dtime = np * combined * dloc
-
-      p[j].time = p[j - 1].time + dtime
-      delay = p[j - 1].delay || 0
-      elapsed += dtime + delay
-      p[j].elapsed = elapsed
-      if (this.event.start) p[j].tod = this.event.elapsedToTimeOfDay(elapsed)
-    }
-    // add factors to that last point
-    generateFactors(_.last(p), { plan: this })
-
-    // normalize factors total:
-    const factors = new Factors(
-      Object.fromEntries(fKeys.map((k) => [k, factorsSum[k] / this.course.dist]))
-    )
-    const factor = factorSum / this.course.dist
-
-    return { factor, factors }
   }
 
   get events() {
@@ -569,89 +484,110 @@ export class Plan {
     return this._cache.stats
   }
 
-  update(field, val) {
-    switch (field) {
-      case 'delays': {
-        this._data.delays = val
-        delete this._cache.delays
+  /**
+   * update Plan with key/value pairs
+   * @param {*} params
+   */
+  update(params) {
+    const d2 = d.extend('update')
+    d2(`fields: ${Object.keys(params).join(', ')}`)
 
-        // pacing now invalid
-        this.invalidatePacing()
+    _.forOwn(params, (val, field) => {
+      switch (field) {
+        case '_id':
+        case 'name':
+        case 'description':
+          this[field] = val
+          break
+        case 'delays': {
+          this._data.delays = val
+          delete this._cache.delays
 
-        break
-      }
-      case 'delay': {
-        let { delay, waypoint } = val
+          // pacing now invalid
+          this.invalidatePacing()
 
-        // get course waypoint
-        waypoint = this.course.waypoints.find((wp) => areSameWaypoint(wp, waypoint))
-        if (!waypoint) throw new Error('unknown waypoint')
-
-        // find existing index
-        const i = this._data.delays.findIndex((d) => areSameWaypoint(d.waypoint, waypoint))
-
-        // if the delay is a non-typical value, update/push it to the _data.delays array:
-        if (delay !== this.getTypicalDelayAtWaypoint(waypoint)) {
-          if (i >= 0) this._data.delays[i] = { waypoint, delay }
-          else this._data.delays.push({ waypoint, delay })
-
-          // otherwise if is typical, remove it from the _data.delays array
-        } else if (i >= 0) {
-          this._data.delays.splice(i, 1)
+          break
         }
+        case 'delay': {
+          let { delay, waypoint } = val
 
-        // clear _cache.delays
-        delete this._cache.delays
+          // get course waypoint
+          waypoint = this.course.waypoints.find((wp) => areSameWaypoint(wp, waypoint))
+          if (!waypoint) throw new Error('unknown waypoint')
 
-        // pacing now invalid
-        this.invalidatePacing()
+          // find existing index
+          const i = this._data.delays.findIndex((d) => areSameWaypoint(d.waypoint, waypoint))
 
-        break
-      }
-      case 'note': {
-        let { text, waypoint } = val
+          // if the delay is a non-typical value, update/push it to the _data.delays array:
+          if (delay !== this.getTypicalDelayAtWaypoint(waypoint)) {
+            if (i >= 0) this._data.delays[i] = { waypoint, delay }
+            else this._data.delays.push({ waypoint, delay })
 
-        // get course waypoint
-        waypoint = this.course.waypoints.find((wp) => areSameWaypoint(wp, waypoint))
-        if (!waypoint) throw new Error('unknown waypoint')
+            // otherwise if is typical, remove it from the _data.delays array
+          } else if (i >= 0) {
+            this._data.delays.splice(i, 1)
+          }
 
-        // find existing index
-        const i = this._data.notes.findIndex((d) => areSameWaypoint(d.waypoint, waypoint))
+          // clear _cache.delays
+          delete this._cache.cutoffs
+          delete this._cache.delays
 
-        // if the text is truthy value, update/push it to the _data.notes array:
-        if (text) {
-          if (i >= 0) this._data.notes[i] = { waypoint, text }
-          else this._data.notes.push({ waypoint, text })
+          // pacing now invalid
+          this.invalidatePacing()
 
-          // otherwise if is typical, remove it from the _data.delays array
-        } else if (i >= 0) {
-          this._data.notes.splice(i, 1)
+          break
         }
+        case 'note': {
+          let { text, waypoint } = val
 
-        // clear _cache.delays
-        delete this._cache.notes
+          // get course waypoint
+          waypoint = this.course.waypoints.find((wp) => areSameWaypoint(wp, waypoint))
+          if (!waypoint) throw new Error('unknown waypoint')
 
-        break
+          // find existing index
+          const i = this._data.notes.findIndex((d) => areSameWaypoint(d.waypoint, waypoint))
+
+          // if the text is truthy value, update/push it to the _data.notes array:
+          if (text) {
+            if (i >= 0) this._data.notes[i] = { waypoint, text }
+            else this._data.notes.push({ waypoint, text })
+
+            // otherwise if is typical, remove it from the _data.delays array
+          } else if (i >= 0) {
+            this._data.notes.splice(i, 1)
+          }
+
+          // clear _cache.delays
+          delete this._cache.notes
+
+          break
+        }
+        default:
+          this[field] = val
+          d2('clearCache, invalidatePacing')
+          this.clearCache()
+          this.invalidatePacing()
       }
-    }
+    })
+
+    this.callbacks.execute('onUpdated')
   }
 
   invalidatePacing() {
     d('invalidatePacing')
-    if (this.pacing?.status && !_.isUndefined(this.pacing.status.success))
-      delete this.pacing.status.success
+    this.pacing.invalidate()
     delete this._cache.splits
   }
 
   checkPacing() {
-    if (!this.pacing.status.success) {
-      d('checkPacing -- calcPacing')
-      this.calcPacing()
+    d('checkPacing')
+    if (!this.pacing.status?.complete) {
+      d('checkPacing: calculate')
+      this.pacing.calculate()
     }
-    if (!this.points?.length) {
-      d('checkPacing -- applyPacing')
-      this.applyPacing()
-    }
+
+    // this is mostly just to trigger the points getter
+    if (!this.points?.length) throw new Error('No plan points')
     return true
   }
 }
