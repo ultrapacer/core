@@ -4,6 +4,7 @@ export class PlanPoint {
   constructor(plan, point) {
     Object.defineProperty(this, '_plan', { value: plan })
     Object.defineProperty(this, '_point', { value: point }) // should be CoursePoint object
+    Object.defineProperty(this, '_chunk', { writable: true, enumerable: false })
     planPointFields.forEach((f) => {
       Object.defineProperty(this, f, {
         get() {
@@ -21,7 +22,7 @@ export class PlanPoint {
    * np for a point is the same as its parent chunk
    */
   get np() {
-    return this.chunk.np
+    return this._chunk.np
   }
 
   get factor() {

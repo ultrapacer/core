@@ -207,7 +207,7 @@ export class Pacing {
 
     // assign the chunk to all points
     this.plan.points.forEach((p) => {
-      p.chunk = this.chunks[0]
+      p._chunk = this.chunks[0]
     })
   }
 
@@ -262,7 +262,7 @@ export class Pacing {
     newChunk.points
       .filter((p, i) => i < newChunk.points.length - 1)
       .forEach((p) => {
-        p.chunk = newChunk
+        p._chunk = newChunk
       })
 
     this.chunks.unshift(newChunk)
@@ -295,7 +295,7 @@ export class Pacing {
     a.delay += b.delay
     delete a.status
     a.points.forEach((p) => {
-      p.chunk = a
+      p._chunk = a
     })
     a.constraints = [a.constraints[0], b.constraints[1]]
     this.chunks.splice(j, 1)
