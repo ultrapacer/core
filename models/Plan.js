@@ -67,36 +67,30 @@ class PlanSplits {
 }
 
 export class Plan {
-  constructor(db) {
-    if (!db.course) throw new Error('Course required')
-
-    // use to store raw input data
-    Object.defineProperty(this, 'db', { writable: true })
-
+  constructor(data) {
     Object.defineProperty(this, 'pacing', { writable: false, value: new Pacing({ plan: this }) })
 
-    const _data = db._data || {}
-
-    // assign defaults
-    _.defaults(_data, { adjustForCutoffs: true })
-
-    Object.defineProperty(this, '_data', { value: _data, enumerable: true })
+    Object.defineProperty(this, '_data', {
+      value: {
+        adjustForCutoffs: true,
+        delays: [],
+        notes: []
+      },
+      enumerable: false
+    })
 
     // used to store results of processed information in _data to speed up calcs
-    Object.defineProperty(this, '_cache', { value: {} })
+    Object.defineProperty(this, '_cache', { value: {}, writable: true })
 
-    Object.defineProperty(this, 'course', { writable: true })
-
-    this.db = db
-    this.course = db.course
+    if (data.course) Object.defineProperty(this, 'course', { writable: false, value: data.course })
+    else throw new Error('Course required')
 
     // other fields just pass along:
     // plan constructor will pass through all fields; use
     // this array to omit certain keys from passing through
-    const disallowed = ['_data', 'cache']
-    if (db._data) disallowed.push('delays')
-    Object.keys(db).forEach((k) => {
-      if (!disallowed.includes(k)) this[k] = db[k]
+    const disallowed = ['course', '_data', 'cache']
+    Object.keys(data).forEach((k) => {
+      if (!disallowed.includes(k)) this[k] = data[k]
     })
 
     Object.defineProperty(this, 'callbacks', {
@@ -111,9 +105,7 @@ export class Plan {
 
   clearCache() {
     d('clearCache')
-    Object.keys(this._cache).forEach((key) => {
-      delete this._cache[key]
-    })
+    this._cache = {}
   }
 
   set eventStart(v) {
@@ -286,6 +278,8 @@ export class Plan {
   }
 
   set delays(v) {
+    if (_.isUndefined(v)) v = []
+    else if (!_.isArray(v)) throw new Error('"delays" must be an array')
     this._data.delays = v
     delete this._cache.delays
   }
@@ -296,16 +290,17 @@ export class Plan {
 
   get notes() {
     if (this._cache.notes) return this._cache.notes
-    this._cache.notes =
-      this._data.notes?.map((wpn) => ({
-        waypoint: this.course.waypoints.find((waypoint) => areSameWaypoint(wpn.waypoint, waypoint)),
-        text: wpn.text
-      })) || []
+    this._cache.notes = this._data.notes.map((wpn) => ({
+      waypoint: this.course.waypoints.find((waypoint) => areSameWaypoint(wpn.waypoint, waypoint)),
+      text: wpn.text
+    }))
 
     return this._cache.notes
   }
 
   set notes(v) {
+    if (_.isUndefined(v)) v = []
+    else if (!_.isArray(v)) throw new Error('"notes" must be an array')
     this._data.notes = v
     delete this._cache.notes
   }
