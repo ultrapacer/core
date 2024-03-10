@@ -5,9 +5,10 @@
   "author": "Danny Murphy <danny@ultrapacer.com>",
   "type": "module",
   "scripts": {
-    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "lint": "eslint . --ext .js,.ts --fix --ignore-path .gitignore",
     "format": "prettier --write ./",
-    "test": "vitest"
+    "test": "vitest",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "debug": "^4.3.4",
@@ -17,10 +18,17 @@
     "suncalc": "^1.9.0"
   },
   "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "@types/lodash": "^4.14.202",
+    "@types/sprintf-js": "^1.1.4",
+    "@types/suncalc": "^1.9.2",
+    "@typescript-eslint/eslint-plugin": "^7.1.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-simple-import-sort": "^10.0.0",
+    "eslint-plugin-tsdoc": "^0.2.17",
     "prettier": "^3.1.1",
     "supports-color": "^9.4.0",
     "vitest": "^1.1.0"

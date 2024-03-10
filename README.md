@@ -25,8 +25,6 @@ distribution.
 - **gainScale**, _Number_, _optional_\
   Vertical gain scaling factor
 - **event**
-- **eventStart**
-- **eventTimezone**
 - **eventTimezoneFixed**
 - **loss**, _Number_\
   Total amount of vertical loss in course (m)
@@ -45,7 +43,6 @@ distribution.
 
 ## Plan Model fields
 
-- **adjustForCutoffs**
 - **course**
 - **created**
 - **cutoffMargin**
@@ -56,11 +53,11 @@ distribution.
 - **heatModel**
 - **notes**
 - **pacing**
-- **pacingMethod**
+- **method**
 - **pacingTarget**
 - **scales**: Object, optional \
   { _factor1_: Number, _factor2_: Number, ... } \
   Scale factors to be applied on top of base pacing models. A value of 1 does nothing.
 - **splits**
 - **strategy**
-- **waypointDelay**
+- **typicalDelay**
