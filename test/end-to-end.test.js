@@ -57,7 +57,7 @@ const tests = [
       ]
     }),
     r: {
-      segments: { 8: { elapsed: '11:36:07', 16: { elapsed: '23:07:45' } } },
+      segments: { 8: { elapsed: '11:36:07' }, 16: { elapsed: '24:21:43' } },
       elapsed: 25 * 3600
     }
   },
