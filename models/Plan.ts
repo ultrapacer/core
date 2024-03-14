@@ -41,6 +41,20 @@ class PlanScales {
   }
 }
 
+export type PlanData = {
+  course: Course
+  start: { date: Date; timezone: string }
+  method: string
+  target: number
+  name?: string
+  strategy?: StrategyValues
+  cutoffMargin?: number
+  typicalDelay?: number
+  scales?: { altitude?: number; dark?: number }
+  heatModel?: { baseline: number; max: number }
+  delays?: DelaysInput
+}
+
 export class Plan {
   readonly course: Course
   event: Event
@@ -50,19 +64,7 @@ export class Plan {
   name?: string
   scales: PlanScales = new PlanScales(this)
 
-  constructor(data: {
-    course: Course
-    start: { date: Date; timezone: string }
-    method: string
-    target: number
-    name?: string
-    strategy?: StrategyValues
-    cutoffMargin?: number
-    typicalDelay?: number
-    scales?: { altitude?: number; dark?: number }
-    heatModel?: { baseline: number; max: number }
-    delays?: DelaysInput
-  }) {
+  constructor(data: PlanData) {
     this.pacing = new Pacing(this)
 
     this.course = data.course
@@ -222,13 +224,13 @@ export class Plan {
     return this._splits
   }
 
-  private _events?: { sun: object }
+  private _events?: { sun: { event: string; elapsed: number; loc: number }[] }
   get events() {
     if (this._events) return this._events
 
     // create array of sun events during the course:
     d('calculating events.sun')
-    const sun: { event: string; elapsed: number; loc?: number }[] = []
+    const eventTimes: { event: string; elapsed: number }[] = []
     const startTimeOfDay = this.event.elapsedToTimeOfDay(0)
     const days = Math.ceil((startTimeOfDay + this.points[this.points.length - 1].elapsed) / 86400)
     for (let d = 0; d < days; d++) {
@@ -244,24 +246,20 @@ export class Plan {
 
         // if it happens in the data, add it to the array
         if (elapsed >= 0 && elapsed <= this.points[this.points.length - 1].elapsed) {
-          sun.push({ event: e.event, elapsed })
+          eventTimes.push({ event: e.event, elapsed })
         }
       })
     }
     // sort by elapsed time:
-    sun.sort((a, b) => a.elapsed - b.elapsed)
+    eventTimes.sort((a, b) => a.elapsed - b.elapsed)
 
     // interpolate distances from elapsed times:
-    if (sun.length) {
-      const locs = interpArray(
-        this.points.map((p) => p.elapsed),
-        this.points.map((p) => p.loc),
-        sun.map((x) => x.elapsed)
-      )
-      locs.forEach((l, i) => {
-        sun[i].loc = l
-      })
-    }
+    const locs = interpArray(
+      this.points.map((p) => p.elapsed),
+      this.points.map((p) => p.loc),
+      eventTimes.map((x) => x.elapsed)
+    )
+    const sun = eventTimes.map((s, i) => ({ ...s, loc: locs[i] }))
 
     this._events = { sun }
 

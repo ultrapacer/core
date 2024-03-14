@@ -16,6 +16,14 @@ const d = createDebug('models:Course')
 // this array to omit certain keys from passing through
 const disallowed = ['track', 'dist', 'gain', 'loss', 'cache', 'distance']
 
+export type CourseData = {
+  track: Track
+  loops?: number
+  dist?: number
+  gain?: number
+  loss?: number
+}
+
 export class Course {
   name?: string
   _cache: {
@@ -25,7 +33,7 @@ export class Course {
     stats?: object
   } = {}
 
-  constructor(data: { track: Track; loops?: number; dist?: number; gain?: number; loss?: number }) {
+  constructor(data: CourseData) {
     this._track = data.track
 
     if (data.loops) this.loops = data.loops

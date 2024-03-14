@@ -57,11 +57,6 @@ export class PlanPoint {
   }
 
   get pace() {
-    const { np, factor } = this
-
-    if (factor && np) return factor * np
-
-    // if no factors, undefined (this will be the case for last point)
-    return undefined
+    return this.np * this.factor
   }
 }
