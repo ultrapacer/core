@@ -25,7 +25,6 @@ distribution.
 - **gainScale**, _Number_, _optional_\
   Vertical gain scaling factor
 - **event**
-- **eventTimezoneFixed**
 - **loss**, _Number_\
   Total amount of vertical loss in course (m)
 - **lossScale**, _Number_, _optional_\

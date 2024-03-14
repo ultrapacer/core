@@ -1813,7 +1813,6 @@ const coursedata = {
   loss: -3352.7998927104036,
   eventStart: '2021-11-06T12:15:00.000Z',
   eventTimezone: 'America/Los_Angeles',
-  eventTimezoneFixed: true,
   dist: 160.93444978925635,
   sites: [
     {
