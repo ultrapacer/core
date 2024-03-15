@@ -12,6 +12,6 @@ const model = {
 }
 
 test('Check dark factor halfway through dawn', () => {
-  const fDark = getDarkFactor({ timeOfDaySeconds: 21600 - 1800, terrainFactor: 1.5, sun, model })
+  const fDark = getDarkFactor(21600 - 1800, 1.5, sun, model)
   expect(fDark).toBe(1.2)
 })

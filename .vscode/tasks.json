@@ -7,6 +7,12 @@
       "problemMatcher": [],
       "label": "npm: format",
       "detail": "prettier --write src/"
+    },
+    {
+      "type": "npm",
+      "script": "check-types",
+      "problemMatcher": ["$tsc"],
+      "label": "npm: check-types"
     }
   ]
 }
