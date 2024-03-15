@@ -4,6 +4,7 @@ import { latlon as LatLon } from 'sgeo'
 import { createDebug } from '../debug'
 import { round } from '../util/math'
 import { Point, TrackPoint } from './Point'
+import { getGrades } from './Points/getGrades'
 import { getLocations } from './Points/getLocations'
 import { getSmoothedProfile } from './Points/getSmoothedProfile'
 import { interpolatePoint } from './Points/interpolate'
@@ -23,13 +24,7 @@ export class Track {
 
     const locations = getLocations(points)
 
-    const lsq = getSmoothedProfile(
-      locations,
-      points.map((p) => p.alt),
-      locations,
-      0.05
-    )
-    const grades = lsq.map((x) => x.grade)
+    const grades = getGrades(points, locations)
 
     this.points = points.map((p, i) => new TrackPoint(p.lat, p.lon, p.alt, locations[i], grades[i]))
 
