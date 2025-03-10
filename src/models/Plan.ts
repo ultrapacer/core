@@ -19,7 +19,6 @@ export class Plan implements Types.Plan {
     event?: Types.Event
     events?: Types.Plan['events']
     heatModel?: Types.PlanHeatModel
-    scales?: Types.Plan['scales']
     stats?: Types.Plan['stats']
     strategy?: Types.Strategy
     version?: number
@@ -178,13 +177,7 @@ export class Plan implements Types.Plan {
   readonly points: Types.PlanPoint[]
 
   get scales() {
-    if ('scales' in this.cache) return this.cache.scales
-    if (this._data.scales)
-      return (this.cache.scales = {
-        altitude: this._data.scales.altitude || 1,
-        dark: this._data.scales.dark || 1
-      })
-    return (this.cache.scales = undefined)
+    return this._data.scales
   }
 
   readonly splits: Types.PlanSplits = new PlanSplits(this)

@@ -33,7 +33,7 @@ export type PlanData = {
   /**
    * Scales for factors
    */
-  scales?: { altitude?: number; dark?: number } | undefined
+  scales?: PlanScales
 
   /**
    * Start date and timezone
@@ -90,10 +90,37 @@ export type PlanHeatModel =
     }
   | undefined
 
-type PlanScales =
+/**
+ * Scales applied to customize the influence of pacing factors on the plan
+ * Optional
+ */
+export type PlanScales =
   | {
-      altitude: number
-      dark: number
+      /**
+       * Altitude factor scale, number between 0 and 2
+       * Optional
+       */
+      altitude?: number
+
+      /**
+       * Climbing factor scale, number between 0 and 2
+       * Only applies to positive grades
+       * Optional
+       */
+      climbing?: number
+
+      /**
+       * Darkness factor scale, number between 0 and 2
+       * Optional
+       */
+      dark?: number
+
+      /**
+       * Descenging factor scale, number between 0 and 2
+       * Only applies to negative grades where grade factor is positive
+       * Optional
+       */
+      descending?: number
     }
   | undefined
 
