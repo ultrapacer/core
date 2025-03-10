@@ -7,7 +7,6 @@ export declare class Plan implements Types.Plan {
         event?: Types.Event;
         events?: Types.Plan["events"];
         heatModel?: Types.PlanHeatModel;
-        scales?: Types.Plan["scales"];
         stats?: Types.Plan["stats"];
         strategy?: Types.Strategy;
         version?: number;
@@ -31,10 +30,7 @@ export declare class Plan implements Types.Plan {
     get name(): string | undefined;
     pacing: Types.Pacing;
     readonly points: Types.PlanPoint[];
-    get scales(): {
-        altitude: number;
-        dark: number;
-    } | undefined;
+    get scales(): Types.PlanScales;
     readonly splits: Types.PlanSplits;
     get stats(): {
         readonly factors: {
