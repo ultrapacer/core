@@ -9,7 +9,6 @@ import { getTerrainFactor } from './terrain'
 // utility function to offset by 1 and scale
 function applyScale(fact: number, scale?: number) {
   if (scale === undefined) return fact
-  if (scale <= 0) scale = 1
   return (fact - 1) * scale + 1
 }
 

@@ -54,7 +54,9 @@ export interface CoursePoint extends TrackPoint {
   factors: factors.Factors
 
   /**
-   * grade, scaled, as a percentage
+   * grade, scaled by dist/gain/loss, as a percentage
+   * this is the grade at the point per least squares algorithm (not specifically
+   * the grade from the prior point or to the following point)
    */
   grade: number
 

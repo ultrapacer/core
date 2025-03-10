@@ -12,6 +12,19 @@ import { PlanSplits } from './PlanSplits'
 
 const d = createDebug('models:Plan')
 
+function validateScales(scales?: Types.PlanScales) {
+  if (
+    !scales ||
+    Object.keys(scales).every((k) => {
+      const v = scales[k as keyof Types.PlanScales]
+      return v === undefined || (v >= 0 && v <= 2)
+    })
+  )
+    return
+
+  throw new Error('Plan scales must be between 0 and 2')
+}
+
 export class Plan implements Types.Plan {
   private _cache: {
     cutoffs?: PlanCutoff[]
@@ -260,6 +273,8 @@ export class Plan implements Types.Plan {
   }
 
   constructor(course: Types.Course, data: Types.PlanData) {
+    validateScales(data.scales)
+
     this.course = course
     this._data = data
 
@@ -332,6 +347,8 @@ export class Plan implements Types.Plan {
   }
 
   update(data: Types.PlanUpdateData) {
+    validateScales(data.scales)
+
     // check for invalid null or undefined values
     const keys = ['target', 'method'] as (keyof Types.PlanUpdateData)[]
     const k = keys.find((k) => k in data && _.isNil(data[k]))
