@@ -1,5 +1,7 @@
 import _ from 'lodash'
 
+import { defaultModel as defaultGradeModel } from '~/factors/grade/defaults'
+
 import { createDebug } from '../debug'
 import { factorKeys, generatePlanFactors } from '../factors'
 import { Strategy } from '../factors/strategy'
@@ -31,6 +33,7 @@ export class Plan implements Types.Plan {
     delays?: Types.Plan['delays']
     event?: Types.Event
     events?: Types.Plan['events']
+    gradeModel?: Types.PlanGradeModel
     heatModel?: Types.PlanHeatModel
     stats?: Types.Plan['stats']
     strategy?: Types.Strategy
@@ -158,6 +161,16 @@ export class Plan implements Types.Plan {
     this.cache.events = { sun }
 
     return this.cache.events
+  }
+
+  get gradeModel(): Types.PlanGradeModel {
+    if ('gradeModel' in this.cache) return this.cache.gradeModel
+    if (typeof this._data.scales?.descending1 === 'number') {
+      const model = defaultGradeModel
+      // TODO come up with other model here
+      this.cache.gradeModel = model
+    } else this.cache.gradeModel = defaultGradeModel
+    return this.cache.gradeModel
   }
 
   get heatModel(): { start: number; stop: number; baseline: number; max: number } | undefined {

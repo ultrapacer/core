@@ -74,6 +74,7 @@ type PlanStats = {
         };
     };
 };
+export type PlanGradeModel = (grade: number) => number;
 export type PlanHeatModel = {
     start: number;
     stop: number;
@@ -103,10 +104,16 @@ export type PlanScales = {
     dark?: number;
     /**
      * Descenging factor scale, number between 0 and 2
-     * Only applies to negative grades where grade factor is positive
+     * Only applies to negative grades where grade factor is negative (faster)
      * Optional
      */
-    descending?: number;
+    descending1?: number;
+    /**
+     * Descenging factor scale, number between 0 and 2
+     * Only applies to negative grades where grade factor is positive (slower)
+     * Optional
+     */
+    descending2?: number;
 } | undefined;
 export interface PlanDelay {
     delay: number;
@@ -141,6 +148,7 @@ export interface Plan {
      */
     readonly event: Types.Event;
     readonly events: PlanEvents;
+    readonly gradeModel: PlanGradeModel;
     readonly heatModel: {
         start: number;
         stop: number;

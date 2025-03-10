@@ -20,15 +20,11 @@ function applyScale(fact: number, scale?: number) {
 function applyScales(point: Types.PlanPoint, plan: Types.Plan) {
   point.factors.altitude = applyScale(point.factors.altitude, plan.scales?.altitude)
 
-  if (point.grade > 0) point.factors.grade = applyScale(point.factors.grade, plan.scales?.climbing)
-
-  if (point.grade < 0 && typeof plan.scales?.descending === 'number') {
-    let scale = plan.scales.descending
-    // when descending factor is negative, flip the grade to reduce benefit of downhill
-    if (point.factors.grade < 1) scale = 2 - scale
-
-    point.factors.grade = applyScale(point.factors.grade, scale)
-  }
+  if (point.grade >= 0) point.factors.grade = applyScale(point.factors.grade, plan.scales?.climbing)
+  else if (point.grade < 0 && point.factors.grade < 1)
+    point.factors.grade = applyScale(point.factors.grade, plan.scales?.descending1)
+  else if (point.grade < 0 && point.factors.grade > 1)
+    point.factors.grade = applyScale(point.factors.grade, plan.scales?.descending2)
 
   point.factors.dark = applyScale(point.factors.dark, plan.scales?.dark)
 }
@@ -52,6 +48,10 @@ export function generatePlanFactors(point: Types.PlanPoint, plan: Types.Plan) {
 
   if (plan) {
     if (point.factors === undefined) throw new Error('no factors')
+
+    if (typeof plan.scales?.descending1 === 'number')
+      point.factors.grade = getGradeFactor(point.grade, plan.gradeModel)
+
     point.factors.strategy = plan.strategy.at(point.loc)
 
     Object.assign(point.factors, {

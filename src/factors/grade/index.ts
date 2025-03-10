@@ -1,5 +1,6 @@
-import { defaults } from './defaults'
-import { GradeModel } from './GradeModel'
+import { Types } from '~/main'
+
+import { defaultModel } from './defaults'
 
 /**
  * get grade factor
@@ -7,15 +8,9 @@ import { GradeModel } from './GradeModel'
  * @param model - grade model to use
  * @returns grade factor
  */
-export function getGradeFactor(grade: number, model?: GradeModel): number {
-  if (model === null || typeof model === 'undefined') {
-    model = defaults
+export function getGradeFactor(grade: number, model?: Types.PlanGradeModel): number {
+  if (!model) {
+    model = defaultModel
   }
-  if (grade < model.lower.lim) {
-    return model.lower.m * grade + model.lower.b
-  } else if (grade > model.upper.lim) {
-    return model.upper.m * grade + model.upper.b
-  } else {
-    return model.a * grade ** 2 + model.b * grade + 1
-  }
+  return model(grade)
 }

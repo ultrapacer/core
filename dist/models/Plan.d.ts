@@ -6,6 +6,7 @@ export declare class Plan implements Types.Plan {
         delays?: Types.Plan["delays"];
         event?: Types.Event;
         events?: Types.Plan["events"];
+        gradeModel?: Types.PlanGradeModel;
         heatModel?: Types.PlanHeatModel;
         stats?: Types.Plan["stats"];
         strategy?: Types.Strategy;
@@ -19,6 +20,7 @@ export declare class Plan implements Types.Plan {
     get delays(): PlanDelay[];
     get event(): Types.Event;
     get events(): Types.PlanEvents;
+    get gradeModel(): Types.PlanGradeModel;
     get heatModel(): {
         start: number;
         stop: number;
