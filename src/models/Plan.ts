@@ -56,21 +56,20 @@ export class Plan implements Types.Plan {
     if (climbFactor !== 1) {
       let sumF = 0
       let sumD = 0
+      const filter = (point: Types.PlanPoint) => point.grade >= 4
 
       for (let j = 1, jl = this.points.length; j < jl; j++) {
         const dloc = this.points[j].loc - this.points[j - 1].loc
-        if (this.points[j - 1].grade >= 4) {
+        if (filter(this.points[j - 1])) {
           sumD += dloc
-          sumF += dloc * climbFactor
+          sumF += dloc * (1 - climbFactor)
         }
       }
 
       this._cache.strategies.climbing = {
-        apply(point) {
-          return point.grade >= 4
-        },
+        default: sumF / (this.course.dist - sumD) + 1,
         factor: climbFactor,
-        default: sumF / (this.course.dist - sumD)
+        filter
       }
     }
 
