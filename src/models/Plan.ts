@@ -1,9 +1,9 @@
 import _ from 'lodash'
 
-import { defaultModel as defaultGradeModel } from '~/factors/grade/defaults'
+import { defaultModel as defaultGradeModel, defaultParameters } from '~/factors/grade/defaults'
 
 import { createDebug } from '../debug'
-import { factorKeys, generatePlanFactors } from '../factors'
+import { applyScale, factorKeys, generatePlanFactors } from '../factors'
 import { Strategy } from '../factors/strategy'
 import { Types } from '../main'
 import { interp, interpArray, req, rgte } from '../util/math'
@@ -165,11 +165,15 @@ export class Plan implements Types.Plan {
 
   get gradeModel(): Types.PlanGradeModel {
     if ('gradeModel' in this.cache) return this.cache.gradeModel
-    if (typeof this._data.scales?.descending1 === 'number') {
-      const model = defaultGradeModel
-      // TODO come up with other model here
-      this.cache.gradeModel = model
-    } else this.cache.gradeModel = defaultGradeModel
+    const cs = numberOr1(this.scales?.climbing)
+    const ds1 = numberOr1(this.scales?.descending1)
+    const th = -defaultParameters.b / (2 * defaultParameters.a)
+
+    this.cache.gradeModel = (grade: number): number => {
+      if (grade >= 0) return applyScale(defaultGradeModel(grade), cs)
+      return defaultGradeModel(grade < th ? th + (grade - th) / ds1 : grade)
+    }
+
     return this.cache.gradeModel
   }
 
@@ -409,4 +413,8 @@ class PlanCutoff implements Types.PlanCutoff {
       Math.max(this.plan.cutoffMargin || 0, this.plan.getDelayAtWaypoint(this.waypoint))
     )
   }
+}
+
+function numberOr1(v?: number): number {
+  return typeof v === 'number' ? v : 1
 }

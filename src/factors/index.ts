@@ -7,7 +7,7 @@ import { getHeatFactor } from './heat'
 import { getTerrainFactor } from './terrain'
 
 // utility function to offset by 1 and scale
-function applyScale(fact: number, scale?: number) {
+export function applyScale(fact: number, scale?: number) {
   if (scale === undefined) return fact
   return (fact - 1) * scale + 1
 }
@@ -20,11 +20,10 @@ function applyScale(fact: number, scale?: number) {
 function applyScales(point: Types.PlanPoint, plan: Types.Plan) {
   point.factors.altitude = applyScale(point.factors.altitude, plan.scales?.altitude)
 
-  if (point.grade >= 0) point.factors.grade = applyScale(point.factors.grade, plan.scales?.climbing)
-  else if (point.grade < 0 && point.factors.grade < 1)
-    point.factors.grade = applyScale(point.factors.grade, plan.scales?.descending1)
-  else if (point.grade < 0 && point.factors.grade > 1)
-    point.factors.grade = applyScale(point.factors.grade, plan.scales?.descending2)
+  point.factors.grade = applyScale(
+    point.factors.grade,
+    point.grade >= 0 ? plan.scales?.climbing : plan.scales?.descending2
+  )
 
   point.factors.dark = applyScale(point.factors.dark, plan.scales?.dark)
 }
@@ -49,8 +48,7 @@ export function generatePlanFactors(point: Types.PlanPoint, plan: Types.Plan) {
   if (plan) {
     if (point.factors === undefined) throw new Error('no factors')
 
-    if (typeof plan.scales?.descending1 === 'number')
-      point.factors.grade = getGradeFactor(point.grade, plan.gradeModel)
+    point.factors.grade = getGradeFactor(point.grade, plan.gradeModel)
 
     point.factors.strategy = plan.strategy.at(point.loc)
 

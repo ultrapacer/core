@@ -5,6 +5,7 @@ import { factorKeys, Factors, type FactorsKeys, type FactorsObject } from './Fac
 import { getGradeFactor } from './grade';
 import { getHeatFactor } from './heat';
 import { getTerrainFactor } from './terrain';
+export declare function applyScale(fact: number, scale?: number): number;
 export declare function generateCourseFactors(point: Types.CoursePoint | Types.PlanPoint, course: Types.Course): void;
 export declare function generatePlanFactors(point: Types.PlanPoint, plan: Types.Plan): void;
 export { typeList } from './list';
