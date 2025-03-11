@@ -1,5 +1,7 @@
 export type FactorsObject = {
   altitude: number
+  climbStrategy: number
+  descentStrategy: number
   grade: number
   terrain: number
   heat: number
@@ -12,6 +14,8 @@ export type FactorsKeys = keyof FactorsObject
 
 export const factorKeys: FactorsKeys[] = [
   'altitude',
+  'climbStrategy',
+  'descentStrategy',
   'grade',
   'terrain',
   'heat',
@@ -23,6 +27,8 @@ export const factorKeys: FactorsKeys[] = [
 export class Factors {
   private _data: FactorsObject = {
     altitude: 1,
+    climbStrategy: 1,
+    descentStrategy: 1,
     grade: 1,
     terrain: 1,
     heat: 1,
@@ -47,6 +53,20 @@ export class Factors {
   }
   set altitude(v) {
     this._data.altitude = v
+    delete this._combined
+  }
+  get climbStrategy() {
+    return this._data.climbStrategy
+  }
+  set climbStrategy(v) {
+    this._data.climbStrategy = v
+    delete this._combined
+  }
+  get descentStrategy() {
+    return this._data.descentStrategy
+  }
+  set descentStrategy(v) {
+    this._data.descentStrategy = v
     delete this._combined
   }
   get grade() {

@@ -1,5 +1,7 @@
 export type FactorsObject = {
     altitude: number;
+    climbStrategy: number;
+    descentStrategy: number;
     grade: number;
     terrain: number;
     heat: number;
@@ -16,6 +18,10 @@ export declare class Factors {
     init(val: number): this;
     get altitude(): number;
     set altitude(v: number);
+    get climbStrategy(): number;
+    set climbStrategy(v: number);
+    get descentStrategy(): number;
+    set descentStrategy(v: number);
     get grade(): number;
     set grade(v: number);
     get terrain(): number;

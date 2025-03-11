@@ -19,12 +19,6 @@ export function applyScale(fact: number, scale?: number) {
  */
 function applyScales(point: Types.PlanPoint, plan: Types.Plan) {
   point.factors.altitude = applyScale(point.factors.altitude, plan.scales?.altitude)
-
-  point.factors.grade = applyScale(
-    point.factors.grade,
-    point.grade >= 0 ? plan.scales?.climbing : plan.scales?.descending2
-  )
-
   point.factors.dark = applyScale(point.factors.dark, plan.scales?.dark)
 }
 
@@ -51,6 +45,14 @@ export function generatePlanFactors(point: Types.PlanPoint, plan: Types.Plan) {
     point.factors.grade = getGradeFactor(point.grade, plan.gradeModel)
 
     point.factors.strategy = plan.strategy.at(point.loc)
+
+    if (plan.strategies?.climbing?.apply(point)) {
+      point.factors.climbStrategy = plan.strategies.climbing.factor
+    } else point.factors.climbStrategy = plan.strategies.climbing?.default ?? 1
+
+    if (plan.strategies?.descending?.apply(point)) {
+      point.factors.descentStrategy = plan.strategies.descending.factor
+    } else point.factors.descentStrategy = plan.strategies.descending?.default ?? 1
 
     Object.assign(point.factors, {
       heat: plan.heatModel ? getHeatFactor(point, plan.heatModel) : 1,

@@ -42,6 +42,8 @@ export type PlanData = {
 
   strategy?: Types.StrategyElement[] | undefined
 
+  strategies?: PlanStrategyInput | undefined
+
   target: number
 
   typicalDelay?: number | undefined
@@ -105,13 +107,6 @@ export type PlanScales =
       altitude?: number
 
       /**
-       * Climbing factor scale, number between 0 and 2
-       * Only applies to positive grades
-       * Optional
-       */
-      climbing?: number
-
-      /**
        * Darkness factor scale, number between 0 and 2
        * Optional
        */
@@ -119,19 +114,27 @@ export type PlanScales =
 
       /**
        * Descenging factor scale, number between 0 and 2
-       * Only applies to negative grades where grade factor is negative (faster)
        * Optional
        */
-      descending1?: number
-
-      /**
-       * Descenging factor scale, number between 0 and 2
-       * Only applies to negative grades where grade factor is positive (slower)
-       * Optional
-       */
-      descending2?: number
+      descending?: number
     }
   | undefined
+
+export interface PlanStrategyInput {
+  climbing?: number
+  descending?: number
+}
+
+export interface PlanStrategy {
+  apply: (point: Types.PlanPoint) => boolean
+  factor: number
+  default: number
+}
+
+export interface PlanStrategies {
+  climbing?: PlanStrategy
+  descending?: PlanStrategy
+}
 
 export interface PlanDelay {
   delay: number
@@ -177,7 +180,7 @@ export interface Plan {
 
   readonly events: PlanEvents
 
-  readonly gradeModel: PlanGradeModel
+  readonly gradeModel?: PlanGradeModel | undefined
 
   readonly heatModel: { start: number; stop: number; baseline: number; max: number } | undefined
 
@@ -216,6 +219,8 @@ export interface Plan {
   readonly stats: PlanStats
 
   readonly strategy: Types.Strategy
+
+  readonly strategies: PlanStrategies
 
   /**
    * Target time in seconds

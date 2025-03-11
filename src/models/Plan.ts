@@ -3,7 +3,7 @@ import _ from 'lodash'
 import { defaultModel as defaultGradeModel, defaultParameters } from '~/factors/grade/defaults'
 
 import { createDebug } from '../debug'
-import { applyScale, factorKeys, generatePlanFactors } from '../factors'
+import { factorKeys, generatePlanFactors } from '../factors'
 import { Strategy } from '../factors/strategy'
 import { Types } from '../main'
 import { interp, interpArray, req, rgte } from '../util/math'
@@ -37,6 +37,7 @@ export class Plan implements Types.Plan {
     heatModel?: Types.PlanHeatModel
     stats?: Types.Plan['stats']
     strategy?: Types.Strategy
+    strategies?: Types.PlanStrategies
     version?: number
   } = {}
   get cache() {
@@ -46,6 +47,35 @@ export class Plan implements Types.Plan {
   }
 
   private _data: Types.PlanData
+
+  get strategies() {
+    if ('strategies' in this._cache) return this._cache.strategies
+    this._cache.strategies = {}
+
+    const climbFactor = this._data.strategies?.climbing ?? 1
+    if (climbFactor !== 1) {
+      let sumF = 0
+      let sumD = 0
+
+      for (let j = 1, jl = this.points.length; j < jl; j++) {
+        const dloc = this.points[j].loc - this.points[j - 1].loc
+        if (this.points[j - 1].grade >= 4) {
+          sumD += dloc
+          sumF += dloc * climbFactor
+        }
+      }
+
+      this._cache.strategies.climbing = {
+        apply(point) {
+          return point.grade >= 4
+        },
+        factor: climbFactor,
+        default: sumF / (this.course.dist - sumD)
+      }
+    }
+
+    return this._cache.strategies
+  }
 
   readonly course: Types.Course
 
@@ -163,16 +193,15 @@ export class Plan implements Types.Plan {
     return this.cache.events
   }
 
-  get gradeModel(): Types.PlanGradeModel {
+  get gradeModel(): Types.PlanGradeModel | undefined {
     if ('gradeModel' in this.cache) return this.cache.gradeModel
-    const cs = numberOr1(this.scales?.climbing)
-    const ds1 = numberOr1(this.scales?.descending1)
+    const f = this.scales?.descending ?? 1
     const th = -defaultParameters.b / (2 * defaultParameters.a)
 
-    this.cache.gradeModel = (grade: number): number => {
-      if (grade >= 0) return applyScale(defaultGradeModel(grade), cs)
-      return defaultGradeModel(grade < th ? th + (grade - th) / ds1 : grade)
-    }
+    if (f !== 1)
+      this.cache.gradeModel = (grade: number): number => {
+        return defaultGradeModel(grade < th ? th + (grade - th) / f : grade)
+      }
 
     return this.cache.gradeModel
   }
@@ -413,8 +442,4 @@ class PlanCutoff implements Types.PlanCutoff {
       Math.max(this.plan.cutoffMargin || 0, this.plan.getDelayAtWaypoint(this.waypoint))
     )
   }
-}
-
-function numberOr1(v?: number): number {
-  return typeof v === 'number' ? v : 1
 }

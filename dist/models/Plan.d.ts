@@ -10,9 +10,11 @@ export declare class Plan implements Types.Plan {
         heatModel?: Types.PlanHeatModel;
         stats?: Types.Plan["stats"];
         strategy?: Types.Strategy;
+        strategies?: Types.PlanStrategies;
         version?: number;
     };
     private _data;
+    get strategies(): Types.PlanStrategies;
     readonly course: Types.Course;
     get cutoffMargin(): number | undefined;
     get cutoffs(): PlanCutoff[];
@@ -20,7 +22,7 @@ export declare class Plan implements Types.Plan {
     get delays(): PlanDelay[];
     get event(): Types.Event;
     get events(): Types.PlanEvents;
-    get gradeModel(): Types.PlanGradeModel;
+    get gradeModel(): Types.PlanGradeModel | undefined;
     get heatModel(): {
         start: number;
         stop: number;
