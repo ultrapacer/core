@@ -12,16 +12,6 @@ export function applyScale(fact: number, scale?: number) {
   return (fact - 1) * scale + 1
 }
 
-/**
- * Apply scales to a PlanPoint
- * @param point - PlanPoint to apply scales to
- * @param plan - Plan to use for scales
- */
-function applyScales(point: Types.PlanPoint, plan: Types.Plan) {
-  point.factors.altitude = applyScale(point.factors.altitude, plan.scales?.altitude)
-  point.factors.dark = applyScale(point.factors.dark, plan.scales?.dark)
-}
-
 export function generateCourseFactors(
   point: Types.CoursePoint | Types.PlanPoint,
   course: Types.Course
@@ -61,7 +51,8 @@ export function generatePlanFactors(point: Types.PlanPoint, plan: Types.Plan) {
   }
 
   // if any factor scales exist, apply them:
-  if (plan.scales) applyScales(point, plan)
+  point.factors.altitude = applyScale(point.factors.altitude, plan.scales?.altitude)
+  point.factors.dark = applyScale(point.factors.dark, plan.scales?.dark)
 }
 
 export { rollup } from './rollup'
