@@ -1,2 +1,2 @@
-export type FactorType = 'altitude' | 'grade' | 'terrain' | 'heat' | 'dark' | 'fatigue' | 'strategy';
-export declare const typeList: FactorType[];
+import { Types } from '~/main';
+export declare const typeList: (keyof Types.FactorsObject)[];

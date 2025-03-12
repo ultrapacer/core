@@ -46,11 +46,11 @@ export function generatePlanFactors(point: Types.PlanPoint, plan: Types.Plan) {
 
     point.factors.strategy = plan.strategy.at(point.loc)
 
-    if (plan.strategies?.climbing?.apply(point)) {
+    if (plan.strategies?.climbing?.filter(point)) {
       point.factors.climbStrategy = plan.strategies.climbing.factor
     } else point.factors.climbStrategy = plan.strategies.climbing?.default ?? 1
 
-    if (plan.strategies?.descending?.apply(point)) {
+    if (plan.strategies?.descending?.filter(point)) {
       point.factors.descentStrategy = plan.strategies.descending.factor
     } else point.factors.descentStrategy = plan.strategies.descending?.default ?? 1
 

@@ -8,7 +8,6 @@ export const factorKeys: Types.FactorsKeys[] = [
   'terrain',
   'heat',
   'dark',
-  'fatigue',
   'strategy'
 ]
 
@@ -21,7 +20,6 @@ export class Factors implements Types.Factors {
     terrain: 1,
     heat: 1,
     dark: 1,
-    fatigue: 1,
     strategy: 1
   }
 
@@ -83,13 +81,6 @@ export class Factors implements Types.Factors {
   }
   set dark(v) {
     this._data.dark = v
-    delete this._combined
-  }
-  get fatigue() {
-    return this._data.fatigue
-  }
-  set fatigue(v) {
-    this._data.fatigue = v
     delete this._combined
   }
   get strategy() {

@@ -6,7 +6,6 @@ export type FactorsObject = {
   terrain: number
   heat: number
   dark: number
-  fatigue: number
   strategy: number
 }
 

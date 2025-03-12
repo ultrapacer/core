@@ -1,10 +1,12 @@
-export type FactorType = 'altitude' | 'grade' | 'terrain' | 'heat' | 'dark' | 'fatigue' | 'strategy'
-export const typeList: FactorType[] = [
+import { Types } from '~/main'
+
+export const typeList: (keyof Types.FactorsObject)[] = [
   'altitude',
   'grade',
   'terrain',
   'heat',
   'dark',
-  'fatigue',
-  'strategy'
+  'strategy',
+  'climbStrategy',
+  'descentStrategy'
 ]

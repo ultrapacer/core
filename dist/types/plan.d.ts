@@ -108,9 +108,9 @@ export interface PlanStrategyInput {
     descending?: number;
 }
 export interface PlanStrategy {
-    apply: (point: Types.PlanPoint) => boolean;
-    factor: number;
     default: number;
+    factor: number;
+    filter: (point: Types.PlanPoint) => boolean;
 }
 export interface PlanStrategies {
     climbing?: PlanStrategy;
