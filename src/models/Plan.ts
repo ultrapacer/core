@@ -52,26 +52,36 @@ export class Plan implements Types.Plan {
     if ('strategies' in this._cache) return this._cache.strategies
     this._cache.strategies = {}
 
-    const climbFactor = this._data.strategies?.climbing ?? 1
-    if (climbFactor !== 1) {
-      let sumF = 0
-      let sumD = 0
-      const filter = (point: Types.PlanPoint) => point.grade >= 4
+    const types: {
+      key: keyof Types.PlanStrategies
+      filter: (f: Types.PlanPoint) => boolean
+    }[] = [
+      { key: 'climbing', filter: (point: Types.PlanPoint) => point.grade >= 4 },
+      { key: 'descending', filter: (point: Types.PlanPoint) => point.grade <= 4 }
+    ]
 
-      for (let j = 1, jl = this.points.length; j < jl; j++) {
-        const dloc = this.points[j].loc - this.points[j - 1].loc
-        if (filter(this.points[j - 1])) {
-          sumD += dloc
-          sumF += dloc * (1 - climbFactor)
+    types.forEach((type) => {
+      const factor = this._data.strategies?.[type.key] ?? 1
+      if (factor !== 1) {
+        let sumF = 0
+        let sumD = 0
+
+        for (let j = 1, jl = this.points.length; j < jl; j++) {
+          const dloc = this.points[j].loc - this.points[j - 1].loc
+          if (type.filter(this.points[j - 1])) {
+            sumD += dloc
+            sumF += dloc * (1 - factor)
+          }
+        }
+
+        if (!this._cache.strategies) this._cache.strategies = {}
+        this._cache.strategies[type.key] = {
+          default: sumF / (this.course.dist - sumD) + 1,
+          factor,
+          filter: type.filter
         }
       }
-
-      this._cache.strategies.climbing = {
-        default: sumF / (this.course.dist - sumD) + 1,
-        factor: climbFactor,
-        filter
-      }
-    }
+    })
 
     return this._cache.strategies
   }

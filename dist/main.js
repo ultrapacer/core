@@ -5824,24 +5824,25 @@ class Q0 {
     return ((s = this._cache) == null ? void 0 : s.version) === this.version ? this._cache : (this._cache = { version: this.version }, this._cache);
   }
   get strategies() {
-    var r;
-    if ("strategies" in this._cache) return this._cache.strategies;
-    this._cache.strategies = {};
-    const s = ((r = this._data.strategies) == null ? void 0 : r.climbing) ?? 1;
-    if (s !== 1) {
-      let a = 0, l = 0;
-      const p = (d) => d.grade >= 4;
-      for (let d = 1, g = this.points.length; d < g; d++) {
-        const y = this.points[d].loc - this.points[d - 1].loc;
-        p(this.points[d - 1]) && (l += y, a += y * (1 - s));
+    return "strategies" in this._cache ? this._cache.strategies : (this._cache.strategies = {}, [
+      { key: "climbing", filter: (r) => r.grade >= 4 },
+      { key: "descending", filter: (r) => r.grade <= 4 }
+    ].forEach((r) => {
+      var l;
+      const a = ((l = this._data.strategies) == null ? void 0 : l[r.key]) ?? 1;
+      if (a !== 1) {
+        let p = 0, d = 0;
+        for (let g = 1, y = this.points.length; g < y; g++) {
+          const M = this.points[g].loc - this.points[g - 1].loc;
+          r.filter(this.points[g - 1]) && (d += M, p += M * (1 - a));
+        }
+        this._cache.strategies || (this._cache.strategies = {}), this._cache.strategies[r.key] = {
+          default: p / (this.course.dist - d) + 1,
+          factor: a,
+          filter: r.filter
+        };
       }
-      this._cache.strategies.climbing = {
-        default: a / (this.course.dist - l) + 1,
-        factor: s,
-        filter: p
-      };
-    }
-    return this._cache.strategies;
+    }), this._cache.strategies);
   }
   get cutoffMargin() {
     return this._data.cutoffMargin;
