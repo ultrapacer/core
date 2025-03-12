@@ -107,13 +107,6 @@ export class Factors implements Types.Factors {
   }
 
   /**
-   * get object representation
-   */
-  toObject() {
-    return this._data
-  }
-
-  /**
    * scale each factor
    * @param scale - scale to apply
    */

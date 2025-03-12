@@ -64,7 +64,6 @@ export function generatePlanFactors(point: Types.PlanPoint, plan: Types.Plan) {
   if (plan.scales) applyScales(point, plan)
 }
 
-export { typeList } from './list'
 export { rollup } from './rollup'
 export { Strategy, type StrategyElement, type StrategyElementType } from './strategy'
 export {

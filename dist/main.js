@@ -330,7 +330,7 @@ function Ke(f) {
   }
   return ms[f];
 }
-function a_() {
+function s_() {
   xs.enable("ultraPacer:core*"), xs("ultraPacer:core")("debug enabled");
 }
 const T0 = {
@@ -407,7 +407,7 @@ function zr(f, s, r) {
 function Mn(f, s, r) {
   return Nt(f, r) === Nt(s, r);
 }
-const o_ = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const a_ = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   interp: wn,
   interpArray: bu,
@@ -537,12 +537,6 @@ class Ce {
    */
   applyEach(s, r) {
     mn.forEach((a) => this._data[a] = s(this._data[a], r[a]));
-  }
-  /**
-   * get object representation
-   */
-  toObject() {
-    return this._data;
   }
   /**
    * scale each factor
@@ -4260,34 +4254,24 @@ function Ru(f, s) {
   const r = Q.findLast(s.terrain, (a) => yn(a.percents[0] * s.dist, f.loc, 4));
   return r ? r.value / 100 + 1 : 1;
 }
-const D0 = [
-  "altitude",
-  "grade",
-  "terrain",
-  "heat",
-  "dark",
-  "strategy",
-  "climbStrategy",
-  "descentStrategy"
-];
 function Rs(f) {
   const s = new Ce().init(0);
   return f.forEach(({ factors: r, dist: a }) => {
     s.applyEach((l, p) => l + a * p, r);
   }), s.scaleEach(1 / Eu.sumBy(f, "dist")), s;
 }
-function N0(f, s) {
+function D0(f, s) {
   let r = 0, a = 0;
   return f.forEach((l, p) => {
     const d = p === f.length - 1 ? s : f[p + 1].onset, g = l.type === "linear" ? l.value / 2 : l.value;
     a += (r + g) * (d - l.onset), r += l.value;
   }), a / s;
 }
-function W0(f) {
+function N0(f) {
   return f < 30 ? 2 : f < 60 ? 5 : f < 90 ? 10 : f < 120 ? 15 : 20;
 }
-function B0(f, s, r) {
-  let a = -N0(s, r);
+function W0(f, s, r) {
+  let a = -D0(s, r);
   return s.forEach((l, p) => {
     if (f >= l.onset) {
       if (l.type === "step")
@@ -4303,7 +4287,7 @@ class Tu {
   constructor(s, r) {
     P(this, "plan");
     P(this, "values");
-    this.plan = s, this.values = r ? Q.cloneDeep(r) : [{ onset: 0, value: W0(this.plan.course.dist), type: "linear" }];
+    this.plan = s, this.values = r ? Q.cloneDeep(r) : [{ onset: 0, value: N0(this.plan.course.dist), type: "linear" }];
   }
   /**
    * Returns strategy factor at location.
@@ -4312,7 +4296,7 @@ class Tu {
    * @returns  The strategy factor at input location.
    */
   at(s) {
-    return 1 + B0(s, this.values, this.plan.course.dist) / 100;
+    return 1 + W0(s, this.values, this.plan.course.dist) / 100;
   }
   addValue(s) {
     const r = this.values.findIndex((a) => a.onset >= s.onset);
@@ -4322,7 +4306,7 @@ class Tu {
 function Is(f, s) {
   return s === void 0 ? f : (f - 1) * s + 1;
 }
-function U0(f, s) {
+function B0(f, s) {
   var r, a;
   f.factors.altitude = Is(f.factors.altitude, (r = s.scales) == null ? void 0 : r.altitude), f.factors.dark = Is(f.factors.dark, (a = s.scales) == null ? void 0 : a.dark);
 }
@@ -4342,9 +4326,9 @@ function Gn(f, s) {
       dark: s.event.sun ? Iu(f.tod, f.factors.terrain, s.event.sun) : 1
     });
   }
-  s.scales && U0(f, s);
+  s.scales && B0(f, s);
 }
-const u_ = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const o_ = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   Factors: Ce,
   Strategy: Tu,
@@ -4357,11 +4341,10 @@ const u_ = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   getGradeFactor: Es,
   getHeatFactor: Pu,
   getTerrainFactor: Ru,
-  rollup: Rs,
-  typeList: D0
+  rollup: Rs
 }, Symbol.toStringTag, { value: "Module" }));
 var ws = {}, du;
-function $0() {
+function U0() {
   return du || (du = 1, function(f) {
     f.parseDMS = function(r) {
       if (typeof l == "object") throw new TypeError("geo.parseDMS - dmsStr is [DOM?] object");
@@ -4542,8 +4525,8 @@ function $0() {
     });
   }(ws)), ws;
 }
-var q0 = $0();
-function G0(f) {
+var $0 = U0();
+function q0(f) {
   return "latlon" in f;
 }
 class Fs {
@@ -4564,7 +4547,7 @@ class Fs {
     this.source.lat = s;
   }
   get latlon() {
-    return G0(this.source) ? this.source.latlon : new q0.latlon(this.lat, this.lon);
+    return q0(this.source) ? this.source.latlon : new $0.latlon(this.lat, this.lon);
   }
   get lon() {
     return this.source.lon;
@@ -4631,7 +4614,7 @@ function Fu(f) {
 function Wr(f) {
   return typeof f == "number" && !isNaN(f);
 }
-function z0(f, s, r) {
+function G0(f, s, r) {
   f = [...f], s.interpolated && f.splice(f.findIndex((p) => p.loc > s.loc) - 1, 0, s), r.interpolated && f.splice(f.findIndex((p) => p.loc > r.loc) - 1, 0, r);
   const a = f.filter(
     (p, d) => d >= f.findIndex((g) => g === s) && d <= f.findIndex((g) => g === r)
@@ -4714,11 +4697,11 @@ class Ou extends Lu {
   set tod(r) {
   }
   get factors() {
-    return this._factors || (this._factors = z0(this._plan.points, this.point1, this.point2));
+    return this._factors || (this._factors = G0(this._plan.points, this.point1, this.point2));
   }
 }
 const Ms = Ke("CourseSplits");
-class H0 {
+class z0 {
   constructor(s) {
     P(this, "_segments");
     P(this, "_miles");
@@ -4928,7 +4911,7 @@ const $n = Ke("models:Course"), Nu = [
   { type: "singletrack", value: 15 },
   { type: "technical", value: 30 }
 ];
-class K0 {
+class H0 {
   constructor(s, r) {
     P(this, "_cache", {});
     /**
@@ -5024,7 +5007,7 @@ class K0 {
     return this.cache.sites;
   }
   get splits() {
-    return "splits" in this.cache ? this.cache.splits : (this.cache.splits = new H0(this), this.cache.splits);
+    return "splits" in this.cache ? this.cache.splits : (this.cache.splits = new z0(this), this.cache.splits);
   }
   get stats() {
     if ("stats" in this.cache) return this.cache.stats;
@@ -5126,7 +5109,7 @@ class Wu {
   }
 }
 var Cs = { exports: {} }, _u;
-function Z0() {
+function K0() {
   return _u || (_u = 1, function(f, s) {
     (function() {
       var r = Math.PI, a = Math.sin, l = Math.cos, p = Math.tan, d = Math.asin, g = Math.atan2, y = Math.acos, M = r / 180, I = 1e3 * 60 * 60 * 24, m = 2440588, R = 2451545;
@@ -5259,7 +5242,7 @@ function Z0() {
     })();
   }(Cs)), Cs.exports;
 }
-var vu = Z0();
+var vu = K0();
 function He(f, s) {
   const r = f.toLocaleString([], {
     hour: "2-digit",
@@ -5270,7 +5253,7 @@ function He(f, s) {
   }).split(":").map((a) => Number(a));
   return r[0] * 60 * 60 + r[1] * 60 + r[2];
 }
-class J0 {
+class Z0 {
   constructor(s) {
     P(this, "nadir", 0);
     P(this, "dawn", 0);
@@ -5292,7 +5275,7 @@ class Bu {
     P(this, "startTime");
     this.start = s, this.lat = a, this.lon = l, this.timezone = r;
     const p = vu.getTimes(this.start, this.lat, this.lon), d = vu.getPosition(p.nadir, this.lat, this.lon);
-    this.sun = new J0({
+    this.sun = new Z0({
       nadir: He(p.nadir, this.timezone),
       dawn: He(p.dawn, this.timezone),
       sunrise: He(p.sunrise, this.timezone),
@@ -5311,7 +5294,7 @@ class Bu {
   }
 }
 var bs = {}, mu;
-function Y0() {
+function J0() {
   return mu || (mu = 1, function(f) {
     (function() {
       var s = {
@@ -5455,9 +5438,9 @@ function Y0() {
     })();
   }(bs)), bs;
 }
-var Uu = Y0();
-const X0 = Ke("PaceChunk");
-class Q0 {
+var Uu = J0();
+const Y0 = Ke("PaceChunk");
+class X0 {
   constructor() {
     P(this, "points", !1);
     P(this, "iterations", !1);
@@ -5515,11 +5498,11 @@ class wu {
    * iterate applyPacing method until tests pass
    */
   calculate() {
-    const a = X0.extend(
+    const a = Y0.extend(
       Uu.vsprintf("calculate:%.2f-%.2f", [this.points[0].loc, this.points[this.points.length - 1].loc])
     );
     let l = this.factor || 0, p, d;
-    const g = new Q0();
+    const g = new X0();
     for (d = 1; d <= 30; d++)
       if (this.applyPacing(), g.iterations = d >= 2, g.factor = !Q.round(l - this.factor, d === 30 ? 6 : 8), l = this.factor, g.target = Math.abs(
         (Q.isFunction(this.constraints[1]) ? this.constraints[1]() : this.constraints[1]) - this.points[this.points.length - 1].elapsed
@@ -5724,7 +5707,7 @@ class Ps extends $r {
   }
 }
 const Ss = Ke("PlanSplits");
-class V0 {
+class Q0 {
   constructor(s) {
     P(this, "plan");
     P(this, "_segments");
@@ -5821,14 +5804,14 @@ function yu(f) {
   })))
     throw new Error("Plan scales must be between 0 and 2");
 }
-class j0 {
+class V0 {
   constructor(s, r) {
     P(this, "_cache", {});
     P(this, "_data");
     P(this, "course");
     P(this, "pacing", new $u(this));
     P(this, "points");
-    P(this, "splits", new V0(this));
+    P(this, "splits", new Q0(this));
     /**
      * Version of plan update (non trivial changes that affect pacing)
      */
@@ -5870,7 +5853,7 @@ class j0 {
   get cutoffs() {
     var r;
     if ("cutoffs" in this.cache) return this.cache.cutoffs;
-    this.cache.cutoffs = this.cutoffMargin ? ((r = this.course.cutoffs) == null ? void 0 : r.map((a) => new e_(this, a, this.getPoint(a.loc, !0)))) || [] : [];
+    this.cache.cutoffs = this.cutoffMargin ? ((r = this.course.cutoffs) == null ? void 0 : r.map((a) => new t_(this, a, this.getPoint(a.loc, !0)))) || [] : [];
     let s = 0;
     for (; this.cache.cutoffs.length - 1 >= s; ) {
       const a = this.cache.cutoffs[s];
@@ -5888,7 +5871,7 @@ class j0 {
       const l = (d = this._data.delays) == null ? void 0 : d.find(
         (g) => g.loop === a.loop && g.siteId === a.site.id
       ), p = l ? l.delay : a.hasTypicalDelay ? this.typicalDelay : 0;
-      return new t_(a, p);
+      return new j0(a, p);
     }).filter((a) => a.delay > 0).sort((a, l) => a.loc - l.loc);
     let r = 0;
     for (; s.length - 1 >= r; )
@@ -6020,7 +6003,7 @@ class j0 {
     Object.assign(this._data, s), this._version++;
   }
 }
-class t_ {
+class j0 {
   constructor(s, r) {
     P(this, "delay");
     P(this, "waypoint");
@@ -6030,7 +6013,7 @@ class t_ {
     return this.waypoint.loc;
   }
 }
-class e_ {
+class t_ {
   constructor(s, r, a) {
     P(this, "plan");
     P(this, "courseCutoff");
@@ -6059,7 +6042,7 @@ const qu = (f, s, r, a) => {
     });
   }), p;
 };
-function n_(f, s) {
+function e_(f, s) {
   return qu(
     s,
     f.map((a) => a.alt),
@@ -6067,7 +6050,7 @@ function n_(f, s) {
     0.05
   ).map((a) => a.grade);
 }
-const r_ = (f) => {
+const n_ = (f) => {
   let s = 0, r = 0;
   const a = [0];
   for (let l = 1, p = f.length; l < p; l++)
@@ -6081,7 +6064,7 @@ class Kr {
     P(this, "loss");
     P(this, "points");
     Br("Creating new Track object");
-    const r = s.map((M) => new Fs(M)), a = r_(r), l = n_(r, a);
+    const r = s.map((M) => new Fs(M)), a = n_(r), l = e_(r, a);
     this.points = r.map((M, I) => new Hr(M, a[I], l[I])), Br(`set-points - ${r.length} points`), Br("Calculating"), this.dist = this.points[this.points.length - 1].loc;
     let p = 0, d = 0, g = 0, y = this.points[0].alt;
     this.points.forEach((M) => {
@@ -6145,19 +6128,19 @@ class Kr {
     return a(`Reduced from ${this.points.length} to ${M.points.length} points.`), M;
   }
 }
-function i_(f, s, r) {
+function r_(f, s, r) {
   const a = f.map((l, p) => ({ lat: f[p], lon: s[p], alt: r[p] }));
   return new Kr(a);
 }
-const c_ = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const u_ = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Course: K0,
+  Course: H0,
   CourseCutoff: Wu,
   CoursePoint: $r,
   CourseSegment: ku,
   Event: Bu,
   Pacing: $u,
-  Plan: j0,
+  Plan: V0,
   PlanPoint: Ps,
   PlanSegment: Ou,
   Point: Fs,
@@ -6165,21 +6148,21 @@ const c_ = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   Track: Kr,
   TrackPoint: Hr,
   Waypoint: As,
-  createTrackFromArrays: i_,
+  createTrackFromArrays: r_,
   terrainTypes: Nu
-}, Symbol.toStringTag, { value: "Module" })), l_ = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, Symbol.toStringTag, { value: "Module" })), c_ = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   dateToTODSeconds: He
 }, Symbol.toStringTag, { value: "Module" }));
 export {
   Ce as Factors,
-  c_ as Models,
+  u_ as Models,
   Tu as Strategy,
-  N0 as adjustStrategy,
-  a_ as enableDebug,
-  u_ as factors,
+  D0 as adjustStrategy,
+  s_ as enableDebug,
+  o_ as factors,
   Du as interpolatePoint,
-  o_ as math,
+  a_ as math,
   L0 as scaleDark,
-  l_ as util
+  c_ as util
 };

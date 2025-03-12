@@ -28,10 +28,6 @@ export declare class Factors implements Types.Factors {
      */
     applyEach(f: (val: number, factor2: number) => number, factors: Types.FactorsObject): void;
     /**
-     * get object representation
-     */
-    toObject(): Types.FactorsObject;
-    /**
      * scale each factor
      * @param scale - scale to apply
      */
