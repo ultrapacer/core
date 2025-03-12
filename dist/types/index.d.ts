@@ -1,4 +1,4 @@
-export type { Factors } from '../factors';
+export type { Factors, FactorsObject } from '../factors';
 export type { Strategy, StrategyElement, StrategyElementType } from '../factors/strategy';
 export type * from './course';
 export type * from './event';

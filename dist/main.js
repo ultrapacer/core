@@ -460,7 +460,6 @@ const mn = [
   "terrain",
   "heat",
   "dark",
-  "fatigue",
   "strategy"
 ];
 class Ce {
@@ -473,7 +472,6 @@ class Ce {
       terrain: 1,
       heat: 1,
       dark: 1,
-      fatigue: 1,
       strategy: 1
     });
     P(this, "_combined");
@@ -523,12 +521,6 @@ class Ce {
   }
   set dark(s) {
     this._data.dark = s, delete this._combined;
-  }
-  get fatigue() {
-    return this._data.fatigue;
-  }
-  set fatigue(s) {
-    this._data.fatigue = s, delete this._combined;
   }
   get strategy() {
     return this._data.strategy;
@@ -4274,8 +4266,9 @@ const D0 = [
   "terrain",
   "heat",
   "dark",
-  "fatigue",
-  "strategy"
+  "strategy",
+  "climbStrategy",
+  "descentStrategy"
 ];
 function Rs(f) {
   const s = new Ce().init(0);

@@ -6,7 +6,6 @@ export type FactorsObject = {
     terrain: number;
     heat: number;
     dark: number;
-    fatigue: number;
     strategy: number;
 };
 export type FactorsKeys = keyof FactorsObject;
@@ -30,8 +29,6 @@ export declare class Factors {
     set heat(v: number);
     get dark(): number;
     set dark(v: number);
-    get fatigue(): number;
-    set fatigue(v: number);
     get strategy(): number;
     set strategy(v: number);
     get combined(): number;
