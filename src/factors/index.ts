@@ -1,7 +1,7 @@
 import { Types } from '../main'
 import { getAltitudeFactor } from './altitude'
 import { getDarkFactor } from './dark'
-import { factorKeys, Factors, type FactorsKeys, type FactorsObject } from './Factors'
+import { factorKeys, Factors } from './Factors'
 import { getGradeFactor } from './grade'
 import { getHeatFactor } from './heat'
 import { getTerrainFactor } from './terrain'
@@ -76,4 +76,3 @@ export {
   getHeatFactor,
   getTerrainFactor
 }
-export type { FactorsKeys, FactorsObject }

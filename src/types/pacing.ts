@@ -156,7 +156,7 @@ export interface Pacing {
   /**
    * The factors associated with the pacing.
    */
-  factors: factors.Factors
+  factors: Types.Factors
 
   /**
    * The moving time (seconds).

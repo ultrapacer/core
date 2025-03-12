@@ -1,7 +1,7 @@
-export type { Factors } from '../factors';
 export type { Strategy, StrategyElement, StrategyElementType } from '../factors/strategy';
 export type * from './course';
 export type * from './event';
+export type * from './factors';
 export type * from './pacing';
 export type * from './plan';
 export type * from './point';

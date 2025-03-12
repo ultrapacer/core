@@ -1,18 +1,6 @@
-export type FactorsObject = {
-  altitude: number
-  climbStrategy: number
-  descentStrategy: number
-  grade: number
-  terrain: number
-  heat: number
-  dark: number
-  fatigue: number
-  strategy: number
-}
+import type { Types } from '~/main'
 
-export type FactorsKeys = keyof FactorsObject
-
-export const factorKeys: FactorsKeys[] = [
+export const factorKeys: Types.FactorsKeys[] = [
   'altitude',
   'climbStrategy',
   'descentStrategy',
@@ -24,8 +12,8 @@ export const factorKeys: FactorsKeys[] = [
   'strategy'
 ]
 
-export class Factors {
-  private _data: FactorsObject = {
+export class Factors implements Types.Factors {
+  private _data: Types.FactorsObject = {
     altitude: 1,
     climbStrategy: 1,
     descentStrategy: 1,
@@ -39,7 +27,7 @@ export class Factors {
 
   private _combined?: number
 
-  constructor(value?: Partial<FactorsObject>) {
+  constructor(value?: Partial<Types.FactorsObject>) {
     Object.assign(this, value)
   }
 
@@ -123,7 +111,7 @@ export class Factors {
    * @param f - function to apply
    * @param factors - factor list to apply
    */
-  applyEach(f: (val: number, factor2: number) => number, factors: Factors) {
+  applyEach(f: (val: number, factor2: number) => number, factors: Types.FactorsObject) {
     factorKeys.forEach((key) => (this._data[key] = f(this._data[key], factors[key])))
   }
 

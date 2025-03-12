@@ -1,5 +1,5 @@
 import { latlon as LatLon } from 'sgeo';
-import { factors, Types } from '../main';
+import { Types } from '../main';
 /**
  * Represents a geographical point with altitude, latitude, longitude, and source information.
  */
@@ -42,7 +42,7 @@ export interface CoursePoint extends TrackPoint {
     /**
      * pacing factors at this point
      */
-    factors: factors.Factors;
+    factors: Types.Factors;
     /**
      * grade, scaled by dist/gain/loss, as a percentage
      * this is the grade at the point per least squares algorithm (not specifically

@@ -1,20 +1,9 @@
-export type FactorsObject = {
-    altitude: number;
-    climbStrategy: number;
-    descentStrategy: number;
-    grade: number;
-    terrain: number;
-    heat: number;
-    dark: number;
-    fatigue: number;
-    strategy: number;
-};
-export type FactorsKeys = keyof FactorsObject;
-export declare const factorKeys: FactorsKeys[];
-export declare class Factors {
+import type { Types } from '~/main';
+export declare const factorKeys: Types.FactorsKeys[];
+export declare class Factors implements Types.Factors {
     private _data;
     private _combined?;
-    constructor(value?: Partial<FactorsObject>);
+    constructor(value?: Partial<Types.FactorsObject>);
     init(val: number): this;
     get altitude(): number;
     set altitude(v: number);
@@ -39,11 +28,11 @@ export declare class Factors {
      * @param f - function to apply
      * @param factors - factor list to apply
      */
-    applyEach(f: (val: number, factor2: number) => number, factors: Factors): void;
+    applyEach(f: (val: number, factor2: number) => number, factors: Types.FactorsObject): void;
     /**
      * get object representation
      */
-    toObject(): FactorsObject;
+    toObject(): Types.FactorsObject;
     /**
      * scale each factor
      * @param scale - scale to apply
