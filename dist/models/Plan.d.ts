@@ -34,30 +34,9 @@ export declare class Plan implements Types.Plan {
     get name(): string | undefined;
     pacing: Types.Pacing;
     readonly points: Types.PlanPoint[];
-    get scales(): Types.PlanScales;
+    get scales(): Types.PlanScales | undefined;
     readonly splits: Types.PlanSplits;
-    get stats(): {
-        readonly factors: {
-            [key: string]: {
-                min: number;
-                max: number;
-            };
-        };
-        readonly sun: {
-            day: {
-                time: number;
-                dist: number;
-            };
-            twilight: {
-                time: number;
-                dist: number;
-            };
-            dark: {
-                time: number;
-                dist: number;
-            };
-        };
-    };
+    get stats(): Types.PlanStats;
     get strategy(): Types.Strategy;
     get target(): number;
     get typicalDelay(): number;

@@ -60,7 +60,7 @@ export type PlanEvents = {
   sun: { event: SunEventType; elapsed: number; loc: number }[]
 }
 
-type PlanStats = {
+export type PlanStats = {
   readonly factors: {
     [key: string]: {
       min: number
@@ -98,27 +98,25 @@ export type PlanHeatModel =
  * Scales applied to customize the influence of pacing factors on the plan
  * Optional
  */
-export type PlanScales =
-  | {
-      /**
-       * Altitude factor scale, number between 0 and 2
-       * Optional
-       */
-      altitude?: number
+export type PlanScales = {
+  /**
+   * Altitude factor scale, number between 0 and 2
+   * Optional
+   */
+  altitude?: number
 
-      /**
-       * Darkness factor scale, number between 0 and 2
-       * Optional
-       */
-      dark?: number
+  /**
+   * Darkness factor scale, number between 0 and 2
+   * Optional
+   */
+  dark?: number
 
-      /**
-       * Descenging factor scale, number between 0 and 2
-       * Optional
-       */
-      descending?: number
-    }
-  | undefined
+  /**
+   * Descenging factor scale, number between 0 and 2
+   * Optional
+   */
+  descending?: number
+}
 
 export interface PlanStrategyInput {
   climbing?: number
@@ -206,7 +204,7 @@ export interface Plan {
   /**
    * Scales for factors
    */
-  readonly scales: PlanScales
+  readonly scales: PlanScales | undefined
 
   /**
    * splits

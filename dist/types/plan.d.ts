@@ -53,7 +53,7 @@ export type PlanEvents = {
         loc: number;
     }[];
 };
-type PlanStats = {
+export type PlanStats = {
     readonly factors: {
         [key: string]: {
             min: number;
@@ -102,7 +102,7 @@ export type PlanScales = {
      * Optional
      */
     descending?: number;
-} | undefined;
+};
 export interface PlanStrategyInput {
     climbing?: number;
     descending?: number;
@@ -173,7 +173,7 @@ export interface Plan {
     /**
      * Scales for factors
      */
-    readonly scales: PlanScales;
+    readonly scales: PlanScales | undefined;
     /**
      * splits
      */
@@ -217,4 +217,3 @@ export interface Plan {
      */
     update(data: Types.PlanUpdateData): void;
 }
-export {};
