@@ -209,7 +209,11 @@ export class Plan implements Types.Plan {
 
     if (f !== 1)
       this.cache.gradeModel = (grade: number): number => {
-        return defaultGradeModel(grade < th ? th + (grade - th) / f : grade)
+        // change 0 to 2 to 0.5 to 1.5
+        const b = (f - 1) / 2 + 1
+        return (
+          defaultGradeModel(grade < th ? th + (grade - th) / b : grade) * (grade < 0 ? 1 / b : 1)
+        )
       }
 
     return this.cache.gradeModel
