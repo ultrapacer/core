@@ -5826,7 +5826,7 @@ class Q0 {
   get strategies() {
     return "strategies" in this._cache ? this._cache.strategies : (this._cache.strategies = {}, [
       { key: "climbing", filter: (r) => r.grade >= 4 },
-      { key: "descending", filter: (r) => r.grade <= 4 }
+      { key: "descending", filter: (r) => r.grade <= -4 }
     ].forEach((r) => {
       var l;
       const a = ((l = this._data.strategies) == null ? void 0 : l[r.key]) ?? 1;

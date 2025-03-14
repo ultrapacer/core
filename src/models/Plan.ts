@@ -57,7 +57,7 @@ export class Plan implements Types.Plan {
       filter: (f: Types.PlanPoint) => boolean
     }[] = [
       { key: 'climbing', filter: (point: Types.PlanPoint) => point.grade >= 4 },
-      { key: 'descending', filter: (point: Types.PlanPoint) => point.grade <= 4 }
+      { key: 'descending', filter: (point: Types.PlanPoint) => point.grade <= -4 }
     ]
 
     types.forEach((type) => {
