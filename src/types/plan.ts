@@ -33,7 +33,7 @@ export type PlanData = {
   /**
    * Scales for factors
    */
-  scales?: PlanScales
+  scales?: PlanScales | undefined
 
   /**
    * Start date and timezone

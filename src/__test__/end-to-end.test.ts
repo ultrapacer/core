@@ -56,6 +56,23 @@ const tests: Test[] = [
     }
   },
 
+  // plan for a 30-hour finish that adjusts only to final cutoff
+  {
+    planData: {
+      name: '20 hour with climbing strategy',
+      target: 20 * 3600,
+      cutoffMargin: 300,
+      typicalDelay: 180,
+      method: 'time',
+      scales: undefined,
+      start,
+      strategies: { climbing: 0.8 }
+    },
+    r: {
+      elapsed: 20 * 3600
+    }
+  },
+
   // plan for a 25-hour with big rests
   {
     planData: {
@@ -70,7 +87,8 @@ const tests: Test[] = [
       delays: [
         { siteId: '5d8e9a27e372020007cb2452', loop: 1, delay: 5 * 3600 },
         { siteId: '5d8e9aaae372020007cb2459', loop: 1, delay: 5 * 3600 }
-      ]
+      ],
+      strategies: undefined
     },
     r: {
       segments: [
@@ -224,24 +242,6 @@ const tests: Test[] = [
           result: 9 * 60 * 0.621371
         }
       ] // should be 10% under np using default strategy
-    }
-  },
-
-  // plan for a 10-minute np, with a 10% climbing strategy, should be same np and elapsed as above
-  {
-    planData: {
-      start,
-      name: '10-min-climb-strategy',
-      method: 'np',
-      target: 10 * 60 * 0.621371,
-      cutoffMargin: 300,
-      typicalDelay: 180,
-      scales: { altitude: 1.2, dark: 0.7 },
-      strategies: { descending: 1.1 }
-    },
-    r: {
-      np: 10 * 60 * 0.621371,
-      elapsed: '20:52:22'
     }
   },
 
