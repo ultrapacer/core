@@ -227,6 +227,24 @@ const tests: Test[] = [
     }
   },
 
+  // plan for a 10-minute np, with a 10% climbing strategy, should be same np and elapsed as above
+  {
+    planData: {
+      start,
+      name: '10-min-climb-strategy',
+      method: 'np',
+      target: 10 * 60 * 0.621371,
+      cutoffMargin: 300,
+      typicalDelay: 180,
+      scales: { altitude: 1.2, dark: 0.7 },
+      strategies: { descending: 1.1 }
+    },
+    r: {
+      np: 10 * 60 * 0.621371,
+      elapsed: '20:52:22'
+    }
+  },
+
   // plan for a 13-minute np reverse that hits early cutoffs but finishes before final cutoff
   {
     planData: {
