@@ -136,20 +136,20 @@ export class Course implements Types.Course {
       new Site(this, {
         id: String(_.random(10000, 20000)),
         name: 'Start',
-        type: 'start',
+        isStart: true,
         percent: 0
       }),
       new Site(this, {
         id: String(_.random(30000, 40000)),
         name: 'Finish',
-        type: 'finish',
+        isFinish: true,
         percent: 1
       })
     ]
     if (
       this.cache.sites.length < 2 ||
-      !this.cache.sites.find((s) => s.type === 'start') ||
-      !this.cache.sites.find((s) => s.type === 'finish')
+      this.cache.sites.filter((s) => s.isStart).length !== 1 ||
+      this.cache.sites.filter((s) => s.isFinish).length !== 1
     )
       throw new Error('Course must have at least a start and finish')
 

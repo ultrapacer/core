@@ -1814,13 +1814,13 @@ const coursedata: Types.CourseData = {
   sites: [
     {
       id: '5d73071e0588d90008bba0c6',
-      type: 'start',
+      isStart: true,
       name: 'Beals Point',
       percent: 0
     },
     {
       id: '5d73071e0588d90008bba0c8',
-      type: 'finish',
+      isFinish: true,
       name: 'Beals Point',
       percent: 1,
       cutoffs: [
@@ -1832,19 +1832,19 @@ const coursedata: Types.CourseData = {
     },
     {
       id: '5d8e9973e372020007cb244b',
-      type: 'aid',
+      hasDelay: true,
       name: 'Willow Creek',
       percent: 0.09307857690919637
     },
     {
       id: '5d8e9986e372020007cb244c',
-      type: 'aid',
+      hasDelay: true,
       name: 'Negro Bar',
       percent: 0.17173104036331144
     },
     {
       id: '5d8e9999e372020007cb244d',
-      type: 'aid',
+      hasDelay: true,
       name: 'Beals Point',
       percent: 0.21614081362393417,
       cutoffs: [
@@ -1856,91 +1856,91 @@ const coursedata: Types.CourseData = {
     },
     {
       id: '5d8e99bfe372020007cb244e',
-      type: 'aid',
+      hasDelay: true,
       name: 'Granite Beach',
       percent: 0.2585158095755734
     },
     {
       id: '5d8e99d9e372020007cb244f',
-      type: 'aid',
+      hasDelay: true,
       name: 'Horseshoe Bar',
       percent: 0.32515885820639173
     },
     {
       id: '5d8e9a0ee372020007cb2450',
-      type: 'aid',
+      hasDelay: true,
       name: 'Rattlesnake Bar',
       percent: 0.35365561039357263,
       cutoffs: [{ time: 39000, loop: 1 }]
     },
     {
       id: '5d8e9a1be372020007cb2451',
-      type: 'aid',
+      hasDelay: true,
       name: 'Cardiac',
       percent: 0.4142567540435294
     },
     {
       id: '5d8e9a27e372020007cb2452',
-      type: 'aid',
+      hasDelay: true,
       name: 'Overlook',
       percent: 0.44720734817088204,
       cutoffs: [{ time: 49200, loop: 1 }]
     },
     {
       id: '5d8e9a38e372020007cb2453',
-      type: 'aid',
+      hasDelay: true,
       name: 'No Hands Bridge',
       percent: 0.49056550569606505,
       cutoffs: [{ time: 53400, loop: 1 }]
     },
     {
       id: '5d8e9a49e372020007cb2454',
-      type: 'aid',
+      hasDelay: true,
       name: 'Auburn Lake Trails',
       percent: 0.5948036693901647
     },
     {
       id: '5d8e9a5fe372020007cb2455',
-      type: 'aid',
+      hasDelay: true,
       name: 'Cool',
       percent: 0.6925279700041065,
       cutoffs: [{ time: 74700, loop: 1 }]
     },
     {
       id: '5d8e9a7ce372020007cb2456',
-      type: 'aid',
+      hasDelay: true,
       name: 'No Hands Bridge',
       percent: 0.7254864680653189
     },
     {
       id: '5d8e9a8fe372020007cb2457',
-      type: 'aid',
+      hasDelay: true,
       name: 'Overlook',
       percent: 0.7688062063772747,
       cutoffs: [{ time: 83100, loop: 1 }]
     },
     {
       id: '5d8e9a9be372020007cb2458',
-      type: 'aid',
+      hasDelay: true,
       name: 'Cardiac',
       percent: 0.8017078660120303
     },
     {
       id: '5d8e9aaae372020007cb2459',
-      type: 'aid',
+      hasDelay: true,
       name: 'Rattlesnake Bar',
       percent: 0.8622081110896661,
       cutoffs: [{ time: 93000, loop: 1 }]
     },
     {
       id: '5d8e9abbe372020007cb245a',
-      type: 'aid',
+      hasDelay: true,
       name: 'Horseshoe Bar',
       percent: 0.8907373775846068
     },
     {
       id: '5d8e9acae372020007cb245b',
-      type: 'aid',
+      hasDelay: true,
       name: 'Granite Beach',
       percent: 0.9574520419508679
     }
