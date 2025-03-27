@@ -4818,7 +4818,11 @@ class Is {
   }
   set loc(s) {
     if (!Q.isNumber(s)) throw new Error("Wrong format for Waypoint.loc");
-    this.isStart ? this.site.percent = 0 : this.isFinish ? this.site.percent = 1 : this.site.percent = s / this.course.loopDist % 1;
+    if (this.isStart || this.isFinish) {
+      console.warn("Cannot set loc for start or finish waypoint");
+      return;
+    }
+    this.site.percent = s / this.course.loopDist % 1;
   }
   get lat() {
     return this.site.lat;

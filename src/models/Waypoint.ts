@@ -36,13 +36,13 @@ export class Waypoint implements Types.Waypoint {
 
   set loc(v) {
     if (!_.isNumber(v)) throw new Error('Wrong format for Waypoint.loc')
-    if (this.isStart) {
-      this.site.percent = 0
-    } else if (this.isFinish) {
-      this.site.percent = 1
-    } else {
-      this.site.percent = (v / this.course.loopDist) % 1
+
+    if (this.isStart || this.isFinish) {
+      console.warn('Cannot set loc for start or finish waypoint')
+      return
     }
+
+    this.site.percent = (v / this.course.loopDist) % 1
   }
 
   get lat() {
