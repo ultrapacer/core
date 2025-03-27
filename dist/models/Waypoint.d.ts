@@ -13,7 +13,8 @@ export declare class Waypoint implements Types.Waypoint {
     get lat(): number;
     get lon(): number;
     get alt(): number;
-    get type(): Types.SiteType;
-    get hasTypicalDelay(): boolean;
+    get hasDelay(): boolean | undefined;
+    get isFinish(): boolean | undefined;
+    get isStart(): boolean | undefined;
     get cutoff(): number | undefined;
 }
