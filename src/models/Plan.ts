@@ -72,7 +72,7 @@ export class Plan implements Types.Plan {
         const wpd = this._data.delays?.find(
           (d) => d.loop === waypoint.loop && d.siteId === waypoint.site.id
         )
-        const delay = wpd ? wpd.delay : waypoint.hasTypicalDelay ? this.typicalDelay : 0
+        const delay = wpd ? wpd.delay : waypoint.hasDelay ? this.typicalDelay : 0
         return new PlanDelay(waypoint, delay)
       })
       .filter((d: { delay: number }) => d.delay > 0)

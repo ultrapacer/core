@@ -185,7 +185,7 @@ export interface Plan {
   readonly target: number
 
   /**
-   * Typical delay for the plan; amount of dwell time at 'aid' and 'water' waypoints
+   * Typical delay for the plan; amount of dwell time at waypoints where 'hasDelay' is true
    */
   readonly typicalDelay: number
 

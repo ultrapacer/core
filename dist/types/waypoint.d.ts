@@ -2,15 +2,11 @@ import { Site } from './site';
 /**
  * Waypoint type
  */
-export interface Waypoint extends Pick<Site, 'alt' | 'description' | 'lat' | 'lon' | 'name' | 'type'> {
+export interface Waypoint extends Pick<Site, 'alt' | 'description' | 'lat' | 'lon' | 'name' | 'hasDelay' | 'isFinish' | 'isStart'> {
     /**
      * cutoff time for the waypoint
      */
     readonly cutoff?: number | undefined;
-    /**
-     * whether the waypoint has a typical delay
-     */
-    readonly hasTypicalDelay: boolean;
     /**
      * location along the course (in km)
      */
