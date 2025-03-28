@@ -56,9 +56,15 @@ export class Site implements Types.Site {
   get isFinish() {
     return this._data.isFinish
   }
+  set isFinish(v) {
+    this._data.isFinish = v
+  }
 
   get isStart() {
     return this._data.isStart
+  }
+  set isStart(v) {
+    this._data.isStart = v
   }
 
   get lat() {
