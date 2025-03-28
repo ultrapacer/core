@@ -26,7 +26,9 @@ export declare class Site implements Types.Site {
     get hasDelay(): boolean | undefined;
     get id(): string | symbol | undefined;
     get isFinish(): boolean | undefined;
+    set isFinish(v: boolean | undefined);
     get isStart(): boolean | undefined;
+    set isStart(v: boolean | undefined);
     get lat(): number;
     get lon(): number;
     get name(): string | undefined;

@@ -4884,8 +4884,14 @@ class Br {
   get isFinish() {
     return this._data.isFinish;
   }
+  set isFinish(s) {
+    this._data.isFinish = s;
+  }
   get isStart() {
     return this._data.isStart;
+  }
+  set isStart(s) {
+    this._data.isStart = s;
   }
   get lat() {
     return "lat" in this._cache ? this._cache.lat : (this.refreshLLA(), Number(this._cache.lat));

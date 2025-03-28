@@ -34,12 +34,12 @@ export interface SiteData {
   /**
    * isFinish - true if the site is the finish of the course
    */
-  isFinish?: boolean
+  isFinish?: boolean | undefined
 
   /**
    * isStart - true if the site is the start of the course
    */
-  isStart?: boolean
+  isStart?: boolean | undefined
 
   /**
    * optional name for the site
@@ -89,12 +89,12 @@ export interface Site {
   /**
    * isFinish - true if the site is the finish of the course
    */
-  readonly isFinish?: boolean | undefined
+  isFinish?: boolean | undefined
 
   /**
    * isStart - true if the site is the start of the course
    */
-  readonly isStart?: boolean | undefined
+  isStart?: boolean | undefined
 
   /**
    * latitude of the site
