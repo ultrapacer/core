@@ -19,7 +19,7 @@ export class Waypoint implements Types.Waypoint {
   }
 
   get name() {
-    if (this.loop >= 2 && this.type !== 'finish') {
+    if (this.loop >= 2 && !this.isFinish) {
       return `${this.site.name} ${this.loop}`
     } else {
       return this.site.name
@@ -36,13 +36,13 @@ export class Waypoint implements Types.Waypoint {
 
   set loc(v) {
     if (!_.isNumber(v)) throw new Error('Wrong format for Waypoint.loc')
-    if (this.type === 'start') {
-      this.site.percent = 0
-    } else if (this.type === 'finish') {
-      this.site.percent = 1
-    } else {
-      this.site.percent = (v / this.course.loopDist) % 1
+
+    if (this.isStart || this.isFinish) {
+      console.warn('Cannot set loc for start or finish waypoint')
+      return
     }
+
+    this.site.percent = (v / this.course.loopDist) % 1
   }
 
   get lat() {
@@ -57,14 +57,17 @@ export class Waypoint implements Types.Waypoint {
     return this.site.alt
   }
 
-  get type() {
-    return this.site.type
+  get hasDelay() {
+    if (this.isStart) return false
+    return this.site.hasDelay
   }
 
-  get hasTypicalDelay() {
-    return Boolean(
-      this.type === 'aid' || this.type === 'water' || (this.loop >= 2 && this.type === 'start')
-    )
+  get isFinish() {
+    return this.site.isFinish
+  }
+
+  get isStart() {
+    return this.site.isStart && this.loop === 1
   }
 
   get cutoff() {

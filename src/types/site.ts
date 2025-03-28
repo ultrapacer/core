@@ -7,11 +7,6 @@ import type { Course } from './course'
 type WaypointCutoff = { loop: number; time: number }
 
 /**
- * Waypoint type
- */
-export type SiteType = 'start' | 'finish' | 'aid' | 'water' | 'landmark' | 'junction' | 'other'
-
-/**
  * Site data object
  */
 export interface SiteData {
@@ -26,10 +21,25 @@ export interface SiteData {
   description?: string
 
   /**
+   * hasDelay - true if the site has a delay
+   */
+  hasDelay?: boolean
+
+  /**
    * optional id for the site
    * required when inputting plan delays
    */
   id?: string | symbol
+
+  /**
+   * isFinish - true if the site is the finish of the course
+   */
+  isFinish?: boolean | undefined
+
+  /**
+   * isStart - true if the site is the start of the course
+   */
+  isStart?: boolean | undefined
 
   /**
    * optional name for the site
@@ -40,11 +50,6 @@ export interface SiteData {
    * percent of total distance along the track where the site is located
    */
   percent: number
-
-  /**
-   * type of site
-   */
-  type: SiteType
 }
 
 /**
@@ -72,9 +77,24 @@ export interface Site {
   readonly description?: string | undefined
 
   /**
+   * hasDelay - true if the site has a delay
+   */
+  readonly hasDelay?: boolean | undefined
+
+  /**
    * optional id for the site
    */
   readonly id?: string | symbol | undefined
+
+  /**
+   * isFinish - true if the site is the finish of the course
+   */
+  isFinish?: boolean | undefined
+
+  /**
+   * isStart - true if the site is the start of the course
+   */
+  isStart?: boolean | undefined
 
   /**
    * latitude of the site
@@ -95,11 +115,6 @@ export interface Site {
    * percent of total distance along the track where the site is located
    */
   readonly percent: number
-
-  /**
-   * type of site
-   */
-  readonly type: SiteType
 
   /**
    * waypoints associated with the site

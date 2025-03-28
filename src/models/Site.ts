@@ -45,8 +45,26 @@ export class Site implements Types.Site {
     return this._data.description
   }
 
+  get hasDelay() {
+    return this._data.hasDelay
+  }
+
   get id() {
     return this._data.id
+  }
+
+  get isFinish() {
+    return this._data.isFinish
+  }
+  set isFinish(v) {
+    this._data.isFinish = v
+  }
+
+  get isStart() {
+    return this._data.isStart
+  }
+  set isStart(v) {
+    this._data.isStart = v
   }
 
   get lat() {
@@ -66,21 +84,12 @@ export class Site implements Types.Site {
   }
 
   get percent() {
-    switch (this.type) {
-      case 'start':
-        return 0
-      case 'finish':
-        return 1
-      default:
-        return this._data.percent
-    }
+    if (this.isStart) return 0
+    if (this.isFinish) return 1
+    return this._data.percent
   }
   set percent(v) {
     this._data.percent = v
-  }
-
-  get type() {
-    return this._data.type
   }
 
   get version() {
@@ -91,7 +100,7 @@ export class Site implements Types.Site {
     if ('waypoints' in this._cache) return this._cache.waypoints
 
     d(`generating waypoints array: ${this.name}`)
-    if (this.type === 'finish') {
+    if (this.isFinish) {
       this._cache.waypoints = [new Waypoint(this, this.course.loops)]
     } else {
       this._cache.waypoints = _.range(this.course.loops).map((x) => new Waypoint(this, x + 1))
@@ -110,11 +119,11 @@ export class Site implements Types.Site {
     let lat, lon, alt
 
     // if start use start lla
-    if (this.type === 'start') {
+    if (this.isStart) {
       ;({ lat, lon, alt } = this.course.track.points[0])
 
       // if finish use finish lla
-    } else if (this.type === 'finish') {
+    } else if (this.isFinish) {
       ;({ lat, lon, alt } = this.course.track.points[this.course.track.points.length - 1])
 
       // otherwise interpolate the lla from track array
