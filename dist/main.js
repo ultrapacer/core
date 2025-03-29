@@ -4778,7 +4778,7 @@ class Ms {
     return this.site.alt;
   }
   get hasDelay() {
-    return this.isStart ? !1 : this.site.hasDelay;
+    return this.isStart || this.isFinish ? !1 : this.site.hasDelay;
   }
   get isFinish() {
     return this.site.isFinish;
