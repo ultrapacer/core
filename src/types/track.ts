@@ -1,5 +1,3 @@
-import { latlon } from 'sgeo'
-
 import { Types } from '../main'
 
 /**
@@ -62,22 +60,6 @@ export interface Track {
    * @returns The latitude, longitude, and altitude at the specified location.
    */
   getLLA(location: number): Types.LLA
-
-  /**
-   * Finds the nearest point on the track to a given latitude and longitude.
-   * @param latlon - The new point location.
-   * @param start - The starting point in the track.
-   * @param limit - The maximum distance along the track from the starting point.
-   * @returns An object containing the nearest track point and the distance delta.
-   */
-  getNearestPoint(
-    latlon: latlon,
-    start: Types.Point,
-    limit: number
-  ): {
-    point: Types.TrackPoint
-    delta: number
-  }
 
   /**
    * Reduces the density of track points based on the specified spacing and length.

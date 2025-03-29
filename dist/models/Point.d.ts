@@ -1,4 +1,3 @@
-import { latlon as LatLon } from 'sgeo';
 import { Types } from '../main';
 export declare function isSourcePoint(arg: Types.LLA | Point): arg is Point;
 /**
@@ -9,7 +8,6 @@ export declare class Point implements Types.Point {
     set alt(value: number);
     get lat(): number;
     set lat(value: number);
-    get latlon(): LatLon;
     get lon(): number;
     set lon(value: number);
     source: {

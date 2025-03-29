@@ -1,9 +1,7 @@
-import { latlon as LatLon } from 'sgeo'
-
 import { Types } from '../main'
 
 export function isSourcePoint(arg: Types.LLA | Point): arg is Point {
-  return 'latlon' in arg
+  return 'source' in arg
 }
 
 /**
@@ -22,10 +20,6 @@ export class Point implements Types.Point {
   }
   set lat(value: number) {
     this.source.lat = value
-  }
-
-  get latlon(): LatLon {
-    return isSourcePoint(this.source) ? this.source.latlon : new LatLon(this.lat, this.lon)
   }
 
   get lon(): number {

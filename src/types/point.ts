@@ -1,5 +1,3 @@
-import { latlon as LatLon } from 'sgeo'
-
 import { factors, Types } from '../main'
 
 /**
@@ -20,11 +18,6 @@ export interface Point {
    * The longitude of the point in decimal degrees.
    */
   lon: number
-
-  /**
-   * The latitude and longitude of the point as a LatLon object (see sgeo).
-   */
-  latlon: LatLon
 
   /**
    * The source information of the point, which can be either an object containing altitude, latitude, and longitude, or another Point instance.
