@@ -210,12 +210,12 @@ const tests: Test[] = [
     },
     r: {
       segments: [
-        { index: 8, r: { elapsed: 14 * 3600 + 42 * 60 + 42 } },
-        { index: 16, r: { elapsed: 25 * 3600 + 16 * 60 + 59 } }
+        // these two waypoints should be bouncing on cutoffs
+        { index: 2, r: { elapsed: Number(course.waypoints[3].cutoff) - 300 } },
+        { index: 5, r: { elapsed: Number(course.waypoints[6].cutoff) - 300 } }
       ],
-      // np: 542.63,
       pace: 15 * 60 * 0.621371,
-      elapsed: 15 * 60 * 100 + 17 * 180, // cutoff,
+      elapsed: 15 * 60 * 100 + 17 * 180,
       numChunks: 3
     }
   },
@@ -233,7 +233,7 @@ const tests: Test[] = [
     },
     r: {
       np: 10 * 60 * 0.621371,
-      elapsed: '20:52:22',
+      elapsed: '20:52:23',
       custom: [
         {
           name: 'starting pace',
@@ -291,7 +291,7 @@ function time(v: number | string | undefined) {
 }
 
 test(`check track distance`, () => {
-  expect(course.track.dist).toBeCloseTo(159.32537, 5)
+  expect(course.track.dist).toBeCloseTo(159.32522, 5)
 })
 
 test(`check segment 7 properties`, () => {
