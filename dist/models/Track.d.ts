@@ -1,4 +1,3 @@
-import { latlon as LatLon } from 'sgeo';
 import { Types } from '../main';
 export declare class Track implements Types.Track {
     dist: number;
@@ -12,10 +11,6 @@ export declare class Track implements Types.Track {
         lat: number;
         lon: number;
         alt: number;
-    };
-    getNearestPoint(latlon: LatLon, start: Types.Point, limit: number): {
-        point: Types.TrackPoint;
-        delta: number;
     };
     reduceDensity(spacing?: number, length?: number): Track;
 }

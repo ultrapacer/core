@@ -1,4 +1,4 @@
-import { latlon as LatLon } from 'sgeo';
+import type { Feature as TurfFeature, Point as TurfPoint } from 'geojson';
 import { factors, Types } from '../main';
 /**
  * Represents a geographical point with altitude, latitude, longitude, and source information.
@@ -17,9 +17,9 @@ export interface Point {
      */
     lon: number;
     /**
-     * The latitude and longitude of the point as a LatLon object (see sgeo).
+     * Point geometry object (see turf).
      */
-    latlon: LatLon;
+    latlon: TurfFeature<TurfPoint>;
     /**
      * The source information of the point, which can be either an object containing altitude, latitude, and longitude, or another Point instance.
      */

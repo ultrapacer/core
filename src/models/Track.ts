@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { latlon as LatLon } from 'sgeo'
 
 import { createDebug } from '../debug'
 import { Types } from '../main'
@@ -69,48 +68,6 @@ export class Track implements Types.Track {
       point = interpolatePoint(this.points[i - 1], this.points[i], location)
     }
     return _.pick(point, ['lat', 'lon', 'alt'])
-  }
-
-  getNearestPoint(latlon: LatLon, start: Types.Point, limit: number) {
-    const steps = 5
-    let jj = this.points.findIndex((p) => p === start)
-    let p = this.points[jj]
-    let min = 0
-
-    while (limit > 0.025) {
-      const size = limit / steps
-      const ps = [p]
-
-      // loop thru incremental steps:
-      for (let i = 1; i <= steps; i++) {
-        const l = p.loc + size * i
-        if (l <= this.dist) {
-          while (this.points[jj + 1].loc < l && jj < this.points.length - 1) {
-            jj++
-          }
-          ps.push(this.points[jj])
-        }
-      }
-
-      // get an array of distances from reference latlon:
-      const dists = ps.map((x) => {
-        return Number(latlon.distanceTo(x.latlon))
-      })
-
-      // find the minimum distance:
-      min = Math.min(...dists)
-      const imin = dists.findIndex((d) => d === min)
-
-      // set the new point to the one w/ min distance:
-      p = ps[imin]
-
-      // downsize iteration
-      limit = limit / steps
-    }
-    return {
-      point: p,
-      delta: min
-    }
   }
 
   reduceDensity(spacing: number = 0.025, length: number = this.points.length / 2) {

@@ -1,3 +1,5 @@
+import { along, lineString } from '@turf/turf'
+
 import { Models, Types } from '../../main'
 import { interp } from '../../util/math'
 
@@ -11,9 +13,12 @@ import { interp } from '../../util/math'
 export function interpolatePoint(p1: Types.TrackPoint, p2: Types.TrackPoint, loc: number) {
   if ((p1.loc > p2.loc && loc > p1.loc) || (p2.loc > p1.loc && loc > p2.loc))
     throw new Error('Input location must be between points')
-  const dist = Math.abs(p1.loc - loc)
-  const brng = p1.latlon.bearingTo(p2.latlon)
-  const { lat, lng: lon } = p1.latlon.destinationPoint(brng, dist)
+
+  const line = lineString([
+    [p1.lon, p1.lat],
+    [p2.lon, p2.lat]
+  ])
+  const p3 = along(line, loc - p1.loc)
 
   // use first point for these fields:
   const grade = p1.grade
@@ -21,5 +26,9 @@ export function interpolatePoint(p1: Types.TrackPoint, p2: Types.TrackPoint, loc
   // linear interpolation of other fields
   const alt = interp(p1.loc, p2.loc, p1.alt, p2.alt, loc)
 
-  return new Models.TrackPoint({ lat, lon, alt }, loc, grade)
+  return new Models.TrackPoint(
+    { lon: p3.geometry.coordinates[0], lat: p3.geometry.coordinates[1], alt },
+    loc,
+    grade
+  )
 }
