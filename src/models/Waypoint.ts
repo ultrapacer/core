@@ -58,7 +58,7 @@ export class Waypoint implements Types.Waypoint {
   }
 
   get hasDelay() {
-    if (this.isStart) return false
+    if (this.isStart || this.isFinish) return false
     return this.site.hasDelay
   }
 
