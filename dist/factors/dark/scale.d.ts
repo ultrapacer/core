@@ -5,4 +5,4 @@ import { Types } from '../../main';
  * @param ssm - seconds since midnight
  * @returns scale factor
  */
-export declare function scale(sun: Types.SunEventTimes, ssm: number): number;
+export declare function scale(sun: Types.SunEvents, ssm: number): number;

@@ -16,14 +16,11 @@ import { scale } from './scale'
 export function getDarkFactor(
   timeOfDaySeconds: number,
   terrainFactor: number,
-  sun: Types.SunEventTimes,
+  sun: Types.SunEvents,
   model: DarkModel = defaults
 ): number {
   if (terrainFactor === 1) return 1
 
-  if (timeOfDaySeconds >= sun.sunrise && timeOfDaySeconds <= sun.sunset) {
-    return 1
-  }
   if (model === null || typeof model === 'undefined') {
     model = defaults
   }

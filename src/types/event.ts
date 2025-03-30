@@ -1,47 +1,54 @@
+export interface SunEvent {
+  /**
+   * Seconds since midnight when the event occurs
+   */
+  time: number
+
+  /**
+   * Altitude of the sun at the event
+   */
+  altitude: number
+}
+
 /**
  * Times of day (in seconds since midnight) for sun events
  */
-export interface SunEventTimes {
+export interface SunEvents {
   /**
    * Seconds since midnight when the sun is at its lowest point (nadir)
    */
-  nadir: number
+  nadir: SunEvent
 
   /**
    * Seconds since midnight at the beginning of civil twilight
    */
-  dawn: number
+  dawn: SunEvent | null
 
   /**
    * Seconds since midnight at sunrise
    */
-  sunrise: number
+  sunrise: SunEvent | null
 
   /**
    * Seconds since midnight at the end of civil twilight
    */
-  dusk: number
+  dusk: SunEvent | null
 
   /**
    * Seconds since midnight when the sun sets
    */
-  sunset: number
+  sunset: SunEvent | null
 
   /**
    * Seconds since midnight when the sun is at solar noon
    */
-  noon: number
-
-  /**
-   * Altitude of the sun at its lowest point
-   */
-  nadirAltitude: number
+  noon: SunEvent
 }
 
 /**
  * Sun event type
  */
-export type SunEventType = keyof SunEventTimes
+export type SunEventType = keyof SunEvents
 
 export interface Event {
   start: Date
@@ -52,7 +59,7 @@ export interface Event {
   /**
    * Times of day (in seconds since midnight) for sun events
    */
-  sun: SunEventTimes
+  sun: SunEvents
 
   /**
    * get a date object at [seconds] from start

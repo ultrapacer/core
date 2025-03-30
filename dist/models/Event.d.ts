@@ -4,7 +4,7 @@ export declare class Event implements Types.Event {
     readonly lat: number;
     readonly lon: number;
     readonly timezone: string;
-    readonly sun: Types.SunEventTimes;
+    readonly sun: Types.SunEvents;
     private readonly startTime;
     constructor(start: Date, timezone: string, lat: number, lon: number);
     dateAtElapsed(seconds: number): Date;
