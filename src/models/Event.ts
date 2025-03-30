@@ -3,17 +3,21 @@ import { getPosition, getTimes } from 'suncalc'
 import { Types } from '../main'
 import { dateToTODSeconds } from '../util/dateToTODSeconds'
 
-class SunEventTimes implements Types.SunEventTimes {
-  nadir: number = 0
-  dawn: number = 0
-  sunrise: number = 0
-  dusk: number = 0
-  sunset: number = 0
-  noon: number = 0
-  nadirAltitude: number = 0
+class SunEvents implements Types.SunEvents {
+  readonly nadir: Types.SunEvent
+  readonly dawn: Types.SunEvent | null
+  readonly sunrise: Types.SunEvent | null
+  readonly dusk: Types.SunEvent | null
+  readonly sunset: Types.SunEvent | null
+  readonly noon: Types.SunEvent
 
-  constructor(obj: SunEventTimes) {
-    Object.assign(this, obj)
+  constructor(obj: Types.SunEvents) {
+    this.nadir = obj.nadir
+    this.dawn = obj.dawn
+    this.sunrise = obj.sunrise
+    this.dusk = obj.dusk
+    this.sunset = obj.sunset
+    this.noon = obj.noon
   }
 }
 
@@ -22,7 +26,7 @@ export class Event implements Types.Event {
   readonly lat: number
   readonly lon: number
   readonly timezone: string
-  readonly sun: Types.SunEventTimes
+  readonly sun: Types.SunEvents
   private readonly startTime: number
 
   constructor(start: Date, timezone: string, lat: number, lon: number) {
@@ -32,16 +36,20 @@ export class Event implements Types.Event {
     this.timezone = timezone
 
     const times = getTimes(this.start, this.lat, this.lon)
-    const nadirPosition = getPosition(times.nadir, this.lat, this.lon)
 
-    this.sun = new SunEventTimes({
-      nadir: dateToTODSeconds(times.nadir, this.timezone),
-      dawn: dateToTODSeconds(times.dawn, this.timezone),
-      sunrise: dateToTODSeconds(times.sunrise, this.timezone),
-      dusk: dateToTODSeconds(times.dusk, this.timezone),
-      sunset: dateToTODSeconds(times.sunset, this.timezone),
-      noon: dateToTODSeconds(times.solarNoon, this.timezone),
-      nadirAltitude: (nadirPosition.altitude * 180) / Math.PI
+    const f1 = (date: Date) => ({
+      altitude: (getPosition(date, this.lat, this.lon).altitude * 180) / Math.PI,
+      time: dateToTODSeconds(date, this.timezone)
+    })
+    const f2 = (date: Date) => (date.getTime() > 0 ? f1(date) : null)
+
+    this.sun = new SunEvents({
+      nadir: f1(times.nadir),
+      dawn: f2(times.dawn),
+      sunrise: f2(times.sunrise),
+      sunset: f2(times.sunset),
+      dusk: f2(times.dusk),
+      noon: f1(times.solarNoon)
     })
 
     this.startTime = dateToTODSeconds(this.start, this.timezone)
