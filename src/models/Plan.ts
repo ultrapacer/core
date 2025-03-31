@@ -1,5 +1,6 @@
 import _ from 'lodash'
 
+import { scale } from '~/factors/dark/scale'
 import { defaultModel as defaultGradeModel, defaultParameters } from '~/factors/grade/defaults'
 
 import { createDebug } from '../debug'
@@ -168,15 +169,16 @@ export class Plan implements Types.Plan {
     const eventTimes: { event: Types.SunEventType; elapsed: number }[] = []
     const startTimeOfDay = this.event.elapsedToTimeOfDay(0)
     const days = Math.ceil((startTimeOfDay + this.points[this.points.length - 1].elapsed) / 86400)
+
+    // get sun events for the course and filter out null values
+    const sunEvents = (
+      ['nadir', 'dawn', 'sunrise', 'noon', 'sunset', 'dusk'] as Types.SunEventType[]
+    )
+      .filter((event) => this.event.sun[event] !== null)
+      .map((event) => ({ event, time: this.event.sun[event]!.time }))
+
     for (let d = 0; d < days; d++) {
-      const arr: { event: Types.SunEventType; time: number }[] = [
-        { event: 'dawn', time: this.event.sun.dawn },
-        { event: 'sunrise', time: this.event.sun.sunrise },
-        { event: 'nadir', time: this.event.sun.nadir },
-        { event: 'sunset', time: this.event.sun.sunset },
-        { event: 'dusk', time: this.event.sun.dusk }
-      ]
-      arr.forEach((e) => {
+      sunEvents.forEach((e) => {
         // get elapsed time of the event:
         const elapsed = e.time - startTimeOfDay + 86400 * d
 
@@ -224,8 +226,8 @@ export class Plan implements Types.Plan {
 
     if (this._data.heatModel)
       return (this.cache.heatModel = {
-        start: this.event.sun.sunrise + 1800,
-        stop: this.event.sun.sunset + 7200,
+        start: this.event.sun.sunrise ? this.event.sun.sunrise.time + 1800 : 0,
+        stop: this.event.sun.sunset ? this.event.sun.sunset.time + 7200 : 86400,
         baseline: this._data.heatModel.baseline,
         max: this._data.heatModel.max
       })
@@ -285,14 +287,11 @@ export class Plan implements Types.Plan {
     this.points.forEach((x: { loc: number; elapsed: number; tod: number }, i: number) => {
       dloc = x.loc - (this.points[i - 1]?.loc || 0)
       dtime = x.elapsed - (this.points[i - 1]?.elapsed || 0)
-      if (
-        !isNaN(this.event.sun.dawn) &&
-        !isNaN(this.event.sun.dusk) &&
-        (x.tod <= this.event.sun.dawn || x.tod >= this.event.sun.dusk)
-      ) {
+      const s = scale(this.event.sun, x.tod)
+      if (s === 1) {
         sun.dark.time += dtime
         sun.dark.dist += dloc
-      } else if (x.tod < this.event.sun.sunrise || x.tod > this.event.sun.sunset) {
+      } else if (s > 0) {
         sun.twilight.time += dtime
         sun.twilight.dist += dloc
       } else {
