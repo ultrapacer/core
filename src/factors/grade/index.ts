@@ -1,5 +1,5 @@
 import { defaults } from './defaults'
-import { GradeModel } from './GradeModel'
+import type { GradeModel } from './GradeModel'
 
 /**
  * get grade factor

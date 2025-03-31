@@ -1,13 +1,11 @@
+import type { Types } from '..'
 import { Factors } from '../factors'
-import { Types } from '../main'
 import { CoursePoint } from './CoursePoint'
 
 /**
  * PlanPoint object for use in a plan, including pacing and time data
  */
 export class PlanPoint extends CoursePoint implements Types.PlanPoint {
-  private _plan: Types.Plan
-
   _chunk?: Types.PaceChunk
 
   delay: number = 0
@@ -29,7 +27,7 @@ export class PlanPoint extends CoursePoint implements Types.PlanPoint {
     return this.np * this.factor
   }
 
-  source: Types.CoursePoint
+  declare source: Types.CoursePoint
 
   time: number = 0
 
@@ -38,7 +36,6 @@ export class PlanPoint extends CoursePoint implements Types.PlanPoint {
   constructor(plan: Types.Plan, point: Types.CoursePoint) {
     super(plan.course, point, point.loop)
 
-    this._plan = plan
     this.source = point
   }
 }

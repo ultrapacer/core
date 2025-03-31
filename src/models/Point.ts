@@ -1,4 +1,4 @@
-import { Types } from '../main'
+import type { Types } from '..'
 
 export function isSourcePoint(arg: Types.LLA | Point): arg is Point {
   return 'source' in arg

@@ -1,4 +1,4 @@
-import { StrategyElement } from './StrategyElement'
+import type { StrategyElement } from './StrategyElement'
 
 export function adjust(values: StrategyElement[], length: number) {
   // calculate initial strategy factor offset such that strategy averages to 0

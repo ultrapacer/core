@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-import type { Types } from '../../main'
+import type { Types } from '../..'
 import { rlte } from '../../util/math'
 
 // TODO: instead of having tFs values as added % (eg 5, 10), change to percent eg (1.05, 1.10))

@@ -1,5 +1,5 @@
+import type { Types } from '..'
 import { rollup } from '../factors'
-import { Types } from '../main'
 import { isNumber } from '../util/isNumber'
 
 /**
@@ -20,7 +20,7 @@ function rollupPointFactors(
   if (point2.interpolated) points.splice(points.findIndex((p) => p.loc > point2.loc) - 1, 0, point2)
 
   const filteredPoints = points.filter(
-    (p, i) =>
+    (_p, i) =>
       i >= points.findIndex((p) => p === point1) && i <= points.findIndex((p) => p === point2)
   )
 
@@ -84,13 +84,11 @@ class Segment implements Types.Segment {
 }
 
 export class CourseSegment extends Segment implements Types.CourseSegment {
-  private _course: Types.Course
-
-  point1: Types.CoursePoint
-  point2: Types.CoursePoint
+  declare point1: Types.CoursePoint
+  declare point2: Types.CoursePoint
 
   constructor(
-    course: Types.Course,
+    _course: Types.Course,
     obj: {
       point1: Types.CoursePoint
       point2: Types.CoursePoint
@@ -100,7 +98,6 @@ export class CourseSegment extends Segment implements Types.CourseSegment {
     }
   ) {
     super(obj)
-    this._course = course
     this.point1 = obj.point1
     this.point2 = obj.point2
   }
@@ -109,8 +106,8 @@ export class CourseSegment extends Segment implements Types.CourseSegment {
 export class PlanSegment extends Segment implements Types.PlanSegment {
   private _plan: Types.Plan
 
-  point1: Types.PlanPoint
-  point2: Types.PlanPoint
+  declare point1: Types.PlanPoint
+  declare point2: Types.PlanPoint
 
   constructor(
     plan: Types.Plan,
@@ -157,11 +154,11 @@ export class PlanSegment extends Segment implements Types.PlanSegment {
   }
 
   // dummy setters, just in case:
-  set delay(v) {}
-  set pace(v) {}
-  set elapsed(v) {}
-  set time(v) {}
-  set tod(v) {}
+  set delay(_v) {}
+  set pace(_v) {}
+  set elapsed(_v) {}
+  set time(_v) {}
+  set tod(_v) {}
 
   private _factors?: Types.Factors
   get factors() {

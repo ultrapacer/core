@@ -1,4 +1,4 @@
-import { GradeModel } from './GradeModel';
+import type { GradeModel } from './GradeModel';
 /**
  * get grade factor
  * @param grade - grade as percentage (positive up, negative down)

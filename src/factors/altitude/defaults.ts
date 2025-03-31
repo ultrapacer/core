@@ -1,4 +1,4 @@
-import { AltitudeModel } from './AltitudeModel'
+import type { AltitudeModel } from './AltitudeModel'
 
 export const defaults: AltitudeModel = {
   rate: 6, // %

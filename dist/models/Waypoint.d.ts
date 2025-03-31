@@ -1,5 +1,5 @@
-import { Types } from '../main';
-import { Site } from './Site';
+import type { Types } from '..';
+import type { Site } from './Site';
 export declare class Waypoint implements Types.Waypoint {
     constructor(site: Site, loop?: number);
     _data: object;

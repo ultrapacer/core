@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
+import type { Types } from '..'
 import { createDebug } from '../debug'
-import { Types } from '../main'
 import { round } from '../util/math'
 import { Point, TrackPoint } from './Point'
 import { getGrades } from './Points/getGrades'
@@ -83,7 +83,7 @@ export class Track implements Types.Track {
     const numpoints = Math.floor(len / spacing) + 1
     const xs = Array(numpoints)
       .fill(0)
-      .map((e, i) => round(i++ * spacing, 3))
+      .map((_e, i) => round(i++ * spacing, 3))
     if (xs[xs.length - 1] < len) {
       xs.push(len)
     }
@@ -109,6 +109,6 @@ export class Track implements Types.Track {
 }
 
 export function createTrackFromArrays(lat: number[], lon: number[], alt: number[]) {
-  const llas = lat.map((x, i) => ({ lat: lat[i], lon: lon[i], alt: alt[i] }))
+  const llas = lat.map((_x, i) => ({ lat: lat[i], lon: lon[i], alt: alt[i] }))
   return new Track(llas)
 }

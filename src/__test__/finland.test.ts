@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { Models, Types } from '~/main'
+import { Models, type Types } from '..'
 
 // track in Lapland, Finland
 // unique because sun does not fully set

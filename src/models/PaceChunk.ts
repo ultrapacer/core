@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import { vsprintf } from 'sprintf-js'
 
+import type { Types } from '..'
 import { createDebug } from '../debug'
 import { Factors, generatePlanFactors } from '../factors'
-import { Types } from '../main'
 import { req } from '../util/math'
 
 const d = createDebug('PaceChunk')

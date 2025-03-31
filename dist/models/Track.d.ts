@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 export declare class Track implements Types.Track {
     dist: number;
     gain: number;

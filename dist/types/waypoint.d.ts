@@ -1,4 +1,4 @@
-import { Site } from './site';
+import type { Site } from './site';
 /**
  * Waypoint type
  */

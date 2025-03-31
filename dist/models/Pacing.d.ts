@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 export declare class Pacing implements Types.Pacing {
     chunks: Types.PaceChunk[];
     plan: Types.Plan;

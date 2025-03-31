@@ -1,4 +1,4 @@
-import { Point } from '../Point'
+import type { Point } from '../Point'
 import { getSmoothedProfile } from './getSmoothedProfile'
 
 export function getGrades(points: Point[], locations: number[]) {

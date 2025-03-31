@@ -1,4 +1,4 @@
-import { HeatModel } from './HeatModel'
+import type { HeatModel } from './HeatModel'
 
 /**
  * Return a scaling factor for heat
