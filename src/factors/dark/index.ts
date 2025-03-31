@@ -1,5 +1,5 @@
-import { Types } from '../../main'
-import { DarkModel } from './DarkModel'
+import type { Types } from '../..'
+import type { DarkModel } from './DarkModel'
 import { defaults } from './defaults'
 import { scale } from './scale'
 

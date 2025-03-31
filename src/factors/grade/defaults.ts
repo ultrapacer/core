@@ -1,4 +1,4 @@
-import { GradeModel } from './GradeModel'
+import type { GradeModel } from './GradeModel'
 
 export const defaults: GradeModel = {
   // f = a*x^2 + b*x

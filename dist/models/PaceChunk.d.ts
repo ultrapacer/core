@@ -1,5 +1,5 @@
+import type { Types } from '..';
 import { Factors } from '../factors';
-import { Types } from '../main';
 export declare class PaceChunk implements Types.PaceChunk {
     constraints: (number | (() => number))[];
     constructor(plan: Types.Plan, points: Types.PlanPoint[], constraints: (number | (() => number))[], delay: number);

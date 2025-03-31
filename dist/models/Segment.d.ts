@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 declare class Segment implements Types.Segment {
     constructor(obj: {
         point1: Types.CoursePoint | Types.PlanPoint;
@@ -22,10 +22,9 @@ declare class Segment implements Types.Segment {
     get alt(): number;
 }
 export declare class CourseSegment extends Segment implements Types.CourseSegment {
-    private _course;
     point1: Types.CoursePoint;
     point2: Types.CoursePoint;
-    constructor(course: Types.Course, obj: {
+    constructor(_course: Types.Course, obj: {
         point1: Types.CoursePoint;
         point2: Types.CoursePoint;
         gain: number;
@@ -49,11 +48,11 @@ export declare class PlanSegment extends Segment implements Types.PlanSegment {
     get elapsed(): number;
     get time(): number;
     get tod(): number;
-    set delay(v: number);
-    set pace(v: number);
-    set elapsed(v: number);
-    set time(v: number);
-    set tod(v: number);
+    set delay(_v: number);
+    set pace(_v: number);
+    set elapsed(_v: number);
+    set time(_v: number);
+    set tod(_v: number);
     private _factors?;
     get factors(): Types.Factors;
 }

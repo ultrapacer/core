@@ -1,4 +1,4 @@
-import { type Types } from '../main'
+import { type Types } from '..'
 
 export type TerrainTypeIndex = 'paved' | 'dirt road' | 'doubletrack' | 'singletrack' | 'technical'
 
@@ -198,4 +198,3 @@ export interface Course {
    */
   getPoint(loc: number): Types.CoursePoint
 }
-export default Course

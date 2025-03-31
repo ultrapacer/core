@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
-import { Types } from '../main'
-import { Site } from './Site'
+import type { Types } from '..'
+import type { Site } from './Site'
 
 export class Waypoint implements Types.Waypoint {
   constructor(site: Site, loop: number = 1) {
@@ -12,7 +12,7 @@ export class Waypoint implements Types.Waypoint {
 
   _data: object
   loop: number
-  site: Site
+  declare site: Site
 
   get course() {
     return this.site.course

@@ -1,4 +1,4 @@
-import { DarkModel } from './DarkModel'
+import type { DarkModel } from './DarkModel'
 
 export const defaults: DarkModel = {
   baseline: 0,

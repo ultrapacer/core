@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 export declare class CourseSplits implements Types.CourseSplits {
     private _segments?;
     private _miles?;

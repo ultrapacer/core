@@ -1,4 +1,4 @@
-import { factors, Types } from '../main';
+import type { factors, Types } from '..';
 /**
  * Represents a geographical point with altitude, latitude, longitude, and source information.
  */

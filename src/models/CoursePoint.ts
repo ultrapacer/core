@@ -1,5 +1,5 @@
+import type { Types } from '..'
 import { Factors } from '../factors/Factors'
-import { Types } from '../main'
 import { TrackPoint } from './Point'
 
 function isCoursePoint(point: Types.TrackPoint | Types.CoursePoint): point is Types.CoursePoint {
@@ -42,7 +42,7 @@ export class CoursePoint extends TrackPoint implements Types.CoursePoint {
 
   loop: number
 
-  readonly source: Types.TrackPoint | Types.CoursePoint
+  declare readonly source: Types.TrackPoint | Types.CoursePoint
 
   constructor(course: Types.Course, point: Types.TrackPoint, loop: number) {
     super(point, point.loc, point.grade)

@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 export declare const terrainTypes: {
     type: Types.TerrainTypeIndex;
     value: number;

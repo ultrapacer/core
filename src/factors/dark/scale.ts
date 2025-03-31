@@ -1,4 +1,4 @@
-import { Types } from '../../main'
+import type { Types } from '../..'
 import { interp } from '../../util/math'
 
 const twilightAlt = -6 // degrees

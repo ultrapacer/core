@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 export declare class Event implements Types.Event {
     readonly start: Date;
     readonly lat: number;

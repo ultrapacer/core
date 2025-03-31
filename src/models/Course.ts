@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
+import type { Types } from '..'
 import { createDebug } from '../debug'
-import { Types } from '../main'
 import { req, rgte, rlt } from '../util/math'
 import { CoursePoint } from './CoursePoint'
 import { CourseSplits } from './CourseSplits'
@@ -51,20 +51,19 @@ export class Course implements Types.Course {
    * Course cutoffs
    */
   get cutoffs(): CourseCutoff[] {
-    if ('cutoffs' in this.cache) return this.cache.cutoffs
-
-    this.cache.cutoffs = this.waypoints.filter((wp) => wp.cutoff).map((wp) => new CourseCutoff(wp))
-
-    return this.cache.cutoffs
+    return (
+      this.cache.cutoffs ??
+      (this.cache.cutoffs = this.waypoints
+        .filter((wp) => wp.cutoff)
+        .map((wp) => new CourseCutoff(wp)))
+    )
   }
 
   /**
    * Total distance of course (in km)
    */
   get dist(): number {
-    if ('dist' in this.cache) return this.cache.dist
-    this.cache.dist = this._data.dist || this.track.dist * this.loops
-    return this.cache.dist
+    return this.cache.dist ?? (this.cache.dist = this._data.dist || this.track.dist * this.loops)
   }
 
   /**
@@ -75,9 +74,7 @@ export class Course implements Types.Course {
   }
 
   get gain(): number {
-    if ('gain' in this.cache) return this.cache.gain
-    this.cache.gain = this._data.gain || this.track.gain * this.loops
-    return this.cache.gain
+    return this.cache.gain ?? (this.cache.gain = this._data.gain || this.track.gain * this.loops)
   }
 
   get gainScale() {
@@ -101,9 +98,7 @@ export class Course implements Types.Course {
   }
 
   get loss(): number {
-    if ('loss' in this.cache) return this.cache.loss
-    this.cache.loss = this._data.loss || this.track.loss * this.loops
-    return this.cache.loss
+    return this.cache.loss ?? (this.cache.loss = this._data.loss || this.track.loss * this.loops)
   }
 
   get lossScale() {
@@ -111,7 +106,7 @@ export class Course implements Types.Course {
   }
 
   get points(): Types.CoursePoint[] {
-    if ('points' in this.cache) return this.cache.points
+    if (this.cache.points) return this.cache.points
 
     d('generating points array')
 
@@ -130,7 +125,7 @@ export class Course implements Types.Course {
   }
 
   get sites(): Types.Site[] {
-    if ('sites' in this.cache) return this.cache.sites
+    if (this.cache.sites) return this.cache.sites
 
     this.cache.sites = this._data.sites?.map((site) => new Site(this, site)) || [
       new Site(this, {
@@ -157,15 +152,11 @@ export class Course implements Types.Course {
   }
 
   get splits(): Types.CourseSplits {
-    if ('splits' in this.cache) return this.cache.splits
-
-    this.cache.splits = new CourseSplits(this)
-
-    return this.cache.splits
+    return this.cache.splits ?? (this.cache.splits = new CourseSplits(this))
   }
 
   get stats(): Types.CourseStats {
-    if ('stats' in this.cache) return this.cache.stats
+    if (this.cache.stats) return this.cache.stats
 
     d('stats:calculate')
 
@@ -220,7 +211,7 @@ export class Course implements Types.Course {
   }
 
   get terrain(): Types.TerrainElement[] {
-    if ('terrain' in this.cache) return this.cache.terrain
+    if (this.cache.terrain) return this.cache.terrain
 
     if (this._data.terrain) {
       const value = [...this._data.terrain]
@@ -258,7 +249,7 @@ export class Course implements Types.Course {
   version: number = 0
 
   get waypoints(): Types.Waypoint[] {
-    if ('waypoints' in this.cache) return this.cache.waypoints
+    if (this.cache.waypoints) return this.cache.waypoints
 
     if (!this.track?.dist) return []
 

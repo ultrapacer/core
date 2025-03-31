@@ -1,6 +1,6 @@
 import { distance } from '@turf/turf'
 
-import { Point } from '../Point'
+import type { Point } from '../Point'
 
 export const getLocations = (points: Point[]) => {
   let d = 0

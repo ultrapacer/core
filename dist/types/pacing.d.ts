@@ -1,4 +1,4 @@
-import { factors, Types } from '../main';
+import type { factors, Types } from '..';
 /**
  * Interface representing the tests for pacing.
  */

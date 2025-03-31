@@ -1,4 +1,5 @@
-import { Models, Types } from '../main'
+import type { Types } from '..'
+import { Models } from '..'
 
 const trackdata = {
   lat: [

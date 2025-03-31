@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 export declare class Site implements Types.Site {
     /**
      * internal cache object
@@ -37,5 +37,9 @@ export declare class Site implements Types.Site {
     get version(): number;
     get waypoints(): Types.Waypoint[];
     constructor(course: Types.Course, data: Types.SiteData);
-    refreshLLA(): void;
+    refreshLLA(): {
+        lat: number;
+        lon: number;
+        alt: number;
+    };
 }
