@@ -1,4 +1,4 @@
-import type { Types } from '~/main';
+import type { Types } from '../';
 export declare const factorKeys: Types.FactorsKeys[];
 export declare class Factors implements Types.Factors {
     private _data;

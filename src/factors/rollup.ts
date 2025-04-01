@@ -1,7 +1,6 @@
 import { sumBy } from 'lodash'
 
-import { Types } from '~/main'
-
+import type { Types } from '..'
 import { Factors } from './Factors'
 
 export function rollup(input: { factors: Types.Factors; dist: number }[]) {

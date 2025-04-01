@@ -1,10 +1,10 @@
 import _ from 'lodash'
 
 import type { Types } from '..'
-import { defaultModel as defaultGradeModel, defaultParameters } from '../factors/grade/defaults'
 import { createDebug } from '../debug'
 import { factorKeys, generatePlanFactors } from '../factors'
 import { scale } from '../factors/dark/scale'
+import { defaultModel as defaultGradeModel, defaultParameters } from '../factors/grade/defaults'
 import { Strategy } from '../factors/strategy'
 import { interp, interpArray, req, rgte } from '../util/math'
 import { Event } from './Event'
@@ -49,7 +49,7 @@ export class Plan implements Types.Plan {
   private _data: Types.PlanData
 
   get strategies() {
-    if ('strategies' in this._cache) return this._cache.strategies
+    if (this._cache.strategies) return this._cache.strategies
     this._cache.strategies = {}
 
     const types: {

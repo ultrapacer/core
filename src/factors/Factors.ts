@@ -1,4 +1,4 @@
-import type { Types } from '~/main'
+import type { Types } from '../'
 
 export const factorKeys: Types.FactorsKeys[] = [
   'altitude',
