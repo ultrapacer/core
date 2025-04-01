@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 import { getAltitudeFactor } from './altitude';
 import { getDarkFactor } from './dark';
 import { factorKeys, Factors } from './Factors';

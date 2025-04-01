@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
+import type { Types } from '..'
 import { createDebug } from '../debug'
-import { Types } from '../main'
 import { Waypoint } from './Waypoint'
 
 const d = createDebug('models:Waypoint')
@@ -30,9 +30,7 @@ export class Site implements Types.Site {
   private _data: Types.SiteData
 
   get alt() {
-    if ('alt' in this._cache) return this._cache.alt
-    this.refreshLLA()
-    return Number(this._cache.alt)
+    return this._cache.alt ?? this.refreshLLA().alt
   }
 
   readonly course: Types.Course
@@ -68,15 +66,11 @@ export class Site implements Types.Site {
   }
 
   get lat() {
-    if ('lat' in this._cache) return this._cache.lat
-    this.refreshLLA()
-    return Number(this._cache.lat)
+    return this._cache.lat ?? this.refreshLLA().lat
   }
 
   get lon() {
-    if ('lon' in this._cache) return this._cache.lon
-    this.refreshLLA()
-    return Number(this._cache.lon)
+    return this._cache.lon ?? this.refreshLLA().lon
   }
 
   get name() {
@@ -97,7 +91,7 @@ export class Site implements Types.Site {
   }
 
   get waypoints(): Types.Waypoint[] {
-    if ('waypoints' in this._cache) return this._cache.waypoints
+    if (this._cache.waypoints) return this._cache.waypoints
 
     d(`generating waypoints array: ${this.name}`)
     if (this.isFinish) {
@@ -134,5 +128,7 @@ export class Site implements Types.Site {
     this._cache.lat = lat
     this._cache.lon = lon
     this._cache.alt = alt
+
+    return { lat, lon, alt }
   }
 }

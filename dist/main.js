@@ -4389,7 +4389,6 @@ class Hr extends Zr {
     I(this, "factors", new ye());
     I(this, "_interpolated");
     I(this, "loop");
-    I(this, "source");
     this._course = i, this.loop = f, this.source = o;
   }
   get grade() {
@@ -4463,20 +4462,14 @@ class Uo {
   }
 }
 class No extends Uo {
-  constructor(i, o) {
-    super(o);
-    I(this, "_course");
-    I(this, "point1");
-    I(this, "point2");
-    this._course = i, this.point1 = o.point1, this.point2 = o.point2;
+  constructor(s, i) {
+    super(i), this.point1 = i.point1, this.point2 = i.point2;
   }
 }
 class $o extends Uo {
   constructor(i, o) {
     super(o);
     I(this, "_plan");
-    I(this, "point1");
-    I(this, "point2");
     I(this, "_factors");
     this._plan = i, this.point1 = o.point1, this.point2 = o.point2;
   }
@@ -4740,7 +4733,6 @@ class Ls {
   constructor(s, i = 1) {
     I(this, "_data");
     I(this, "loop");
-    I(this, "site");
     this._data = {}, this.site = s, this.loop = i;
   }
   get course() {
@@ -4806,7 +4798,7 @@ class Gr {
     return ((s = this._cache) == null ? void 0 : s._version) === this.version ? this._cache : (this._cache = { _version: this.version }, this._cache);
   }
   get alt() {
-    return "alt" in this._cache ? this._cache.alt : (this.refreshLLA(), Number(this._cache.alt));
+    return this._cache.alt ?? this.refreshLLA().alt;
   }
   get cutoffs() {
     return this._data.cutoffs || [];
@@ -4833,10 +4825,10 @@ class Gr {
     this._data.isStart = s;
   }
   get lat() {
-    return "lat" in this._cache ? this._cache.lat : (this.refreshLLA(), Number(this._cache.lat));
+    return this._cache.lat ?? this.refreshLLA().lat;
   }
   get lon() {
-    return "lon" in this._cache ? this._cache.lon : (this.refreshLLA(), Number(this._cache.lon));
+    return this._cache.lon ?? this.refreshLLA().lon;
   }
   get name() {
     return this._data.name;
@@ -4851,12 +4843,12 @@ class Gr {
     return this.course.version;
   }
   get waypoints() {
-    return "waypoints" in this._cache ? this._cache.waypoints : (yo(`generating waypoints array: ${this.name}`), this.isFinish ? this._cache.waypoints = [new Ls(this, this.course.loops)] : this._cache.waypoints = Y.range(this.course.loops).map((s) => new Ls(this, s + 1)), this._cache.waypoints);
+    return this._cache.waypoints ? this._cache.waypoints : (yo(`generating waypoints array: ${this.name}`), this.isFinish ? this._cache.waypoints = [new Ls(this, this.course.loops)] : this._cache.waypoints = Y.range(this.course.loops).map((s) => new Ls(this, s + 1)), this._cache.waypoints);
   }
   refreshLLA() {
     yo("refreshLLA");
     let s, i, o;
-    this.isStart ? { lat: s, lon: i, alt: o } = this.course.track.points[0] : this.isFinish ? { lat: s, lon: i, alt: o } = this.course.track.points[this.course.track.points.length - 1] : { lat: s, lon: i, alt: o } = this.course.track.getLLA(this.percent * this.course.track.dist), this._cache.lat = s, this._cache.lon = i, this._cache.alt = o;
+    return this.isStart ? { lat: s, lon: i, alt: o } = this.course.track.points[0] : this.isFinish ? { lat: s, lon: i, alt: o } = this.course.track.points[this.course.track.points.length - 1] : { lat: s, lon: i, alt: o } = this.course.track.getLLA(this.percent * this.course.track.dist), this._cache.lat = s, this._cache.lon = i, this._cache.alt = o, { lat: s, lon: i, alt: o };
   }
 }
 const qn = Ke("models:Course"), Jo = [
@@ -4891,13 +4883,13 @@ class r_ {
    * Course cutoffs
    */
   get cutoffs() {
-    return "cutoffs" in this.cache ? this.cache.cutoffs : (this.cache.cutoffs = this.waypoints.filter((s) => s.cutoff).map((s) => new Zo(s)), this.cache.cutoffs);
+    return this.cache.cutoffs ?? (this.cache.cutoffs = this.waypoints.filter((s) => s.cutoff).map((s) => new Zo(s)));
   }
   /**
    * Total distance of course (in km)
    */
   get dist() {
-    return "dist" in this.cache ? this.cache.dist : (this.cache.dist = this._data.dist || this.track.dist * this.loops, this.cache.dist);
+    return this.cache.dist ?? (this.cache.dist = this._data.dist || this.track.dist * this.loops);
   }
   /**
    * Distance scale of course (in km), relative to calculated track distance
@@ -4906,7 +4898,7 @@ class r_ {
     return this._data.dist ? this._data.dist / (this.track.dist * this.loops) : 1;
   }
   get gain() {
-    return "gain" in this.cache ? this.cache.gain : (this.cache.gain = this._data.gain || this.track.gain * this.loops, this.cache.gain);
+    return this.cache.gain ?? (this.cache.gain = this._data.gain || this.track.gain * this.loops);
   }
   get gainScale() {
     return this._data.gain ? this._data.gain / (this.track.gain * this.loops) : 1;
@@ -4924,13 +4916,13 @@ class r_ {
     return this._data.loops || 1;
   }
   get loss() {
-    return "loss" in this.cache ? this.cache.loss : (this.cache.loss = this._data.loss || this.track.loss * this.loops, this.cache.loss);
+    return this.cache.loss ?? (this.cache.loss = this._data.loss || this.track.loss * this.loops);
   }
   get lossScale() {
     return this._data.loss ? this._data.loss / (this.track.loss * this.loops) : 1;
   }
   get points() {
-    if ("points" in this.cache) return this.cache.points;
+    if (this.cache.points) return this.cache.points;
     qn("generating points array"), this.cache.points = new Array(this.track.points.length * this.loops);
     for (let s = 0; s < this.loops; s++)
       for (let i = 0; i < this.track.points.length; i++)
@@ -4943,7 +4935,7 @@ class r_ {
   }
   get sites() {
     var s;
-    if ("sites" in this.cache) return this.cache.sites;
+    if (this.cache.sites) return this.cache.sites;
     if (this.cache.sites = ((s = this._data.sites) == null ? void 0 : s.map((i) => new Gr(this, i))) || [
       new Gr(this, {
         id: String(Y.random(1e4, 2e4)),
@@ -4962,10 +4954,10 @@ class r_ {
     return this.cache.sites;
   }
   get splits() {
-    return "splits" in this.cache ? this.cache.splits : (this.cache.splits = new Y0(this), this.cache.splits);
+    return this.cache.splits ?? (this.cache.splits = new Y0(this));
   }
   get stats() {
-    if ("stats" in this.cache) return this.cache.stats;
+    if (this.cache.stats) return this.cache.stats;
     qn("stats:calculate");
     const s = this.track.points.map((g) => g.alt), i = this.track.points.map((g) => g.grade), o = this.terrain.map((g) => g.value / 100 + 1), f = {
       altitude: {
@@ -5000,7 +4992,7 @@ class r_ {
     }), this.cache.stats = f, f;
   }
   get terrain() {
-    if ("terrain" in this.cache) return this.cache.terrain;
+    if (this.cache.terrain) return this.cache.terrain;
     if (this._data.terrain) {
       const s = [...this._data.terrain];
       s.sort((i, o) => i.percent - o.percent), this.cache.terrain = s.map((i, o) => {
@@ -5018,7 +5010,7 @@ class r_ {
   }
   get waypoints() {
     var i;
-    if ("waypoints" in this.cache) return this.cache.waypoints;
+    if (this.cache.waypoints) return this.cache.waypoints;
     if (!((i = this.track) != null && i.dist)) return [];
     let s = [];
     return this.sites.forEach((o) => {
@@ -5558,7 +5550,7 @@ class Qo {
     }), s("creating pace chunks"), this.initChunks(), [null, ...Y.reverse([...this.plan.cutoffs || []]), null].forEach((g) => {
       for (; this.chunks.find((y) => !y.status); )
         this.calcChunks(), this.validateChunks();
-      if (!g) return !0;
+      if (!g) return;
       const _ = this.plan.getPoint(g.loc);
       if (_.elapsed - g.time > 0.5) {
         s(`cutoff at ${g.loc} missed`);
@@ -5636,15 +5628,13 @@ class Qo {
 class Rs extends Hr {
   constructor(i, o) {
     super(i.course, o, o.loop);
-    I(this, "_plan");
     I(this, "_chunk");
     I(this, "delay", 0);
     I(this, "elapsed", 0);
     I(this, "factors", new ye());
-    I(this, "source");
     I(this, "time", 0);
     I(this, "tod", 0);
-    this._plan = i, this.source = o;
+    this.source = o;
   }
   get factor() {
     var i;
@@ -5781,7 +5771,7 @@ class l_ {
     return ((s = this._cache) == null ? void 0 : s.version) === this.version ? this._cache : (this._cache = { version: this.version }, this._cache);
   }
   get strategies() {
-    return "strategies" in this._cache ? this._cache.strategies : (this._cache.strategies = {}, [
+    return this._cache.strategies ? this._cache.strategies : (this._cache.strategies = {}, [
       { key: "climbing", filter: (i) => i.grade >= 4 },
       { key: "descending", filter: (i) => i.grade <= -4 }
     ].forEach((i) => {
@@ -5806,7 +5796,7 @@ class l_ {
   }
   get cutoffs() {
     var i;
-    if ("cutoffs" in this.cache) return this.cache.cutoffs;
+    if (this.cache.cutoffs) return this.cache.cutoffs;
     this.cache.cutoffs = this.cutoffMargin ? ((i = this.course.cutoffs) == null ? void 0 : i.map((o) => new h_(this, o, this.getPoint(o.loc, !0)))) || [] : [];
     let s = 0;
     for (; this.cache.cutoffs.length - 1 >= s; ) {
@@ -5819,7 +5809,7 @@ class l_ {
     return Y.sumBy(this.delays, "delay");
   }
   get delays() {
-    if ("delays" in this.cache) return this.cache.delays;
+    if (this.cache.delays) return this.cache.delays;
     const s = this.course.waypoints.map((o) => {
       var g;
       const f = (g = this._data.delays) == null ? void 0 : g.find(
@@ -5833,7 +5823,7 @@ class l_ {
     return this.cache.delays = s, this.cache.delays;
   }
   get event() {
-    if ("event" in this.cache) return this.cache.event;
+    if (this.cache.event) return this.cache.event;
     if (this._data.start)
       return this.cache.event = new Yo(
         this._data.start.date,
@@ -5844,7 +5834,7 @@ class l_ {
     throw new Error("Start date/timezone is required for either the plan or the course");
   }
   get events() {
-    if ("events" in this.cache) return this.cache.events;
+    if (this.cache.events) return this.cache.events;
     ze("calculating events.sun");
     const s = [], i = this.event.elapsedToTimeOfDay(0), o = Math.ceil((i + this.points[this.points.length - 1].elapsed) / 86400), f = ["nadir", "dawn", "sunrise", "noon", "sunset", "dusk"].filter((_) => this.event.sun[_] !== null).map((_) => ({ event: _, time: this.event.sun[_].time }));
     for (let _ = 0; _ < o; _++)
@@ -5890,7 +5880,7 @@ class l_ {
     return this._data.scales;
   }
   get stats() {
-    if ("stats" in this.cache) return this.cache.stats;
+    if (this.cache.stats) return this.cache.stats;
     ze("calculating stats.factors");
     const s = Y.fromPairs(
       wn.map((v) => {
@@ -5919,7 +5909,7 @@ class l_ {
     }), this.cache.stats = { factors: s, sun: i }, this.cache.stats;
   }
   get strategy() {
-    return "strategy" in this.cache ? this.cache.strategy : this.cache.strategy = new Wo(this, this._data.strategy);
+    return this.cache.strategy ?? (this.cache.strategy = new Wo(this, this._data.strategy));
   }
   get target() {
     return this._data.target;

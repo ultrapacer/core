@@ -1,6 +1,7 @@
 import { along, lineString } from '@turf/turf'
 
-import { Models, Types } from '../../main'
+import type { Types } from '../..'
+import { Models } from '../..'
 import { interp } from '../../util/math'
 
 /**

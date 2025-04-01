@@ -1,4 +1,4 @@
-import { AltitudeModel } from './AltitudeModel'
+import type { AltitudeModel } from './AltitudeModel'
 import { defaults } from './defaults'
 
 /**

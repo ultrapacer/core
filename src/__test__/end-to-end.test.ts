@@ -1,7 +1,8 @@
 import _ from 'lodash'
 import { describe, expect, test } from 'vitest'
 
-import { Models, Types } from '../main'
+import type { Types } from '..'
+import { Models } from '..'
 import { course, planData, start } from './data'
 
 type Rules = {

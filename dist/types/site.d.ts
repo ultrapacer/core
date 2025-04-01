@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 import type { Course } from './course';
 /**
  * Waypoint cutoff object

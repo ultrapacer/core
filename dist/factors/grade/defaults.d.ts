@@ -1,4 +1,4 @@
-import type { Types } from '~/main';
+import type { Types } from '../..';
 export declare const defaultParameters: {
     a: number;
     b: number;

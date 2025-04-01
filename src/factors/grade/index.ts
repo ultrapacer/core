@@ -1,5 +1,4 @@
-import { Types } from '~/main'
-
+import type { Types } from '../..'
 import { defaultModel } from './defaults'
 
 /**

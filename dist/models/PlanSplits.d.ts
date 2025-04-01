@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 export declare class PlanSplits implements Types.PlanSplits {
     plan: Types.Plan;
     constructor(plan: Types.Plan);

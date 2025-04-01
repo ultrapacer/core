@@ -1,4 +1,4 @@
-import { Types } from '../../main';
+import type { Types } from '../..';
 /**
  * get scale factor for time of day
  * @param sun - sun model

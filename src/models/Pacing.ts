@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import { sprintf } from 'sprintf-js'
 
+import type { Types } from '..'
 import { createDebug } from '../debug'
 import { rollup } from '../factors'
-import { Types } from '../main'
 import { PaceChunk } from './PaceChunk'
 
 const d = createDebug('Pacing')
@@ -146,7 +146,7 @@ export class Pacing implements Types.Pacing {
       }
 
       // now test cutoff
-      if (!cutoff) return true
+      if (!cutoff) return
       const point = this.plan.getPoint(cutoff.loc)
       if (point.elapsed - cutoff.time > 0.5) {
         d2(`cutoff at ${cutoff.loc} missed`)
@@ -254,7 +254,7 @@ export class Pacing implements Types.Pacing {
 
     // assign the new chunk to all its points
     newChunk.points
-      .filter((p, i) => i < newChunk.points.length - 1)
+      .filter((_p, i) => i < newChunk.points.length - 1)
       .forEach((p) => {
         p._chunk = newChunk
       })

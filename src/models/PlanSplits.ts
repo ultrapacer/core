@@ -1,8 +1,8 @@
 import _ from 'lodash'
 
+import type { Types } from '..'
 import { createDebug } from '../debug'
 import { Factors, generatePlanFactors } from '../factors'
-import { Types } from '../main'
 import { locationsToBreaks } from '../util/locationsToBreaks'
 import { req, rgte, rlt, rlte } from '../util/math'
 import { distScale } from '../util/units'

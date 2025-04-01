@@ -1,5 +1,5 @@
-import { Types } from '../main'
-import { DateWithTimezone, SunEventType } from '.'
+import type { Types } from '..'
+import type { DateWithTimezone, SunEventType } from '.'
 
 export type PlanDataDelays = { delay: number; loop: number; siteId: string | symbol }[]
 

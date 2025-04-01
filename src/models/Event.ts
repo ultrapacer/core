@@ -1,6 +1,6 @@
 import { getPosition, getTimes } from 'suncalc'
 
-import { Types } from '../main'
+import type { Types } from '..'
 import { dateToTODSeconds } from '../util/dateToTODSeconds'
 
 class SunEvents implements Types.SunEvents {

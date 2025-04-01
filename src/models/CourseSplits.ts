@@ -1,10 +1,9 @@
 import _ from 'lodash'
 
-import { locationsToBreaks } from '~/util/locationsToBreaks'
-
+import type { Types } from '..'
 import { createDebug } from '../debug'
 import { Factors, generateCourseFactors } from '../factors'
-import { Types } from '../main'
+import { locationsToBreaks } from '../util/locationsToBreaks'
 import { req, rlte } from '../util/math'
 import { distScale } from '../util/units'
 import { CourseSegment } from './Segment'

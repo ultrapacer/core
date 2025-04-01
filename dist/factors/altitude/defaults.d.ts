@@ -1,2 +1,2 @@
-import { AltitudeModel } from './AltitudeModel';
+import type { AltitudeModel } from './AltitudeModel';
 export declare const defaults: AltitudeModel;

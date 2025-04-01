@@ -1,5 +1,5 @@
-import { Types } from '../../main';
-import { StrategyElement, StrategyElementType } from './StrategyElement';
+import type { Types } from '../..';
+import type { StrategyElement, StrategyElementType } from './StrategyElement';
 export declare class Strategy {
     plan: Types.Plan;
     values: StrategyElement[];

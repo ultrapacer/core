@@ -1,12 +1,11 @@
 import _ from 'lodash'
 
-import { scale } from '~/factors/dark/scale'
-import { defaultModel as defaultGradeModel, defaultParameters } from '~/factors/grade/defaults'
-
+import type { Types } from '..'
+import { defaultModel as defaultGradeModel, defaultParameters } from '../factors/grade/defaults'
 import { createDebug } from '../debug'
 import { factorKeys, generatePlanFactors } from '../factors'
+import { scale } from '../factors/dark/scale'
 import { Strategy } from '../factors/strategy'
-import { Types } from '../main'
 import { interp, interpArray, req, rgte } from '../util/math'
 import { Event } from './Event'
 import { Pacing } from './Pacing'
@@ -94,7 +93,7 @@ export class Plan implements Types.Plan {
   }
 
   get cutoffs(): PlanCutoff[] {
-    if ('cutoffs' in this.cache) return this.cache.cutoffs
+    if (this.cache.cutoffs) return this.cache.cutoffs
 
     this.cache.cutoffs = this.cutoffMargin
       ? this.course.cutoffs?.map((c) => new PlanCutoff(this, c, this.getPoint(c.loc, true))) || []
@@ -120,7 +119,7 @@ export class Plan implements Types.Plan {
   }
 
   get delays(): PlanDelay[] {
-    if ('delays' in this.cache) return this.cache.delays
+    if (this.cache.delays) return this.cache.delays
 
     const delays = this.course.waypoints
       .map((waypoint) => {
@@ -149,7 +148,7 @@ export class Plan implements Types.Plan {
   }
 
   get event(): Types.Event {
-    if ('event' in this.cache) return this.cache.event
+    if (this.cache.event) return this.cache.event
 
     if (this._data.start)
       return (this.cache.event = new Event(
@@ -162,7 +161,7 @@ export class Plan implements Types.Plan {
   }
 
   get events() {
-    if ('events' in this.cache) return this.cache.events
+    if (this.cache.events) return this.cache.events
 
     // create array of sun events during the course:
     d('calculating events.sun')
@@ -257,7 +256,7 @@ export class Plan implements Types.Plan {
   readonly splits: Types.PlanSplits = new PlanSplits(this)
 
   get stats() {
-    if ('stats' in this.cache) return this.cache.stats
+    if (this.cache.stats) return this.cache.stats
 
     // add in statistics
     // these are max and min values for each factor
@@ -306,8 +305,7 @@ export class Plan implements Types.Plan {
   }
 
   get strategy(): Types.Strategy {
-    if ('strategy' in this.cache) return this.cache.strategy
-    return (this.cache.strategy = new Strategy(this, this._data.strategy))
+    return this.cache.strategy ?? (this.cache.strategy = new Strategy(this, this._data.strategy))
   }
 
   get target() {

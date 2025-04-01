@@ -1,4 +1,4 @@
-import { Types } from '../main'
+import type { Types } from '..'
 
 /**
  * Data used to create a track.

@@ -1,4 +1,4 @@
-import type { Types } from '~/main'
+import type { Types } from '../..'
 
 export const defaultParameters = {
   // f = a*x^2 + b*x

@@ -1,4 +1,4 @@
-import { Types } from '../main';
+import type { Types } from '..';
 export declare function isSourcePoint(arg: Types.LLA | Point): arg is Point;
 /**
  * Point object for use as a basis in a track or course

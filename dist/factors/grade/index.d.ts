@@ -1,4 +1,4 @@
-import { Types } from '~/main';
+import type { Types } from '../..';
 /**
  * get grade factor
  * @param grade - grade as percentage (positive up, negative down)
