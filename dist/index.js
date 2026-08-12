@@ -433,24 +433,13 @@ function Fo(l, s) {
       return x < l.noon.time ? x + 86400 : x;
     };
     const v = l.noon.altitude >= 0 ? 0 : l.noon.altitude / Ur, y = l.nadir.altitude < Ur ? 1 : l.nadir.altitude / Ur;
-    return d(s) >= d(l.nadir.time) ? wn(
-      d(((i = l.dawn) == null ? void 0 : i.time) ?? l.nadir.time),
-      d(((o = l.sunrise) == null ? void 0 : o.time) ?? l.noon.time),
-      y,
-      v,
-      d(s)
-    ) : wn(
-      d(((h = l.sunset) == null ? void 0 : h.time) ?? l.noon.time),
-      d(((m = l.dusk) == null ? void 0 : m.time) ?? l.nadir.time),
-      v,
-      y,
-      d(s)
-    );
+    return d(s) >= d(l.nadir.time) ? wn(d(((i = l.dawn) == null ? void 0 : i.time) ?? l.nadir.time), d(((o = l.sunrise) == null ? void 0 : o.time) ?? l.noon.time), y, v, d(s)) : wn(d(((h = l.sunset) == null ? void 0 : h.time) ?? l.noon.time), d(((m = l.dusk) == null ? void 0 : m.time) ?? l.nadir.time), v, y, d(s));
   } else
     return 0;
 }
 function To(l, s, i, o = go) {
-  if (s === 1) return 1;
+  if (s === 1)
+    return 1;
   (o === null || typeof o > "u") && (o = go);
   const h = o.terrainScale * (s - 1) + o.baseline, m = Fo(i, l);
   return 1 + h * m;
@@ -567,7 +556,8 @@ function Mo(l, s) {
   return (s === null || typeof s > "u") && (s = N0), l < s.lower.lim ? s.lower.m * l + s.lower.b : l > s.upper.lim ? s.upper.m * l + s.upper.b : s.a * l ** 2 + s.b * l + 1;
 }
 function Lo(l, s) {
-  if (!s) return 1;
+  if (!s)
+    return 1;
   const i = l.tod;
   let o = 1;
   if (i > s.start && i < s.stop) {
@@ -4326,7 +4316,8 @@ function Os(l, s) {
 function Gn(l, s) {
   var i, o;
   if (l.factors || (l.factors = new ye()), Os(l, s.course), s) {
-    if (l.factors === void 0) throw new Error("no factors");
+    if (l.factors === void 0)
+      throw new Error("no factors");
     l.factors.strategy = s.strategy.at(l.loc), Object.assign(l.factors, {
       heat: s.heatModel ? Lo(l, s.heatModel) : 1,
       dark: s.event.sun ? To(l.tod, l.factors.terrain, s.event.sun) : 1
@@ -4409,7 +4400,8 @@ class Gr extends Jr {
     this._interpolated = i;
   }
   get loc() {
-    if (Cs(this.source)) return this.source.loc;
+    if (Cs(this.source))
+      return this.source.loc;
     let i = this.source.loc * this._course.distScale;
     return this.loop && (i += this._course.loopDist * this.loop), i;
   }
@@ -4433,9 +4425,7 @@ function Nr(l) {
 }
 function J0(l, s, i) {
   l = [...l], s.interpolated && l.splice(l.findIndex((m) => m.loc > s.loc) - 1, 0, s), i.interpolated && l.splice(l.findIndex((m) => m.loc > i.loc) - 1, 0, i);
-  const o = l.filter(
-    (m, d) => d >= l.findIndex((v) => v === s) && d <= l.findIndex((v) => v === i)
-  ), h = o.map((m, d) => ({
+  const o = l.filter((m, d) => d >= l.findIndex((v) => v === s) && d <= l.findIndex((v) => v === i)), h = o.map((m, d) => ({
     factors: m.factors,
     dist: d === o.length - 1 ? 0 : o[d + 1].loc - o[d].loc
   }));
@@ -4542,13 +4532,9 @@ class Z0 {
   }
   createSegments() {
     xs("createSegments");
-    const s = this.course.waypoints, i = this.calcSegments(
-      Hr(
-        s.map((o) => o.loc),
-        this.course.dist
-      )
-    );
-    if (!i.length) throw new Error("createSegments result is empty");
+    const s = this.course.waypoints, i = this.calcSegments(Hr(s.map((o) => o.loc), this.course.dist));
+    if (!i.length)
+      throw new Error("createSegments result is empty");
     return i.forEach((o, h) => {
       o.waypoint = s[h + 1];
     }), i;
@@ -4558,7 +4544,8 @@ class Z0 {
     const i = ko(s), o = Y.range(this.course.dist * i).map((m) => m / i);
     this.course.dist - o[o.length - 1] > 1e-4 && o.push(this.course.dist);
     const h = this.calcSegments(Hr(o, this.course.dist));
-    if (!h.length) throw new Error("createSplits result is empty");
+    if (!h.length)
+      throw new Error("createSplits result is empty");
     return h;
   }
   calcSegments(s) {
@@ -4587,7 +4574,8 @@ class Z0 {
     v = 1;
     for (let k = 0; k < m.length; k++) {
       const L = m[k], T = d[k];
-      for (; yn(h[v].loc, L.point1.loc, 4); ) v++;
+      for (; yn(h[v].loc, L.point1.loc, 4); )
+        v++;
       let W = L.point1;
       for (; v < h.length && yn(h[v].loc, L.point2.loc, 4); ) {
         const z = h[v];
@@ -4731,11 +4719,7 @@ function Go(l, s, i) {
     [l.lon, l.lat],
     [s.lon, s.lat]
   ]), h = e_(o, i - l.loc), m = l.grade, d = wn(l.loc, s.loc, l.alt, s.alt, i);
-  return new Jr(
-    { lon: h.geometry.coordinates[0], lat: h.geometry.coordinates[1], alt: d },
-    i,
-    m
-  );
+  return new Jr({ lon: h.geometry.coordinates[0], lat: h.geometry.coordinates[1], alt: d }, i, m);
 }
 class Ms {
   constructor(s, i = 1) {
@@ -4756,7 +4740,8 @@ class Ms {
     return (this.site.percent + this.loop - 1) * this.course.loopDist;
   }
   set loc(s) {
-    if (!Y.isNumber(s)) throw new Error("Wrong format for Waypoint.loc");
+    if (!Y.isNumber(s))
+      throw new Error("Wrong format for Waypoint.loc");
     if (this.isStart || this.isFinish) {
       console.warn("Cannot set loc for start or finish waypoint");
       return;
@@ -4930,20 +4915,18 @@ class n_ {
     return this._data.loss ? this._data.loss / (this.track.loss * this.loops) : 1;
   }
   get points() {
-    if (this.cache.points) return this.cache.points;
+    if (this.cache.points)
+      return this.cache.points;
     $n("generating points array"), this.cache.points = new Array(this.track.points.length * this.loops);
     for (let s = 0; s < this.loops; s++)
       for (let i = 0; i < this.track.points.length; i++)
-        this.points[i + s * this.track.points.length] = new Gr(
-          this,
-          this.track.points[i],
-          s
-        );
+        this.points[i + s * this.track.points.length] = new Gr(this, this.track.points[i], s);
     return this.cache.points;
   }
   get sites() {
     var s;
-    if (this.cache.sites) return this.cache.sites;
+    if (this.cache.sites)
+      return this.cache.sites;
     if (this.cache.sites = ((s = this._data.sites) == null ? void 0 : s.map((i) => new qr(this, i))) || [
       new qr(this, {
         id: String(Y.random(1e4, 2e4)),
@@ -4965,16 +4948,15 @@ class n_ {
     return this.cache.splits ?? (this.cache.splits = new Z0(this));
   }
   get stats() {
-    if (this.cache.stats) return this.cache.stats;
+    if (this.cache.stats)
+      return this.cache.stats;
     $n("stats:calculate");
     const s = this.track.points.map((d) => d.alt), i = this.track.points.map((d) => d.grade), o = this.terrain.map((d) => d.value / 100 + 1), h = {
       altitude: {
-        avg: Y.sum(
-          this.track.points.map((d, v) => {
-            var y;
-            return d.alt * (d.loc - (((y = this.track.points[v - 1]) == null ? void 0 : y.loc) || 0));
-          })
-        ) / this.track.dist,
+        avg: Y.sum(this.track.points.map((d, v) => {
+          var y;
+          return d.alt * (d.loc - (((y = this.track.points[v - 1]) == null ? void 0 : y.loc) || 0));
+        })) / this.track.dist,
         max: Y.max(s) || 0,
         min: Y.min(s) || 0
       },
@@ -4990,17 +4972,15 @@ class n_ {
         maxDist: 0,
         minDist: 0
       }
-    }, m = (d) => this.terrain.reduce(
-      (v, y) => y.value / 100 + 1 === d ? v + (y.percents[1] - y.percents[0]) * this.dist : v,
-      0
-    );
+    }, m = (d) => this.terrain.reduce((v, y) => y.value / 100 + 1 === d ? v + (y.percents[1] - y.percents[0]) * this.dist : v, 0);
     return Object.assign(h.terrain, {
       maxDist: m(h.terrain.max),
       minDist: m(h.terrain.min)
     }), this.cache.stats = h, h;
   }
   get terrain() {
-    if (this.cache.terrain) return this.cache.terrain;
+    if (this.cache.terrain)
+      return this.cache.terrain;
     if (this._data.terrain) {
       const s = [...this._data.terrain];
       s.sort((i, o) => i.percent - o.percent), this.cache.terrain = s.map((i, o) => {
@@ -5018,8 +4998,10 @@ class n_ {
   }
   get waypoints() {
     var i;
-    if (this.cache.waypoints) return this.cache.waypoints;
-    if (!((i = this.track) != null && i.dist)) return [];
+    if (this.cache.waypoints)
+      return this.cache.waypoints;
+    if (!((i = this.track) != null && i.dist))
+      return [];
     let s = [];
     return this.sites.forEach((o) => {
       s.push(...o.waypoints);
@@ -5036,13 +5018,10 @@ class n_ {
    */
   getPoint(s) {
     const i = this.points.findIndex((y) => Kr(y.loc, s, 4)), o = this.points[i];
-    if (Cn(o.loc, s, 4)) return o;
+    if (Cn(o.loc, s, 4))
+      return o;
     $n(`getPoint: creating new CoursePoint at ${s}`);
-    const h = i - 1, m = this.points[h], d = Go(
-      m.source,
-      o.source,
-      s % this.loopDist / this.distScale
-    ), v = new Gr(this, d, Math.floor(s / this.loopDist));
+    const h = i - 1, m = this.points[h], d = Go(m.source, o.source, s % this.loopDist / this.distScale), v = new Gr(this, d, Math.floor(s / this.loopDist));
     return v.interpolated = !0, v;
   }
   locationsToBreaks(s) {
@@ -5059,7 +5038,8 @@ class zo {
     return this.waypoint.loc;
   }
   get time() {
-    if (!this.waypoint.cutoff) throw new Error("Invalid cutoff");
+    if (!this.waypoint.cutoff)
+      throw new Error("Invalid cutoff");
     return this.waypoint.cutoff;
   }
 }
@@ -5451,21 +5431,15 @@ class xo {
    * iterate applyPacing method until tests pass
    */
   calculate() {
-    const o = a_.extend(
-      Jo.vsprintf("calculate:%.2f-%.2f", [this.points[0].loc, this.points[this.points.length - 1].loc])
-    );
+    const o = a_.extend(Jo.vsprintf("calculate:%.2f-%.2f", [this.points[0].loc, this.points[this.points.length - 1].loc]));
     let h = this.factor || 0, m, d;
     const v = new u_();
     for (d = 1; d <= 30; d++)
-      if (this.applyPacing(), v.iterations = d >= 2, v.factor = !Y.round(h - this.factor, d === 30 ? 6 : 8), h = this.factor, v.target = Math.abs(
-        (Y.isFunction(this.constraints[1]) ? this.constraints[1]() : this.constraints[1]) - this.points[this.points.length - 1].elapsed
-      ) < 0.1, v.points = m && this.points.every((x, F) => Cn(x.elapsed, m[F], 0)) || !1, m = this.points.map((x) => x.elapsed), v.passing) {
+      if (this.applyPacing(), v.iterations = d >= 2, v.factor = !Y.round(h - this.factor, d === 30 ? 6 : 8), h = this.factor, v.target = Math.abs((Y.isFunction(this.constraints[1]) ? this.constraints[1]() : this.constraints[1]) - this.points[this.points.length - 1].elapsed) < 0.1, v.points = m && this.points.every((x, F) => Cn(x.elapsed, m[F], 0)) || !1, m = this.points.map((x) => x.elapsed), v.passing) {
         o(`iteration ${d} complete, passed`);
         break;
       } else
-        o(
-          `iteration ${d} complete, failed ${Object.keys(v).filter((x) => !v[x]).join("|")}`
-        );
+        o(`iteration ${d} complete, failed ${Object.keys(v).filter((x) => !v[x]).join("|")}`);
     o("chunk complete");
     const y = v.passing ? void 0 : `failed tests ${Object.keys(v).filter((x) => !v[x]).map((x) => `"${x}"`).join(",")} after ${d} iterations`;
     this.status = {
@@ -5546,9 +5520,7 @@ class Zo {
       const d = this.plan.points.findIndex((v) => v.interpolated);
       this.plan.points.splice(d, 1);
     }
-    for (s("adding points at each terrain factor break"), (o = this.plan.course.terrain) == null || o.forEach(
-      (d) => this.plan.getPoint(d.percents[0] * this.plan.course.dist, !0)
-    ), s("adding points at each cutoff"), this.plan.cutoffMargin && ((h = this.plan.cutoffs) == null || h.forEach((d) => {
+    for (s("adding points at each terrain factor break"), (o = this.plan.course.terrain) == null || o.forEach((d) => this.plan.getPoint(d.percents[0] * this.plan.course.dist, !0)), s("adding points at each cutoff"), this.plan.cutoffMargin && ((h = this.plan.cutoffs) == null || h.forEach((d) => {
       this.plan.getPoint(d.loc, !0);
     })), this.plan.points.filter((d) => d.delay).forEach((d) => {
       d.delay = 0;
@@ -5558,7 +5530,8 @@ class Zo {
     }), s("creating pace chunks"), this.initChunks(), [null, ...Y.reverse([...this.plan.cutoffs || []]), null].forEach((d) => {
       for (; this.chunks.find((y) => !y.status); )
         this.calcChunks(), this.validateChunks();
-      if (!d) return;
+      if (!d)
+        return;
       const v = this.plan.getPoint(d.loc);
       if (v.elapsed - d.time > 0.5) {
         s(`cutoff at ${d.loc} missed`);
@@ -5627,7 +5600,8 @@ class Zo {
    */
   mergeChunks(s, i) {
     const o = this.chunks.findIndex((m) => m === s), h = this.chunks.findIndex((m) => m === i);
-    if (h - o !== 1) throw new Error("chunks must be sequential");
+    if (h - o !== 1)
+      throw new Error("chunks must be sequential");
     ue(Jo.sprintf("calcChunks: merging %i&%i (%.2f&%.2f)", o, h, s.np, i.np)), s.points.pop(), s.points.push(...i.points), s.delay += i.delay, delete s.status, s.points.forEach((m) => {
       m._chunk = s;
     }), s.constraints = [s.constraints[0], i.constraints[1]], this.chunks.splice(h, 1), s.calculate();
@@ -5650,7 +5624,8 @@ class Ps extends Gr {
   }
   get np() {
     var i;
-    if (!this._chunk) throw new Error("PlanPoint._chunk not defined");
+    if (!this._chunk)
+      throw new Error("PlanPoint._chunk not defined");
     return (i = this._chunk) == null ? void 0 : i.np;
   }
   get pace() {
@@ -5689,25 +5664,20 @@ class o_ {
   }
   createSegments() {
     bs("createSegments");
-    const s = this.plan.course.waypoints, i = this.calcSegments(
-      Hr(
-        s.map((o) => o.loc),
-        this.plan.course.dist
-      )
-    );
-    if (!i.length) throw new Error("createSegments result is empty");
+    const s = this.plan.course.waypoints, i = this.calcSegments(Hr(s.map((o) => o.loc), this.plan.course.dist));
+    if (!i.length)
+      throw new Error("createSegments result is empty");
     return i.forEach((o, h) => {
       o.waypoint = s[h + 1];
     }), i;
   }
   createSplits(s) {
     bs(`createSplits:${s}`);
-    const i = ko(s), o = Y.range(this.plan.course.dist * i).map(
-      (m) => m / i
-    );
+    const i = ko(s), o = Y.range(this.plan.course.dist * i).map((m) => m / i);
     this.plan.course.dist - o[o.length - 1] > 1e-4 && o.push(this.plan.course.dist);
     const h = this.calcSegments(Hr(o, this.plan.course.dist));
-    if (!h.length) throw new Error("createSplits result is empty");
+    if (!h.length)
+      throw new Error("createSplits result is empty");
     return h;
   }
   calcSegments(s) {
@@ -5736,7 +5706,8 @@ class o_ {
     y = 1;
     for (let L = 0; L < d.length; L++) {
       const T = d[L], W = v[L];
-      for (; yn(m[y].loc, T.point1.loc, 4); ) y++;
+      for (; yn(m[y].loc, T.point1.loc, 4); )
+        y++;
       let z = T.point1;
       for (; y < m.length && yn(m[y].loc, T.point2.loc, 4); ) {
         const tt = m[y];
@@ -5776,7 +5747,8 @@ class c_ {
   }
   get cutoffs() {
     var i;
-    if (this.cache.cutoffs) return this.cache.cutoffs;
+    if (this.cache.cutoffs)
+      return this.cache.cutoffs;
     this.cache.cutoffs = this.cutoffMargin ? ((i = this.course.cutoffs) == null ? void 0 : i.map((o) => new f_(this, o, this.getPoint(o.loc, !0)))) || [] : [];
     let s = 0;
     for (; this.cache.cutoffs.length - 1 >= s; ) {
@@ -5789,12 +5761,11 @@ class c_ {
     return Y.sumBy(this.delays, "delay");
   }
   get delays() {
-    if (this.cache.delays) return this.cache.delays;
+    if (this.cache.delays)
+      return this.cache.delays;
     const s = this.course.waypoints.map((o) => {
       var d;
-      const h = (d = this._data.delays) == null ? void 0 : d.find(
-        (v) => v.loop === o.loop && v.siteId === o.site.id
-      ), m = h ? h.delay : o.hasDelay ? this.typicalDelay : 0;
+      const h = (d = this._data.delays) == null ? void 0 : d.find((v) => v.loop === o.loop && v.siteId === o.site.id), m = h ? h.delay : o.hasDelay ? this.typicalDelay : 0;
       return new l_(o, m);
     }).filter((o) => o.delay > 0).sort((o, h) => o.loc - h.loc);
     let i = 0;
@@ -5803,18 +5774,15 @@ class c_ {
     return this.cache.delays = s, this.cache.delays;
   }
   get event() {
-    if (this.cache.event) return this.cache.event;
+    if (this.cache.event)
+      return this.cache.event;
     if (this._data.start)
-      return this.cache.event = new Ko(
-        this._data.start.date,
-        this._data.start.timezone,
-        this.points[0].lat,
-        this.points[0].lon
-      );
+      return this.cache.event = new Ko(this._data.start.date, this._data.start.timezone, this.points[0].lat, this.points[0].lon);
     throw new Error("Start date/timezone is required for either the plan or the course");
   }
   get events() {
-    if (this.cache.events) return this.cache.events;
+    if (this.cache.events)
+      return this.cache.events;
     He("calculating events.sun");
     const s = [], i = this.event.elapsedToTimeOfDay(0), o = Math.ceil((i + this.points[this.points.length - 1].elapsed) / 86400), h = ["nadir", "dawn", "sunrise", "noon", "sunset", "dusk"].filter((v) => this.event.sun[v] !== null).map((v) => ({ event: v, time: this.event.sun[v].time }));
     for (let v = 0; v < o; v++)
@@ -5823,11 +5791,7 @@ class c_ {
         x >= 0 && x <= this.points[this.points.length - 1].elapsed && s.push({ event: y.event, elapsed: x });
       });
     s.sort((v, y) => v.elapsed - y.elapsed);
-    const m = bo(
-      this.points.map((v) => v.elapsed),
-      this.points.map((v) => v.loc),
-      s.map((v) => v.elapsed)
-    ), d = s.map((v, y) => ({ ...v, loc: m[y] }));
+    const m = bo(this.points.map((v) => v.elapsed), this.points.map((v) => v.loc), s.map((v) => v.elapsed)), d = s.map((v, y) => ({ ...v, loc: m[y] }));
     return this.cache.events = { sun: d }, this.cache.events;
   }
   get heatModel() {
@@ -5854,20 +5818,19 @@ class c_ {
     } : this.cache.scales = void 0;
   }
   get stats() {
-    if (this.cache.stats) return this.cache.stats;
+    if (this.cache.stats)
+      return this.cache.stats;
     He("calculating stats.factors");
-    const s = Y.fromPairs(
-      mn.map((m) => {
-        const d = this.points.map((v) => v.factors[m]);
-        return [
-          m,
-          {
-            min: Number(Y.min(d)),
-            max: Number(Y.max(d))
-          }
-        ];
-      })
-    );
+    const s = Y.fromPairs(mn.map((m) => {
+      const d = this.points.map((v) => v.factors[m]);
+      return [
+        m,
+        {
+          min: Number(Y.min(d)),
+          max: Number(Y.max(d))
+        }
+      ];
+    }));
     He("calculating stats.sun");
     const i = {
       day: { time: 0, dist: 0 },
@@ -5899,7 +5862,8 @@ class c_ {
   }
   checkPacing() {
     var s, i;
-    if (He("checkPacing"), (!((s = this.pacing.status) != null && s.complete) || !this.pacing.isCurrent) && (He("checkPacing: calculate"), this.pacing.calculate()), !((i = this.points) != null && i.length)) throw new Error("No plan points");
+    if (He("checkPacing"), (!((s = this.pacing.status) != null && s.complete) || !this.pacing.isCurrent) && (He("checkPacing: calculate"), this.pacing.calculate()), !((i = this.points) != null && i.length))
+      throw new Error("No plan points");
     return !0;
   }
   getDelayAtWaypoint(s) {
@@ -5908,14 +5872,16 @@ class c_ {
   }
   getPoint(s, i = !1) {
     const o = this.points.findIndex((y) => Kr(y.loc, s, 4)), h = this.points[o];
-    if (Cn(h.loc, s, 4)) return h;
+    if (Cn(h.loc, s, 4))
+      return h;
     He(`getPoint: ${i ? "inserting" : "creating"} new PlanPoint at ${s}`);
     const m = o - 1, d = this.points[m], v = new Ps(this, this.course.getPoint(s));
     return v.delay = Math.round(h.elapsed - d.elapsed - (h.time - d.time)), v.time = wn(d.loc, h.loc, d.time, h.time, v.loc), v.elapsed = d.elapsed + d.delay + (v.time - d.time), v.tod = this.event.elapsedToTimeOfDay(v.elapsed), Gn(v, this), i && this.points.splice(o, 0, v), v;
   }
   update(s) {
     const o = ["target", "method"].find((h) => h in s && Y.isNil(s[h]));
-    if (o) throw new Error(`Plan.${o} cannot be set to null or undefined`);
+    if (o)
+      throw new Error(`Plan.${o} cannot be set to null or undefined`);
     Object.assign(this._data, s), this._version++;
   }
 }
@@ -5959,12 +5925,7 @@ const Yo = (l, s, i, o) => {
   }), m;
 };
 function h_(l, s) {
-  return Yo(
-    s,
-    l.map((o) => o.alt),
-    s,
-    0.05
-  ).map((o) => o.grade);
+  return Yo(s, l.map((o) => o.alt), s, 0.05).map((o) => o.grade);
 }
 const p_ = (l) => {
   let s = 0, i = 0;
@@ -5996,7 +5957,8 @@ class Zr {
   getLLA(s) {
     s > this.dist && (s = s % this.dist);
     let i;
-    if (s === 0) i = this.points[0];
+    if (s === 0)
+      i = this.points[0];
     else {
       const o = this.points.findIndex((h) => h.loc >= s);
       i = Go(this.points[o - 1], this.points[o], s);
@@ -6009,12 +5971,7 @@ class Zr {
       return o("Does not meet criteria"), this;
     const h = this.dist, m = Math.floor(h / s) + 1, d = Array(m).fill(0).map((F, w) => Wt(w++ * s, 3));
     d[d.length - 1] < h && d.push(h);
-    const v = Yo(
-      this.points.map((F) => F.loc),
-      this.points.map((F) => F.alt),
-      d,
-      2 * s
-    ), y = d.map((F) => this.getLLA(F)).map((F, w) => ({
+    const v = Yo(this.points.map((F) => F.loc), this.points.map((F) => F.alt), d, 2 * s), y = d.map((F) => this.getLLA(F)).map((F, w) => ({
       lat: Wt(F.lat, 6),
       lon: Wt(F.lon, 6),
       alt: Wt(v[w].alt, 2)
